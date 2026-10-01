@@ -1,1 +1,1 @@
-txt
+jadikan fitur fitur menjadi plugins js seperti ini
