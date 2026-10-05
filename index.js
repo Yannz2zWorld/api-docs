@@ -144,6 +144,10 @@ const authLimiter=rateLimit({windowMs:15*60*1000,max:Number(process.env.AUTH_RAT
 app.use(['/auth/google','/auth/google/callback','/auth/google/credential'],authLimiter);
 
 // Shared stylesheet for the account pages (explicit route so the Vercel bundle includes it).
+app.get('/assets/scene3d.js', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'scene3d.js'));
+});
 app.get('/assets/theme.css', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.sendFile(path.join(__dirname, 'views', 'theme.css'));

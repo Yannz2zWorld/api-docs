@@ -103,3 +103,10 @@ it('the shared theme stylesheet is served for the account pages', async () => {
   assert.match(r.headers['content-type'], /text\/css/);
   assert.match(r.text, /--bg:\s*#0b0b0c/);
 });
+
+it('the WebGL scene module is served as JavaScript', async () => {
+  const r = await app.request('GET', '/assets/scene3d.js');
+  assert.equal(r.status, 200);
+  assert.match(r.headers['content-type'], /javascript/);
+  assert.match(r.text, /from 'three'/);
+});
