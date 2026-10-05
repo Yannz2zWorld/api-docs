@@ -1,16 +1,19 @@
 'use strict';
-const crypto=require('crypto'); const {query}=require('../lib/db'); const {getTier}=require('./tierService'); const {digest}=require('../lib/keyCrypto');
+const crypto=require('crypto'); const {query,transaction}=require('../lib/db'); const {getTier}=require('./tierService'); const {digest}=require('../lib/keyCrypto');
 async function createKey(user,name,idempotencyKey=null){
  const cap=getTier(user.tier).keys;if(cap===0) throw Object.assign(new Error('Tier ini belum mendapat kuota API key.'),{code:'KEYS_NOT_INCLUDED'});
  const plain='yannz_live_'+crypto.randomBytes(32).toString('base64url');
- const saved=await query(`WITH lock_user AS MATERIALIZED (SELECT pg_advisory_xact_lock(hashtext($1::text))), current_count AS (
- SELECT count(*)::int AS n FROM api_keys,lock_user WHERE user_id=$1 AND status='active'
- ), inserted AS (
- INSERT INTO api_keys(user_id,name,key_hash,key_prefix,idempotency_key)
- SELECT $1,$2,$3,$4,$5 FROM current_count WHERE $6 OR n<$7
- ON CONFLICT(user_id,idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
- RETURNING id,name,key_prefix,status,created_at,last_used_at
- ) SELECT * FROM inserted`,[user.id,String(name||'My API Key').slice(0,80),digest(plain),plain.slice(0,19),idempotencyKey, user.tier==='OWNER', Number.isFinite(cap)?cap:2147483647]);
+ // The per-user advisory lock is taken in its own statement, so the INSERT's count (a new
+ // READ COMMITTED snapshot) sees keys committed by concurrent requests: the cap cannot be overrun.
+ const [,saved]=await transaction([
+  {text:'SELECT pg_advisory_xact_lock(hashtext($1::text))',params:[String(user.id)]},
+  {text:`INSERT INTO api_keys(user_id,name,key_hash,key_prefix,idempotency_key)
+   SELECT $1::uuid,$2::text,$3::text,$4::text,$5::text
+    WHERE $6::boolean OR (SELECT count(*) FROM api_keys WHERE user_id=$1::uuid AND status='active')<$7::int
+   ON CONFLICT(user_id,idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
+   RETURNING id,name,key_prefix,status,created_at,last_used_at`,
+   params:[user.id,String(name||'My API Key').trim().slice(0,80)||'My API Key',digest(plain),plain.slice(0,19),idempotencyKey,!Number.isFinite(cap),Number.isFinite(cap)?cap:0]}
+ ]);
  if(!saved.length){
   if(idempotencyKey){const prior=await query('SELECT id FROM api_keys WHERE user_id=$1 AND idempotency_key=$2',[user.id,idempotencyKey]);if(prior.length)throw Object.assign(new Error('Permintaan key ini sudah diproses. Muat ulang daftar key; secret hanya ditampilkan saat pertama dibuat.'),{code:'IDEMPOTENCY_REPLAY'});}
   throw Object.assign(new Error('Batas API key tier kamu tercapai.'),{code:'KEY_LIMIT'});
