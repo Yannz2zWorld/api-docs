@@ -1,1 +1,130 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Billing — Yannz API</title><style>*{box-sizing:border-box}body{font:15px system-ui;background:#fffdf7;color:#111;margin:0}.wrap{max-width:900px;margin:auto;padding:28px 18px}h1{font-size:42px}.panel{border:3px solid #111;padding:20px;background:#fff;box-shadow:6px 6px #111;margin:20px 0}select,button{font:inherit;padding:11px;border:2px solid #111}button{background:#ffe45e;font-weight:800;cursor:pointer;box-shadow:3px 3px #111}.item{border-top:2px solid #ddd;padding:14px 0;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><main class="wrap"><a href="/home">← Home</a><h1>Billing & Orders</h1><section class="panel"><h2>New order</h2><select id="tier"><option>SULTAN</option><option>SEPUH</option><option>DEWA</option></select><button onclick="makeOrder()">Create order</button><p id="notice"></p><p style="font-size:13px">Untuk pembayaran manual, siapkan URL HTTPS bukti pembayaran (mis. file yang sudah diunggah ke storage). Gateway otomatis tidak membutuhkan bukti manual.</p></section><section class="panel"><h2>Orders</h2><div id="orders">Loading…</div></section></main><script>async function api(p,o={}){let r=await fetch(p,{credentials:'same-origin',...o});let d=await r.json();if(!r.ok)throw Error(d.message||d.error);return d}let orderRequestKey=crypto.randomUUID();async function makeOrder(){try{let d=await api('/api/orders',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':orderRequestKey},body:JSON.stringify({tier:document.getElementById('tier').value})});orderRequestKey=crypto.randomUUID();notice.textContent=`Order ${d.order.order_code} dibuat. Pilih metode di daftar order.`;load()}catch(e){notice.textContent=e.message}}async function pay(id,kind,method){try{let body={method};if(kind==='manual'){const proof=prompt('Masukkan URL HTTPS bukti pembayaran:');if(!proof)return;body.proof_url=proof.trim()}let d=await api(`/api/orders/${id}/${kind}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});alert(JSON.stringify(d.gateway||d.payment||d,null,2));load()}catch(e){alert(e.message)}}async function load(){try{let d=await api('/api/orders');orders.innerHTML=d.orders.map(o=>`<div class="item"><b>${o.order_code}</b> · ${o.tier} · Rp${Number(o.amount).toLocaleString('id-ID')} · ${o.status}<br><small>${new Date(o.created_at).toLocaleString()}</small>${o.status==='pending'?`<p><select id="m-${o.id}"><option value="qris">QRIS (Pakasir)</option><option value="payment_link">Payment Link</option>${Number(o.amount)>=10000?'<option value="bri_va">BRI VA</option><option value="bni_va">BNI VA</option>':''}<option value="DANA">DANA manual</option><option value="GOPAY">GoPay manual</option><option value="QRIS">QRIS manual</option><option value="BANK_TRANSFER">Bank transfer manual</option></select> <button onclick="startPay('${o.id}')">Continue</button></p>`:''}</div>`).join('')||'No orders.'}catch(e){orders.textContent=e.message}}async function startPay(id){const m=document.getElementById('m-'+id).value;await pay(id,['DANA','GOPAY','QRIS','BANK_TRANSFER'].includes(m)?'manual':'pakasir',m)}load();</script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Billing — Yannz API</title>
+<link rel="icon" href="/api/logo-proxy">
+<style>
+:root{--ink:#111;--paper:#fffdf7;--yellow:#ffe45e;--muted:#5d584e;--red:#b23b32;--green:#167553}
+*{box-sizing:border-box}body{font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--paper);color:var(--ink);margin:0}
+a{color:inherit}.wrap{max-width:920px;margin:auto;padding:24px 16px 56px}
+h1{font-size:clamp(34px,8vw,52px);letter-spacing:-.04em;margin:14px 0 4px}.lead{color:var(--muted);margin:0}
+.panel{border:3px solid var(--ink);padding:20px;background:#fff;box-shadow:6px 6px 0 var(--ink);margin:22px 0;border-radius:4px}
+.panel h2{margin:0 0 12px;font-size:20px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+select,input,button{font:inherit;padding:10px 12px;border:2px solid var(--ink);border-radius:4px;background:#fff;color:var(--ink);max-width:100%}
+input{flex:1;min-width:200px}button{background:var(--yellow);font-weight:800;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}button:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.order{border-top:2px solid #eee;padding:16px 0;overflow-wrap:anywhere}.order:first-child{border-top:0}
+.chip{display:inline-block;border:2px solid var(--ink);padding:0 8px;font:700 11px ui-monospace,monospace;text-transform:uppercase;margin-right:4px}
+.pending{background:#fff4b8}.paid{background:#c9f2dc}.rejected,.expired,.cancelled{background:#eee;color:#666}
+.box{border:2px dashed var(--ink);background:#fffbe6;padding:12px;margin-top:10px}.error{color:var(--red);font-weight:600}
+small{color:var(--muted)}code{font:13px ui-monospace,Menlo,monospace;background:#f3efe2;padding:2px 6px;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a href="/home">← Dashboard</a>
+  <h1>Billing &amp; Orders</h1>
+  <p class="lead" id="current">Memuat akun…</p>
+
+  <section class="panel">
+    <h2>Order baru</h2>
+    <div class="row"><select id="tier" aria-label="Paket"></select><button id="order-btn" type="button">Buat order</button></div>
+    <p id="notice" aria-live="polite"></p>
+    <p><small>Harga ditentukan server. Order berlaku 2 jam. Tier baru aktif hanya setelah pembayaran terverifikasi server atau disetujui owner.</small></p>
+  </section>
+
+  <section class="panel">
+    <h2>Riwayat order</h2>
+    <div id="orders" aria-live="polite">Memuat…</div>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const rp = n => 'Rp' + Number(n).toLocaleString('id-ID');
+const when = v => v ? new Date(v).toLocaleString('id-ID') : '—';
+const LABEL = { qris: 'QRIS (otomatis)', payment_link: 'Payment link (otomatis)', bri_va: 'BRI VA', bni_va: 'BNI VA', cimb_niaga_va: 'CIMB Niaga VA', permata_va: 'Permata VA', maybank_va: 'Maybank VA', bnc_va: 'BNC VA', artha_graha_va: 'Artha Graha VA', sampoerna_va: 'Sampoerna VA', DANA: 'DANA (manual)', GOPAY: 'GoPay (manual)', QRIS: 'QRIS (manual)', BANK_TRANSFER: 'Transfer bank (manual)' };
+let ctx = { gatewayMethods: [], manualMethods: [], gatewayConfigured: false };
+let orderKey = crypto.randomUUID();
+
+async function api(url, opts = {}) {
+  const r = await fetch(url, { credentials: 'same-origin', ...opts });
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status})`);
+  return d;
+}
+
+async function loadPlans() {
+  try {
+    const [dash, t] = await Promise.all([api('/api/dashboard'), api('/api/tiers')]);
+    const rank = ['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'];
+    const mine = rank.indexOf(dash.user.tier);
+    $('#current').textContent = `Tier saat ini: ${dash.user.tier}.`;
+    const options = t.tiers.filter(x => x.purchasable && rank.indexOf(x.name) > mine);
+    $('#tier').innerHTML = options.map(x => `<option value="${esc(x.name)}">${esc(x.name)} — ${rp(x.price)} · ${Number(x.dailyLimit).toLocaleString('id-ID')} req/hari</option>`).join('');
+    const want = new URLSearchParams(location.search).get('tier');
+    if (want && options.some(o => o.name === want)) $('#tier').value = want;
+    $('#order-btn').disabled = !options.length;
+    if (!options.length) $('#notice').textContent = 'Kamu sudah berada di paket tertinggi.';
+  } catch (e) { $('#current').textContent = e.message; }
+}
+
+function paymentState(o) {
+  if (o.status === 'paid') return '<div class="box">✅ Lunas &amp; terverifikasi. Tier sudah aktif.</div>';
+  if (o.status !== 'pending') return `<div class="box">Order ${esc(o.status)}.${o.status === 'expired' ? ' Buat order baru bila ingin membeli lagi.' : ''}</div>`;
+  if (o.provider === 'manual' && o.payment_status === 'pending') return '<div class="box">⏳ Bukti terkirim — menunggu approval owner. Tier belum berubah.</div>';
+  let gateway = '';
+  if (o.provider === 'pakasir' && o.payment_status === 'pending') {
+    gateway = `<div class="box">⏳ Menunggu pembayaran &amp; verifikasi server.${o.payment_url ? ` <a href="${esc(o.payment_url)}" target="_blank" rel="noopener noreferrer">Buka halaman pembayaran</a>` : ''}${o.va_number ? `<br>Nomor VA: <code>${esc(o.va_number)}</code>` : ''}${o.qr_string ? `<br>QR string: <code>${esc(o.qr_string)}</code>` : ''}${o.gateway_expires_at ? `<br><small>Berlaku sampai ${when(o.gateway_expires_at)}</small>` : ''}</div>`;
+  }
+  const methods = [...(ctx.gatewayConfigured ? ctx.gatewayMethods.filter(m => m === 'qris' || m === 'payment_link' || Number(o.amount) >= 10000) : []), ...ctx.manualMethods];
+  return gateway + `<form class="row" data-pay="${esc(o.id)}" style="margin-top:10px">
+    <select name="method" aria-label="Metode pembayaran">${methods.map(m => `<option value="${esc(m)}">${esc(LABEL[m] || m)}</option>`).join('')}</select>
+    <input name="proof" type="url" placeholder="URL HTTPS bukti transfer (khusus manual)" aria-label="URL bukti pembayaran">
+    <button type="submit">Lanjutkan</button>
+  </form>`;
+}
+
+async function loadOrders() {
+  try {
+    const d = await api('/api/orders');
+    ctx = d;
+    const help = [d.manualInstructions ? esc(d.manualInstructions) : 'Untuk pembayaran manual, hubungi owner untuk nomor tujuan, lalu kirim URL HTTPS bukti transfer (mis. tautan file di Google Drive/storage).', d.contact ? `Kontak: <a href="${esc(d.contact)}" target="_blank" rel="noopener noreferrer">WhatsApp owner</a>` : '', d.gatewayConfigured ? '' : 'Pembayaran otomatis belum aktif.'].filter(Boolean).join(' ');
+    $('#orders').innerHTML = (d.orders.length ? d.orders.map(o => `<div class="order"><b>${esc(o.order_code)}</b> · ${esc(o.tier)} · ${rp(o.amount)}<br><span class="chip ${esc(o.status)}">order: ${esc(o.status)}</span>${o.payment_status ? `<span class="chip ${esc(o.payment_status)}">bayar: ${esc(o.payment_status)}</span>` : ''}<br><small>Dibuat ${when(o.created_at)}${o.status === 'pending' ? ' · berlaku sampai ' + when(o.expires_at) : ''}${o.paid_at ? ' · lunas ' + when(o.paid_at) : ''}</small>${paymentState(o)}</div>`).join('') : '<p>Belum ada order.</p>') + `<p><small>${help}</small></p>`;
+  } catch (e) { $('#orders').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
+}
+
+$('#order-btn').addEventListener('click', async () => {
+  const btn = $('#order-btn'); btn.disabled = true; $('#notice').textContent = 'Membuat order…';
+  try {
+    const d = await api('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': orderKey }, body: JSON.stringify({ tier: $('#tier').value }) });
+    orderKey = crypto.randomUUID();
+    $('#notice').textContent = `Order ${d.order.order_code} dibuat (${rp(d.order.amount)}). Pilih metode pembayaran di bawah.`;
+    loadOrders();
+  } catch (e) { $('#notice').textContent = e.message; }
+  finally { btn.disabled = false; }
+});
+
+$('#orders').addEventListener('submit', async e => {
+  const form = e.target.closest('form[data-pay]'); if (!form) return;
+  e.preventDefault();
+  const id = form.dataset.pay, method = form.querySelector('[name=method]').value, manual = ctx.manualMethods.includes(method);
+  const body = { method };
+  if (manual) {
+    body.proof_url = form.querySelector('[name=proof]').value.trim();
+    if (!/^https:\/\//i.test(body.proof_url)) { alert('Pembayaran manual butuh URL HTTPS bukti transfer.'); return; }
+  }
+  form.querySelector('button').disabled = true;
+  try {
+    await api(`/api/orders/${encodeURIComponent(id)}/${manual ? 'manual' : 'pakasir'}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  } catch (err) { alert(err.message); }
+  loadOrders();
+});
+
+loadPlans();
+loadOrders();
+</script>
+</body>
+</html>

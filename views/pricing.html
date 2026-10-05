@@ -1,1 +1,75 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pricing — Yannz API</title><style>*{box-sizing:border-box}body{margin:0;background:#fffdf7;color:#111;font:16px system-ui}.wrap{max-width:1100px;margin:auto;padding:32px 20px}h1{font-size:clamp(34px,7vw,64px);letter-spacing:-.06em}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}.card{border:3px solid #111;padding:24px;background:white;box-shadow:7px 7px 0 #111}.card:nth-child(2){background:#ffe45e}.price{font-size:32px;font-weight:900}.btn{display:block;margin-top:20px;padding:13px;border:2px solid #111;background:#ffe45e;color:#111;text-align:center;font-weight:800;text-decoration:none;cursor:pointer;box-shadow:3px 3px 0 #111}li{margin:9px 0}small{color:#555}</style></head><body><main class="wrap"><a href="/home">← Dashboard</a><h1>Simple pricing.<br>Build without limits.</h1><p>Paket berbayar diproses melalui order server-side. Harga final ditentukan server.</p><div class="grid"><article class="card"><h2>FREE</h2><div class="price">Rp0</div><ul><li>100 requests/day</li><li>0 API keys</li><li>Selected API</li></ul><b>Current base plan</b></article><article class="card"><h2>SULTAN</h2><div class="price">Rp5.000</div><ul><li>1.000 requests/day</li><li>2 API keys</li><li>All active API</li></ul><button class="btn" onclick="buy('SULTAN')">Upgrade</button></article><article class="card"><h2>SEPUH</h2><div class="price">Rp10.000</div><ul><li>10.000 requests/day</li><li>3 API keys</li><li>All active API</li></ul><button class="btn" onclick="buy('SEPUH')">Upgrade</button></article><article class="card"><h2>DEWA</h2><div class="price">Rp25.000</div><ul><li>100.000 requests/day</li><li>Unlimited API keys</li><li>All active API</li></ul><button class="btn" onclick="buy('DEWA')">Upgrade</button></article></div><p id="result" role="status"></p><small>OWNER merupakan role operasional dan tidak dijual.</small></main><script>async function buy(tier){const r=document.querySelector('#result');r.textContent='Membuat order…';try{const x=await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({tier})});const d=await x.json();if(!x.ok)throw Error(d.message||'Order gagal');r.textContent=`Order ${d.order.order_code} dibuat. Lanjutkan pembayaran dari dashboard atau API order.`;}catch(e){r.textContent=e.message;}}</script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pricing — Yannz API</title>
+<link rel="icon" href="/api/logo-proxy">
+<style>
+:root{--ink:#111;--paper:#fffdf7;--yellow:#ffe45e;--muted:#5d584e}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:inherit}.wrap{max-width:1100px;margin:auto;padding:24px 16px 56px}
+h1{font-size:clamp(34px,7vw,64px);letter-spacing:-.05em;line-height:1;margin:18px 0 10px}.lead{color:var(--muted);max-width:640px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:26px}
+.card{border:3px solid var(--ink);padding:22px;background:#fff;box-shadow:7px 7px 0 var(--ink);display:flex;flex-direction:column;border-radius:4px}
+.card.current{background:var(--yellow)}.card h2{margin:0}.price{font-size:32px;font-weight:900;margin:6px 0}
+ul{padding-left:18px;margin:8px 0 0;flex:1}li{margin:8px 0}
+.btn{display:block;margin-top:18px;padding:12px;border:2px solid var(--ink);background:var(--yellow);color:var(--ink);text-align:center;font:inherit;font-weight:800;text-decoration:none;cursor:pointer;box-shadow:3px 3px 0 var(--ink);width:100%}
+.card.current .btn{background:#fff}.btn[disabled]{opacity:.55;cursor:default;box-shadow:none}
+.tag{font:700 11px ui-monospace,monospace;text-transform:uppercase;border:2px solid var(--ink);padding:1px 8px;align-self:flex-start;background:#fff}
+small{color:var(--muted)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a href="/home">← Dashboard</a>
+  <h1>Pilih paket sesuai kebutuhan.</h1>
+  <p class="lead">Kuota dihitung per hari (reset 00:00 UTC) dan hanya request yang berhasil yang dihitung. Harga final ditentukan server saat order dibuat.</p>
+  <div class="grid" id="grid" aria-live="polite"><p>Memuat paket…</p></div>
+  <p id="result" role="status"></p>
+  <small>OWNER adalah peran operasional dan tidak dijual.</small>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = n => Number(n).toLocaleString('id-ID');
+const RANK = ['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'];
+let me = null;
+
+async function render() {
+  try {
+    const [tiers, auth] = await Promise.all([
+      fetch('/api/tiers').then(r => r.json()),
+      fetch('/auth/me', { credentials: 'same-origin', cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null)
+    ]);
+    me = auth && auth.authenticated ? auth.user : null;
+    const mine = me ? RANK.indexOf(me.tier) : -1;
+    $('#grid').innerHTML = tiers.tiers.filter(t => t.name !== 'OWNER').map(t => {
+      const current = me && me.tier === t.name;
+      const keys = t.apiKeys === null ? 'API key tanpa batas' : t.apiKeys === 0 ? 'Tanpa custom API key (pakai Sandbox dengan login)' : `Maksimal ${num(t.apiKeys)} API key`;
+      const access = t.name === 'FREE' ? 'Endpoint tier FREE' : 'Semua endpoint yang aktif';
+      let action;
+      if (current) action = '<button class="btn" disabled>Paket kamu saat ini</button>';
+      else if (!t.purchasable) action = me ? '' : '<a class="btn" href="/">Login gratis</a>';
+      else if (!me) action = `<a class="btn" href="/">Login untuk upgrade</a>`;
+      else if (RANK.indexOf(t.name) <= mine) action = '<button class="btn" disabled>Sudah termasuk</button>';
+      else action = `<button class="btn" data-tier="${esc(t.name)}">Upgrade ke ${esc(t.name)}</button>`;
+      return `<article class="card${current ? ' current' : ''}">${current ? '<span class="tag">Aktif</span>' : ''}<h2>${esc(t.name)}</h2><div class="price">Rp${num(t.price || 0)}</div><ul><li>${num(t.dailyLimit)} request/hari</li><li>${keys}</li><li>${access}</li></ul>${action}</article>`;
+    }).join('');
+  } catch { $('#grid').innerHTML = '<p>Daftar paket sementara tidak tersedia.</p>'; }
+}
+
+$('#grid').addEventListener('click', async e => {
+  const tier = e.target.dataset.tier; if (!tier) return;
+  e.target.disabled = true; $('#result').textContent = 'Membuat order…';
+  try {
+    const r = await fetch('/api/orders', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ tier }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw Error(`${d.message || 'Order gagal.'} (${d.error || r.status})`);
+    location.href = '/billing';
+  } catch (err) { $('#result').textContent = err.message; e.target.disabled = false; }
+});
+render();
+</script>
+</body>
+</html>

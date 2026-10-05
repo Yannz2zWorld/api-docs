@@ -1,10 +1,294 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Owner — Yannz API</title><style>*{box-sizing:border-box}body{font:15px system-ui;background:#fffdf7;color:#111;margin:0}.wrap{max-width:1100px;margin:auto;padding:24px}h1{font-size:42px}.tabs{display:flex;gap:8px;flex-wrap:wrap}.tabs a,button{border:2px solid #111;padding:10px;background:#ffe45e;color:#111;font-weight:700;box-shadow:3px 3px #111;text-decoration:none;cursor:pointer}.panel{margin-top:24px;border:3px solid #111;padding:20px;background:white;box-shadow:6px 6px #111;overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:9px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}input,select{padding:9px;border:2px solid #111;max-width:100%}.muted{color:#666}</style></head><body><main class="wrap"><a href="/home">← Home</a><h1>Owner Console</h1><nav class="tabs"><a href="#dash">Dashboard</a><a href="#users">Users</a><a href="#endpoints">Endpoints</a><a href="#payments">Payments</a><a href="#server">Server</a><a href="/owner/backup">Backup JSON</a><a href="#audit">Audit Logs</a></nav><section class="panel" id="dash"><h2>Dashboard</h2><pre id="dash-data">Loading…</pre></section><section class="panel" id="users"><h2>Users</h2><input id="q" placeholder="Search email/name"><button onclick="loadUsers()">Search</button><div id="users-data"></div></section><section class="panel" id="endpoints"><h2>Endpoint registry</h2><div><input id="ep-name" placeholder="Name"><input id="ep-path" placeholder="/api/example"><input id="ep-desc" placeholder="Description"><select id="ep-tier"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option>OWNER</option></select><button onclick="addEndpoint()">Add metadata</button></div><div id="endpoints-data"></div><p class="muted">Registry controls metadata/access flags. New executable handlers still require a deployed plugin.</p></section><section class="panel" id="payments"><h2>Payments</h2><div id="payments-data"></div></section><section class="panel" id="server"><h2>Maintenance Server</h2><label><input type="checkbox" id="maint"> Maintenance enabled</label><p><input id="message" placeholder="Maintenance message" style="width:min(100%,600px)"></p><button onclick="saveServer()">Save settings</button><pre id="server-data"></pre></section><section class="panel" id="audit"><h2>Audit Logs</h2><pre id="audit-data"></pre></section></main><script>
-const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function api(url,opts={}){const r=await fetch(url,{credentials:'same-origin',...opts});const d=await r.json();if(!r.ok)throw Error(d.message||d.error||'Request failed');return d}const json=o=>JSON.stringify(o,null,2);
-async function loadUsers(){try{const d=await api('/owner/users?q='+encodeURIComponent($('q').value));$('users-data').innerHTML='<table><tr><th>User</th><th>Tier / Status</th><th>Actions</th></tr>'+d.users.map(u=>`<tr><td>${esc(u.name)}<br><small>${esc(u.email)}</small><br><small>${esc(u.id)}</small></td><td>${esc(u.tier)} / ${esc(u.status)}</td><td><select id="tier-${esc(u.id)}"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option></select><button onclick="changeTier('${esc(u.id)}')">Set tier</button> ${u.status==='pending'?`<button onclick="userAction('${esc(u.id)}','approve')">Approve</button>`:''} <button onclick="userAction('${esc(u.id)}','${u.status==='banned'?'unban':'ban'}')">${u.status==='banned'?'Unban':'Ban'}</button> <button onclick="userAction('${esc(u.id)}','delete')">Delete</button></td></tr>`).join('')+'</table>';}catch(e){$('users-data').textContent=e.message}}
-async function userAction(id,action){if(!confirm(`${action} user?`))return;try{await api(`/owner/users/${id}${action==='delete'?'':'/'+action}`,{method:action==='delete'?'DELETE':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:action==='ban'?prompt('Optional ban reason')||'Owner action':''})});loadUsers()}catch(e){alert(e.message)}}async function changeTier(id){try{await api(`/owner/users/${id}/tier`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({tier:$(`tier-${id}`).value})});loadUsers()}catch(e){alert(e.message)}}
-async function loadEndpoints(){try{const d=await api('/owner/api/endpoints');$('endpoints-data').innerHTML='<table><tr><th>Endpoint</th><th>Access</th><th>State</th><th>Actions</th></tr>'+d.endpoints.map(e=>`<tr><td>${esc(e.name)}<br><small>${esc(e.method)} ${esc(e.path)}</small></td><td><select id="ep-tier-${e.id}"><option ${e.minimum_tier==='FREE'?'selected':''}>FREE</option><option ${e.minimum_tier==='SULTAN'?'selected':''}>SULTAN</option><option ${e.minimum_tier==='SEPUH'?'selected':''}>SEPUH</option><option ${e.minimum_tier==='DEWA'?'selected':''}>DEWA</option><option ${e.minimum_tier==='OWNER'?'selected':''}>OWNER</option></select> <button onclick="setEndpointTier('${e.id}')">Save tier</button><br>${e.locked?'locked':'open'}</td><td>${esc(e.status)}</td><td><button onclick="endpointAction('${e.id}','${e.locked?'unlock':'lock'}')">${e.locked?'Unlock':'Lock'}</button> <button onclick="endpointAction('${e.id}','delete')">Delete metadata</button></td></tr>`).join('')+'</table>';}catch(e){$('endpoints-data').textContent=e.message}}async function addEndpoint(){try{await api('/owner/api/endpoints',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('ep-name').value,path:$('ep-path').value,description:$('ep-desc').value,minimum_tier:$('ep-tier').value})});loadEndpoints()}catch(e){alert(e.message)}}async function setEndpointTier(id){try{await api(`/owner/api/endpoints/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({minimum_tier:$(`ep-tier-${id}`).value})});loadEndpoints()}catch(e){alert(e.message)}}async function endpointAction(id,action){if(!confirm(`${action} endpoint metadata?`))return;try{await api(`/owner/api/endpoints/${id}${action==='delete'?'':'/'+action}`,{method:action==='delete'?'DELETE':'POST'});loadEndpoints()}catch(e){alert(e.message)}}
-async function loadPayments(){try{const d=await api('/owner/payments');$('payments-data').innerHTML='<table><tr><th>Order / User</th><th>Amount / Method</th><th>Status</th><th>Actions</th></tr>'+d.payments.map(p=>`<tr><td>${esc(p.order_code)}<br>${esc(p.name)}<br><small>${esc(p.email)}</small></td><td>Rp${Number(p.amount).toLocaleString('id-ID')}<br>${esc(p.payment_method)} · ${esc(p.tier)}<br>${p.proof_url?`<a href="${esc(p.proof_url)}" rel="noreferrer" target="_blank">Proof link</a>`:''}</td><td>${esc(p.status)}</td><td>${p.status==='pending'&&p.provider==='manual'?`<button onclick="paymentAction('${p.id}','approve')">Approve</button> <button onclick="paymentAction('${p.id}','reject')">Reject</button>`:'—'}</td></tr>`).join('')+'</table>';}catch(e){$('payments-data').textContent=e.message}}async function paymentAction(id,action){if(!confirm(`${action} payment?`))return;try{await api(`/owner/payments/${id}/${action}`,{method:'POST'});loadPayments()}catch(e){alert(e.message)}}
-async function saveServer(){try{$('server-data').textContent=json(await api('/owner/server',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({maintenance_enabled:$('maint').checked,maintenance_message:$('message').value})}))}catch(e){$('server-data').textContent=e.message}}
-async function load(){try{const d=await api('/owner/dashboard');$('dash-data').textContent=json(d.stats);const s=await api('/owner/server');$('maint').checked=s.settings.maintenance_enabled;$('message').value=s.settings.maintenance_message;$('audit-data').textContent=json(await api('/owner/audit'));await Promise.all([loadUsers(),loadEndpoints(),loadPayments()]);}catch(e){$('dash-data').textContent=e.message}}load();
-</script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Owner Console — Yannz API</title>
+<link rel="icon" href="/api/logo-proxy">
+<style>
+:root{--ink:#111;--paper:#fffdf7;--yellow:#ffe45e;--muted:#5d584e;--red:#b23b32;--green:#167553}
+*{box-sizing:border-box}body{font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--paper);color:var(--ink);margin:0}
+a{color:inherit}.wrap{max-width:1180px;margin:auto;padding:20px 16px 60px}
+h1{font-size:clamp(30px,6vw,46px);letter-spacing:-.04em;margin:10px 0 14px}h2{margin:0 0 12px;font-size:20px}h3{margin:16px 0 8px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:0;background:var(--paper);padding:8px 0;z-index:2}
+button,.tabs a{font:inherit;border:2px solid var(--ink);padding:8px 12px;background:#fff;color:var(--ink);font-weight:700;box-shadow:3px 3px 0 var(--ink);cursor:pointer;text-decoration:none;border-radius:4px}
+.tabs button[aria-selected=true]{background:var(--yellow)}button.primary{background:var(--yellow)}button.danger{background:#ffd6d1}button:disabled{opacity:.5;cursor:not-allowed}
+button.sm{padding:4px 8px;font-size:12px;box-shadow:2px 2px 0 var(--ink)}
+.panel{margin-top:18px;border:3px solid var(--ink);padding:18px;background:#fff;box-shadow:6px 6px 0 var(--ink);overflow:auto;border-radius:4px}
+.panel[hidden]{display:none}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}th{font:700 11px ui-monospace,monospace;text-transform:uppercase;color:var(--muted)}
+input,select,textarea{font:inherit;padding:8px;border:2px solid var(--ink);border-radius:4px;max-width:100%;background:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{border:2px solid var(--ink);padding:10px;background:#fffbe6}.stat b{display:block;font-size:24px}
+.chip{display:inline-block;border:2px solid var(--ink);padding:0 6px;font:700 10px ui-monospace,monospace;text-transform:uppercase;margin:1px}
+.ok{background:#c9f2dc}.bad{background:#ffd6d1}.warn{background:#fff4b8}.muted{color:var(--muted)}small{color:var(--muted)}
+code{font:12px ui-monospace,Menlo,monospace;background:#f3efe2;padding:1px 5px;overflow-wrap:anywhere}
+.error{color:var(--red);font-weight:600}dialog{border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);max-width:min(860px,94vw);width:100%;padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.35)}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin:0}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a href="/home">← Dashboard</a>
+  <h1>Owner Console</h1>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="status" aria-selected="true">Status</button>
+    <button role="tab" data-tab="dash">Dashboard</button>
+    <button role="tab" data-tab="users">Users</button>
+    <button role="tab" data-tab="endpoints">Endpoints</button>
+    <button role="tab" data-tab="payments">Payments</button>
+    <button role="tab" data-tab="server">Maintenance</button>
+    <button role="tab" data-tab="audit">Audit</button>
+    <a href="/owner/backup">Backup JSON</a>
+  </nav>
+
+  <section class="panel" id="tab-status"><h2>System status</h2><div id="status-data">Memuat…</div></section>
+  <section class="panel" id="tab-dash" hidden><h2>Dashboard</h2><div id="dash-data" class="stats">Memuat…</div></section>
+
+  <section class="panel" id="tab-users" hidden>
+    <h2>Users</h2>
+    <form class="row" id="user-filter">
+      <input name="q" placeholder="Cari email / nama" aria-label="Cari user">
+      <select name="tier" aria-label="Filter tier"><option value="">Semua tier</option><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option>OWNER</option></select>
+      <select name="status" aria-label="Filter status"><option value="">Semua status</option><option>active</option><option>banned</option><option>pending</option></select>
+      <button class="primary" type="submit">Cari</button>
+    </form>
+    <div id="users-data">Memuat…</div>
+  </section>
+
+  <section class="panel" id="tab-endpoints" hidden>
+    <h2>Endpoint registry</h2>
+    <p class="muted">Registry hanya menyimpan metadata &amp; akses. Endpoint baru bisa dipanggil hanya jika plugin handler untuk path itu sudah di-deploy di folder <code>plugin/</code> (kolom <b>Handler</b>).</p>
+    <form class="row" id="ep-form">
+      <input name="name" placeholder="Nama" required>
+      <input name="path" placeholder="/api/kategori/nama" required pattern="/[a-zA-Z0-9/_-]+">
+      <input name="description" placeholder="Deskripsi">
+      <select name="minimum_tier"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option>OWNER</option></select>
+      <button class="primary" type="submit">Tambah metadata</button>
+    </form>
+    <div id="endpoints-data">Memuat…</div>
+  </section>
+
+  <section class="panel" id="tab-payments" hidden>
+    <h2>Payments</h2>
+    <div class="row"><select id="pay-status" aria-label="Filter status pembayaran"><option value="pending">pending</option><option value="">semua</option><option value="paid">paid</option><option value="rejected">rejected</option><option value="expired">expired</option></select></div>
+    <div id="payments-data">Memuat…</div>
+  </section>
+
+  <section class="panel" id="tab-server" hidden>
+    <h2>Maintenance</h2>
+    <p class="muted">Saat aktif, semua panggilan API non-owner dijawab <code>503 MAINTENANCE</code>. Login &amp; dashboard tetap jalan.</p>
+    <label class="row"><input type="checkbox" id="maint"> Maintenance aktif</label>
+    <div class="row"><input id="maint-msg" placeholder="Pesan maintenance" style="flex:1;min-width:240px" maxlength="500"><button class="primary" id="save-server" type="button">Simpan</button></div>
+    <p id="server-msg" aria-live="polite"></p>
+  </section>
+
+  <section class="panel" id="tab-audit" hidden>
+    <h2>Audit log</h2>
+    <div class="row"><input id="audit-action" placeholder="Filter action, mis. user_ban"><button id="audit-load" type="button">Muat</button></div>
+    <div id="audit-data">Memuat…</div>
+  </section>
+</main>
+
+<dialog id="user-dialog"><div id="user-detail"></div><div class="row" style="margin-top:14px"><button type="button" onclick="document.getElementById('user-dialog').close()">Tutup</button></div></dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const when = v => v ? new Date(v).toLocaleString('id-ID') : '—';
+const num = n => n === null || n === undefined ? '∞' : Number(n).toLocaleString('id-ID');
+const chip = (text, cls = '') => `<span class="chip ${cls}">${esc(text)}</span>`;
+const TIERS = ['FREE', 'SULTAN', 'SEPUH', 'DEWA'];
+
+async function api(url, opts = {}) {
+  const r = await fetch(url, { credentials: 'same-origin', ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status})`);
+  return d;
+}
+const send = (url, method = 'POST', body) => api(url, { method, body: body === undefined ? undefined : JSON.stringify(body) });
+const fail = (el, e) => { $(el).innerHTML = `<p class="error">${esc(e.message)}</p>`; };
+
+// ---------- tabs
+const loaders = {};
+let loaded = new Set();
+document.querySelector('.tabs').addEventListener('click', e => {
+  const tab = e.target.dataset.tab; if (!tab) return;
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  document.querySelectorAll('section[id^=tab-]').forEach(s => { s.hidden = s.id !== 'tab-' + tab; });
+  if (!loaded.has(tab)) { loaded.add(tab); loaders[tab]?.(); }
+});
+
+// ---------- status
+loaders.status = async () => {
+  try {
+    const s = await api('/owner/status');
+    const db = s.database;
+    const cfg = Object.entries(s.config).map(([k, v]) => chip(k, v ? 'ok' : 'warn')).join(' ');
+    $('#status-data').innerHTML = `
+      <h3>Database</h3>${chip(db.connected ? 'connected' : 'disconnected', db.connected ? 'ok' : 'bad')} ${db.ok === undefined ? '' : chip(db.ok ? 'schema ok' : 'migration required', db.ok ? 'ok' : 'bad')}
+      ${db.missing?.length ? `<p class="error">Kurang: ${db.missing.map(esc).join(', ')}</p>` : ''}${db.error ? `<p class="error">${esc(db.error)}</p>` : ''}
+      <h3>Environment</h3><p>${cfg}</p><small>Hijau = terisi, kuning = kosong. Nilai tidak pernah ditampilkan.</small>
+      <h3>Pembayaran</h3><p>Pakasir: ${chip(s.payments.pakasirConfigured ? 'configured' : 'not configured', s.payments.pakasirConfigured ? 'ok' : 'warn')} Settlement otomatis: ${chip(s.payments.automaticSettlement, s.payments.automaticSettlement === 'disabled_fail_closed' ? 'warn' : 'ok')}</p>
+      <small>Settlement otomatis tetap mati (fail-closed) sampai endpoint verifikasi resmi Pakasir dikonfigurasi di PAKASIR_V2_VERIFY_URL dan diuji.</small>
+      <h3>Notifikasi WhatsApp</h3><p>${chip(s.notifications.configured ? 'provider aktif' : 'provider belum ada', s.notifications.configured ? 'ok' : 'warn')} OWNER_WA: ${chip(s.notifications.ownerWaConfigured ? 'set' : 'kosong', s.notifications.ownerWaConfigured ? 'ok' : 'warn')}</p>
+      <small>Tidak ada pesan WhatsApp yang dikirim sampai provider resmi diintegrasikan.</small>
+      <h3>Plugin</h3><p>${s.plugins.loaded.map(p => chip(p, 'ok')).join(' ') || '—'}</p>
+      ${s.plugins.registryWithoutHandler.length ? `<p>Metadata tanpa handler: ${s.plugins.registryWithoutHandler.map(p => chip(p, 'warn')).join(' ')}</p>` : ''}
+      <h3>Runtime</h3><p>${chip(s.runtime.node)} ${chip(s.runtime.vercel ? 'vercel' : 'local')} ${s.runtime.region ? chip(s.runtime.region) : ''}</p>`;
+  } catch (e) { fail('#status-data', e); }
+};
+
+// ---------- dashboard
+loaders.dash = async () => {
+  try {
+    const { stats } = await api('/owner/dashboard');
+    const labels = { users: 'Users', active_users: 'Active', banned_users: 'Banned', pending_users: 'Pending', free: 'FREE', sultan: 'SULTAN', sepuh: 'SEPUH', dewa: 'DEWA', requests_today: 'Requests hari ini', active_keys: 'API key aktif', payments: 'Payments', pending_payments: 'Payment pending', revenue: 'Revenue (Rp, paid)', active_endpoints: 'Endpoint aktif', locked_endpoints: 'Endpoint terkunci' };
+    $('#dash-data').innerHTML = Object.entries(labels).map(([k, l]) => `<div class="stat"><small>${esc(l)}</small><b>${num(stats[k])}</b></div>`).join('');
+  } catch (e) { fail('#dash-data', e); }
+};
+
+// ---------- users
+loaders.users = async () => {
+  const f = new FormData($('#user-filter'));
+  const qs = new URLSearchParams({ q: f.get('q') || '', tier: f.get('tier') || '', status: f.get('status') || '' });
+  try {
+    const d = await api('/owner/users?' + qs);
+    $('#users-data').innerHTML = d.users.length ? `<table><tr><th>User</th><th>Tier / status</th><th>Hari ini</th><th>Aksi</th></tr>${d.users.map(u => `<tr>
+      <td><b>${esc(u.name)}</b><br><small>${esc(u.email)}</small></td>
+      <td>${chip(u.tier, u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? `<br><small>${esc(u.ban_reason)}</small>` : ''}</td>
+      <td>${num(u.used_today)} req · ${num(u.active_keys)} key</td>
+      <td><button class="sm" data-act="detail" data-id="${esc(u.id)}">Detail</button></td></tr>`).join('')}</table>` : '<p>Tidak ada user yang cocok.</p>';
+  } catch (e) { fail('#users-data', e); }
+};
+$('#user-filter').addEventListener('submit', e => { e.preventDefault(); loaders.users(); });
+
+async function showUser(id) {
+  try {
+    const d = await api('/owner/users/' + encodeURIComponent(id));
+    const u = d.user;
+    const tierSel = `<select id="tier-sel">${TIERS.map(t => `<option ${t === u.storedTier ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+    $('#user-detail').innerHTML = `<h2>${esc(u.name)}</h2><p>${esc(u.email)}<br><small>ID ${esc(u.id)} · dibuat ${when(u.created_at)}</small></p>
+      <p>${chip(u.tier, u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? ` <small>Alasan: ${esc(u.ban_reason)}</small>` : ''}</p>
+      <p><b>Kuota hari ini:</b> ${num(d.usage.used)} / ${num(d.usage.limit)} · sisa ${num(d.usage.remaining)}</p>
+      ${u.isOwner ? '<p class="muted">Akun owner (OWNER_EMAIL) tidak bisa diban, diubah tier, atau dihapus dari panel.</p>' : `<div class="row">${tierSel}<button class="sm primary" data-act="tier" data-id="${esc(u.id)}">Set tier</button>
+        ${u.status === 'pending' ? `<button class="sm" data-act="approve" data-id="${esc(u.id)}">Approve</button>` : ''}
+        ${u.status === 'banned' ? `<button class="sm" data-act="unban" data-id="${esc(u.id)}">Unban</button>` : `<button class="sm danger" data-act="ban" data-id="${esc(u.id)}">Ban</button>`}
+        <button class="sm danger" data-act="delete" data-id="${esc(u.id)}" data-email="${esc(u.email)}">Hapus user</button></div>`}
+      <h3>Pemakaian 14 hari</h3>${d.usage.history.length ? d.usage.history.map(h => `${chip(h.date)} ${num(h.used)}`).join(' · ') : '<small>Belum ada.</small>'}
+      <h3>API keys (${d.apiKeys.filter(k => k.status === 'active').length} aktif / batas ${num(d.apiKeyLimit)})</h3>
+      ${d.apiKeys.length ? `<table><tr><th>Nama</th><th>Prefix</th><th>Status</th><th>Terakhir dipakai</th><th></th></tr>${d.apiKeys.map(k => `<tr><td>${esc(k.name)}</td><td><code>${esc(k.key_prefix)}…</code></td><td>${chip(k.status, k.status === 'active' ? 'ok' : '')}</td><td>${when(k.last_used_at)}</td><td>${k.status === 'active' ? `<button class="sm danger" data-act="revoke-key" data-id="${esc(u.id)}" data-key="${esc(k.id)}">Cabut</button>` : ''}</td></tr>`).join('')}</table>` : '<small>Tidak ada key.</small>'}
+      <h3>Order</h3>${d.orders.length ? `<table><tr><th>Kode</th><th>Tier</th><th>Jumlah</th><th>Status</th></tr>${d.orders.map(o => `<tr><td>${esc(o.order_code)}</td><td>${esc(o.tier)}</td><td>Rp${num(o.amount)}</td><td>${chip(o.status)} ${o.payment_status ? chip(o.provider + ':' + o.payment_status) : ''}</td></tr>`).join('')}</table>` : '<small>Belum ada order.</small>'}`;
+    if (!$('#user-dialog').open) $('#user-dialog').showModal();
+  } catch (e) { alert(e.message); }
+}
+
+async function userAction(btn) {
+  const { act, id } = btn.dataset;
+  try {
+    if (act === 'detail') return showUser(id);
+    if (act === 'tier') { const tier = $('#tier-sel').value; if (!confirm(`Ubah tier user menjadi ${tier}?`)) return; await send(`/owner/users/${id}/tier`, 'PATCH', { tier }); }
+    if (act === 'ban') { const reason = prompt('Alasan ban (wajib):'); if (!reason) return; await send(`/owner/users/${id}/ban`, 'POST', { reason }); }
+    if (act === 'unban') { if (!confirm('Unban user ini?')) return; await send(`/owner/users/${id}/unban`); }
+    if (act === 'approve') { if (!confirm('Approve user ini?')) return; await send(`/owner/users/${id}/approve`); }
+    if (act === 'revoke-key') { if (!confirm('Cabut API key ini? Aplikasi user akan langsung ditolak.')) return; await send(`/owner/users/${id}/keys/${btn.dataset.key}/revoke`); }
+    if (act === 'delete') {
+      const typed = prompt(`Hapus permanen user beserta key, order, dan pembayarannya?\nKetik email user untuk konfirmasi:\n${btn.dataset.email}`);
+      if (typed !== btn.dataset.email) { if (typed !== null) alert('Email tidak cocok. Dibatalkan.'); return; }
+      await send(`/owner/users/${id}`, 'DELETE');
+      $('#user-dialog').close(); return loaders.users();
+    }
+    await showUser(id);
+    loaders.users();
+  } catch (e) { alert(e.message); }
+}
+document.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (b) userAction(b); });
+
+// ---------- endpoints
+loaders.endpoints = async () => {
+  try {
+    const d = await api('/owner/api/endpoints');
+    $('#endpoints-data').innerHTML = `<table><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Status</th><th>Aksi</th></tr>${d.endpoints.map(e => `<tr>
+      <td><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></td>
+      <td>${e.handler_loaded ? chip('deployed', 'ok') : chip('metadata only', 'warn')}</td>
+      <td><select data-ep-tier="${esc(e.id)}">${['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'].map(t => `<option ${t === e.minimum_tier ? 'selected' : ''}>${t}</option>`).join('')}</select></td>
+      <td>${chip(e.status, e.status === 'active' ? 'ok' : 'bad')} ${e.locked ? chip('locked', 'bad') : chip('open', 'ok')}</td>
+      <td><button class="sm" data-ep="${e.locked ? 'unlock' : 'lock'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.locked ? 'Unlock' : 'Lock'}</button>
+          <button class="sm" data-ep="status" data-status="${e.status === 'active' ? 'disabled' : 'active'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.status === 'active' ? 'Disable' : 'Enable'}</button>
+          ${e.handler_loaded ? '' : `<button class="sm danger" data-ep="delete" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Hapus</button>`}</td></tr>`).join('')}</table>`;
+  } catch (e) { fail('#endpoints-data', e); }
+};
+$('#endpoints-data').addEventListener('change', async e => {
+  const id = e.target.dataset.epTier; if (!id) return;
+  if (!confirm(`Ubah tier minimum menjadi ${e.target.value}?`)) return loaders.endpoints();
+  try { await send(`/owner/api/endpoints/${id}`, 'PATCH', { minimum_tier: e.target.value }); } catch (err) { alert(err.message); }
+  loaders.endpoints();
+});
+$('#endpoints-data').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-ep]'); if (!b) return;
+  const { ep, id, path } = b.dataset;
+  const q = { lock: `Kunci ${path}? Semua user non-owner akan ditolak (ENDPOINT_LOCKED).`, unlock: `Buka kunci ${path}?`, status: `${b.dataset.status === 'disabled' ? 'Nonaktifkan' : 'Aktifkan'} ${path}?`, delete: `Hapus metadata ${path}?` }[ep];
+  if (!confirm(q)) return;
+  try {
+    if (ep === 'lock' || ep === 'unlock') await send(`/owner/api/endpoints/${id}/${ep}`);
+    if (ep === 'status') await send(`/owner/api/endpoints/${id}`, 'PATCH', { status: b.dataset.status });
+    if (ep === 'delete') await send(`/owner/api/endpoints/${id}`, 'DELETE');
+  } catch (err) { alert(err.message); }
+  loaders.endpoints();
+});
+$('#ep-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const body = Object.fromEntries(new FormData(e.target));
+  try { const d = await send('/owner/api/endpoints', 'POST', body); if (d.warning) alert(d.warning); e.target.reset(); } catch (err) { alert(err.message); }
+  loaders.endpoints();
+});
+
+// ---------- payments
+loaders.payments = async () => {
+  try {
+    const d = await api('/owner/payments?status=' + encodeURIComponent($('#pay-status').value));
+    $('#payments-data').innerHTML = d.payments.length ? `<table><tr><th>Order / user</th><th>Jumlah / metode</th><th>Status</th><th>Aksi</th></tr>${d.payments.map(p => `<tr>
+      <td><b>${esc(p.order_code)}</b> · ${esc(p.tier)}<br>${esc(p.name)} <small>${esc(p.email)}</small><br><small>${when(p.created_at)}</small></td>
+      <td>Rp${num(p.amount)}<br>${esc(p.provider)} · ${esc(p.payment_method)}${p.proof_url ? `<br><a href="${esc(p.proof_url)}" target="_blank" rel="noopener noreferrer">Lihat bukti</a> <small>(URL dari user — periksa sebelum approve)</small>` : ''}</td>
+      <td>${chip(p.status, p.status === 'paid' ? 'ok' : p.status === 'pending' ? 'warn' : '')}<br><small>order: ${esc(p.order_status)}</small></td>
+      <td>${p.status === 'pending' && p.provider === 'manual' ? `<button class="sm primary" data-pay="approve" data-id="${esc(p.id)}" data-desc="${esc(p.order_code)} (${esc(p.tier)}, Rp${num(p.amount)}) untuk ${esc(p.email)}">Approve</button> <button class="sm danger" data-pay="reject" data-id="${esc(p.id)}" data-desc="${esc(p.order_code)}">Reject</button>` : p.provider === 'pakasir' && p.status === 'pending' ? '<small>Menunggu verifikasi gateway</small>' : '—'}</td></tr>`).join('')}</table>` : '<p>Tidak ada pembayaran.</p>';
+  } catch (e) { fail('#payments-data', e); }
+};
+$('#pay-status').addEventListener('change', () => loaders.payments());
+$('#payments-data').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-pay]'); if (!b) return;
+  const approve = b.dataset.pay === 'approve';
+  if (!confirm(approve ? `Approve pembayaran ${b.dataset.desc}?\nTier user akan langsung naik. Pastikan dana sudah benar-benar masuk.` : `Tolak pembayaran ${b.dataset.desc}?`)) return;
+  try { await send(`/owner/payments/${b.dataset.id}/${b.dataset.pay}`); } catch (err) { alert(err.message); }
+  loaders.payments();
+});
+
+// ---------- maintenance
+loaders.server = async () => {
+  try { const { settings } = await api('/owner/server'); $('#maint').checked = settings.maintenance_enabled; $('#maint-msg').value = settings.maintenance_message || ''; }
+  catch (e) { $('#server-msg').textContent = e.message; }
+};
+$('#save-server').addEventListener('click', async () => {
+  const enabled = $('#maint').checked;
+  if (!confirm(enabled ? 'Aktifkan maintenance? Semua panggilan API non-owner akan ditolak.' : 'Matikan maintenance?')) return;
+  try { const d = await send('/owner/server', 'PATCH', { maintenance_enabled: enabled, maintenance_message: $('#maint-msg').value }); $('#server-msg').textContent = `Tersimpan: maintenance ${d.settings.maintenance_enabled ? 'AKTIF' : 'mati'}.`; }
+  catch (e) { $('#server-msg').textContent = e.message; }
+});
+
+// ---------- audit
+loaders.audit = async () => {
+  try {
+    const d = await api('/owner/audit?action=' + encodeURIComponent($('#audit-action').value.trim()));
+    $('#audit-data').innerHTML = d.logs.length ? `<table><tr><th>Waktu</th><th>Aksi</th><th>Pelaku</th><th>Target</th><th>Detail</th></tr>${d.logs.map(l => `<tr><td>${when(l.created_at)}</td><td>${chip(l.action)}</td><td>${esc(l.actor_email || 'system')}</td><td><small>${esc(l.target_type)} ${esc(l.target_id)}</small></td><td><pre>${esc(JSON.stringify(l.metadata))}</pre><small>${esc(l.ip_address)}</small></td></tr>`).join('')}</table>` : '<p>Tidak ada log.</p>';
+  } catch (e) { fail('#audit-data', e); }
+};
+$('#audit-load').addEventListener('click', () => loaders.audit());
+
+loaded.add('status');
+loaders.status();
+</script>
+</body>
+</html>
