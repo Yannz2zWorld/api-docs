@@ -142,7 +142,7 @@ emails, and secrets are never logged.
 
 | HTTP | error                     | stage    | Meaning / fix |
 |------|---------------------------|----------|---------------|
-| 503  | DATABASE_SCHEMA_OUTDATED  | database | Migrations not applied (log `code` 42703 = missing column, 42P01 = missing table). Run migrations 001, 002, 003. |
+| 503  | DATABASE_SCHEMA_OUTDATED  | database | Migrations not applied (log `code` 42703 = missing column, 42P01 = missing table). Run migrations 001-004 in order. |
 | 503  | DATABASE_NOT_CONFIGURED   | database | DATABASE_URL missing in this Vercel environment. Add it and redeploy. |
 | 503  | DATABASE_UNAVAILABLE      | database | Neon unreachable / bad credentials / suspended project. Check Neon dashboard and the connection string. |
 | 503  | AUTH_NOT_CONFIGURED       | config   | GOOGLE_CLIENT_ID or AUTH_SECRET missing (log lists which). |
@@ -166,7 +166,7 @@ Google Cloud Console checklist (OAuth 2.0 Client ID, type "Web application"):
 
 1. `npm install`
 2. Take a Neon backup/branch and inspect the existing `users` table (`users.id` must be uuid).
-3. Apply `migrations/001_users.sql`, `002_platform.sql`, then `003_backfill_columns.sql` (idempotent, additive, no DROP).
+3. Apply `migrations/001_users.sql`, `002_platform.sql`, `003_backfill_columns.sql`, then `004_payments_amount.sql` (idempotent, additive, no DROP).
 4. Configure secrets only in Vercel environment settings.
 5. Deploy a preview first, verify `/health/database` and Google login, then promote.
 
