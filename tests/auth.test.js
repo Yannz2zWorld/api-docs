@@ -50,12 +50,28 @@ test('missing auth configuration reports variable names only', () => {
   assert.deepEqual(missingAuthConfig({ GOOGLE_CLIENT_ID: 'id', AUTH_SECRET: 's' }), []);
 });
 
-test('login page has no client-side session flag or fake password login', () => {
+test('login page keeps auth server-side: real password endpoints, no client-side session flag', () => {
   const html = fs.readFileSync(path.join(__dirname, '../views/login.html'), 'utf8');
   assert.doesNotMatch(html, /sessionStorage|localStorage/);
-  assert.doesNotMatch(html, /type="password"/);
-  assert.match(html, /\/auth\/google\/credential/);
+  for (const endpoint of ['/auth/login', '/auth/register', '/auth/email/verify', '/auth/password/forgot', '/auth/password/reset', '/auth/google/credential']) {
+    assert.ok(html.includes(endpoint), endpoint);
+  }
   assert.match(html, /href="\/auth\/google"/);
+  assert.match(html, /autocomplete="one-time-code"/);
+});
+
+test('password hashing uses scrypt with per-hash salt and constant-time verification', async () => {
+  const pw = require('../services/passwordService');
+  const a = await pw.hashPassword('Rahasia123');
+  const b = await pw.hashPassword('Rahasia123');
+  assert.match(a, /^scrypt\$17\$8\$1\$/);
+  assert.notEqual(a, b, 'random salt');
+  assert.equal(await pw.verifyPassword('Rahasia123', a), true);
+  assert.equal(await pw.verifyPassword('rahasia123', a), false);
+  assert.equal(await pw.verifyPassword('Rahasia123', 'garbage'), false);
+  assert.equal(pw.passwordProblem('short1'), 'Sandi minimal 8 karakter.');
+  assert.match(pw.passwordProblem('onlyletters'), /huruf dan angka/);
+  assert.equal(pw.passwordProblem('valid12345'), null);
 });
 
 test('migrations create the users table before the platform migration references it', () => {

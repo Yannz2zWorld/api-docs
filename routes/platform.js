@@ -13,6 +13,7 @@ const audit = require('../services/auditService');
 const pakasir = require('../services/pakasirService');
 const notifier = require('../services/ownerNotificationService');
 const orderService = require('../services/orderService');
+const emailService = require('../services/emailService');
 
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
@@ -262,10 +263,11 @@ router.get('/owner/status', auth, owner, async (req, res) => {
     success: true,
     database,
     // Names and presence only; values are never returned.
-    config: Object.fromEntries(['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL', 'AUTH_SECRET', 'OWNER_EMAIL', 'CORS_ORIGINS', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA'].map(n => [n, configured(n)])),
+    config: Object.fromEntries(['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL', 'AUTH_SECRET', 'OWNER_EMAIL', 'CORS_ORIGINS', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'EMAIL_FROM', 'RESEND_API_KEY', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'].map(n => [n, configured(n)])),
     authConfigured: missingAuthConfig().length === 0,
     payments: { pakasirConfigured: pakasir.isConfigured(), automaticSettlement: pakasir.isVerificationConfigured() ? 'configured_not_verified' : 'disabled_fail_closed' },
     notifications: notifier.status(),
+    email: emailService.status(),
     plugins: { loaded, registryWithoutHandler: registry.filter(p => !loaded.includes(p)), handlerWithoutRegistry: loaded.filter(p => !registry.includes(p)) },
     runtime: { node: process.version, vercel: Boolean(process.env.VERCEL), region: process.env.VERCEL_REGION || null, uptimeSeconds: Math.round(process.uptime()) }
   });
@@ -293,7 +295,7 @@ router.get('/owner/users', auth, owner, async (req, res) => {
 });
 
 router.get('/owner/users/:id', auth, owner, validId('id'), async (req, res) => {
-  const u = (await query('SELECT id,google_id,email,name,picture,tier,status,created_at,updated_at,banned_at,ban_reason FROM users WHERE id=$1', [req.params.id]))[0];
+  const u = (await query('SELECT id,google_id,email,name,picture,tier,status,created_at,updated_at,banned_at,ban_reason,email_verified,(password_hash IS NOT NULL) AS has_password FROM users WHERE id=$1', [req.params.id]))[0];
   if (!u) return fail(res, 404, 'NOT_FOUND', 'User tidak ditemukan.');
   const mapped = users.mapUser(u);
   const [daily, apiKeys, orders] = await Promise.all([
@@ -306,6 +308,7 @@ router.get('/owner/users/:id', auth, owner, validId('id'), async (req, res) => {
   const todayKey = new Date().toISOString().slice(0, 10);
   const usedToday = daily.find(d => d.date === todayKey)?.used || 0;
   const { google_id, ...profile } = u;
+  profile.loginMethods = [google_id ? 'google' : null, u.has_password ? 'password' : null].filter(Boolean);
   res.json({ success: true, user: { ...profile, storedTier: u.tier, tier: mapped.tier, isOwner: mapped.isOwner }, usage: { ...usagePayload(mapped.tier, usedToday), history: daily }, apiKeys, apiKeyLimit: finite(tiers.getTier(mapped.tier).keys), orders });
 });
 

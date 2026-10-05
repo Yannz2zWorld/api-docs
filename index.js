@@ -141,7 +141,7 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 const authLimiter=rateLimit({windowMs:15*60*1000,max:Number(process.env.AUTH_RATE_LIMIT_PER_15MIN)||20,standardHeaders:true,legacyHeaders:false,message:{success:false,error:'AUTH_RATE_LIMIT',message:'Terlalu banyak percobaan autentikasi. Coba lagi nanti.'}});
-app.use(['/auth/google','/auth/google/callback','/auth/google/credential'],authLimiter);
+app.use(['/auth/google','/auth/google/callback','/auth/google/credential','/auth/login','/auth/register','/auth/email/verify','/auth/email/resend','/auth/password/forgot','/auth/password/reset'],authLimiter);
 
 // Shared stylesheet for the account pages (explicit route so the Vercel bundle includes it).
 app.get('/assets/scene3d.js', (req, res) => {
@@ -155,6 +155,7 @@ app.get('/assets/theme.css', (req, res) => {
 app.use('/views', express.static(path.join(__dirname, 'views')));
 app.locals.getSession = currentUser;
 app.use(platformRouter);
+app.use(require('./routes/auth')({ issueSession }));
 
 global.getBuffer = async (url, options = {}) => {
   try {
@@ -429,14 +430,14 @@ app.get('/auth/config', (req, res) => {
   res.json({ configured: true, clientId: GOOGLE_CLIENT_ID });
 });
 
-function issueSession(res, sub, account) {
+function issueSession(res, sub, account, provider = 'google') {
   const session = {
     sub,
     userId: account.id,
     email: account.email,
     name: account.name,
     picture: account.picture,
-    provider: 'google',
+    provider,
     sv: account.sessionVersion || 0,
     iat: Date.now(),
     exp: Date.now() + (7 * 24 * 60 * 60 * 1000)
@@ -496,6 +497,13 @@ app.post('/auth/google/credential', async (req, res) => {
   }
   if (account.status !== 'active') {
     return fail(403, 'ACCOUNT_RESTRICTED', 'Akun ini tidak aktif. Hubungi owner jika merasa ini keliru.');
+  }
+  try {
+    const sv = await userService.secureGoogleLink(account.id);
+    if (sv !== null) account.sessionVersion = sv;
+  } catch (err) {
+    const c = classifyDatabaseError(err);
+    return fail(c.status, c.error, 'Layanan akun sementara tidak tersedia. Silakan coba lagi.', { stage: 'database', error: c.error, code: c.code });
   }
 
   try {
@@ -561,6 +569,8 @@ app.get('/auth/google/callback', async (req, res) => {
     if (account.status !== 'active') {
       return res.redirect('/?auth=restricted');
     }
+    const sv = await userService.secureGoogleLink(account.id);
+    if (sv !== null) account.sessionVersion = sv;
     issueSession(res, profile.id, account);
     await auditService.writeAudit({actorUserId:account.id,action:'login',targetType:'session'}).catch(()=>{});
     res.redirect('/home');

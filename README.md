@@ -169,7 +169,7 @@ Google Cloud Console checklist (OAuth 2.0 Client ID, type "Web application"):
 1. `npm install`
 2. Take a Neon backup/branch and inspect the existing `users` table (`users.id` must be uuid).
 3. Apply, in order, in the Neon SQL Editor: `migrations/001_users.sql`, `002_platform.sql`,
-   `003_backfill_columns.sql`, `004_payments_amount.sql`, `005_integrity.sql`.
+   `003_backfill_columns.sql`, `004_payments_amount.sql`, `005_integrity.sql`, `006_password_auth.sql`.
    All are idempotent and additive (no DROP, no data rewrite). 005 prints a WARNING
    (not an error) for any constraint it skips because existing rows do not comply.
 4. **Run 005 BEFORE deploying this version.** The code reads `users.session_version`
@@ -190,6 +190,32 @@ PostgreSQL: each file creates and drops its own schema. Never point
 TEST_DATABASE_URL at production. Google tokens are real RS256 JWTs verified by
 google-auth-library (only the certificate download is stubbed); Pakasir HTTP calls
 are stubbed.
+
+## Email + password login (IMPLEMENTED; email delivery CONFIGURED only when env is set)
+
+Login page tabs: **Masuk** (email + password, or Google) and **Daftar** (name, email, password).
+- Passwords: scrypt (N=2^17, r=8, p=1, random salt), min 8 chars with letters and digits; never
+  stored or logged in plaintext. 10 wrong passwords lock the account for 15 minutes.
+- Registration requires email verification: a 6-digit code is emailed; password login answers
+  `403 EMAIL_NOT_VERIFIED` until verified. This also prevents pre-registering someone else's email
+  (including OWNER_EMAIL). If a Google login claims an address whose password was never verified,
+  that password and its sessions are removed.
+- Lupa sandi: `POST /auth/password/forgot` always answers the same message (no account
+  enumeration) and emails a reset code; `POST /auth/password/reset` sets the new password,
+  verifies the email and signs out every other session. Google-only accounts can add a password
+  this way.
+- Codes: 6 digits, stored as an HMAC, valid 15 minutes, single use, 5 wrong guesses burn the code,
+  resend cooldown 60 s, max 5 codes per hour.
+- Endpoints: `/auth/register`, `/auth/email/verify`, `/auth/email/resend`, `/auth/login`,
+  `/auth/password/forgot`, `/auth/password/reset` (same-origin only, per-IP rate limited).
+
+Email is sent with the sender name **YannApi** from `EMAIL_FROM`, through one provider:
+- SMTP (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, optional `SMTP_SECURE`). Gmail:
+  `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER`/`EMAIL_FROM` = the Gmail address,
+  `SMTP_PASS` = a Google **App Password** (requires 2-Step Verification), not the account password.
+- Resend (`RESEND_API_KEY`); `EMAIL_FROM` must be on a domain verified in Resend.
+Without a provider, register/forgot answer `503 EMAIL_NOT_CONFIGURED` (no account is created and
+nothing is claimed as sent). The owner panel Status tab shows which provider is active.
 
 ## Tiers (IMPLEMENTED, server-side: services/tierService.js, public: GET /api/tiers)
 
@@ -326,7 +352,10 @@ cookies or secrets).
 - NOT VERIFIED in production: Google login end-to-end on apiz2z.vercel.app, Vercel
   build/runtime logs, Neon production data shape beyond the health check, Pakasir
   live/sandbox payments and webhook, any WhatsApp delivery.
-- NOT CONFIGURED: WhatsApp provider, object storage for proofs, Pakasir verification URL.
+- NOT CONFIGURED: WhatsApp provider, object storage for proofs, Pakasir verification URL,
+  email provider (until EMAIL_FROM + SMTP_* or RESEND_API_KEY are set).
+- Email delivery was verified locally against a test SMTP server and a stubbed Resend API;
+  real delivery to inboxes (spam placement, Gmail limits) is NOT VERIFIED.
 
 ## Smoke checks after deploy
 
