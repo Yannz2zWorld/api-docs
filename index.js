@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const chalk = require('chalk');
 const fs = require('fs');
@@ -7,7 +8,8 @@ const path = require('path');
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
 const { google } = require('googleapis');
-const { healthCheck } = require('./lib/db');
+const { healthCheck, checkSchema } = require('./lib/db');
+const { classifyGoogleVerifyError, classifyDatabaseError, missingAuthConfig } = require('./lib/authErrors');
 const userService = require('./services/userService');
 const { query } = require('./lib/db');
 const platformRouter = require('./routes/platform');
@@ -15,7 +17,6 @@ const apiKeyService = require('./services/apiKeyService');
 const usageService = require('./services/usageService');
 const { canAccess, getTier } = require('./services/tierService');
 const auditService = require('./services/auditService');
-require('dotenv').config();
 
 const settings = require('./settings');
 
@@ -25,6 +26,13 @@ const PORT = process.env.PORT || 3000;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || 'https://apiz2z.vercel.app/auth/google/callback';
 const AUTH_SECRET = process.env.AUTH_SECRET || '';
+
+// Names only: never log configuration values.
+{
+  const missing = [...missingAuthConfig(), ...(process.env.DATABASE_URL ? [] : ['DATABASE_URL'])];
+  if (missing.length) console.error('Server configuration incomplete; missing environment variables:', missing.join(', '));
+  if (AUTH_SECRET && AUTH_SECRET.length < 32) console.error('AUTH_SECRET is shorter than 32 characters; use a long random value.');
+}
 
 function requireAuthConfig() {
   if (!GOOGLE_CLIENT_ID || !AUTH_SECRET) {
@@ -249,6 +257,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
               const header = String(req.get('authorization') || '');
               const bearer = /^Bearer\s+(.+)$/i.exec(header)?.[1] || req.get('x-api-key') || '';
               let identity = bearer ? await apiKeyService.findKey(bearer) : null;
+              if (bearer && (!identity || identity.key_status !== 'active')) return res.status(401).json({ success:false,error:'INVALID_API_KEY',message:'API key tidak valid atau telah dicabut.' });
               if (!identity) {
                 const session = currentUser(req);
                 if (session?.userId) {
@@ -265,6 +274,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
               if (!endpoint) return res.status(503).json({success:false,error:'ENDPOINT_REGISTRY_NOT_READY',message:'Registry endpoint belum tersedia.'});
               if (endpoint.status !== 'active') return res.status(404).json({ success:false,error:'ENDPOINT_UNAVAILABLE',message:'Endpoint tidak tersedia.' });
               if (!identity.key_id && identity.tier !== 'OWNER' && (endpoint.minimum_tier !== 'FREE' || endpoint.locked)) return res.status(403).json({ success:false,error:'API_KEY_REQUIRED',message:'Endpoint ini membutuhkan API key dan tier berbayar.' });
+              if (identity.tier !== 'OWNER' && endpoint.locked) return res.status(403).json({ success:false,error:'ENDPOINT_LOCKED',message:'Endpoint ini sedang dikunci oleh owner.' });
               if (identity.tier !== 'OWNER' && !canAccess(identity.tier, endpoint.minimum_tier, endpoint.locked)) return res.status(403).json({ success:false,error:'TIER_REQUIRED',message:`Endpoint ini membutuhkan tier ${endpoint.minimum_tier} atau lebih tinggi.` });
               const maintenance = await query('SELECT maintenance_enabled,maintenance_message FROM server_settings WHERE id=1');
               if (maintenance[0]?.maintenance_enabled && identity.tier !== 'OWNER') return res.status(503).json({success:false,error:'MAINTENANCE',message:maintenance[0].maintenance_message});
@@ -321,10 +331,14 @@ app.get('/health', (req,res)=>res.json({status:'ok'}));
 app.get('/health/database', async (req, res) => {
   try {
     const ok = await healthCheck();
-    return res.status(ok ? 200 : 503).json({ database: ok ? 'connected' : 'disconnected' });
+    if (!ok) return res.status(503).json({ database: 'disconnected' });
+    const schema = await checkSchema();
+    if (!schema.ok) return res.status(503).json({ database: 'connected', schema: 'migration_required', missing: schema.missing });
+    return res.json({ database: 'connected', schema: 'ok' });
   } catch (err) {
-    console.error('Database health check failed:', err.code || 'DATABASE_ERROR');
-    return res.status(503).json({ database: 'disconnected' });
+    const c = classifyDatabaseError(err);
+    console.error('Database health check failed:', { error: c.error, code: c.code });
+    return res.status(503).json({ database: 'disconnected', error: c.error });
   }
 });
 
@@ -333,76 +347,81 @@ app.get('/auth/config', (req, res) => {
   res.json({ configured: true, clientId: GOOGLE_CLIENT_ID });
 });
 
+function issueSession(res, sub, account) {
+  const session = {
+    sub,
+    userId: account.id,
+    email: account.email,
+    name: account.name,
+    picture: account.picture,
+    provider: 'google',
+    iat: Date.now(),
+    exp: Date.now() + (7 * 24 * 60 * 60 * 1000)
+  };
+  setCookie(res, 'yannz_session', encryptSession(session), 7 * 24 * 60 * 60);
+}
+
+// Each stage reports its own stable error code so a production failure can be traced
+// from the response body or the Vercel log line without logging tokens or secrets.
 app.post('/auth/google/credential', async (req, res) => {
+  const fail = (status, error, message, log) => {
+    if (log) console.error('Google credential/login failed:', log);
+    return res.status(status).json({ success: false, error, message });
+  };
+
+  const origin = req.get('origin');
+  if (origin && origin !== `${req.protocol}://${req.get('host')}`) {
+    return fail(403, 'CSRF_BLOCKED', 'Origin tidak diizinkan.', { stage: 'origin' });
+  }
+
+  const missing = missingAuthConfig();
+  if (missing.length) {
+    return fail(503, 'AUTH_NOT_CONFIGURED', 'Google login belum dikonfigurasi di server.', { stage: 'config', missing });
+  }
+
+  const credential = typeof req.body?.credential === 'string' ? req.body.credential : '';
+  if (!credential) return fail(400, 'MISSING_CREDENTIAL', 'Google credential tidak ditemukan.');
+
+  let profile;
   try {
-    requireAuthConfig();
-    const credential = String(req.body?.credential || '');
-    if (!credential) return res.status(400).json({ error: 'Google credential tidak ditemukan.' });
-
     const verifier = new google.auth.OAuth2();
-    const ticket = await verifier.verifyIdToken({
-      idToken: credential,
-      audience: GOOGLE_CLIENT_ID
-    });
-    const profile = ticket.getPayload();
+    const ticket = await verifier.verifyIdToken({ idToken: credential, audience: GOOGLE_CLIENT_ID });
+    profile = ticket.getPayload();
+  } catch (err) {
+    const c = classifyGoogleVerifyError(err);
+    const message = c.status === 503
+      ? 'Server tidak dapat menghubungi Google untuk verifikasi. Silakan coba lagi.'
+      : 'Google login gagal. Credential tidak valid atau sudah kedaluwarsa.';
+    return fail(c.status, c.error, message, { stage: 'verify', reason: c.reason, code: c.code });
+  }
 
-    if (!profile?.sub || !profile.email || profile.email_verified !== true) {
-      return res.status(403).json({ success:false,error:'EMAIL_NOT_VERIFIED',message:'Akun Google harus memiliki email yang terverifikasi.' });
-    }
+  if (!profile?.sub || !profile.email || profile.email_verified !== true) {
+    return fail(403, 'EMAIL_NOT_VERIFIED', 'Akun Google harus memiliki email yang terverifikasi.', { stage: 'profile', reason: 'EMAIL_NOT_VERIFIED' });
+  }
 
-    const account = await userService.upsertGoogleUser({
+  let account;
+  try {
+    account = await userService.upsertGoogleUser({
       googleId: profile.sub,
       email: profile.email,
       name: profile.name,
       picture: profile.picture
     });
-    if (account.status !== 'active') {
-      return res.status(403).json({ success: false, error: 'Akun ini tidak aktif. Hubungi owner jika merasa ini keliru.' });
-    }
-    await auditService.writeAudit({actorUserId:account.id,action:'login',targetType:'session'}).catch(()=>{});
-
-    const session = {
-      sub: profile.sub,
-      userId: account.id,
-      email: account.email,
-      name: account.name,
-      picture: account.picture,
-      provider: 'google',
-      iat: Date.now(),
-      exp: Date.now() + (7 * 24 * 60 * 60 * 1000)
-    };
-
-    setCookie(res, 'yannz_session', encryptSession(session), 7 * 24 * 60 * 60);
-    return res.json({ success: true });
-} catch (err) {
-  // Jangan log credential/token Google.
-  // Hanya tampilkan metadata error untuk debugging.
-  console.error('Google credential/login failed:', {
-    name: err?.name || null,
-    code: err?.code || null,
-    message: err?.message || null
-  });
-
-  const errorCode = String(err?.code || '');
-  const errorMessage = String(err?.message || '');
-
-  if (
-    errorCode.startsWith('DATABASE_') ||
-    /database|postgres|connection|ECONN|ETIMEDOUT/i.test(errorMessage)
-  ) {
-    return res.status(503).json({
-      success: false,
-      error: 'DATABASE_UNAVAILABLE',
-      message: 'Layanan akun sementara tidak tersedia. Silakan coba lagi.'
-    });
+  } catch (err) {
+    const c = classifyDatabaseError(err);
+    return fail(c.status, c.error, 'Layanan akun sementara tidak tersedia. Silakan coba lagi.', { stage: 'database', error: c.error, code: c.code });
+  }
+  if (account.status !== 'active') {
+    return fail(403, 'ACCOUNT_RESTRICTED', 'Akun ini tidak aktif. Hubungi owner jika merasa ini keliru.');
   }
 
-  return res.status(401).json({
-    success: false,
-    error: 'INVALID_CREDENTIAL',
-    message: 'Google login gagal. Credential tidak valid atau sudah kedaluwarsa.'
-  });
-}
+  try {
+    issueSession(res, profile.sub, account);
+  } catch (err) {
+    return fail(500, 'SESSION_ERROR', 'Sesi login tidak dapat dibuat.', { stage: 'session', code: err?.code || null });
+  }
+  await auditService.writeAudit({ actorUserId: account.id, action: 'login', targetType: 'session', ipAddress: (req.ip || '').replace(/^::ffff:/, '') || null }).catch(() => {});
+  return res.json({ success: true, redirect: '/home' });
 });
 
 app.get('/auth/google', (req, res) => {
@@ -459,23 +478,12 @@ app.get('/auth/google/callback', async (req, res) => {
     if (account.status !== 'active') {
       return res.redirect('/?auth=restricted');
     }
+    issueSession(res, profile.id, account);
     await auditService.writeAudit({actorUserId:account.id,action:'login',targetType:'session'}).catch(()=>{});
-
-    const session = {
-      sub: profile.id,
-      userId: account.id,
-      email: account.email,
-      name: account.name,
-      picture: account.picture,
-      provider: 'google',
-      iat: Date.now(),
-      exp: Date.now() + (7 * 24 * 60 * 60 * 1000)
-    };
-
-    setCookie(res, 'yannz_session', encryptSession(session), 7 * 24 * 60 * 60);
     res.redirect('/home');
   } catch (err) {
-    console.error('Google OAuth callback failed:', err.code || 'AUTH_ERROR');
+    const stage = err?.isDatabaseError ? classifyDatabaseError(err).error : 'OAUTH_EXCHANGE_FAILED';
+    console.error('Google OAuth callback failed:', { stage, code: err?.code || null, status: err?.response?.status || null, oauthError: typeof err?.response?.data?.error === 'string' ? err.response.data.error : null });
     res.redirect('/?oauth=error');
   }
 });

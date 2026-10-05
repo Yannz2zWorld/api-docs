@@ -19,5 +19,5 @@ async function createKey(user,name,idempotencyKey=null){
 }
 async function listKeys(userId){return query('SELECT id,name,key_prefix,status,created_at,last_used_at,revoked_at FROM api_keys WHERE user_id=$1 ORDER BY created_at DESC',[userId]);}
 async function revokeKey(userId,id){const r=await query("UPDATE api_keys SET status='revoked',revoked_at=now() WHERE id=$1 AND user_id=$2 AND status='active' RETURNING id",[id,userId]);return !!r.length;}
-async function findKey(plain){if(!plain)return null;const rows=await query("SELECT k.id AS key_id,k.user_id,k.status AS key_status,u.email,CASE WHEN lower(u.email)=lower($2) THEN 'OWNER' WHEN u.tier='OWNER' THEN 'OWNER' ELSE u.tier END AS tier,u.status AS user_status,u.id AS uid FROM api_keys k JOIN users u ON u.id=k.user_id WHERE k.key_hash=$1 LIMIT 1",[digest(plain),process.env.OWNER_EMAIL||'']);return rows[0]||null;}
+async function findKey(plain){if(!plain)return null;const rows=await query("SELECT k.id AS key_id,k.user_id,k.status AS key_status,u.email,CASE WHEN lower(u.email)=lower($2) THEN 'OWNER' WHEN u.tier='OWNER' THEN 'FREE' ELSE u.tier END AS tier,u.status AS user_status,u.id AS uid FROM api_keys k JOIN users u ON u.id=k.user_id WHERE k.key_hash=$1 LIMIT 1",[digest(plain),process.env.OWNER_EMAIL||'']);return rows[0]||null;}
 module.exports={createKey,listKeys,revokeKey,findKey,digest};
