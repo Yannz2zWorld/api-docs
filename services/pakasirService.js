@@ -20,4 +20,6 @@ async function verifyTransaction(orderCode,amount){
  const t=data?.transaction||data?.data||data;
  return Boolean(t&&String(t.order_id||orderCode)===String(orderCode)&&Number(t.amount)===Number(amount)&&String(t.status||'').toLowerCase()==='completed');
 }
-module.exports={METHODS,createTransaction,verifyTransaction};
+function isConfigured(){return Boolean(process.env.PAKASIR_PROJECT&&process.env.PAKASIR_API_KEY);}
+function isVerificationConfigured(){return isConfigured()&&/^https:\/\//i.test(process.env.PAKASIR_V2_VERIFY_URL||'');}
+module.exports={METHODS,createTransaction,verifyTransaction,isConfigured,isVerificationConfigured};

@@ -16,7 +16,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.407.0/dist/umd/lucide.min.js"></script>
   <script>
-    tailwind.config = {
+    if (window.tailwind) tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
@@ -499,9 +499,9 @@ footer a:hover{border-color:var(--nb-yellow)!important;background:#222!important
             <span class="text-stone-500 font-sans">Tidak ada endpoint API yang cocok dengan pencarian Anda.</span>
           </div>
         `;
-        lucide.createIcons();
+        window.lucide?.createIcons();
       } else {
-        lucide.createIcons();
+        window.lucide?.createIcons();
       }
     }
 
@@ -516,7 +516,7 @@ footer a:hover{border-color:var(--nb-yellow)!important;background:#222!important
       }
     }
 
-    lucide.createIcons();
+    window.lucide?.createIcons();
     window.addEventListener('load', () => {
       setTimeout(dismissLoader, 600);
     });

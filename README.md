@@ -130,8 +130,10 @@ The server-side cookie is the only source of truth for login state; the login pa
 no longer has a client-side email/password form or sessionStorage flag. Protected
 pages (`/home`, `/keys`, `/billing`, `/owner`) and `/auth/me` re-read the user
 from PostgreSQL on each request, so banned/deleted users lose access immediately.
-`POST /auth/logout` clears the cookie. `GET /auth/google` is a redirect-based
-fallback when the Google button script cannot load.
+`POST /auth/logout` clears the cookie AND increments `users.session_version`, so
+every cookie issued to that account (including a copied one) stops working; a ban
+does the same. `GET /auth/google` is a redirect-based fallback when the Google
+button script cannot load.
 
 ## Google Login troubleshooting
 
@@ -162,49 +164,175 @@ Google Cloud Console checklist (OAuth 2.0 Client ID, type "Web application"):
 - Authorized redirect URIs: https://apiz2z.vercel.app/auth/google/callback
 - The Client ID shown there must equal GOOGLE_CLIENT_ID in Vercel Production.
 
-## Install and migration
+## Install, migration and deploy order
 
 1. `npm install`
 2. Take a Neon backup/branch and inspect the existing `users` table (`users.id` must be uuid).
-3. Apply `migrations/001_users.sql`, `002_platform.sql`, `003_backfill_columns.sql`, then `004_payments_amount.sql` (idempotent, additive, no DROP).
-4. Configure secrets only in Vercel environment settings.
-5. Deploy a preview first, verify `/health/database` and Google login, then promote.
+3. Apply, in order, in the Neon SQL Editor: `migrations/001_users.sql`, `002_platform.sql`,
+   `003_backfill_columns.sql`, `004_payments_amount.sql`, `005_integrity.sql`.
+   All are idempotent and additive (no DROP, no data rewrite). 005 prints a WARNING
+   (not an error) for any constraint it skips because existing rows do not comply.
+4. **Run 005 BEFORE deploying this version.** The code reads `users.session_version`
+   and the new `payments` gateway columns; without them login answers
+   `503 DATABASE_SCHEMA_OUTDATED`. 005 is safe for the previous code version too.
+5. `GET /health/database` must return `{"database":"connected","schema":"ok"}`; it also
+   checks the unique indexes `ON CONFLICT` relies on (reported as `unique:table(cols)`).
+6. Configure secrets only in Vercel environment settings, deploy a preview, verify, promote.
 
 Local commands:
   npm install
   npm run lint
-  npm test
-  npm start
+  npm test                     # unit tests; integration tests skip without a database
+  TEST_DATABASE_URL=postgresql://user@host/db npm run test:integration
+
+Integration tests (tests/integration) run the real app against a disposable
+PostgreSQL: each file creates and drops its own schema. Never point
+TEST_DATABASE_URL at production. Google tokens are real RS256 JWTs verified by
+google-auth-library (only the certificate download is stubbed); Pakasir HTTP calls
+are stubbed.
+
+## Tiers (IMPLEMENTED, server-side: services/tierService.js, public: GET /api/tiers)
+
+| Tier   | Price    | Requests/day | Custom API keys | Access |
+|--------|----------|--------------|-----------------|--------|
+| FREE   | Rp0      | 100          | 0 (use Sandbox with login) | endpoints with minimum tier FREE |
+| SULTAN | Rp5.000  | 1.000        | 2               | all active endpoints up to SULTAN |
+| SEPUH  | Rp10.000 | 10.000       | 3               | up to SEPUH |
+| DEWA   | Rp25.000 | 100.000      | unlimited       | up to DEWA |
+| OWNER  | not sold | unlimited    | unlimited       | everything, incl. locked endpoints |
+
+OWNER is decided only by `OWNER_EMAIL` (case-insensitive). A `users.tier='OWNER'`
+value never grants owner rights (it is treated as FREE), and the owner panel
+cannot assign OWNER. Paid tiers are permanent until the owner changes them (no
+expiry/renewal is implemented). Downgrading a user does not revoke keys above
+the new cap; those keys keep working with the lower tier's quota.
+
+## Daily quota (IMPLEMENTED)
+
+- Enforced in PostgreSQL per user per UTC day (`daily_quota_counters`), shared by
+  session and API-key calls. Reset is automatic at 00:00 UTC (new row per date).
+- Atomic reservation (`INSERT ... ON CONFLICT DO UPDATE ... WHERE count < limit`):
+  concurrent requests cannot overrun the limit (tested: 30 parallel at 990/1000 -> 10 pass).
+- Only successful calls count. Auth/authorization failures (INVALID_API_KEY,
+  API_KEY_REVOKED, AUTH_REQUIRED, CSRF_BLOCKED, TIER_RESTRICTED, ENDPOINT_LOCKED,
+  MAINTENANCE) are rejected before reserving; a reserved call whose handler answers
+  >= 400 (bad parameter, UPSTREAM_FAILED) is refunded before the response is sent.
+- Responses carry `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`;
+  `429 QUOTA_EXCEEDED` adds `Retry-After`, `used`, `limit`, `resetAt`.
+- The per-IP limiter (`RATE_LIMIT_PER_MINUTE`, default 150; auth routes
+  `AUTH_RATE_LIMIT_PER_15MIN`, default 20) is in-memory per serverless instance:
+  best-effort abuse damping only, not a quota.
+
+## API keys (IMPLEMENTED)
+
+- `yannz_live_` + 32 random bytes; only a SHA-256 hash and a short display prefix are
+  stored; plaintext is returned once at creation.
+- Send `Authorization: Bearer <key>` or `x-api-key: <key>`. Query-string keys are not accepted.
+- Caps per tier are enforced in a transaction with a per-user lock (no race).
+- Revoked keys fail immediately with `401 API_KEY_REVOKED`; unknown keys `401 INVALID_API_KEY`.
+  A presented-but-bad key never falls back to the cookie session.
+- Keys are scoped to their owner: other users get 404 on revoke and never see them.
+- `GET /api/tools/ping` checks a key/session and shows the remaining quota (no upstream call).
+
+## Endpoint access control (IMPLEMENTED)
+
+Order of checks for every plugin route: authentication -> endpoint `status`
+(`disabled` -> `404 ENDPOINT_UNAVAILABLE`, for everyone) -> `locked`
+(`403 ENDPOINT_LOCKED`, OWNER bypasses) -> `minimum_tier` (`403 TIER_RESTRICTED`;
+`OWNER` minimum = owner-only) -> maintenance (`503 MAINTENANCE`, OWNER bypasses) -> quota.
+The handler runs only after all checks pass.
+
+Session (cookie) access works for any tier from the site's own pages: the browser
+must send `X-Yannz-Client` and must not be `Sec-Fetch-Site: cross-site`. This blocks
+cross-site links/forms from spending a logged-in user's quota (SameSite=Lax still
+sends the cookie on top-level GET navigations). Integrations use API keys.
+
+The endpoint registry (owner panel) is metadata only. A path executes only if a
+plugin in `plugin/` handles it (`handler_loaded`); metadata for a live handler
+cannot be deleted (disable or lock it instead). No dynamic code execution exists.
+
+## Owner panel (IMPLEMENTED, /owner)
+
+Status (DB/schema, env presence without values, payment and notification
+configuration, plugin vs registry), dashboard stats, users (search/filter, detail
+with 14-day usage, keys, orders; ban/unban/approve/tier change/key revoke/delete),
+endpoints (tier, lock, enable/disable, metadata create/delete), payments
+(filter, approve/reject manual payments), maintenance, audit log, JSON backup.
+Every owner route is authorized server-side (`OWNER_REQUIRED`), state-changing
+routes are same-origin only, destructive UI actions require confirmation (user
+delete requires typing the email). The owner account cannot be banned, demoted
+or deleted from the panel.
+
+## Billing and payments
+
+Orders: `POST /api/orders` with `{tier}`; the amount always comes from the tier
+table (client amounts ignored), only upgrades are allowed, at most 5 pending orders
+per user, optional `Idempotency-Key`. Orders expire after 2 hours unless a manual
+proof is waiting for review. States: order `pending|paid|rejected|expired`, payment
+`pending|paid|rejected|expired`.
+
+Manual payment (IMPLEMENTED): the user submits method + HTTPS proof URL
+(`PAYMENT_PENDING`, one pending proof per order); the owner approves (tier upgrade,
+once, audited) or rejects. Approval is idempotent (`409 PAYMENT_NOT_PENDING` on a
+second decision). LIMITATION: no file upload/object storage; the proof is a
+user-supplied HTTPS link the owner must check.
+
+Pakasir (IMPLEMENTED, NOT VERIFIED against the live provider): transaction creation
+uses `PAKASIR_PROJECT` + `PAKASIR_API_KEY`; the payment link/VA/QR is stored and
+shown on /billing. Creating a payment never marks it paid. The webhook
+(`POST /webhooks/pakasir`) checks project, `completed` status, order code and amount
+against the database, then requires a server-side provider lookup via
+`PAKASIR_V2_VERIFY_URL` (template with `{project}`, `{order_id}`, `{amount}`).
+Without that variable automatic settlement is DISABLED (fail-closed, `202
+PAYMENT_NOT_VERIFIED`). Settlement is idempotent: replays and concurrent duplicates
+upgrade once (`duplicate: true`). The official Pakasir verification endpoint could
+not be confirmed from the development environment, so no URL is shipped; configure
+it only from Pakasir's official documentation and test it with a sandbox payment.
+
+WhatsApp notification: NOT CONFIGURED. `services/ownerNotificationService.js` is an
+adapter with no provider; it reports `not_configured` and never claims delivery.
+
+## Error contract
+
+Responses use `{success:false, error:<CODE>, message}`. Codes: AUTH_REQUIRED,
+INVALID_CREDENTIAL, INVALID_API_KEY, API_KEY_REVOKED, ACCOUNT_RESTRICTED,
+CSRF_BLOCKED, QUOTA_EXCEEDED, TIER_RESTRICTED, ENDPOINT_LOCKED,
+ENDPOINT_UNAVAILABLE, MAINTENANCE, UPSTREAM_FAILED, OWNER_REQUIRED, KEY_LIMIT,
+KEYS_NOT_INCLUDED, INVALID_TIER, TIER_NOT_UPGRADE, TOO_MANY_PENDING_ORDERS,
+PAYMENT_PENDING (status), PAYMENT_NOT_VERIFIED, PAYMENT_NOT_PENDING,
+PAYMENT_NOT_CONFIGURED, INVALID_PAYMENT, INVALID_PROOF_URL, NOT_FOUND,
+INVALID_JSON, DATABASE_UNAVAILABLE, DATABASE_SCHEMA_OUTDATED. SQL errors and stack
+traces are never returned; logs contain codes/stages only (no tokens, keys,
+cookies or secrets).
 
 ## Routes
 
 - `GET /health`, `GET /health/database`, `GET /auth/config`, `GET /auth/me`, `POST /auth/logout`
 - `POST /auth/google/credential`, `GET /auth/google`, `GET /auth/google/callback`
-- `GET /pricing`, authenticated `GET /keys`, `GET /billing`, `GET /usage`, `GET /api/dashboard`
+- `GET /api/tiers`, `GET /api/endpoints`, `GET /api/stats`, `GET /api/tools/ping`
+- Pages: `/`, `/home`, `/api` (Sandbox), `/api/playground`, `/pricing`, `/keys`, `/billing`, `/owner`
+- `GET /usage`, `GET /api/dashboard`
 - `GET|POST /api/keys`, `DELETE /api/keys/:id`, `POST /api/keys/:id/revoke`
 - `GET|POST /api/orders`, `POST /api/orders/:id/pakasir`, `POST /api/orders/:id/manual`
-- Owner routes under `/owner`: dashboard, users, endpoint metadata, payments, server maintenance, audit, and JSON backup.
-- `POST /webhooks/pakasir` is fail-closed unless a verified V2 detail URL is configured.
+- Owner: `/owner/status`, `/owner/dashboard`, `/owner/users[/:id]` (+ ban, unban,
+  approve, tier, delete, keys/:keyId/revoke), `/owner/api/endpoints[/:id]` (+ lock,
+  unlock), `/owner/payments` (+ approve, reject), `/owner/server`, `/owner/audit`, `/owner/backup`
+- `POST /webhooks/pakasir`
 
-Plugin API authentication is `Authorization: Bearer ...` (or `x-api-key`). Keys are
-cryptographically random and SHA-256 hashed; plaintext is returned once. Revoked or
-unknown keys are rejected with 401 (no fallback to the cookie session). Without a key,
-a logged-in user can call FREE, unlocked endpoints through their session cookie.
-Legacy query-string keys are not accepted.
+## Verification status
 
-## Known integration gates
-
-- Pakasir V2 create is integrated; automatic settlement stays fail-closed until an officially supported V2 verification endpoint is configured (PAKASIR_V2_VERIFY_URL). See https://pakasir.com/p/create-transaction.
-- Manual payment notification is an adapter stub (reports provider-not-configured; no fake delivery).
-- Manual proof upload expects an HTTPS URL; no object-storage upload is implemented.
-- Owner panel: some admin operations are API-only; the visual console is not complete CRUD.
-- Adding a new executable endpoint requires deploying a plugin handler; DB metadata alone does not execute code.
-- Production OAuth, Neon, Vercel build, live payment, webhook, and storage tests were not run from this environment.
+- IMPLEMENTED and VERIFIED locally (PostgreSQL 16, Chromium): everything above
+  except where marked otherwise. `npm test` with TEST_DATABASE_URL: all pass.
+- NOT VERIFIED in production: Google login end-to-end on apiz2z.vercel.app, Vercel
+  build/runtime logs, Neon production data shape beyond the health check, Pakasir
+  live/sandbox payments and webhook, any WhatsApp delivery.
+- NOT CONFIGURED: WhatsApp provider, object storage for proofs, Pakasir verification URL.
 
 ## Smoke checks after deploy
 
-- `GET https://apiz2z.vercel.app/health` -> `{"status":"ok"}`
-- `GET https://apiz2z.vercel.app/health/database` -> 200 `{"database":"connected","schema":"ok"}`
-- `GET https://apiz2z.vercel.app/auth/me` while signed out -> 401; after Google login -> user plus usage/key limits.
-- Open `/pricing`, `/home`, `/keys`, `/billing`; `/owner` must reject non-owners.
-- Create a paid-tier test user in a non-production database, create a key, call a plugin with `Authorization: Bearer <key>`, revoke it, confirm 401.
+- `GET /health` -> `{"status":"ok"}`; `GET /health/database` -> `schema: ok`.
+- `GET /auth/me` signed out -> 401; after Google login -> user plus usage/key limits.
+- `/api` signed in as FREE: run "Ping" without a key -> 200, quota decreases by 1.
+- `/keys` as a paid user: create a key, `curl -H "Authorization: Bearer <key>" /api/tools/ping`, revoke it, repeat -> 401 API_KEY_REVOKED.
+- `/owner` -> Status tab shows schema ok and the expected configuration; non-owners get 403.
+- Logout, then reuse the old cookie (e.g. another browser) -> /auth/me 401.

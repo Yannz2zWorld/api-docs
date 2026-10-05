@@ -112,7 +112,7 @@ module.exports = {
       return res.status(401).json({ status: false, error: "Apikey invalid atau tidak terdaftar" });
     }
     if (!url) {
-      return res.status(400).json({ status: false, error: "Parameter 'url' wajib diisi" });
+      return res.status(400).json({ status: false, error: "INVALID_PARAMETER", message: "Parameter 'url' wajib diisi" });
     }
 
     try {
@@ -122,9 +122,11 @@ module.exports = {
         result
       });
     } catch (error) {
-      return res.status(500).json({
+      // Upstream (tikwm) failure: a stable code for clients; the gateway refunds the quota.
+      return res.status(502).json({
         status: false,
-        error: error
+        error: "UPSTREAM_FAILED",
+        message: "Layanan sumber TikTok sedang bermasalah. Coba lagi nanti."
       });
     }
   }

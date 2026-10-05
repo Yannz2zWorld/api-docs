@@ -1,1 +1,102 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>API Keys — Yannz</title><style>*{box-sizing:border-box}body{font:15px system-ui;background:#fffdf7;color:#111;margin:0}.wrap{max-width:900px;margin:auto;padding:28px 18px}h1{font-size:42px}.panel{border:3px solid #111;padding:20px;background:#fff;box-shadow:6px 6px #111;margin:20px 0}input,button{font:inherit;padding:11px;border:2px solid #111}button{background:#ffe45e;font-weight:800;cursor:pointer;box-shadow:3px 3px #111}.key{overflow-wrap:anywhere;background:#fff4b8;padding:14px;border:2px dashed #111}li{margin:12px 0}small{color:#555}</style></head><body><main class="wrap"><a href="/home">← Home</a><h1>API Keys</h1><section class="panel"><h2>Create key</h2><input id="name" maxlength="80" placeholder="Key name"><button onclick="createKey()">Create API key</button><p><small>Plaintext hanya tampil sekali. Simpan di password manager; jangan bagikan atau taruh di frontend publik.</small></p><div id="newkey"></div></section><section class="panel"><h2>Your keys</h2><div id="list">Loading…</div></section></main><script>async function call(url,opts={}){const r=await fetch(url,{credentials:'same-origin',...opts});const d=await r.json();if(!r.ok)throw Error(d.message||d.error||'Request failed');return d}async function load(){try{const d=await call('/api/keys');list.innerHTML=`<p>Active keys: ${d.keys.filter(k=>k.status==='active').length} / ${d.limit===null?'Unlimited':d.limit}</p>`+(d.keys.length?'<ul>'+d.keys.map(k=>`<li><b>${esc(k.name)}</b><br><code>${esc(k.key_prefix)}••••••</code> · ${k.status} · created ${new Date(k.created_at).toLocaleString()}<br><small>Last used: ${k.last_used_at?new Date(k.last_used_at).toLocaleString():'Never'}</small> ${k.status==='active'?`<button onclick="revoke('${k.id}')">Revoke</button>`:''}</li>`).join('')+'</ul>':'No keys yet.');}catch(e){list.textContent=e.message}}function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}async function createKey(){try{const d=await call('/api/keys',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()},body:JSON.stringify({name:name.value})});newkey.innerHTML=`<p><b>Copy now — this is the only plaintext display.</b></p><div class="key" id="once"></div><button onclick="navigator.clipboard.writeText(document.querySelector('#once').textContent)">Copy key</button>`;once.textContent=d.key;await load()}catch(e){newkey.textContent=e.message}}async function revoke(id){if(!confirm('Revoke this key?'))return;try{await call(`/api/keys/${id}/revoke`,{method:'POST'});await load()}catch(e){alert(e.message)}}load();</script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>API Keys — Yannz API</title>
+<link rel="icon" href="/api/logo-proxy">
+<style>
+:root{--ink:#111;--paper:#fffdf7;--yellow:#ffe45e;--muted:#5d584e;--red:#b23b32;--green:#167553}
+*{box-sizing:border-box}body{font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--paper);color:var(--ink);margin:0}
+a{color:inherit}.wrap{max-width:920px;margin:auto;padding:24px 16px 56px}
+h1{font-size:clamp(34px,8vw,52px);letter-spacing:-.04em;margin:14px 0 4px}.lead{color:var(--muted);margin:0 0 8px}
+.panel{border:3px solid var(--ink);padding:20px;background:#fff;box-shadow:6px 6px 0 var(--ink);margin:22px 0;border-radius:4px}
+.panel h2{margin:0 0 12px;font-size:20px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input,button{font:inherit;padding:11px 13px;border:2px solid var(--ink);border-radius:4px;background:#fff;color:var(--ink)}
+input{flex:1;min-width:180px}button{background:var(--yellow);font-weight:800;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+button:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}button.ghost{background:#fff}button.danger{background:#ffd6d1}
+.notice{border:2px dashed var(--ink);background:#fff4b8;padding:12px 14px;margin:12px 0}.error{color:var(--red);font-weight:600}
+.key{overflow-wrap:anywhere;font:600 14px ui-monospace,Menlo,monospace;background:#fff4b8;padding:14px;border:2px dashed var(--ink);margin:10px 0}
+ul{list-style:none;padding:0;margin:0}li{border-top:2px solid #eee;padding:14px 0;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+code{font:13px ui-monospace,Menlo,monospace;background:#f3efe2;padding:2px 6px}small{color:var(--muted)}
+.chip{display:inline-block;border:2px solid var(--ink);padding:1px 8px;font:700 11px ui-monospace,monospace;text-transform:uppercase}
+.chip.active{background:#c9f2dc}.chip.revoked{background:#eee;color:#777}
+pre{background:#111;color:#f5f2e8;padding:14px;overflow:auto;font-size:12px;border-radius:4px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a href="/home">← Dashboard</a>
+  <h1>API Keys</h1>
+  <p class="lead" id="summary">Memuat…</p>
+
+  <section class="panel" id="create-panel">
+    <h2>Buat key baru</h2>
+    <div class="row">
+      <input id="name" maxlength="80" placeholder="Nama key, mis. server-produksi" aria-label="Nama key">
+      <button id="create-btn" type="button">Buat API key</button>
+    </div>
+    <div id="create-msg" aria-live="polite"></div>
+    <p><small>Plaintext key hanya tampil satu kali. Simpan di password manager atau secret server; jangan taruh di frontend publik.</small></p>
+  </section>
+
+  <section class="panel">
+    <h2>Key kamu</h2>
+    <div id="list" aria-live="polite">Memuat…</div>
+  </section>
+
+  <section class="panel">
+    <h2>Cara pakai</h2>
+    <pre>curl -H "Authorization: Bearer YOUR_API_KEY" \
+  "https://apiz2z.vercel.app/api/tools/ping"</pre>
+    <p><small>Header <code>x-api-key</code> juga didukung. Key yang dicabut langsung ditolak dengan <code>API_KEY_REVOKED</code>.</small></p>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const when = v => v ? new Date(v).toLocaleString('id-ID') : '—';
+async function call(url, opts = {}) {
+  const r = await fetch(url, { credentials: 'same-origin', ...opts });
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status})`);
+  return d;
+}
+async function load() {
+  try {
+    const d = await call('/api/keys');
+    const active = d.keys.filter(k => k.status === 'active').length;
+    const cap = d.limit === null ? 'tanpa batas' : d.limit;
+    $('#summary').textContent = `Tier ${d.tier} · ${active} key aktif dari ${cap}.`;
+    const full = d.limit !== null && active >= d.limit;
+    if ($('#create-btn')) $('#create-btn').disabled = full;
+    if (d.limit === 0) {
+      $('#create-panel').innerHTML = `<h2>Custom API key</h2><div class="notice">Tier <b>FREE</b> tidak mendapat custom API key. Kamu tetap bisa memakai 100 request/hari lewat <a href="/api">Sandbox</a> dengan login, atau <a href="/pricing">upgrade</a> untuk membuat key.</div>`;
+    } else if (full) {
+      $('#create-msg').innerHTML = `<p class="notice">Batas key tier ${esc(d.tier)} tercapai. Cabut key lama atau <a href="/pricing">upgrade</a>.</p>`;
+    }
+    $('#list').innerHTML = d.keys.length ? '<ul>' + d.keys.map(k => `<li><div><b>${esc(k.name)}</b> <span class="chip ${esc(k.status)}">${esc(k.status)}</span><br><code>${esc(k.key_prefix)}••••••</code><br><small>Dibuat ${when(k.created_at)} · Terakhir dipakai ${when(k.last_used_at)}${k.revoked_at ? ' · Dicabut ' + when(k.revoked_at) : ''}</small></div>${k.status === 'active' ? `<div><button class="danger" type="button" data-revoke="${esc(k.id)}" data-name="${esc(k.name)}">Cabut</button></div>` : ''}</li>`).join('') + '</ul>' : '<p>Belum ada key.</p>';
+  } catch (e) { $('#list').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
+}
+$('#create-panel').addEventListener('click', async e => {
+  if (e.target.id !== 'create-btn') return;
+  const btn = e.target; btn.disabled = true; $('#create-msg').textContent = 'Membuat key…';
+  try {
+    const d = await call('/api/keys', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ name: $('#name').value }) });
+    $('#create-msg').innerHTML = '<p><b>Salin sekarang — ini satu-satunya kali key ditampilkan.</b></p><div class="key" id="once"></div><button type="button" class="ghost" id="copy">Salin key</button>';
+    $('#once').textContent = d.key;
+    $('#copy').onclick = () => navigator.clipboard.writeText(d.key).then(() => { $('#copy').textContent = 'Tersalin ✓'; });
+    $('#name').value = '';
+  } catch (err) { $('#create-msg').innerHTML = `<p class="error">${esc(err.message)}</p>`; }
+  finally { btn.disabled = false; load(); }
+});
+$('#list').addEventListener('click', async e => {
+  const id = e.target.dataset.revoke; if (!id) return;
+  if (!confirm(`Cabut key "${e.target.dataset.name}"? Aplikasi yang memakai key ini akan langsung ditolak.`)) return;
+  try { await call(`/api/keys/${encodeURIComponent(id)}/revoke`, { method: 'POST' }); load(); } catch (err) { alert(err.message); }
+});
+load();
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@ Apply in order to the configured Neon database (Neon SQL editor or `psql "$DATAB
 2. `002_platform.sql` — adds the remaining `users` columns (`banned_at`, `ban_reason`, `daily_usage`, `last_usage_reset`, ...) and the platform tables.
 3. `003_backfill_columns.sql` — adds newer columns to platform tables that already existed in an older shape (002 skips existing tables). Existing `orders` rows get `order_code = 'LEGACY-<id>'`.
 4. `004_payments_amount.sql` — adds `payments.amount` to a pre-existing `payments` table, filled from the linked order.
+5. `005_integrity.sql` — `users.session_version` (server-side logout), Pakasir gateway columns, the unique indexes `ON CONFLICT` needs, one pending manual proof per order, and CHECK/foreign-key constraints. Constraints are added only when existing rows already comply; otherwise a WARNING is printed and the data is left unchanged. **Run before deploying the Part 2 code.**
 
 Both files are additive/idempotent (`CREATE ... IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`) and never drop data. The application does not run DDL at request time.
 

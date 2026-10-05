@@ -122,11 +122,14 @@ app.use((req,res,next)=>{res.set('X-Content-Type-Options','nosniff');res.set('Re
 app.use(express.json({limit:'100kb'}));
 app.use(express.urlencoded({ extended: false, limit:'100kb' }));
 const allowedOrigins = new Set([`https://${process.env.VERCEL_URL || 'apiz2z.vercel.app'}`, 'https://apiz2z.vercel.app', ...(process.env.CORS_ORIGINS || '').split(',').map(v => v.trim()).filter(Boolean)]);
-app.use(cors({ origin(origin, callback) { if (!origin || allowedOrigins.has(origin) || process.env.NODE_ENV !== 'production') return callback(null, true); return callback(new Error('Origin tidak diizinkan.')); }, credentials: true }));
+// Any origin is allowed only for local development; deployed instances (Vercel) only trust
+// their own origins. A disallowed origin simply gets no CORS headers (the browser blocks it).
+const allowAnyOrigin = !process.env.VERCEL && process.env.NODE_ENV !== 'production';
+app.use(cors({ origin(origin, callback) { callback(null, !origin || allowedOrigins.has(origin) || allowAnyOrigin); }, credentials: true }));
 
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: 150,
+  max: Number(process.env.RATE_LIMIT_PER_MINUTE) || 150,
   message: {
     creator: settings.creatorName || "YannAjah",
     status: false,
@@ -137,7 +140,7 @@ const limiter = rateLimit({
   validate: { trustProxy: false }
 });
 app.use(limiter);
-const authLimiter=rateLimit({windowMs:15*60*1000,max:20,standardHeaders:true,legacyHeaders:false,message:{success:false,error:'AUTH_RATE_LIMIT',message:'Terlalu banyak percobaan autentikasi. Coba lagi nanti.'}});
+const authLimiter=rateLimit({windowMs:15*60*1000,max:Number(process.env.AUTH_RATE_LIMIT_PER_15MIN)||20,standardHeaders:true,legacyHeaders:false,message:{success:false,error:'AUTH_RATE_LIMIT',message:'Terlalu banyak percobaan autentikasi. Coba lagi nanti.'}});
 app.use(['/auth/google','/auth/google/callback','/auth/google/credential'],authLimiter);
 
 app.use('/views', express.static(path.join(__dirname, 'views')));
@@ -203,6 +206,14 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/api/tiers', (req, res) => {
+  const { TIERS, purchasable } = require('./services/tierService');
+  const finite = v => (Number.isFinite(v) ? v : null);
+  res.json({ success: true, tiers: Object.entries(TIERS).map(([name, t]) => ({
+    name, price: t.price, dailyLimit: finite(t.limit), apiKeys: finite(t.keys), purchasable: purchasable.includes(name)
+  })) });
+});
+
 app.get('/api/set', (req, res) => {
   const publicSettings = { ...settings };
   delete publicSettings.apiKeys;
@@ -230,6 +241,103 @@ app.get('/api/logo-proxy', async (req, res) => {
   }
 });
 
+const loadedPluginPaths = new Set();
+app.locals.loadedPluginPaths = loadedPluginPaths;
+
+function gatewayFail(res, status, error, message, extra = {}) {
+  return res.status(status).json({ success: false, error, message, ...extra });
+}
+
+// Session (cookie) access to plugin endpoints is only accepted from the site's own
+// pages: they send X-Yannz-Client, which a cross-site page cannot add without a CORS
+// preflight we never approve. This stops cross-site links/forms from spending a
+// logged-in user's quota (SameSite=Lax still sends the cookie on top-level GETs).
+function sessionRequestAllowed(req) {
+  if (!req.get('x-yannz-client')) return false;
+  const site = req.get('sec-fetch-site');
+  return !site || site === 'same-origin';
+}
+
+async function resolveIdentity(req) {
+  const header = String(req.get('authorization') || '');
+  const presented = /^Bearer\s+(.+)$/i.exec(header)?.[1]?.trim() || String(req.get('x-api-key') || '').trim();
+  if (presented) {
+    const key = await apiKeyService.findKey(presented);
+    if (!key) return { error: [401, 'INVALID_API_KEY', 'API key tidak valid.'] };
+    if (key.key_status !== 'active') return { error: [401, 'API_KEY_REVOKED', 'API key ini sudah dicabut.'] };
+    if (key.user_status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun tidak aktif.'] };
+    return { identity: { userId: key.uid, keyId: key.key_id, tier: key.tier } };
+  }
+  const session = currentUser(req);
+  if (!session) return { error: [401, 'AUTH_REQUIRED', 'Login atau kirim API key lewat header Authorization: Bearer <key>.'] };
+  if (!sessionRequestAllowed(req)) return { error: [403, 'CSRF_BLOCKED', 'Akses dengan sesi login hanya dari halaman Yannz API. Gunakan API key untuk integrasi.'] };
+  const user = await userService.getUserForSession(session);
+  if (!user) return { error: [401, 'AUTH_REQUIRED', 'Sesi tidak valid. Silakan login lagi.'] };
+  if (user.status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun tidak aktif.'] };
+  return { identity: { userId: user.id, keyId: null, tier: user.tier } };
+}
+
+// Order matters: authentication and authorization failures are answered before any quota
+// is reserved, and a reserved request is refunded when the handler does not succeed, so
+// the daily quota counts successful fetches only.
+function apiGateway(cleanPath, run) {
+  return async (req, res) => {
+    let identity;
+    let endpoint;
+    let quota;
+    try {
+      await registryReady;
+      const resolved = await resolveIdentity(req);
+      if (resolved.error) return gatewayFail(res, ...resolved.error);
+      identity = resolved.identity;
+      const owner = identity.tier === 'OWNER';
+
+      endpoint = (await query('SELECT id,status,locked,minimum_tier FROM endpoints WHERE path=$1 LIMIT 1', [cleanPath]))[0];
+      if (!endpoint) return gatewayFail(res, 503, 'ENDPOINT_REGISTRY_NOT_READY', 'Registry endpoint belum tersedia.');
+      if (endpoint.status !== 'active') return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', 'Endpoint sedang dinonaktifkan.');
+      if (endpoint.locked && !owner) return gatewayFail(res, 403, 'ENDPOINT_LOCKED', 'Endpoint ini sedang dikunci oleh owner.');
+      if (!owner && !canAccess(identity.tier, endpoint.minimum_tier, false)) {
+        return gatewayFail(res, 403, 'TIER_RESTRICTED', `Endpoint ini membutuhkan tier ${endpoint.minimum_tier} atau lebih tinggi.`, { requiredTier: endpoint.minimum_tier, currentTier: identity.tier });
+      }
+      const maintenance = (await query('SELECT maintenance_enabled,maintenance_message FROM server_settings WHERE id=1'))[0];
+      if (maintenance?.maintenance_enabled && !owner) return gatewayFail(res, 503, 'MAINTENANCE', maintenance.maintenance_message);
+
+      quota = await usageService.consume({ userId: identity.userId, keyId: identity.keyId, endpointId: endpoint.id, tier: identity.tier });
+      res.set('X-RateLimit-Limit', quota.limit == null ? 'unlimited' : String(quota.limit));
+      res.set('X-RateLimit-Remaining', quota.remaining == null ? 'unlimited' : String(quota.remaining));
+      res.set('X-RateLimit-Reset', quota.resetAt);
+      if (!quota.allowed) {
+        res.set('Retry-After', String(Math.max(1, Math.ceil((Date.parse(quota.resetAt) - Date.now()) / 1000))));
+        return gatewayFail(res, 429, 'QUOTA_EXCEEDED', 'Batas request harian kamu sudah habis.', { used: quota.used, limit: quota.limit, remaining: 0, resetAt: quota.resetAt });
+      }
+      if (identity.keyId) await query('UPDATE api_keys SET last_used_at=now() WHERE id=$1', [identity.keyId]);
+    } catch (error) {
+      const c = classifyDatabaseError(error);
+      console.error('API gateway error:', { error: c.error, code: c.code });
+      return gatewayFail(res, 503, 'GATEWAY_UNAVAILABLE', 'API gateway sementara tidak tersedia.');
+    }
+
+    // Refund before the response is flushed: serverless runtimes may freeze after it ends.
+    let settled = false;
+    const end = res.end;
+    res.end = function (...args) {
+      if (settled || res.statusCode < 400) { settled = true; return end.apply(this, args); }
+      settled = true;
+      usageService.refund({ userId: identity.userId, endpointId: endpoint.id, usageDate: quota.usageDate })
+        .catch(e => console.error('Quota refund failed:', { code: e?.code || null }))
+        .finally(() => end.apply(this, args));
+      return this;
+    };
+    req.apiAuth = { userId: identity.userId, keyId: identity.keyId, tier: identity.tier, quota };
+    try {
+      await run(req, res);
+    } catch (error) {
+      console.error('Plugin handler failed:', { path: cleanPath, name: error?.name || null, code: error?.code || null });
+      if (!res.headersSent) return gatewayFail(res, 502, 'UPSTREAM_FAILED', 'Layanan sumber sedang bermasalah. Kuota tidak dipotong.');
+    }
+  };
+}
+
 let totalRoutes = 0;
 let rawEndpoints = {};
 const pluginFolder = path.join(__dirname, 'plugin');
@@ -251,43 +359,8 @@ fs.readdirSync(pluginFolder).forEach(file => {
 
         if (name && desc && category && routePath && typeof run === 'function') {
           const cleanPath = routePath.split('?')[0];
-          app.get(cleanPath, async (req, res) => {
-            try {
-              await registryReady;
-              const header = String(req.get('authorization') || '');
-              const bearer = /^Bearer\s+(.+)$/i.exec(header)?.[1] || req.get('x-api-key') || '';
-              let identity = bearer ? await apiKeyService.findKey(bearer) : null;
-              if (bearer && (!identity || identity.key_status !== 'active')) return res.status(401).json({ success:false,error:'INVALID_API_KEY',message:'API key tidak valid atau telah dicabut.' });
-              if (!identity) {
-                const session = currentUser(req);
-                if (session?.userId) {
-                  const freeUser = await userService.getUserById(session.userId);
-                  if (freeUser && freeUser.status === 'active') {
-                    identity = { uid:freeUser.id, key_id:null, key_status:'session', user_status:freeUser.status, tier:freeUser.isOwner?'OWNER':freeUser.tier };
-                  }
-                }
-              }
-              if (!identity) return res.status(401).json({ success:false,error:'INVALID_API_KEY',message:'API key tidak valid atau silakan login untuk endpoint FREE.' });
-              if (identity.user_status !== 'active') return res.status(403).json({ success:false,error:'ACCOUNT_RESTRICTED',message:'Akun tidak aktif.' });
-              const endpointRows = await query('SELECT * FROM endpoints WHERE path=$1 LIMIT 1', [cleanPath]);
-              const endpoint = endpointRows[0];
-              if (!endpoint) return res.status(503).json({success:false,error:'ENDPOINT_REGISTRY_NOT_READY',message:'Registry endpoint belum tersedia.'});
-              if (endpoint.status !== 'active') return res.status(404).json({ success:false,error:'ENDPOINT_UNAVAILABLE',message:'Endpoint tidak tersedia.' });
-              if (!identity.key_id && identity.tier !== 'OWNER' && (endpoint.minimum_tier !== 'FREE' || endpoint.locked)) return res.status(403).json({ success:false,error:'API_KEY_REQUIRED',message:'Endpoint ini membutuhkan API key dan tier berbayar.' });
-              if (identity.tier !== 'OWNER' && endpoint.locked) return res.status(403).json({ success:false,error:'ENDPOINT_LOCKED',message:'Endpoint ini sedang dikunci oleh owner.' });
-              if (identity.tier !== 'OWNER' && !canAccess(identity.tier, endpoint.minimum_tier, endpoint.locked)) return res.status(403).json({ success:false,error:'TIER_REQUIRED',message:`Endpoint ini membutuhkan tier ${endpoint.minimum_tier} atau lebih tinggi.` });
-              const maintenance = await query('SELECT maintenance_enabled,maintenance_message FROM server_settings WHERE id=1');
-              if (maintenance[0]?.maintenance_enabled && identity.tier !== 'OWNER') return res.status(503).json({success:false,error:'MAINTENANCE',message:maintenance[0].maintenance_message});
-              const quota = await usageService.consume({userId:identity.uid,keyId:identity.key_id,endpointId:endpoint.id,tier:identity.tier});
-              if (!quota.allowed) return res.status(429).json({success:false,error:'DAILY_LIMIT_REACHED',message:'Batas request harian kamu sudah habis.',...quota});
-              if (identity.key_id) await query('UPDATE api_keys SET last_used_at=now() WHERE id=$1',[identity.key_id]);
-              req.apiAuth = {userId:identity.uid,keyId:identity.key_id,tier:identity.tier,quota};
-              res.set('X-RateLimit-Limit', quota.limit == null ? 'unlimited' : String(quota.limit));
-              res.set('X-RateLimit-Remaining', quota.remaining == null ? 'unlimited' : String(quota.remaining));
-              if (quota.resetAt) res.set('X-RateLimit-Reset', quota.resetAt);
-              return run(req, res);
-            } catch (error) { console.error('API gateway error:', error.code || 'GATEWAY_ERROR'); return res.status(503).json({success:false,error:'GATEWAY_UNAVAILABLE',message:'API gateway sementara tidak tersedia.'}); }
-          });
+          app.get(cleanPath, apiGateway(cleanPath, run));
+          loadedPluginPaths.add(cleanPath);
           registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
           if (!rawEndpoints[category]) rawEndpoints[category] = [];
@@ -355,6 +428,7 @@ function issueSession(res, sub, account) {
     name: account.name,
     picture: account.picture,
     provider: 'google',
+    sv: account.sessionVersion || 0,
     iat: Date.now(),
     exp: Date.now() + (7 * 24 * 60 * 60 * 1000)
   };
@@ -518,8 +592,14 @@ app.get('/auth/me', async (req, res) => {
 app.post('/auth/logout', async (req, res) => {
   const session=currentUser(req);
   const origin=req.get('origin');if(origin&&origin!==`${req.protocol}://${req.get('host')}`)return res.status(403).json({success:false,error:'CSRF_BLOCKED',message:'Origin tidak diizinkan.'});
-  if(session?.userId) await require('./services/auditService').writeAudit({actorUserId:session.userId,action:'logout',targetType:'session'}).catch(()=>{});
-  clearCookie(res, 'yannz_session'); res.json({ success: true });
+  clearCookie(res, 'yannz_session');
+  if (session?.userId) {
+    // Invalidate every cookie issued to this account so a copied cookie stops working too.
+    try { await userService.revokeSessions(session.userId); }
+    catch (err) { console.error('Session revocation failed:', { code: err?.code || null }); return res.status(503).json({ success: false, error: 'DATABASE_UNAVAILABLE', message: 'Logout belum tersimpan di server. Coba lagi.' }); }
+    await auditService.writeAudit({actorUserId:session.userId,action:'logout',targetType:'session'}).catch(()=>{});
+  }
+  res.json({ success: true });
 });
 
 app.get('/', (req, res) => {
@@ -561,11 +641,20 @@ app.get('/api/stats', async (req, res) => {
   } catch { return res.status(503).json({success:false,error:'STATS_UNAVAILABLE',message:'Statistik sementara tidak tersedia.'}); }
 });
 
-app.use((err,req,res,next)=>{ console.error('Request failed:',err?.code||'REQUEST_ERROR'); if(res.headersSent)return next(err); return res.status(err?.status===413?413:500).json({success:false,error:err?.status===413?'PAYLOAD_TOO_LARGE':'INTERNAL_ERROR',message:err?.status===413?'Ukuran request terlalu besar.':'Terjadi kesalahan server.'}); });
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(chalk.bgHex('#ffb86c').black(` 🚀 SERVER IS RUNNING ON PORT ${PORT} `));
-  console.log(chalk.bgHex('#50fa7b').black(` 📦 TOTAL ROUTES LOADED: ${totalRoutes} `));
+app.use((err,req,res,next)=>{
+  if(res.headersSent)return next(err);
+  if(err?.type==='entity.parse.failed')return res.status(400).json({success:false,error:'INVALID_JSON',message:'Body request bukan JSON yang valid.'});
+  if(err?.status===413)return res.status(413).json({success:false,error:'PAYLOAD_TOO_LARGE',message:'Ukuran request terlalu besar.'});
+  console.error('Request failed:',{ name: err?.name || null, code: err?.code || 'REQUEST_ERROR' });
+  return res.status(500).json({success:false,error:'INTERNAL_ERROR',message:'Terjadi kesalahan server.'});
 });
+
+// Vercel imports the exported app; only `node index.js` (npm start) opens a port.
+if (require.main === module) {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(chalk.bgHex('#ffb86c').black(` 🚀 SERVER IS RUNNING ON PORT ${PORT} `));
+    console.log(chalk.bgHex('#50fa7b').black(` 📦 TOTAL ROUTES LOADED: ${totalRoutes} `));
+  });
+}
 
 module.exports = app;

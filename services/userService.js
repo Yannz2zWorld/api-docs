@@ -27,6 +27,7 @@ function mapUser(row) {
     tier: owner ? OWNER_TIER : (row.tier === OWNER_TIER ? DEFAULT_TIER : (row.tier || DEFAULT_TIER)),
     status: row.status || DEFAULT_STATUS,
     dailyUsage: Number(row.daily_usage || 0),
+    sessionVersion: Number(row.session_version || 0),
     lastUsageReset: row.last_usage_reset || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -37,7 +38,7 @@ function mapUser(row) {
 async function findByGoogleIdOrEmail(googleId, email) {
   const rows = await query(
     `SELECT id, google_id, email, name, picture, tier, status,
-            daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason
+            daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version
        FROM users
       WHERE google_id = $1 OR lower(email) = lower($2)
       ORDER BY CASE WHEN google_id = $1 THEN 0 ELSE 1 END
@@ -51,7 +52,7 @@ async function findByIdOrGoogleId(identity) {
   const value = String(identity || '');
   const rows = await query(
     `SELECT id, google_id, email, name, picture, tier, status,
-            daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason
+            daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version
        FROM users
       WHERE google_id = $1 OR id::text = $1
       LIMIT 1`,
@@ -86,7 +87,7 @@ async function upsertGoogleUser(profile) {
               updated_at = NOW()
         WHERE id = $6
         RETURNING id, google_id, email, name, picture, tier, status,
-                  daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason`,
+                  daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version`,
       [googleId, email, name, picture, owner, existing.id]
     );
     return mapUser(rows[0]);
@@ -99,7 +100,7 @@ async function upsertGoogleUser(profile) {
          (google_id, email, name, picture, tier, status, daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason)
        VALUES ($1, $2, $3, $4, $5, $6, 0, CURRENT_DATE, NOW(), NOW(), NULL, NULL)
        RETURNING id, google_id, email, name, picture, tier, status,
-                 daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason`,
+                 daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version`,
       [googleId, email, name, picture, owner ? OWNER_TIER : DEFAULT_TIER, DEFAULT_STATUS]
     );
   } catch (error) {
@@ -113,13 +114,19 @@ async function upsertGoogleUser(profile) {
 async function getUserForSession(session) {
   const identity = session?.sub || session?.googleId || '';
   const row = await findByIdOrGoogleId(identity);
+  // A cookie issued before the last logout/ban carries an older version and is rejected.
+  if (row && Number(session?.sv || 0) !== Number(row.session_version || 0)) return null;
   return mapUser(row);
+}
+
+async function revokeSessions(userId) {
+  await query('UPDATE users SET session_version = session_version + 1, updated_at = NOW() WHERE id = $1', [userId]);
 }
 
 async function getUserById(id) {
   const rows = await query(
     `SELECT id, google_id, email, name, picture, tier, status,
-            daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason
+            daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version
        FROM users WHERE id = $1 LIMIT 1`,
     [id]
   );
@@ -130,6 +137,7 @@ module.exports = {
   upsertGoogleUser,
   getUserForSession,
   getUserById,
+  revokeSessions,
   isOwnerEmail,
   mapUser
 };
