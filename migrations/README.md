@@ -3,6 +3,7 @@ Apply in order to the configured Neon database (Neon SQL editor or `psql "$DATAB
 
 1. `001_users.sql` — creates the base `users` table when it does not exist (no-op otherwise).
 2. `002_platform.sql` — adds the remaining `users` columns (`banned_at`, `ban_reason`, `daily_usage`, `last_usage_reset`, ...) and the platform tables.
+3. `003_backfill_columns.sql` — adds newer columns to platform tables that already existed in an older shape (002 skips existing tables). Existing `orders` rows get `order_code = 'LEGACY-<id>'`.
 
 Both files are additive/idempotent (`CREATE ... IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`) and never drop data. The application does not run DDL at request time.
 
