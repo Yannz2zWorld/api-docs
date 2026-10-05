@@ -40,6 +40,17 @@ it('cannot buy a tier at or below the current one; pending orders are capped', a
   for (let i = 0; i < 5; i++) assert.equal((await order(cookie, 'DEWA')).status, 201);
   const sixth = await order(cookie, 'DEWA');
   assert.deepEqual([sixth.status, sixth.json.error], [429, 'TOO_MANY_PENDING_ORDERS']);
+  const freshKey = await post(cookie, '/api/orders', { tier: 'DEWA' }, { 'idempotency-key': 'brand-new-key' });
+  assert.deepEqual([freshKey.status, freshKey.json.error], [429, 'TOO_MANY_PENDING_ORDERS'], 'a new Idempotency-Key does not bypass the cap');
+});
+
+it('an Idempotency-Key replay returns the same order instead of creating another', async () => {
+  const cookie = await app.login('pidem@example.test');
+  const a = await post(cookie, '/api/orders', { tier: 'SULTAN' }, { 'idempotency-key': 'order-1' });
+  const b = await post(cookie, '/api/orders', { tier: 'SULTAN' }, { 'idempotency-key': 'order-1' });
+  assert.equal(a.json.order.id, b.json.order.id);
+  const other = await post(cookie, '/api/orders', { tier: 'DEWA' }, { 'idempotency-key': 'order-1' });
+  assert.deepEqual([other.status, other.json.error], [409, 'IDEMPOTENCY_CONFLICT']);
 });
 
 it('manual payment: validation, pending state, one proof per order, no tier change yet', async () => {

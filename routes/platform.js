@@ -137,7 +137,11 @@ router.post('/api/orders', sameOrigin, auth, async (req, res) => {
   await orderService.expirePendingOrders();
   const pending = (await query("SELECT count(*)::int AS n FROM orders WHERE user_id=$1 AND status='pending'", [req.account.id]))[0].n;
   const idem = String(req.get('Idempotency-Key') || '').slice(0, 100) || null;
-  if (pending >= MAX_PENDING_ORDERS && !idem) return fail(res, 429, 'TOO_MANY_PENDING_ORDERS', `Maksimal ${MAX_PENDING_ORDERS} order pending. Selesaikan atau tunggu order lama kedaluwarsa.`);
+  if (pending >= MAX_PENDING_ORDERS) {
+    // Only a replay of an order that already exists is exempt; a fresh Idempotency-Key is not.
+    const replay = idem && (await query('SELECT 1 FROM orders WHERE user_id=$1 AND idempotency_key=$2', [req.account.id, idem])).length > 0;
+    if (!replay) return fail(res, 429, 'TOO_MANY_PENDING_ORDERS', `Maksimal ${MAX_PENDING_ORDERS} order pending. Selesaikan atau tunggu order lama kedaluwarsa.`);
+  }
   // Amount always comes from the server-side tier table; any client-sent amount is ignored.
   const amount = tiers.TIERS[tier].price;
   const code = `YAN-${tier}-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;

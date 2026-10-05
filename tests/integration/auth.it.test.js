@@ -91,3 +91,8 @@ it('protected pages redirect to login instead of returning JSON', async () => {
     assert.equal(r.status, 302, url);
   }
 });
+
+it('malformed JSON bodies get 400 INVALID_JSON, not a 500', async () => {
+  const r = await app.request('POST', '/auth/google/credential', { rawBody: '{"credential":', headers: { origin: app.origin } });
+  assert.deepEqual([r.status, r.json.error], [400, 'INVALID_JSON']);
+});

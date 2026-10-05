@@ -110,9 +110,9 @@ async function startApp(env = {}) {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const origin = `http://127.0.0.1:${server.address().port}`;
 
-  function request(method, url, { body, headers = {}, cookie } = {}) {
+  function request(method, url, { body, rawBody, headers = {}, cookie } = {}) {
     return new Promise((resolve, reject) => {
-      const data = body === undefined ? null : Buffer.from(JSON.stringify(body));
+      const data = rawBody !== undefined ? Buffer.from(rawBody) : body === undefined ? null : Buffer.from(JSON.stringify(body));
       const req = http.request(origin + url, {
         method,
         headers: {

@@ -641,7 +641,13 @@ app.get('/api/stats', async (req, res) => {
   } catch { return res.status(503).json({success:false,error:'STATS_UNAVAILABLE',message:'Statistik sementara tidak tersedia.'}); }
 });
 
-app.use((err,req,res,next)=>{ console.error('Request failed:',err?.code||'REQUEST_ERROR'); if(res.headersSent)return next(err); return res.status(err?.status===413?413:500).json({success:false,error:err?.status===413?'PAYLOAD_TOO_LARGE':'INTERNAL_ERROR',message:err?.status===413?'Ukuran request terlalu besar.':'Terjadi kesalahan server.'}); });
+app.use((err,req,res,next)=>{
+  if(res.headersSent)return next(err);
+  if(err?.type==='entity.parse.failed')return res.status(400).json({success:false,error:'INVALID_JSON',message:'Body request bukan JSON yang valid.'});
+  if(err?.status===413)return res.status(413).json({success:false,error:'PAYLOAD_TOO_LARGE',message:'Ukuran request terlalu besar.'});
+  console.error('Request failed:',{ name: err?.name || null, code: err?.code || 'REQUEST_ERROR' });
+  return res.status(500).json({success:false,error:'INTERNAL_ERROR',message:'Terjadi kesalahan server.'});
+});
 
 // Vercel imports the exported app; only `node index.js` (npm start) opens a port.
 if (require.main === module) {
