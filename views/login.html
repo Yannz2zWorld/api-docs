@@ -86,6 +86,7 @@
     .message{margin:12px 0 0}.message:empty{display:none}
     .oauth .divider{margin:22px 0 16px}.oauth[hidden]{display:none}
     .panel h2{transition:opacity .2s}
+  .layout>*,.panel,.view,.oauth{min-width:0}.panel{max-width:100%}#google-oauth iframe,#google-oauth>div{max-width:100%!important}
   #google-oauth{display:flex;justify-content:center;align-items:center;overflow:hidden}#google-oauth:empty{display:none}#google-fallback{text-decoration:none;color:inherit}#google-fallback[hidden]{display:none}
     #google-oauth iframe{max-width:100%}
   
@@ -238,7 +239,9 @@
       const gis=await waitForGis(8000);
       gis.initialize({client_id:cfg.clientId,callback:handleGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
       const host=$('#google-oauth');host.innerHTML='';
-      gis.renderButton(host,{theme:'filled_black',size:'large',text:'continue_with',shape:'rectangular',logo_alignment:'left',width:Math.min(390,host.parentElement.clientWidth||390)});
+      // Size from the always-visible panel (the oauth block may be hidden while another view is open).
+      const panelWidth=Math.floor($('.panel').getBoundingClientRect().width)||300;
+      gis.renderButton(host,{theme:'filled_black',size:'large',text:'continue_with',shape:'rectangular',logo_alignment:'left',width:Math.max(200,Math.min(400,panelWidth))});
       $('#google-fallback').hidden=true;
     }catch(err){showGoogleError(err.message);}
   }
