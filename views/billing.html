@@ -5,38 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Billing — Yannz API</title>
 <link rel="icon" href="/api/logo-proxy">
-<style>
-:root{--ink:#111;--paper:#fffdf7;--yellow:#ffe45e;--muted:#5d584e;--red:#b23b32;--green:#167553}
-*{box-sizing:border-box}body{font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--paper);color:var(--ink);margin:0}
-a{color:inherit}.wrap{max-width:920px;margin:auto;padding:24px 16px 56px}
-h1{font-size:clamp(34px,8vw,52px);letter-spacing:-.04em;margin:14px 0 4px}.lead{color:var(--muted);margin:0}
-.panel{border:3px solid var(--ink);padding:20px;background:#fff;box-shadow:6px 6px 0 var(--ink);margin:22px 0;border-radius:4px}
-.panel h2{margin:0 0 12px;font-size:20px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-select,input,button{font:inherit;padding:10px 12px;border:2px solid var(--ink);border-radius:4px;background:#fff;color:var(--ink);max-width:100%}
-input{flex:1;min-width:200px}button{background:var(--yellow);font-weight:800;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}button:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
-.order{border-top:2px solid #eee;padding:16px 0;overflow-wrap:anywhere}.order:first-child{border-top:0}
-.chip{display:inline-block;border:2px solid var(--ink);padding:0 8px;font:700 11px ui-monospace,monospace;text-transform:uppercase;margin-right:4px}
-.pending{background:#fff4b8}.paid{background:#c9f2dc}.rejected,.expired,.cancelled{background:#eee;color:#666}
-.box{border:2px dashed var(--ink);background:#fffbe6;padding:12px;margin-top:10px}.error{color:var(--red);font-weight:600}
-small{color:var(--muted)}code{font:13px ui-monospace,Menlo,monospace;background:#f3efe2;padding:2px 6px;overflow-wrap:anywhere}
-</style>
+<meta name="theme-color" content="#0b0b0c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/theme.css">
 </head>
 <body>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing" aria-current="page">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
 <main class="wrap">
-  <a href="/home">← Dashboard</a>
   <h1>Billing &amp; Orders</h1>
-  <p class="lead" id="current">Memuat akun…</p>
+  <p class="lead loading" id="current">Memuat akun…</p>
 
   <section class="panel">
     <h2>Order baru</h2>
-    <div class="row"><select id="tier" aria-label="Paket"></select><button id="order-btn" type="button">Buat order</button></div>
+    <div class="row"><select id="tier" aria-label="Paket"></select><button id="order-btn" class="primary" type="button">Buat order</button></div>
     <p id="notice" aria-live="polite"></p>
     <p><small>Harga ditentukan server. Order berlaku 2 jam. Tier baru aktif hanya setelah pembayaran terverifikasi server atau disetujui owner.</small></p>
   </section>
 
   <section class="panel">
     <h2>Riwayat order</h2>
-    <div id="orders" aria-live="polite">Memuat…</div>
+    <div id="orders" aria-live="polite"><p class="loading">Memuat order…</p></div>
   </section>
 </main>
 <script>
@@ -61,6 +51,7 @@ async function loadPlans() {
     const [dash, t] = await Promise.all([api('/api/dashboard'), api('/api/tiers')]);
     const rank = ['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'];
     const mine = rank.indexOf(dash.user.tier);
+    $('#current').classList.remove('loading');
     $('#current').textContent = `Tier saat ini: ${dash.user.tier}.`;
     const options = t.tiers.filter(x => x.purchasable && rank.indexOf(x.name) > mine);
     $('#tier').innerHTML = options.map(x => `<option value="${esc(x.name)}">${esc(x.name)} — ${rp(x.price)} · ${Number(x.dailyLimit).toLocaleString('id-ID')} req/hari</option>`).join('');
@@ -83,7 +74,7 @@ function paymentState(o) {
   return gateway + `<form class="row" data-pay="${esc(o.id)}" style="margin-top:10px">
     <select name="method" aria-label="Metode pembayaran">${methods.map(m => `<option value="${esc(m)}">${esc(LABEL[m] || m)}</option>`).join('')}</select>
     <input name="proof" type="url" placeholder="URL HTTPS bukti transfer (khusus manual)" aria-label="URL bukti pembayaran">
-    <button type="submit">Lanjutkan</button>
+    <button class="primary" type="submit">Lanjutkan</button>
   </form>`;
 }
 

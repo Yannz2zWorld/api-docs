@@ -6,32 +6,16 @@
 <meta name="robots" content="noindex">
 <title>Owner Console — Yannz API</title>
 <link rel="icon" href="/api/logo-proxy">
-<style>
-:root{--ink:#111;--paper:#fffdf7;--yellow:#ffe45e;--muted:#5d584e;--red:#b23b32;--green:#167553}
-*{box-sizing:border-box}body{font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--paper);color:var(--ink);margin:0}
-a{color:inherit}.wrap{max-width:1180px;margin:auto;padding:20px 16px 60px}
-h1{font-size:clamp(30px,6vw,46px);letter-spacing:-.04em;margin:10px 0 14px}h2{margin:0 0 12px;font-size:20px}h3{margin:16px 0 8px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:0;background:var(--paper);padding:8px 0;z-index:2}
-button,.tabs a{font:inherit;border:2px solid var(--ink);padding:8px 12px;background:#fff;color:var(--ink);font-weight:700;box-shadow:3px 3px 0 var(--ink);cursor:pointer;text-decoration:none;border-radius:4px}
-.tabs button[aria-selected=true]{background:var(--yellow)}button.primary{background:var(--yellow)}button.danger{background:#ffd6d1}button:disabled{opacity:.5;cursor:not-allowed}
-button.sm{padding:4px 8px;font-size:12px;box-shadow:2px 2px 0 var(--ink)}
-.panel{margin-top:18px;border:3px solid var(--ink);padding:18px;background:#fff;box-shadow:6px 6px 0 var(--ink);overflow:auto;border-radius:4px}
-.panel[hidden]{display:none}
-table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}th{font:700 11px ui-monospace,monospace;text-transform:uppercase;color:var(--muted)}
-input,select,textarea{font:inherit;padding:8px;border:2px solid var(--ink);border-radius:4px;max-width:100%;background:#fff}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.stat{border:2px solid var(--ink);padding:10px;background:#fffbe6}.stat b{display:block;font-size:24px}
-.chip{display:inline-block;border:2px solid var(--ink);padding:0 6px;font:700 10px ui-monospace,monospace;text-transform:uppercase;margin:1px}
-.ok{background:#c9f2dc}.bad{background:#ffd6d1}.warn{background:#fff4b8}.muted{color:var(--muted)}small{color:var(--muted)}
-code{font:12px ui-monospace,Menlo,monospace;background:#f3efe2;padding:1px 5px;overflow-wrap:anywhere}
-.error{color:var(--red);font-weight:600}dialog{border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);max-width:min(860px,94vw);width:100%;padding:18px}
-dialog::backdrop{background:rgba(0,0,0,.35)}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin:0}
-</style>
+<meta name="theme-color" content="#0b0b0c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/theme.css">
 </head>
 <body>
-<main class="wrap">
-  <a href="/home">← Dashboard</a>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><a href="/owner" aria-current="page">Owner</a></nav></div></header>
+<main class="wrap wide">
+  <span class="kicker">Owner only</span>
   <h1>Owner Console</h1>
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="status" aria-selected="true">Status</button>
@@ -41,10 +25,10 @@ dialog::backdrop{background:rgba(0,0,0,.35)}pre{white-space:pre-wrap;overflow-wr
     <button role="tab" data-tab="payments">Payments</button>
     <button role="tab" data-tab="server">Maintenance</button>
     <button role="tab" data-tab="audit">Audit</button>
-    <a href="/owner/backup">Backup JSON</a>
+    <a class="btn" href="/owner/backup">Backup JSON</a>
   </nav>
 
-  <section class="panel" id="tab-status"><h2>System status</h2><div id="status-data">Memuat…</div></section>
+  <section class="panel" id="tab-status"><h2>System status</h2><div id="status-data"><p class="loading">Memuat status…</p></div></section>
   <section class="panel" id="tab-dash" hidden><h2>Dashboard</h2><div id="dash-data" class="stats">Memuat…</div></section>
 
   <section class="panel" id="tab-users" hidden>
@@ -92,7 +76,7 @@ dialog::backdrop{background:rgba(0,0,0,.35)}pre{white-space:pre-wrap;overflow-wr
   </section>
 </main>
 
-<dialog id="user-dialog"><div id="user-detail"></div><div class="row" style="margin-top:14px"><button type="button" onclick="document.getElementById('user-dialog').close()">Tutup</button></div></dialog>
+<dialog id="user-dialog"><div id="user-detail"></div><div class="row" style="margin-top:14px"><button class="primary" type="button" onclick="document.getElementById('user-dialog').close()">Tutup</button></div></dialog>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -131,7 +115,7 @@ loaders.status = async () => {
     $('#status-data').innerHTML = `
       <h3>Database</h3>${chip(db.connected ? 'connected' : 'disconnected', db.connected ? 'ok' : 'bad')} ${db.ok === undefined ? '' : chip(db.ok ? 'schema ok' : 'migration required', db.ok ? 'ok' : 'bad')}
       ${db.missing?.length ? `<p class="error">Kurang: ${db.missing.map(esc).join(', ')}</p>` : ''}${db.error ? `<p class="error">${esc(db.error)}</p>` : ''}
-      <h3>Environment</h3><p>${cfg}</p><small>Hijau = terisi, kuning = kosong. Nilai tidak pernah ditampilkan.</small>
+      <h3>Environment</h3><p>${cfg}</p><small>Hijau = terisi, putih = kosong. Nilai tidak pernah ditampilkan.</small>
       <h3>Pembayaran</h3><p>Pakasir: ${chip(s.payments.pakasirConfigured ? 'configured' : 'not configured', s.payments.pakasirConfigured ? 'ok' : 'warn')} Settlement otomatis: ${chip(s.payments.automaticSettlement, s.payments.automaticSettlement === 'disabled_fail_closed' ? 'warn' : 'ok')}</p>
       <small>Settlement otomatis tetap mati (fail-closed) sampai endpoint verifikasi resmi Pakasir dikonfigurasi di PAKASIR_V2_VERIFY_URL dan diuji.</small>
       <h3>Notifikasi WhatsApp</h3><p>${chip(s.notifications.configured ? 'provider aktif' : 'provider belum ada', s.notifications.configured ? 'ok' : 'warn')} OWNER_WA: ${chip(s.notifications.ownerWaConfigured ? 'set' : 'kosong', s.notifications.ownerWaConfigured ? 'ok' : 'warn')}</p>

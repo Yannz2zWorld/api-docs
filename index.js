@@ -143,6 +143,11 @@ app.use(limiter);
 const authLimiter=rateLimit({windowMs:15*60*1000,max:Number(process.env.AUTH_RATE_LIMIT_PER_15MIN)||20,standardHeaders:true,legacyHeaders:false,message:{success:false,error:'AUTH_RATE_LIMIT',message:'Terlalu banyak percobaan autentikasi. Coba lagi nanti.'}});
 app.use(['/auth/google','/auth/google/callback','/auth/google/credential'],authLimiter);
 
+// Shared stylesheet for the account pages (explicit route so the Vercel bundle includes it).
+app.get('/assets/theme.css', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.sendFile(path.join(__dirname, 'views', 'theme.css'));
+});
 app.use('/views', express.static(path.join(__dirname, 'views')));
 app.locals.getSession = currentUser;
 app.use(platformRouter);

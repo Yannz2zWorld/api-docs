@@ -96,3 +96,10 @@ it('malformed JSON bodies get 400 INVALID_JSON, not a 500', async () => {
   const r = await app.request('POST', '/auth/google/credential', { rawBody: '{"credential":', headers: { origin: app.origin } });
   assert.deepEqual([r.status, r.json.error], [400, 'INVALID_JSON']);
 });
+
+it('the shared theme stylesheet is served for the account pages', async () => {
+  const r = await app.request('GET', '/assets/theme.css');
+  assert.equal(r.status, 200);
+  assert.match(r.headers['content-type'], /text\/css/);
+  assert.match(r.text, /--bg:\s*#0b0b0c/);
+});
