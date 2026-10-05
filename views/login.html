@@ -63,6 +63,29 @@
     .visual-copy h1{text-shadow:0 2px 30px rgba(0,0,0,.65)}
     /* Calm CSS fallback: no dashed borders spinning, no bobbing (caused a shimmering "wave"). */
     .r2{border-style:solid}.orb,.dot{animation:none}.cube{animation-duration:28s}.ring{animation-duration:30s!important}
+
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border:2px solid #3f3f46;border-radius:14px;background:var(--surface-2);margin:0 0 24px}
+    .tabs button{border:0;border-radius:10px;padding:10px;background:transparent;color:var(--muted);font:600 11px 'DM Mono';letter-spacing:.1em;text-transform:uppercase}
+    .tabs button:hover{color:var(--ink)}.tabs button[aria-selected=true]{background:var(--yellow);color:var(--accent-ink);box-shadow:3px 3px 0 var(--drop)}
+    .tabs[hidden]{display:none}
+    .view{animation:viewIn .32s cubic-bezier(.2,.8,.2,1) both}.view[hidden]{display:none}
+    @keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .field label{color:var(--muted)}
+    .input-wrap input{background:var(--surface-2);color:var(--ink);border:2px solid #3f3f46;box-shadow:none}
+    .input-wrap input::placeholder,.code-input::placeholder{color:#71717a}
+    .input-wrap input:focus{border-color:var(--edge);box-shadow:4px 4px 0 var(--drop);background:#1f1f23}
+    .input-wrap input:-webkit-autofill{-webkit-text-fill-color:var(--ink);-webkit-box-shadow:0 0 0 40px #1b1b1e inset;caret-color:var(--ink)}
+    .toggle-pass{color:#a1a1aa}.toggle-pass:hover{color:var(--ink)}
+    .code-input{width:100%;height:60px;border:2px solid #3f3f46;border-radius:12px;background:var(--surface-2);color:var(--ink);text-align:center;font:700 28px 'DM Mono',ui-monospace,monospace;letter-spacing:.5em;padding-left:.5em;outline:none;transition:.18s ease}
+    .code-input:focus{border-color:var(--edge);box-shadow:4px 4px 0 var(--drop)}
+    .form-row{display:flex;justify-content:space-between;align-items:center;margin:-2px 0 14px;min-height:20px}.view .submit+.form-row{margin:14px 0 0}
+    .link{border:0;background:none;padding:2px 0;color:var(--muted);font:500 11px 'DM Mono';text-decoration:underline;text-underline-offset:3px;cursor:pointer}.link:hover{color:var(--ink)}.link:disabled{opacity:.5;cursor:default;text-decoration:none}
+    .hint{color:var(--muted);font-size:13px;line-height:1.55;margin:0 0 16px}.hint b{color:var(--ink)}
+    .submit[aria-busy=true]{pointer-events:none;opacity:.75}.submit[aria-busy=true] span::after{content:'';display:inline-block;width:12px;height:12px;margin-left:10px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;animation:spin2 .7s linear infinite}
+    @keyframes spin2{to{transform:rotate(360deg)}}
+    .message{margin:12px 0 0}.message:empty{display:none}
+    .oauth .divider{margin:22px 0 16px}.oauth[hidden]{display:none}
+    .panel h2{transition:opacity .2s}
   #google-oauth{display:flex;justify-content:center;align-items:center;overflow:hidden}#google-oauth:empty{display:none}#google-fallback{text-decoration:none;color:inherit}#google-fallback[hidden]{display:none}
     #google-oauth iframe{max-width:100%}
   
@@ -102,12 +125,59 @@
   <section class="login">
     <div class="panel">
       <div class="panel-top"><span class="panel-label">Account access</span><span class="secure"><i data-lucide="shield-check"></i> Secure session</span></div>
-      <h2>Welcome back.</h2>
-      <p class="panel-sub">Sign in with your Google account to continue to your API workspace.</p>
-      <div id="google-oauth" aria-live="polite"></div>
-      <a class="google" id="google-fallback" href="/auth/google"><span class="google-icon">G</span><span>Continue with Google</span></a>
-      <div id="message" class="message" aria-live="polite"></div>
-      <p class="oauth-note">Your Google identity is verified on the server, which then issues a secure HttpOnly session cookie.</p>
+      <div class="tabs" role="tablist" aria-label="Pilih masuk atau daftar">
+        <button type="button" role="tab" data-tab="login" aria-selected="true">Masuk</button>
+        <button type="button" role="tab" data-tab="register" aria-selected="false">Daftar</button>
+      </div>
+      <h2 id="panel-title">Welcome back.</h2>
+      <p class="panel-sub" id="panel-sub">Masuk dengan email &amp; sandi, atau lanjutkan dengan Google.</p>
+
+      <form class="view" id="view-login" data-view="login" novalidate>
+        <div class="field"><label for="login-email">Email</label><div class="input-wrap"><i data-lucide="mail"></i><input id="login-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div></div>
+        <div class="field"><label for="login-password">Sandi</label><div class="input-wrap"><i data-lucide="lock-keyhole"></i><input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Sandi kamu" required><button class="toggle-pass" type="button" data-toggle-pass aria-label="Tampilkan sandi"><i data-lucide="eye"></i></button></div></div>
+        <div class="form-row"><span></span><button type="button" class="link" data-go="forgot">Lupa sandi?</button></div>
+        <button class="submit" type="submit"><span>Masuk</span><i data-lucide="arrow-up-right"></i></button>
+      </form>
+
+      <form class="view" id="view-register" data-view="register" novalidate hidden>
+        <div class="field"><label for="register-name">Nama</label><div class="input-wrap"><i data-lucide="user-round"></i><input id="register-name" name="name" type="text" autocomplete="name" placeholder="Nama kamu" maxlength="80" required></div></div>
+        <div class="field"><label for="register-email">Email</label><div class="input-wrap"><i data-lucide="mail"></i><input id="register-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div></div>
+        <div class="field"><label for="register-password">Sandi</label><div class="input-wrap"><i data-lucide="lock-keyhole"></i><input id="register-password" name="password" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter, huruf &amp; angka" required><button class="toggle-pass" type="button" data-toggle-pass aria-label="Tampilkan sandi"><i data-lucide="eye"></i></button></div></div>
+        <div class="field"><label for="register-confirm">Ulangi sandi</label><div class="input-wrap"><i data-lucide="lock-keyhole"></i><input id="register-confirm" name="confirm" type="password" autocomplete="new-password" placeholder="Ketik ulang sandi" required><button class="toggle-pass" type="button" data-toggle-pass aria-label="Tampilkan sandi"><i data-lucide="eye"></i></button></div></div>
+        <button class="submit" type="submit"><span>Buat akun</span><i data-lucide="arrow-up-right"></i></button>
+      </form>
+
+      <form class="view" id="view-verify" data-view="verify" novalidate hidden>
+        <p class="hint">Kode 6 digit dikirim ke <b class="target-email"></b>. Cek juga folder spam.</p>
+        <div class="field"><label for="verify-code">Kode verifikasi</label><input class="code-input" id="verify-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" required></div>
+        <button class="submit" type="submit"><span>Verifikasi &amp; masuk</span><i data-lucide="arrow-up-right"></i></button>
+        <div class="form-row"><button type="button" class="link" data-go="login">← Kembali</button><button type="button" class="link" data-resend="verify">Kirim ulang kode</button></div>
+      </form>
+
+      <form class="view" id="view-forgot" data-view="forgot" novalidate hidden>
+        <div class="field"><label for="forgot-email">Email akun</label><div class="input-wrap"><i data-lucide="mail"></i><input id="forgot-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div></div>
+        <button class="submit" type="submit"><span>Kirim kode</span><i data-lucide="send"></i></button>
+        <div class="form-row"><button type="button" class="link" data-go="login">← Kembali ke masuk</button><span></span></div>
+      </form>
+
+      <form class="view" id="view-reset" data-view="reset" novalidate hidden>
+        <p class="hint">Masukkan kode dari email <b class="target-email"></b> dan sandi baru kamu.</p>
+        <div class="field"><label for="reset-code">Kode reset</label><input class="code-input" id="reset-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" required></div>
+        <div class="field"><label for="reset-password">Sandi baru</label><div class="input-wrap"><i data-lucide="lock-keyhole"></i><input id="reset-password" name="password" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter, huruf &amp; angka" required><button class="toggle-pass" type="button" data-toggle-pass aria-label="Tampilkan sandi"><i data-lucide="eye"></i></button></div></div>
+        <div class="field"><label for="reset-confirm">Ulangi sandi baru</label><div class="input-wrap"><i data-lucide="lock-keyhole"></i><input id="reset-confirm" name="confirm" type="password" autocomplete="new-password" placeholder="Ketik ulang sandi" required><button class="toggle-pass" type="button" data-toggle-pass aria-label="Tampilkan sandi"><i data-lucide="eye"></i></button></div></div>
+        <button class="submit" type="submit"><span>Simpan sandi baru</span><i data-lucide="check"></i></button>
+        <div class="form-row"><button type="button" class="link" data-go="forgot">← Ganti email</button><button type="button" class="link" data-resend="reset">Kirim ulang kode</button></div>
+      </form>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+
+      <div class="oauth" id="oauth-block">
+        <div class="divider"><span>atau</span></div>
+        <div id="google-oauth" aria-live="polite"></div>
+        <a class="google" id="google-fallback" href="/auth/google"><span class="google-icon">G</span><span>Continue with Google</span></a>
+        <div id="google-message" class="message" aria-live="polite"></div>
+      </div>
+      <p class="oauth-note">Sandi di-hash di server (scrypt) dan sesi disimpan di cookie HttpOnly yang aman.</p>
       <div class="meta"><span>Authentication layer: ready</span><a href="/api">API documentation</a></div>
     </div>
   </section>
@@ -132,11 +202,11 @@
   if(authParam==='account_missing'){message.className='message';message.textContent='Sesi tidak valid. Silakan login lagi.'}
 
 
-  function showGoogleError(text){message.className='message';message.textContent=text;}
+  function showGoogleError(text){const el=$('#google-message');el.className='message';el.textContent=text;}
   function startGoogleLoading(){
     const screen=$('#loading-screen');screen.classList.add('show');screen.setAttribute('aria-hidden','false');
     const copy=$('#loading-copy');const status=$('#status-line');
-    const steps=[['Verifying Google account','Checking secure identity token...'],['Loading workspace','Mounting API modules...'],['Syncing gateway','Reading live service state...'],['Finalizing interface','Workspace is ready.']];
+    const steps=[['Verifying account','Checking secure session...'],['Loading workspace','Mounting API modules...'],['Syncing gateway','Reading live service state...'],['Finalizing interface','Workspace is ready.']];
     steps.forEach((step,i)=>setTimeout(()=>{copy.textContent=step[0];status.textContent=step[1]},i*170));
   }
   async function handleGoogleCredential(response){
@@ -173,6 +243,98 @@
     }catch(err){showGoogleError(err.message);}
   }
   initGoogle();
+
+  // ---------------- email + password flows
+  const TITLES={
+    login:['Welcome back.','Masuk dengan email & sandi, atau lanjutkan dengan Google.'],
+    register:['Buat akun.','Daftar gratis dengan nama, email, dan sandi. Kami kirim kode verifikasi ke email kamu.'],
+    verify:['Cek email kamu.','Satu langkah lagi: masukkan kode verifikasi dari YannApi.'],
+    forgot:['Lupa sandi?','Masukkan email akunmu. Kami kirim kode reset dari YannApi.'],
+    reset:['Buat sandi baru.','Kode berlaku 15 menit dan hanya bisa dipakai sekali.']
+  };
+  let pendingEmail='';
+  function say(text,ok){message.className='message'+(ok?' ok':'');message.textContent=text||'';}
+  function show(view,opts={}){
+    if(opts.email!==undefined)pendingEmail=opts.email;
+    document.querySelectorAll('form.view').forEach(f=>{f.hidden=f.dataset.view!==view;});
+    document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===view)));
+    $('.tabs').hidden=!(view==='login'||view==='register');
+    $('#oauth-block').hidden=!(view==='login'||view==='register');
+    $('#panel-title').textContent=TITLES[view][0];$('#panel-sub').textContent=TITLES[view][1];
+    document.querySelectorAll('.target-email').forEach(el=>{el.textContent=pendingEmail;});
+    if(!opts.keepMessage)say('');
+    const first=document.querySelector(`form[data-view="${view}"] input`);
+    if(first&&!(view==='forgot'&&pendingEmail&&(first.value=pendingEmail)))setTimeout(()=>first.focus({preventScroll:true}),60);
+    if(history.replaceState)history.replaceState(null,'',view==='login'?location.pathname+location.search:'#'+view);
+  }
+  async function post(path,body){
+    const r=await fetch(path,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await r.json().catch(()=>({}));
+    return {ok:r.ok,status:r.status,data};
+  }
+  const errText=d=>(d.message||'Permintaan gagal.')+(d.error?` (${d.error})`:'');
+  async function busy(form,fn){
+    const btn=form.querySelector('.submit');btn.setAttribute('aria-busy','true');btn.disabled=true;
+    try{await fn();}catch{say('Koneksi bermasalah. Coba lagi.');}finally{btn.removeAttribute('aria-busy');btn.disabled=false;}
+  }
+  function enter(data){startGoogleLoading();setTimeout(()=>{location.href=data.redirect||'/home'},700);}
+  const strong=p=>p.length>=8&&/[A-Za-z]/.test(p)&&/[0-9]/.test(p);
+  const validEmail=e=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
+
+  document.querySelector('.tabs').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(t)show(t.dataset.tab);});
+  document.addEventListener('click',e=>{
+    const go=e.target.closest('[data-go]');if(go){show(go.dataset.go,{email:go.dataset.go==='forgot'?($('#login-email').value.trim()||pendingEmail):pendingEmail});}
+    const eye=e.target.closest('[data-toggle-pass]');
+    if(eye){const input=eye.parentElement.querySelector('input');const showIt=input.type==='password';input.type=showIt?'text':'password';eye.setAttribute('aria-label',showIt?'Sembunyikan sandi':'Tampilkan sandi');eye.innerHTML='<i data-lucide="'+(showIt?'eye-off':'eye')+'"></i>';window.lucide?.createIcons();}
+  });
+
+  $('#view-login').addEventListener('submit',e=>{e.preventDefault();const f=e.target;const email=f.email.value.trim(),password=f.password.value;
+    if(!validEmail(email))return say('Masukkan email yang valid.');if(!password)return say('Masukkan sandi.');
+    busy(f,async()=>{const r=await post('/auth/login',{email,password});
+      if(r.ok)return enter(r.data);
+      if(r.data.error==='EMAIL_NOT_VERIFIED'){show('verify',{email});return say('Email belum diverifikasi. Masukkan kode, atau klik "Kirim ulang kode".');}
+      say(errText(r.data));});
+  });
+  $('#view-register').addEventListener('submit',e=>{e.preventDefault();const f=e.target;const name=f.name.value.trim(),email=f.email.value.trim(),password=f.password.value;
+    if(name.length<2)return say('Nama minimal 2 karakter.');if(!validEmail(email))return say('Masukkan email yang valid.');
+    if(!strong(password))return say('Sandi minimal 8 karakter dan berisi huruf serta angka.');if(password!==f.confirm.value)return say('Konfirmasi sandi tidak sama.');
+    busy(f,async()=>{const r=await post('/auth/register',{name,email,password});
+      if(r.ok||r.data.verificationRequired){show('verify',{email,keepMessage:true});startCooldown('verify');return say(r.ok?r.data.message:errText(r.data),r.ok);}
+      say(errText(r.data));});
+  });
+  $('#view-verify').addEventListener('submit',e=>{e.preventDefault();const f=e.target;const code=f.code.value.replace(/\D/g,'');
+    if(code.length!==6)return say('Kode terdiri dari 6 angka.');
+    busy(f,async()=>{const r=await post('/auth/email/verify',{email:pendingEmail,code});if(r.ok)return enter(r.data);say(errText(r.data));});
+  });
+  $('#view-forgot').addEventListener('submit',e=>{e.preventDefault();const f=e.target;const email=f.email.value.trim();
+    if(!validEmail(email))return say('Masukkan email yang valid.');
+    busy(f,async()=>{const r=await post('/auth/password/forgot',{email});
+      if(r.ok){show('reset',{email,keepMessage:true});startCooldown('reset');return say(r.data.message,true);}
+      say(errText(r.data));});
+  });
+  $('#view-reset').addEventListener('submit',e=>{e.preventDefault();const f=e.target;const code=f.code.value.replace(/\D/g,''),password=f.password.value;
+    if(code.length!==6)return say('Kode terdiri dari 6 angka.');if(!strong(password))return say('Sandi minimal 8 karakter dan berisi huruf serta angka.');
+    if(password!==f.confirm.value)return say('Konfirmasi sandi tidak sama.');
+    busy(f,async()=>{const r=await post('/auth/password/reset',{email:pendingEmail,code,password});if(r.ok)return enter(r.data);say(errText(r.data));});
+  });
+
+  // Resend with a visible 60s cooldown (the server enforces the same limit).
+  const cooldowns={};
+  function startCooldown(kind){
+    const btn=document.querySelector(`[data-resend="${kind}"]`);let left=60;clearInterval(cooldowns[kind]);btn.disabled=true;
+    const tick=()=>{btn.textContent=left>0?`Kirim ulang (${left}s)`:'Kirim ulang kode';if(left--<=0){btn.disabled=false;clearInterval(cooldowns[kind]);}};
+    tick();cooldowns[kind]=setInterval(tick,1000);
+  }
+  document.addEventListener('click',async e=>{
+    const btn=e.target.closest('[data-resend]');if(!btn||btn.disabled)return;const kind=btn.dataset.resend;
+    const r=await post(kind==='verify'?'/auth/email/resend':'/auth/password/forgot',{email:pendingEmail}).catch(()=>null);
+    if(!r)return say('Koneksi bermasalah. Coba lagi.');
+    say(r.ok?r.data.message:errText(r.data),r.ok);if(r.ok)startCooldown(kind);
+  });
+  document.querySelectorAll('.code-input').forEach(i=>i.addEventListener('input',()=>{i.value=i.value.replace(/\D/g,'').slice(0,6);}));
+
+  const start=location.hash.slice(1);
+  if(start==='register'||start==='forgot')show(start);
   fetch('/auth/me',{credentials:'same-origin',cache:'no-store'}).then(r=>{if(r.ok)location.replace('/home')}).catch(()=>{});
 
 </script>

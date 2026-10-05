@@ -118,6 +118,8 @@ loaders.status = async () => {
       <h3>Environment</h3><p>${cfg}</p><small>Hijau = terisi, putih = kosong. Nilai tidak pernah ditampilkan.</small>
       <h3>Pembayaran</h3><p>Pakasir: ${chip(s.payments.pakasirConfigured ? 'configured' : 'not configured', s.payments.pakasirConfigured ? 'ok' : 'warn')} Settlement otomatis: ${chip(s.payments.automaticSettlement, s.payments.automaticSettlement === 'disabled_fail_closed' ? 'warn' : 'ok')}</p>
       <small>Settlement otomatis tetap mati (fail-closed) sampai endpoint verifikasi resmi Pakasir dikonfigurasi di PAKASIR_V2_VERIFY_URL dan diuji.</small>
+      <h3>Email (verifikasi &amp; reset sandi)</h3><p>${chip(s.email.configured ? 'provider: ' + s.email.provider : 'belum dikonfigurasi', s.email.configured ? 'ok' : 'warn')} Pengirim: ${chip(s.email.senderName)}</p>
+      <small>${s.email.configured ? 'Kode dikirim atas nama YannApi.' : 'Tanpa provider email, pendaftaran email &amp; lupa sandi menjawab EMAIL_NOT_CONFIGURED. Isi EMAIL_FROM + SMTP_* atau RESEND_API_KEY.'}</small>
       <h3>Notifikasi WhatsApp</h3><p>${chip(s.notifications.configured ? 'provider aktif' : 'provider belum ada', s.notifications.configured ? 'ok' : 'warn')} OWNER_WA: ${chip(s.notifications.ownerWaConfigured ? 'set' : 'kosong', s.notifications.ownerWaConfigured ? 'ok' : 'warn')}</p>
       <small>Tidak ada pesan WhatsApp yang dikirim sampai provider resmi diintegrasikan.</small>
       <h3>Plugin</h3><p>${s.plugins.loaded.map(p => chip(p, 'ok')).join(' ') || '—'}</p>
@@ -156,6 +158,7 @@ async function showUser(id) {
     const u = d.user;
     const tierSel = `<select id="tier-sel">${TIERS.map(t => `<option ${t === u.storedTier ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
     $('#user-detail').innerHTML = `<h2>${esc(u.name)}</h2><p>${esc(u.email)}<br><small>ID ${esc(u.id)} · dibuat ${when(u.created_at)}</small></p>
+      <p>Login: ${(u.loginMethods || []).map(m => chip(m)).join(' ') || '—'} ${u.email_verified ? chip('email terverifikasi', 'ok') : chip('email belum diverifikasi', 'warn')}</p>
       <p>${chip(u.tier, u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? ` <small>Alasan: ${esc(u.ban_reason)}</small>` : ''}</p>
       <p><b>Kuota hari ini:</b> ${num(d.usage.used)} / ${num(d.usage.limit)} · sisa ${num(d.usage.remaining)}</p>
       ${u.isOwner ? '<p class="muted">Akun owner (OWNER_EMAIL) tidak bisa diban, diubah tier, atau dihapus dari panel.</p>' : `<div class="row">${tierSel}<button class="sm primary" data-act="tier" data-id="${esc(u.id)}">Set tier</button>

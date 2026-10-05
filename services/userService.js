@@ -133,7 +133,85 @@ async function getUserById(id) {
   return mapUser(rows[0]);
 }
 
+// ---------------------------------------------------------------- email + password accounts
+const AUTH_COLUMNS = 'id, google_id, email, name, picture, tier, status, session_version, password_hash, email_verified, failed_login_count, locked_until';
+
+async function findAuthByEmail(email) {
+  const rows = await query(`SELECT ${AUTH_COLUMNS} FROM users WHERE lower(email) = lower($1) LIMIT 1`, [normalizeEmail(email)]);
+  return rows[0] || null;
+}
+
+async function createPasswordUser({ name, email, passwordHash }) {
+  const normalized = normalizeEmail(email);
+  const rows = await query(
+    `INSERT INTO users (google_id, email, name, picture, tier, status, password_hash, password_updated_at, email_verified, created_at, updated_at)
+     VALUES (NULL, $1, $2, '', $3, $4, $5, NOW(), false, NOW(), NOW())
+     RETURNING ${AUTH_COLUMNS}`,
+    [normalized, String(name).trim(), isOwnerEmail(normalized) ? OWNER_TIER : DEFAULT_TIER, DEFAULT_STATUS, passwordHash]
+  );
+  return rows[0];
+}
+
+async function markEmailVerified(userId) {
+  await query('UPDATE users SET email_verified = true, updated_at = NOW() WHERE id = $1', [userId]);
+}
+
+// New password: proves inbox ownership (code), clears lockout and signs out every other session.
+async function setPassword(userId, passwordHash) {
+  const rows = await query(
+    `UPDATE users SET password_hash = $2, password_updated_at = NOW(), email_verified = true,
+            failed_login_count = 0, locked_until = NULL, session_version = session_version + 1, updated_at = NOW()
+      WHERE id = $1 RETURNING ${AUTH_COLUMNS}`,
+    [userId, passwordHash]
+  );
+  return rows[0] || null;
+}
+
+const MAX_FAILED_LOGINS = 10;
+const LOCK_MINUTES = 15;
+async function recordFailedLogin(userId) {
+  await query(
+    `UPDATE users SET
+        locked_until = CASE WHEN failed_login_count + 1 >= $2 THEN NOW() + make_interval(mins => $3) ELSE locked_until END,
+        failed_login_count = CASE WHEN failed_login_count + 1 >= $2 THEN 0 ELSE failed_login_count + 1 END
+      WHERE id = $1`,
+    [userId, MAX_FAILED_LOGINS, LOCK_MINUTES]
+  );
+}
+async function clearFailedLogins(userId) {
+  await query('UPDATE users SET failed_login_count = 0, locked_until = NULL WHERE id = $1 AND (failed_login_count <> 0 OR locked_until IS NOT NULL)', [userId]);
+}
+
+// Google proved the email. If the account was created with a password that was never verified,
+// someone else may have pre-registered this address: drop that password and its sessions.
+async function secureGoogleLink(userId) {
+  try {
+    const rows = await query(
+      `UPDATE users SET
+          password_hash = CASE WHEN email_verified THEN password_hash ELSE NULL END,
+          session_version = CASE WHEN NOT email_verified AND password_hash IS NOT NULL THEN session_version + 1 ELSE session_version END,
+          email_verified = true, updated_at = NOW()
+        WHERE id = $1 AND email_verified = false
+        RETURNING session_version`,
+      [userId]
+    );
+    return rows[0] ? Number(rows[0].session_version) : null;
+  } catch (error) {
+    // Before migration 006 there are no password accounts, so there is nothing to secure.
+    if (error.code === '42703') return null;
+    throw error;
+  }
+}
+
 module.exports = {
+  findAuthByEmail,
+  createPasswordUser,
+  markEmailVerified,
+  setPassword,
+  recordFailedLogin,
+  clearFailedLogins,
+  secureGoogleLink,
+  MAX_FAILED_LOGINS,
   upsertGoogleUser,
   getUserForSession,
   getUserById,
