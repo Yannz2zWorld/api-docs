@@ -105,9 +105,10 @@ module.exports = {
   category: "Downloader",
   path: "/api/download/tiktok?apikey=&url=",
   async run(req, res) {
-    const { url, apikey } = req.query;
+    const { url } = req.query;
 
-    if (!apikey || !global.apikey.includes(apikey)) {
+    // Authentication, tier, and quota are enforced by the gateway in index.js.
+    if (!req.apiAuth) {
       return res.status(401).json({ status: false, error: "Apikey invalid atau tidak terdaftar" });
     }
     if (!url) {

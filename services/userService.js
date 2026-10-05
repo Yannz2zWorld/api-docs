@@ -92,14 +92,21 @@ async function upsertGoogleUser(profile) {
     return mapUser(rows[0]);
   }
 
-  const rows = await query(
-    `INSERT INTO users
-       (google_id, email, name, picture, tier, status, daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason)
-     VALUES ($1, $2, $3, $4, $5, $6, 0, CURRENT_DATE, NOW(), NOW(), NULL, NULL)
-     RETURNING id, google_id, email, name, picture, tier, status,
-               daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason`,
-    [googleId, email, name, picture, owner ? OWNER_TIER : DEFAULT_TIER, DEFAULT_STATUS]
-  );
+  let rows;
+  try {
+    rows = await query(
+      `INSERT INTO users
+         (google_id, email, name, picture, tier, status, daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason)
+       VALUES ($1, $2, $3, $4, $5, $6, 0, CURRENT_DATE, NOW(), NOW(), NULL, NULL)
+       RETURNING id, google_id, email, name, picture, tier, status,
+                 daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason`,
+      [googleId, email, name, picture, owner ? OWNER_TIER : DEFAULT_TIER, DEFAULT_STATUS]
+    );
+  } catch (error) {
+    // Two concurrent first logins: the other request inserted the row; update it instead.
+    if (error.code === '23505' && !profile.retried) return upsertGoogleUser({ ...profile, retried: true });
+    throw error;
+  }
   return mapUser(rows[0]);
 }
 
