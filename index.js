@@ -129,7 +129,11 @@ app.use((req, res, next) => {
   res.set('Content-Security-Policy', "frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
   next();
 });
-app.use(express.json({limit:'100kb'}));
+// Bodies are small everywhere except a manual payment, which carries the proof image
+// (<= 2 MB, base64 in JSON; Vercel's request limit is 4.5 MB).
+const smallJson = express.json({ limit: '100kb' });
+const proofJson = express.json({ limit: '3mb' });
+app.use((req, res, next) => (/^\/api\/orders\/[^/]+\/manual$/.test(req.path) ? proofJson : smallJson)(req, res, next));
 app.use(express.urlencoded({ extended: false, limit:'100kb' }));
 const allowedOrigins = new Set([`https://${process.env.VERCEL_URL || 'apiz2z.vercel.app'}`, 'https://apiz2z.vercel.app', ...(process.env.CORS_ORIGINS || '').split(',').map(v => v.trim()).filter(Boolean)]);
 // Any origin is allowed only for local development; deployed instances (Vercel) only trust
@@ -157,6 +161,10 @@ app.use(['/auth/google','/auth/google/callback','/auth/google/credential','/auth
 app.get('/assets/scene3d.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'scene3d.js'));
+});
+app.get('/assets/qris-manual.jpg', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.sendFile(path.join(__dirname, 'views', 'assets', 'qris-manual.jpg'));
 });
 app.get('/assets/theme.css', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
@@ -281,8 +289,13 @@ async function resolveIdentity(req) {
   const header = String(req.get('authorization') || '');
   const presented = /^Bearer\s+(.+)$/i.exec(header)?.[1]?.trim() || String(req.get('x-api-key') || '').trim();
   if (presented) {
-    const key = await apiKeyService.findKey(presented);
-    if (!key) return { error: [401, 'INVALID_API_KEY', 'API key tidak valid.'] };
+    const clientIp = (req.ip || '').replace(/^::ffff:/, '') || null;
+    const key = await apiKeyService.findKey(presented, clientIp);
+    if (key?.throttled) return { error: [429, 'TOO_MANY_INVALID_KEYS', 'Terlalu banyak API key salah dari jaringan ini. Coba lagi dalam 15 menit.'] };
+    if (!key) {
+      await apiKeyService.recordInvalidKey(clientIp);
+      return { error: [401, 'INVALID_API_KEY', 'API key tidak valid.'] };
+    }
     if (key.key_status !== 'active') return { error: [401, 'API_KEY_REVOKED', 'API key ini sudah dicabut.'] };
     if (key.user_status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun tidak aktif.'] };
     return { identity: { userId: key.uid, keyId: key.key_id, tier: key.tier } };
@@ -608,7 +621,7 @@ app.get('/auth/me', async (req, res) => {
     const limits = getTier(user.tier);
     return res.json({ authenticated: true, user: {
       id:user.id, googleId:user.googleId, name:user.name, email:user.email, picture:user.picture,
-      provider:session.provider||'google', tier:user.tier, status:user.status, isOwner:user.isOwner
+      provider:session.provider||'google', tier:user.tier, tierExpiresAt:user.tierExpiresAt, status:user.status, isOwner:user.isOwner
     }, usage:{used,limit:Number.isFinite(limits.limit)?limits.limit:null,remaining:Number.isFinite(limits.limit)?Math.max(0,limits.limit-used):null},
     apiKeys:{used:keyRows.filter(k=>k.status==='active').length,limit:Number.isFinite(limits.keys)?limits.keys:null} });
   } catch (err) {

@@ -184,7 +184,7 @@ it('manual payment on an expired order is refused and changes nothing', async ()
   const owner = await app.login('payer@example.test');
   const order = (await app.request('POST', '/api/orders', { cookie: owner, headers: { origin: app.origin }, body: { tier: 'SULTAN' } })).json.order;
   await h.db().query("UPDATE orders SET status='expired' WHERE id=$1", [order.id]);
-  const body = { method: 'DANA', proof_url: 'https://example.test/proof.png' };
+  const body = { method: 'QRIS', proof_url: 'https://example.test/proof.png' };
   const expired = await app.request('POST', `/api/orders/${order.id}/manual`, { cookie: owner, headers: { origin: app.origin }, body });
   assert.equal(expired.json.error, 'ORDER_NOT_FOUND', `expired order answered ${expired.status} ${expired.text}`);
   assert.equal((await h.db().query('SELECT count(*)::int AS n FROM payments WHERE order_id=$1', [order.id])).rows[0].n, 0);

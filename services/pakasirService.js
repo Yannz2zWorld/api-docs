@@ -15,7 +15,9 @@ async function verifyTransaction(orderCode,amount){
  if(!process.env.PAKASIR_V2_VERIFY_URL)return false;
  const template=process.env.PAKASIR_V2_VERIFY_URL;
  if(!/^https:\/\//i.test(template))return false;
- const url=template.replaceAll('{order_id}',encodeURIComponent(orderCode)).replaceAll('{amount}',encodeURIComponent(String(amount))).replaceAll('{project}',encodeURIComponent(process.env.PAKASIR_PROJECT||''));
+ // {api_key} lets the owner opt into a lookup API that takes the key as a query parameter
+ // (e.g. Pakasir's transactiondetail). The URL is never logged.
+ const url=template.replaceAll('{order_id}',encodeURIComponent(orderCode)).replaceAll('{amount}',encodeURIComponent(String(amount))).replaceAll('{project}',encodeURIComponent(process.env.PAKASIR_PROJECT||'')).replaceAll('{api_key}',encodeURIComponent(process.env.PAKASIR_API_KEY||''));
  const {data}=await axios.get(url,{headers:{'X-Api-Key':process.env.PAKASIR_API_KEY||''},timeout:15000});
  const t=data?.transaction||data?.data||data;
  return Boolean(t&&String(t.order_id||orderCode)===String(orderCode)&&Number(t.amount)===Number(amount)&&String(t.status||'').toLowerCase()==='completed');

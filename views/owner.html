@@ -23,7 +23,7 @@
     <button role="tab" data-tab="users">Users</button>
     <button role="tab" data-tab="endpoints">Endpoints</button>
     <button role="tab" data-tab="payments">Payments</button>
-    <button role="tab" data-tab="server">Maintenance</button>
+    <button role="tab" data-tab="server">Server &amp; Pembayaran</button>
     <button role="tab" data-tab="audit">Audit</button>
     <a class="btn" href="/owner/backup">Backup JSON</a>
   </nav>
@@ -67,6 +67,14 @@
     <label class="row"><input type="checkbox" id="maint"> Maintenance aktif</label>
     <div class="row"><input id="maint-msg" placeholder="Pesan maintenance" style="flex:1;min-width:240px" maxlength="500"><button class="primary" id="save-server" type="button">Simpan</button></div>
     <p id="server-msg" aria-live="polite"></p>
+
+    <h2 style="margin-top:28px">Rekening pembayaran manual</h2>
+    <p class="muted">Nomor yang tampil ke pembeli untuk DANA / GoPay. Kosongkan untuk menyembunyikan metodenya. QRIS manual memakai gambar <code>views/assets/qris-manual.jpg</code>.</p>
+    <div class="row"><input id="dana-number" inputmode="tel" placeholder="Nomor DANA" maxlength="20"><input id="dana-name" placeholder="Nama akun DANA" maxlength="60"></div>
+    <div class="row" style="margin-top:10px"><input id="gopay-number" inputmode="tel" placeholder="Nomor GoPay" maxlength="20"><input id="gopay-name" placeholder="Nama akun GoPay" maxlength="60"></div>
+    <div class="row" style="margin-top:10px"><button class="primary" id="save-pay" type="button">Simpan rekening</button></div>
+    <p id="pay-msg" aria-live="polite"></p>
+    <p class="muted" id="notify-state"></p>
   </section>
 
   <section class="panel" id="tab-audit" hidden>
@@ -159,9 +167,10 @@ async function showUser(id) {
     const tierSel = `<select id="tier-sel">${TIERS.map(t => `<option ${t === u.storedTier ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
     $('#user-detail').innerHTML = `<h2>${esc(u.name)}</h2><p>${esc(u.email)}<br><small>ID ${esc(u.id)} · dibuat ${when(u.created_at)}</small></p>
       <p>Login: ${(u.loginMethods || []).map(m => chip(m)).join(' ') || '—'} ${u.email_verified ? chip('email terverifikasi', 'ok') : chip('email belum diverifikasi', 'warn')}</p>
-      <p>${chip(u.tier, u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? ` <small>Alasan: ${esc(u.ban_reason)}</small>` : ''}</p>
+      <p>${chip(u.tier, u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? ` <small>Alasan: ${esc(u.ban_reason)}</small>` : ''}
+        <br><small>${u.isOwner || u.tier === 'FREE' ? (u.storedTier !== u.tier && !u.isOwner ? `Tier ${esc(u.storedTier)} sudah kedaluwarsa ${when(u.tier_expires_at)}` : '') : u.tierExpiresAt ? 'Aktif sampai ' + when(u.tierExpiresAt) : 'Tanpa masa berlaku'}</small></p>
       <p><b>Kuota hari ini:</b> ${num(d.usage.used)} / ${num(d.usage.limit)} · sisa ${num(d.usage.remaining)}</p>
-      ${u.isOwner ? '<p class="muted">Akun owner (OWNER_EMAIL) tidak bisa diban, diubah tier, atau dihapus dari panel.</p>' : `<div class="row">${tierSel}<button class="sm primary" data-act="tier" data-id="${esc(u.id)}">Set tier</button>
+      ${u.isOwner ? '<p class="muted">Akun owner (OWNER_EMAIL) tidak bisa diban, diubah tier, atau dihapus dari panel.</p>' : `<div class="row">${tierSel}<input id="tier-days" type="number" min="1" max="3650" placeholder="hari (kosong = permanen)" style="width:190px"><button class="sm primary" data-act="tier" data-id="${esc(u.id)}">Set tier</button>
         ${u.status === 'pending' ? `<button class="sm" data-act="approve" data-id="${esc(u.id)}">Approve</button>` : ''}
         ${u.status === 'banned' ? `<button class="sm" data-act="unban" data-id="${esc(u.id)}">Unban</button>` : `<button class="sm danger" data-act="ban" data-id="${esc(u.id)}">Ban</button>`}
         <button class="sm danger" data-act="delete" data-id="${esc(u.id)}" data-email="${esc(u.email)}">Hapus user</button></div>`}
@@ -177,7 +186,7 @@ async function userAction(btn) {
   const { act, id } = btn.dataset;
   try {
     if (act === 'detail') return showUser(id);
-    if (act === 'tier') { const tier = $('#tier-sel').value; if (!confirm(`Ubah tier user menjadi ${tier}?`)) return; await send(`/owner/users/${id}/tier`, 'PATCH', { tier }); }
+    if (act === 'tier') { const tier = $('#tier-sel').value; const days = $('#tier-days').value ? Number($('#tier-days').value) : null; if (!confirm(`Ubah tier user menjadi ${tier}${days && tier !== 'FREE' ? ` selama ${days} hari` : ' (permanen)'}?`)) return; await send(`/owner/users/${id}/tier`, 'PATCH', { tier, days }); }
     if (act === 'ban') { const reason = prompt('Alasan ban (wajib):'); if (!reason) return; await send(`/owner/users/${id}/ban`, 'POST', { reason }); }
     if (act === 'unban') { if (!confirm('Unban user ini?')) return; await send(`/owner/users/${id}/unban`); }
     if (act === 'approve') { if (!confirm('Approve user ini?')) return; await send(`/owner/users/${id}/approve`); }
@@ -239,9 +248,12 @@ loaders.payments = async () => {
     const d = await api('/owner/payments?status=' + encodeURIComponent($('#pay-status').value));
     $('#payments-data').innerHTML = d.payments.length ? `<table><tr><th>Order / user</th><th>Jumlah / metode</th><th>Status</th><th>Aksi</th></tr>${d.payments.map(p => `<tr>
       <td><b>${esc(p.order_code)}</b> · ${esc(p.tier)}<br>${esc(p.name)} <small>${esc(p.email)}</small><br><small>${when(p.created_at)}</small></td>
-      <td>Rp${num(p.amount)}<br>${esc(p.provider)} · ${esc(p.payment_method)}${p.proof_url ? `<br><a href="${esc(p.proof_url)}" target="_blank" rel="noopener noreferrer">Lihat bukti</a> <small>(URL dari user — periksa sebelum approve)</small>` : ''}</td>
+      <td>Rp${num(p.amount)} · ${num(p.duration_days)} hari<br>${esc(p.provider === 'pakasir' ? 'QRIS gateway' : 'manual')} · ${esc(p.payment_method)}
+        ${p.has_proof ? `<br><a href="/owner/payments/${esc(p.id)}/proof" target="_blank" rel="noopener"><img src="/owner/payments/${esc(p.id)}/proof" alt="Bukti ${esc(p.order_code)}" loading="lazy" style="max-width:120px;max-height:120px;border-radius:8px;margin-top:6px;display:block"></a>` : ''}
+        ${p.proof_url ? `<br><a href="${esc(p.proof_url)}" target="_blank" rel="noopener noreferrer">Lihat bukti (URL)</a> <small>(link dari user — periksa sebelum approve)</small>` : ''}
+        ${p.owner_notified ? `<br><small>dikirim ke ${esc(p.owner_notified)}</small>` : ''}</td>
       <td>${chip(p.status, p.status === 'paid' ? 'ok' : p.status === 'pending' ? 'warn' : '')}<br><small>order: ${esc(p.order_status)}</small></td>
-      <td>${p.status === 'pending' && p.provider === 'manual' ? `<button class="sm primary" data-pay="approve" data-id="${esc(p.id)}" data-desc="${esc(p.order_code)} (${esc(p.tier)}, Rp${num(p.amount)}) untuk ${esc(p.email)}">Approve</button> <button class="sm danger" data-pay="reject" data-id="${esc(p.id)}" data-desc="${esc(p.order_code)}">Reject</button>` : p.provider === 'pakasir' && p.status === 'pending' ? '<small>Menunggu verifikasi gateway</small>' : '—'}</td></tr>`).join('')}</table>` : '<p>Tidak ada pembayaran.</p>';
+      <td>${p.status === 'pending' && p.order_status === 'pending' ? `<button class="sm primary" data-pay="approve" data-id="${esc(p.id)}" data-desc="${esc(p.order_code)} (${esc(p.tier)} ${num(p.duration_days)} hari, Rp${num(p.amount)}) untuk ${esc(p.email)}${p.provider === 'pakasir' ? '\nIni pembayaran QRIS gateway: cek dulu di dashboard Pakasir.' : ''}">Approve</button> <button class="sm danger" data-pay="reject" data-id="${esc(p.id)}" data-desc="${esc(p.order_code)}">Reject</button>` : '—'}</td></tr>`).join('')}</table>` : '<p>Tidak ada pembayaran.</p>';
   } catch (e) { fail('#payments-data', e); }
 };
 $('#pay-status').addEventListener('change', () => loaders.payments());
@@ -255,9 +267,22 @@ $('#payments-data').addEventListener('click', async e => {
 
 // ---------- maintenance
 loaders.server = async () => {
-  try { const { settings } = await api('/owner/server'); $('#maint').checked = settings.maintenance_enabled; $('#maint-msg').value = settings.maintenance_message || ''; }
-  catch (e) { $('#server-msg').textContent = e.message; }
+  try {
+    const { settings, notifications } = await api('/owner/server');
+    $('#maint').checked = settings.maintenance_enabled; $('#maint-msg').value = settings.maintenance_message || '';
+    $('#dana-number').value = settings.payment_dana_number || ''; $('#dana-name').value = settings.payment_dana_name || '';
+    $('#gopay-number').value = settings.payment_gopay_number || ''; $('#gopay-name').value = settings.payment_gopay_name || '';
+    $('#notify-state').textContent = notifications?.telegram
+      ? 'Notifikasi Telegram aktif: bukti pembayaran manual dikirim ke chat owner.'
+      : 'Notifikasi Telegram belum aktif (set TELEGRAM_BOT_TOKEN dan TELEGRAM_OWNER_CHAT_ID di Vercel). Bukti tetap tampil di tab Payments; pembeli juga diberi tombol WhatsApp.';
+  } catch (e) { $('#server-msg').textContent = e.message; }
 };
+$('#save-pay').addEventListener('click', async () => {
+  try {
+    const d = await send('/owner/server/payments', 'PATCH', { payment_dana_number: $('#dana-number').value, payment_dana_name: $('#dana-name').value, payment_gopay_number: $('#gopay-number').value, payment_gopay_name: $('#gopay-name').value });
+    $('#pay-msg').textContent = `Tersimpan. DANA ${d.settings.payment_dana_number ? 'aktif' : 'disembunyikan'}, GoPay ${d.settings.payment_gopay_number ? 'aktif' : 'disembunyikan'}.`;
+  } catch (e) { $('#pay-msg').textContent = e.message; }
+});
 $('#save-server').addEventListener('click', async () => {
   const enabled = $('#maint').checked;
   if (!confirm(enabled ? 'Aktifkan maintenance? Semua panggilan API non-owner akan ditolak.' : 'Matikan maintenance?')) return;

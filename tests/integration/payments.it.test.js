@@ -12,6 +12,9 @@ before(async () => {
   await h.setupDatabase();
   app = await h.startApp({ PAKASIR_PROJECT: 'yannz-test-project' });
   owner = await app.login(h.OWNER_EMAIL);
+  // Manual DANA / GoPay transfers need destination accounts configured by the owner.
+  const set = await app.request('PATCH', '/owner/server/payments', { cookie: owner, headers: { origin: app.origin }, body: { payment_dana_number: '081200000000', payment_dana_name: 'Owner', payment_gopay_number: '081300000000', payment_gopay_name: 'Owner' } });
+  assert.equal(set.status, 200);
 });
 after(async () => { if (h.skip) return; await app?.close(); await h.teardownDatabase(); });
 const it = (name, fn) => test(name, { skip: h.skip }, fn);

@@ -5,6 +5,11 @@ const { query } = require('../lib/db');
 const DEFAULT_TIER = 'FREE';
 const DEFAULT_STATUS = 'active';
 const OWNER_TIER = 'OWNER';
+// tier_expires_at is read through to_jsonb so these queries keep working on a database
+// that has not run migration 007 yet (the value is then simply NULL = no expiry).
+const USER_COLUMNS = `id, google_id, email, name, picture, tier, status,
+            daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version,
+            (to_jsonb(users.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at`;
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -15,16 +20,26 @@ function isOwnerEmail(email) {
   return Boolean(configured && normalizeEmail(email) === configured);
 }
 
+// A purchased tier past its expiry counts as FREE; a stored 'OWNER' without OWNER_EMAIL too.
+function effectiveTier(row, owner = isOwnerEmail(row?.email)) {
+  if (owner) return OWNER_TIER;
+  if (!row?.tier || row.tier === OWNER_TIER) return DEFAULT_TIER;
+  if (row.tier_expires_at && new Date(row.tier_expires_at) <= new Date()) return DEFAULT_TIER;
+  return row.tier;
+}
+
 function mapUser(row) {
   if (!row) return null;
   const owner = isOwnerEmail(row.email);
+  const tier = effectiveTier(row, owner);
   return {
     id: row.id,
     googleId: row.google_id,
     email: row.email,
     name: row.name,
     picture: row.picture || '',
-    tier: owner ? OWNER_TIER : (row.tier === OWNER_TIER ? DEFAULT_TIER : (row.tier || DEFAULT_TIER)),
+    tier,
+    tierExpiresAt: !owner && tier !== DEFAULT_TIER && row.tier_expires_at ? new Date(row.tier_expires_at).toISOString() : null,
     status: row.status || DEFAULT_STATUS,
     dailyUsage: Number(row.daily_usage || 0),
     sessionVersion: Number(row.session_version || 0),
@@ -37,8 +52,7 @@ function mapUser(row) {
 
 async function findByGoogleIdOrEmail(googleId, email) {
   const rows = await query(
-    `SELECT id, google_id, email, name, picture, tier, status,
-            daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version
+    `SELECT ${USER_COLUMNS}
        FROM users
       WHERE google_id = $1 OR lower(email) = lower($2)
       ORDER BY CASE WHEN google_id = $1 THEN 0 ELSE 1 END
@@ -51,8 +65,7 @@ async function findByGoogleIdOrEmail(googleId, email) {
 async function findByIdOrGoogleId(identity) {
   const value = String(identity || '');
   const rows = await query(
-    `SELECT id, google_id, email, name, picture, tier, status,
-            daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version
+    `SELECT ${USER_COLUMNS}
        FROM users
       WHERE google_id = $1 OR id::text = $1
       LIMIT 1`,
@@ -86,8 +99,7 @@ async function upsertGoogleUser(profile) {
               tier = CASE WHEN $5 THEN 'OWNER' ELSE COALESCE(NULLIF(tier, ''), 'FREE') END,
               updated_at = NOW()
         WHERE id = $6
-        RETURNING id, google_id, email, name, picture, tier, status,
-                  daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version`,
+        RETURNING ${USER_COLUMNS}`,
       [googleId, email, name, picture, owner, existing.id]
     );
     return mapUser(rows[0]);
@@ -99,8 +111,7 @@ async function upsertGoogleUser(profile) {
       `INSERT INTO users
          (google_id, email, name, picture, tier, status, daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason)
        VALUES ($1, $2, $3, $4, $5, $6, 0, CURRENT_DATE, NOW(), NOW(), NULL, NULL)
-       RETURNING id, google_id, email, name, picture, tier, status,
-                 daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version`,
+       RETURNING ${USER_COLUMNS}`,
       [googleId, email, name, picture, owner ? OWNER_TIER : DEFAULT_TIER, DEFAULT_STATUS]
     );
   } catch (error) {
@@ -125,8 +136,7 @@ async function revokeSessions(userId) {
 
 async function getUserById(id) {
   const rows = await query(
-    `SELECT id, google_id, email, name, picture, tier, status,
-            daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version
+    `SELECT ${USER_COLUMNS}
        FROM users WHERE id = $1 LIMIT 1`,
     [id]
   );
@@ -134,7 +144,7 @@ async function getUserById(id) {
 }
 
 // ---------------------------------------------------------------- email + password accounts
-const AUTH_COLUMNS = 'id, google_id, email, name, picture, tier, status, session_version, password_hash, email_verified, failed_login_count, locked_until';
+const AUTH_COLUMNS = "id, google_id, email, name, picture, tier, status, session_version, password_hash, email_verified, failed_login_count, locked_until, (to_jsonb(users.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at";
 
 async function findAuthByEmail(email) {
   const rows = await query(`SELECT ${AUTH_COLUMNS} FROM users WHERE lower(email) = lower($1) LIMIT 1`, [normalizeEmail(email)]);
