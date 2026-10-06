@@ -15,6 +15,7 @@ const { query } = require('./lib/db');
 const platformRouter = require('./routes/platform');
 const apiKeyService = require('./services/apiKeyService');
 const usageService = require('./services/usageService');
+const turnstile = require('./services/turnstileService');
 const { canAccess, getTier } = require('./services/tierService');
 const auditService = require('./services/auditService');
 
@@ -133,7 +134,8 @@ app.use((req, res, next) => {
 // (<= 2 MB, base64 in JSON; Vercel's request limit is 4.5 MB).
 const smallJson = express.json({ limit: '100kb' });
 const proofJson = express.json({ limit: '3mb' });
-app.use((req, res, next) => (/^\/api\/orders\/[^/]+\/manual$/.test(req.path) ? proofJson : smallJson)(req, res, next));
+const pluginJson = express.json({ limit: '512kb' });   // owner panel: endpoint + uploaded .js (max 200 KB of code)
+app.use((req, res, next) => (/^\/api\/orders\/[^/]+\/manual$/.test(req.path) ? proofJson : req.path === '/owner/api/endpoints' ? pluginJson : smallJson)(req, res, next));
 app.use(express.urlencoded({ extended: false, limit:'100kb' }));
 const allowedOrigins = new Set([`https://${process.env.VERCEL_URL || 'apiz2z.vercel.app'}`, 'https://apiz2z.vercel.app', ...(process.env.CORS_ORIGINS || '').split(',').map(v => v.trim()).filter(Boolean)]);
 // Any origin is allowed only for local development; deployed instances (Vercel) only trust
@@ -166,6 +168,10 @@ app.get('/assets/scene3d.js', (req, res) => {
 app.get('/assets/scythe.glb', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400');
   res.type('model/gltf-binary').sendFile(path.join(__dirname, 'views', 'assets', 'scythe.glb'));
+});
+app.get('/assets/slash-intro.js', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'slash-intro.js'));
 });
 app.get('/assets/qris-manual.jpg', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
@@ -453,8 +459,9 @@ app.get('/health/database', async (req, res) => {
 });
 
 app.get('/auth/config', (req, res) => {
-  if (!GOOGLE_CLIENT_ID) return res.status(503).json({ configured: false });
-  res.json({ configured: true, clientId: GOOGLE_CLIENT_ID });
+  const turnstileSiteKey = turnstile.isEnabled() ? turnstile.siteKey() : null;
+  if (!GOOGLE_CLIENT_ID) return res.status(503).json({ configured: false, turnstileSiteKey });
+  res.json({ configured: true, clientId: GOOGLE_CLIENT_ID, turnstileSiteKey });
 });
 
 function issueSession(res, sub, account, provider = 'google') {

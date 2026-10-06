@@ -114,9 +114,13 @@
     .brand-mark,.submit{border-color:var(--edge)}.google{background:#f4f4f5;border-color:#f4f4f5;color:#0b0b0c}.google:hover{background:#e4e4e7;color:#0b0b0c}.google-icon{background:#f4f4f5;border-color:#0b0b0c;color:#0b0b0c}#google-fallback{color:#0b0b0c}
   </style>
   <link rel="preload" href="/assets/scythe.glb" as="fetch" type="model/gltf-binary" crossorigin>
-  <script defer src="/assets/scene3d.js?v=5"></script>
+  <style>.turnstile{margin:14px 0 2px;min-height:65px}.turnstile[hidden]{display:none}</style>
+  <style>#slash-intro{position:fixed;inset:0;z-index:300;background:#0b0b0c;pointer-events:none;animation:slash-fallback .4s ease 2.8s forwards}@keyframes slash-fallback{to{opacity:0;visibility:hidden}}@media (prefers-reduced-motion:reduce){#slash-intro{display:none}}</style>
+  <script defer src="/assets/slash-intro.js?v=1"></script>
+  <script defer src="/assets/scene3d.js?v=6"></script>
 </head>
 <body>
+<div id="slash-intro" aria-hidden="true"></div>
 <div class="layout">
   <section class="visual">
     <div class="brand"><span class="brand-mark"><i data-lucide="orbit"></i></span><span id="brand-name">Yannz API</span></div>
@@ -176,6 +180,7 @@
         <div class="form-row"><button type="button" class="link" data-go="forgot">← Ganti email</button><button type="button" class="link" data-resend="reset">Kirim ulang kode</button></div>
       </form>
 
+      <div id="cf-turnstile" class="turnstile" hidden></div>
       <div id="message" class="message" role="status" aria-live="polite"></div>
 
       <div class="oauth" id="oauth-block">
@@ -238,9 +243,10 @@
       })();
     });
   }
+  const authConfig=fetch('/auth/config').then(r=>r.json()).catch(()=>({}));
   async function initGoogle(){
     try{
-      const cfg=await fetch('/auth/config').then(r=>r.json()).catch(()=>({}));
+      const cfg=await authConfig;
       if(!cfg.configured||!cfg.clientId) throw new Error('Google OAuth belum dikonfigurasi di server.');
       const gis=await waitForGis(8000);
       gis.initialize({client_id:cfg.clientId,callback:handleGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
@@ -276,10 +282,34 @@
     if(first&&!(view==='forgot'&&pendingEmail&&(first.value=pendingEmail)))setTimeout(()=>first.focus({preventScroll:true}),60);
     if(history.replaceState)history.replaceState(null,'',view==='login'?location.pathname+location.search:'#'+view);
   }
+  // ---------------- Cloudflare Turnstile (only when the server has keys configured)
+  const GATED=['/auth/login','/auth/register','/auth/password/forgot','/auth/email/resend'];
+  const ts={enabled:false,widget:null,token:''};
+  authConfig.then(cfg=>{
+    if(!cfg.turnstileSiteKey)return;
+    ts.enabled=true;
+    const host=$('#cf-turnstile');host.hidden=false;
+    const s=document.createElement('script');
+    s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;
+    s.onload=()=>{ts.widget=window.turnstile.render(host,{sitekey:cfg.turnstileSiteKey,theme:'dark',size:'flexible',language:'id',
+      callback:t=>{ts.token=t;},'expired-callback':()=>{ts.token='';},'error-callback':()=>{ts.token='';}});};
+    s.onerror=()=>say('Verifikasi Cloudflare gagal dimuat. Muat ulang halaman atau masuk dengan Google.');
+    document.head.appendChild(s);
+  });
   async function post(path,body){
-    const r=await fetch(path,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const data=await r.json().catch(()=>({}));
-    return {ok:r.ok,status:r.status,data};
+    const gated=ts.enabled&&GATED.includes(path);
+    if(gated){
+      if(!ts.token)return {ok:false,status:400,data:{error:'TURNSTILE_REQUIRED',message:'Tunggu verifikasi keamanan Cloudflare selesai, lalu coba lagi.'}};
+      body={...body,turnstileToken:ts.token};
+    }
+    try{
+      const r=await fetch(path,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const data=await r.json().catch(()=>({}));
+      return {ok:r.ok,status:r.status,data};
+    }finally{
+      // Each token works once: get a fresh one for the next attempt.
+      if(gated){ts.token='';try{window.turnstile.reset(ts.widget);}catch{}}
+    }
   }
   const errText=d=>(d.message||'Permintaan gagal.')+(d.error?` (${d.error})`:'');
   async function busy(form,fn){

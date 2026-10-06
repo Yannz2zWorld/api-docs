@@ -10,6 +10,7 @@ const codes = require('../services/authCodeService');
 const email = require('../services/emailService');
 const audit = require('../services/auditService');
 const { classifyDatabaseError } = require('../lib/authErrors');
+const turnstile = require('../services/turnstileService');
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
 const GENERIC_SENT = 'Jika email tersebut terdaftar, kode sudah dikirim. Cek inbox atau folder spam.';
@@ -29,6 +30,9 @@ module.exports = function authRouter({ issueSession }) {
     }
     next();
   });
+
+  // Cloudflare Turnstile on the forms a bot would hammer (no-op until the keys are configured).
+  router.use(['/auth/login', '/auth/register', '/auth/password/forgot', '/auth/email/resend'], turnstile.guard());
 
   async function sendCode(user, purpose) {
     const issued = await codes.issueCode(user.id, purpose);

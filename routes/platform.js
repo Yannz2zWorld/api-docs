@@ -14,6 +14,7 @@ const pakasir = require('../services/pakasirService');
 const notifier = require('../services/ownerNotificationService');
 const orderService = require('../services/orderService');
 const emailService = require('../services/emailService');
+const pluginService = require('../services/githubPluginService');
 
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
@@ -478,6 +479,7 @@ router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
 
 router.post('/owner/api/endpoints', sameOrigin, auth, owner, async (req, res) => {
   const b = req.body || {};
+  if (b.code !== undefined) return createPluginEndpoint(req, res);
   const method = String(b.method || 'GET').toUpperCase();
   if (typeof b.name !== 'string' || !b.name.trim() || typeof b.path !== 'string' || !/^\/[a-zA-Z0-9/_-]{1,200}$/.test(b.path) || !['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
     return fail(res, 400, 'INVALID_ENDPOINT', 'Data endpoint tidak valid.');
@@ -492,6 +494,51 @@ router.post('/owner/api/endpoints', sameOrigin, auth, owner, async (req, res) =>
   const endpoint = withHandler(req, r[0]);
   res.status(201).json({ success: true, endpoint, warning: endpoint.handler_loaded ? null : 'Metadata tersimpan, tetapi belum ada plugin handler untuk path ini. Endpoint tidak bisa dipanggil sampai plugin di-deploy.' });
 });
+
+// New endpoint with its script: 1 name, 2 /api/kategori/nama, 3 .js script, 4 description, 5 tier.
+// The registry row is written first (so the tier is in place before the deploy registers the
+// route), then the script is committed to plugin/ on GitHub; a failed commit removes the row.
+async function createPluginEndpoint(req, res) {
+  const b = req.body || {};
+  const name = typeof b.name === 'string' ? b.name.trim().slice(0, 100) : '';
+  const target = pluginService.parsePath(b.path);
+  if (!name || !target) return fail(res, 400, 'INVALID_ENDPOINT', 'Nama wajib diisi dan path harus berbentuk /api/kategori/nama (huruf kecil, angka, tanda -).');
+  const tier = b.minimum_tier === undefined ? 'FREE' : b.minimum_tier;
+  if (!tiers.TIERS[tier]) return fail(res, 400, 'INVALID_TIER', 'Tier minimum tidak valid.');
+  const desc = String(b.description || '').trim().slice(0, 500) || name;   // the plugin loader skips plugins without desc
+  try {
+    pluginService.validateCode(b.code);
+  } catch (e) {
+    if (e instanceof pluginService.PluginError) return fail(res, e.status, e.code, e.message);
+    throw e;
+  }
+  if (!pluginService.isConfigured()) return fail(res, 503, 'GITHUB_NOT_CONFIGURED', 'Upload plugin belum aktif: set GITHUB_TOKEN (dan GITHUB_REPO jika repo berbeda) di Environment Variables Vercel, lalu redeploy.');
+
+  const r = await query(
+    "INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,'GET',$4,false,'active',$5) ON CONFLICT(path) DO NOTHING RETURNING *",
+    [name, b.path, desc, tier, target.plugin]
+  );
+  if (!r.length) return fail(res, 409, 'ENDPOINT_EXISTS', 'Path endpoint sudah terdaftar.');
+  let commit;
+  try {
+    commit = await pluginService.commitPlugin({
+      file: target.file,
+      content: pluginService.buildPluginFile({ name, desc, category: target.category, path: b.path, code: b.code }),
+      message: `Add endpoint ${b.path} from the owner panel`
+    });
+  } catch (e) {
+    await query('DELETE FROM endpoints WHERE id=$1', [r[0].id]);
+    if (e instanceof pluginService.PluginError) return fail(res, e.status, e.code, e.message);
+    throw e;
+  }
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_create', targetType: 'endpoint', targetId: r[0].id, metadata: { path: b.path, tier, file: commit.file, commit: commit.sha }, ipAddress: ip(req) });
+  res.status(201).json({
+    success: true,
+    endpoint: withHandler(req, r[0]),
+    commit,
+    message: `Script di-commit ke ${commit.file}. Vercel akan deploy ulang (biasanya 20–60 detik); setelah itu endpoint aktif.`
+  });
+}
 
 router.patch('/owner/api/endpoints/:id', sameOrigin, auth, owner, validId('id'), async (req, res) => {
   const b = req.body || {};
