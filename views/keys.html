@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/assets/theme.css">
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api">Sandbox</a><a href="/keys" aria-current="page">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys" aria-current="page">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
 <main class="wrap">
   <h1>API Keys</h1>
   <p class="lead loading" id="summary">Memuat…</p>
@@ -70,7 +70,7 @@ async function load() {
     const full = d.limit !== null && active >= d.limit;
     if ($('#create-btn')) $('#create-btn').disabled = full;
     if (d.limit === 0) {
-      $('#create-panel').innerHTML = `<h2>Custom API key</h2><div class="notice">Tier <b>FREE</b> tidak mendapat custom API key. Kamu tetap bisa memakai 100 request/hari lewat <a href="/api">Sandbox</a> dengan login, atau <a href="/pricing">upgrade</a> untuk membuat key.</div>`;
+      $('#create-panel').innerHTML = `<h2>Custom API key</h2><div class="notice">Tier <b>FREE</b> tidak mendapat custom API key. Kamu tetap bisa memakai 100 request/hari lewat <a href="/api/playground">Playground</a><a href="/api">Sandbox</a> dengan login, atau <a href="/pricing">upgrade</a> untuk membuat key.</div>`;
     } else if (full) {
       $('#create-msg').innerHTML = `<p class="notice">Batas key tier ${esc(d.tier)} tercapai. Cabut key lama atau <a href="/pricing">upgrade</a>.</p>`;
     }

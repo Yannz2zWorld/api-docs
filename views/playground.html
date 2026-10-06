@@ -1,525 +1,112 @@
-<!DOCTYPE html>
-<html lang="id" class="overflow-x-hidden">
+<!doctype html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Playground - Yannz API</title>
-  <link rel="icon" id="favicon" href="">
-  
-  <link rel="preload" href="https://cdn.jsdelivr.net/npm/lucide@0.407.0/dist/umd/lucide.min.js" as="script">
-  <link rel="preload" href="https://img2.pixhost.to/images/9050/745481347_yannganteng-1783009788991.jpg" as="image">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.407.0/dist/umd/lucide.min.js"></script>
-  <script>
-    if (window.tailwind) tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Outfit"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          },
-          colors: {
-            retro: {
-              black: '#0a0a0c', 
-              dark: '#1c1c1e', 
-              card: '#242426', 
-              border: '#3a3a3c', 
-              orange: '#8b8b93', 
-              light: '#f4f4f5', 
-              gray: '#9ca3af'
-            }
-          },
-          boxShadow: {
-            glow: '0 0 25px rgba(139, 139, 147, 0.12)',
-            glowHover: '0 0 40px rgba(139, 139, 147, 0.25)',
-            btn: '0 4px 12px rgba(139, 139, 147, 0.1)'
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    body {
-      background-color: #0a0a0c;
-    }
-    .grid-bg {
-      background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-      background-size: 20px 20px;
-    }
-    .orange-glow-blur {
-      background: radial-gradient(circle, rgba(139, 139, 147, 0.08) 0%, transparent 70%);
-    }
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0a0a0c;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #3a3a3c;
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #8b8b93;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Playground — Yannz API</title>
+<link rel="icon" href="/api/logo-proxy">
+<meta name="theme-color" content="#0b0b0c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/theme.css">
 <style>
-<!-- YANNZ NEO-BRUTALIST OVERRIDE -->
-/* YANNZ NEO-BRUTALIST THEME */
-:root{--nb-bg:#f5f2e8;--nb-paper:#fffdf7;--nb-ink:#111;--nb-yellow:#ffd21c;--nb-blue:#5b72ff;--nb-green:#16b982;--nb-red:#ff5c5c;--nb-muted:#65615a;--nb-line:3px solid #111;--nb-shadow:6px 7px 0 #111}
-html,body{background:var(--nb-bg)!important;color:var(--nb-ink)!important}
-body{font-family:'Outfit',sans-serif!important;background-image:radial-gradient(#d7d3c7 1.2px,transparent 1.2px)!important;background-size:22px 22px!important}
-/* kill the old glow atmosphere */
-.orange-glow-blur{display:none!important}
-/* loader */
-#page-loader{background:var(--nb-bg)!important;color:var(--nb-ink)!important}
-#page-loader .border-retro-orange\/10{border-color:#111!important}
-#page-loader .border-t-retro-orange{border-top-color:var(--nb-yellow)!important}
-#page-loader .bg-retro-orange{background:var(--nb-yellow)!important}
-#page-loader span{color:#111!important}
-/* header */
-header{background:var(--nb-paper)!important;border-bottom:var(--nb-line)!important;box-shadow:0 5px 0 #111!important;backdrop-filter:none!important}
-header>div{max-width:1120px!important}
-header a img{border:var(--nb-line)!important;border-radius:12px!important;box-shadow:3px 3px 0 #111!important}
-header a img:hover{border-color:#111!important}
-#web-title{color:#111!important;font-family:'Space Grotesk',sans-serif!important;font-weight:900!important}
-#web-title .text-retro-orange{color:#111!important}
-#web-title .text-retro-light{color:#111!important}
-header .bg-retro-orange\/10{background:#fff8d6!important;border:2px solid #111!important;color:#111!important;border-radius:999px!important;box-shadow:3px 3px 0 #111}
-/* shared content */
-main{max-width:1120px!important}
-main h1,main h2,main h3,main h4{font-family:'Space Grotesk',sans-serif!important;color:#111!important}
-main h1{font-weight:900!important;letter-spacing:-.05em!important}
-.text-retro-orange{color:#111!important}
-.text-white{color:#111!important}
-.text-stone-300,.text-stone-400,.text-stone-500,.text-retro-gray{color:var(--nb-muted)!important}
-/* badges */
-main .bg-retro-orange\/10{background:#fff8d6!important;border:2px solid #111!important;color:#111!important;border-radius:12px!important;box-shadow:3px 3px 0 #111}
-main .bg-retro-orange\/10 .text-retro-orange{color:#111!important}
-/* buttons */
-a.bg-retro-orange,button.bg-retro-orange{background:var(--nb-yellow)!important;color:#111!important;border:var(--nb-line)!important;box-shadow:4px 5px 0 #111!important;border-radius:13px!important}
-a.bg-retro-orange:hover,button.bg-retro-orange:hover{background:#fff!important;color:#111!important;box-shadow:6px 7px 0 #111!important;transform:translate(-2px,-2px)!important}
-/* cards */
-main .bg-retro-dark,main .bg-\[\#0a0908\],main [class*="bg-retro-dark"]{background:var(--nb-paper)!important;color:#111!important;border-color:#111!important}
-main .rounded-2xl,main .rounded-xl{border-radius:18px!important}
-main .border-retro-border,main [class*="border-retro-border"]{border-color:#111!important}
-main .shadow-lg,main .shadow-xl,main .shadow-2xl{box-shadow:var(--nb-shadow)!important}
-/* stat cards / grid cards */
-main .group{transition:transform .18s ease,box-shadow .18s ease!important}
-main .group:hover{transform:translate(-2px,-2px)!important;box-shadow:9px 10px 0 #111!important}
-main .group .text-3xl{font-family:'JetBrains Mono',monospace!important;font-weight:900!important}
-/* inputs */
-input,textarea,select{background:#fff!important;color:#111!important;border:var(--nb-line)!important;border-radius:12px!important;box-shadow:inset 2px 2px 0 #e2dfd4!important}
-input::placeholder,textarea::placeholder{color:#888!important}
-input:focus,textarea:focus,select:focus{outline:0!important;border-color:#111!important;box-shadow:4px 4px 0 var(--nb-yellow)!important}
-/* category chips */
-.category-chip{border:2px solid #111!important;border-radius:999px!important;box-shadow:2px 3px 0 #111!important;background:#fff!important;color:#111!important}
-.category-chip:hover{background:var(--nb-yellow)!important}
-/* API cards generated dynamically */
-#apis-grid-container>div:not(.col-span-full){background:var(--nb-paper)!important;border:var(--nb-line)!important;border-radius:18px!important;box-shadow:var(--nb-shadow)!important;color:#111!important}
-#apis-grid-container>div:not(.col-span-full) *{color:inherit}
-/* code / endpoint surfaces */
-pre,code,.font-mono{font-family:'JetBrains Mono',monospace!important}
-pre{background:#111!important;color:#fff!important;border:3px solid #111!important;border-radius:14px!important;box-shadow:5px 6px 0 var(--nb-yellow)!important}
-/* footer */
-footer{background:#111!important;border-top:var(--nb-line)!important;color:#fff!important}
-footer .text-white{color:#fff!important}
-footer .text-stone-400,footer .text-retro-gray{color:#aaa!important}
-footer a{border-color:#555!important;background:#181818!important}
-footer a:hover{border-color:var(--nb-yellow)!important;background:#222!important}
-/* dividers */
-.border-t,.border-b{border-color:#111!important}
-/* responsive */
-@media(max-width:700px){
- header>div,main,footer>div{padding-left:14px!important;padding-right:14px!important}
- header{box-shadow:0 4px 0 #111!important}
- header a img{width:34px!important;height:34px!important}
- #web-title{font-size:13px!important}
- header .bg-retro-orange\/10{font-size:8px!important;padding:5px 8px!important}
- main{padding-top:28px!important;padding-bottom:35px!important;gap:28px!important}
- main h1{font-size:32px!important;line-height:1.02!important}
- main h2{font-size:23px!important}
- main p{font-size:12px!important;line-height:1.55!important}
- main .p-6{padding:16px!important}
- main .p-5{padding:14px!important}
- main .gap-6{gap:12px!important}
- main .gap-10{gap:18px!important}
- main .rounded-2xl{border-radius:14px!important}
- main .shadow-lg,main .shadow-xl,main .shadow-2xl{box-shadow:4px 5px 0 #111!important}
- a.bg-retro-orange{padding:14px 20px!important;font-size:11px!important}
- input{font-size:11px!important;padding:12px 12px 12px 42px!important}
- .category-chip{font-size:8px!important;padding:7px 11px!important}
- #apis-grid-container{grid-template-columns:1fr!important;gap:13px!important}
- footer{padding-top:35px!important}
-}
-@media(max-width:380px){
- main h1{font-size:27px!important}
- #web-title{font-size:11px!important}
- header .bg-retro-orange\/10 span:last-child{display:none}
-}
-
+  .hero-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+  .counter { font: 700 13px "DM Mono", monospace; color: var(--muted); }
+  .counter b { color: var(--ink); font-size: 22px; font-family: "Space Grotesk", sans-serif; }
+  .toolbar { display: grid; gap: 12px; margin: 22px 0 6px; }
+  .toolbar input[type=search] { width: 100%; font-size: 15px; padding: 13px 14px; }
+  .cats { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: thin; }
+  .cats button { flex: 0 0 auto; box-shadow: 2px 2px 0 var(--drop); padding: 8px 12px; font-size: 11px; }
+  .cats button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-top: 14px; }
+  .ep { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); transition: transform .2s var(--ease), box-shadow .2s var(--ease); min-width: 0; }
+  .ep:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 var(--drop); }
+  .ep-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .ep h2 { font-size: 18px; margin: 4px 0 0; }
+  .ep p { margin: 0; color: var(--muted); font-size: 14px; flex: 1; }
+  .ep-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1.5px solid var(--edge-soft); min-width: 0; }
+  .ep-foot code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .ep-foot .btn { flex: 0 0 auto; padding: 8px 12px; font-size: 11px; box-shadow: 3px 3px 0 var(--drop); }
+  .empty { text-align: center; padding: 40px 10px; color: var(--muted); }
+  .site-foot { border-top: 2px solid var(--edge-soft); margin-top: 40px; padding: 26px 16px 40px; }
+  .site-foot .inner { max-width: 1180px; margin: auto; display: flex; flex-wrap: wrap; gap: 14px 22px; justify-content: space-between; align-items: center; color: var(--muted); font-size: 14px; }
+  .site-foot nav { display: flex; flex-wrap: wrap; gap: 8px 16px; }
 </style>
 </head>
-<body class="bg-retro-black text-stone-200 font-sans grid-bg min-h-screen flex flex-col justify-between selection:bg-retro-orange selection:text-retro-black relative overflow-x-hidden w-full max-w-[100vw]">
-
-  <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] orange-glow-blur pointer-events-none z-0"></div>
-  <div class="absolute bottom-10 -right-40 w-[400px] h-[400px] orange-glow-blur pointer-events-none z-0 opacity-50"></div>
-
-  <div id="page-loader" class="fixed top-0 left-0 w-screen h-screen bg-retro-black z-[9999] flex flex-col items-center justify-center gap-4 transition-all duration-500 ease-out">
-    <div class="relative w-16 h-16 flex items-center justify-center">
-      <div class="absolute inset-0 border-4 border-retro-orange/10 rounded-full"></div>
-      <div class="absolute inset-0 border-4 border-t-retro-orange border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-      <div class="w-2.5 h-2.5 bg-retro-orange rounded-full animate-pulse shadow-glow"></div>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span><span id="web-title">Yannz API</span></a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground" aria-current="page">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
+<main class="wrap wide">
+  <div class="hero-row">
+    <div>
+      <span class="kicker">Katalog endpoint</span>
+      <h1>API Playground</h1>
+      <p class="lead">Cari endpoint, lihat tier yang dibutuhkan, lalu coba langsung di Sandbox dengan sesi login atau API key kamu.</p>
     </div>
-    <div class="flex flex-col items-center gap-1.5 mt-2">
-      <span class="font-mono text-[10px] tracking-[0.25em] text-white font-bold">Yannz engine</span>
-      <span class="font-mono text-[8px] tracking-[0.15em] text-stone-500 animate-pulse">Memuat sandbox aman...</span>
-    </div>
+    <p class="counter" aria-live="polite"><b id="api-counter">—</b> endpoint</p>
   </div>
 
-  <header class="border-b border-retro-border/40 bg-retro-dark/80 sticky top-0 z-50 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-      <a href="/home" class="flex items-center gap-3 group">
-        <img id="nav-logo-img" src="https://img2.pixhost.to/images/9050/745481347_yannganteng-1783009788991.jpg" class="w-9 h-9 rounded-xl border-2 border-retro-border hover:border-retro-orange transition-all duration-300 object-cover shadow-lg">
-        <span id="web-title" class="font-sans font-black tracking-wider text-white text-base group-hover:text-retro-orange transition-all duration-300 flex items-center gap-2">
-          Yannz <span class="text-retro-orange font-light">//</span> <span class="text-retro-light font-bold">Api</span>
-        </span>
-      </a>
-      
-      <div class="flex items-center gap-2 font-mono text-[9px] bg-retro-orange/10 border border-retro-orange/20 px-3 py-1.5 rounded-lg text-retro-light font-extrabold tracking-wider">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-        <span>Gateway: Online</span>
-      </div>
-    </div>
-  </header>
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="Cari nama, deskripsi, atau path…" aria-label="Cari endpoint" autocomplete="off">
+    <div class="cats" id="cats" role="toolbar" aria-label="Kategori"><button type="button" data-cat="ALL" aria-pressed="true">Semua</button></div>
+  </div>
 
-  <main class="max-w-7xl mx-auto px-6 py-10 flex-grow w-full relative z-10 flex flex-col gap-8">
-    
-    <div class="flex justify-start items-center">
-      <a href="/home" class="inline-flex items-center gap-2 bg-retro-dark border border-retro-border hover:border-retro-orange/40 text-stone-300 hover:text-white font-mono font-black text-[9px] tracking-[0.15em] px-5 py-3 rounded-xl transition-all duration-300 shadow-lg">
-        <i data-lucide="arrow-left" class="w-4 h-4 text-retro-orange"></i>
-        <span>Kembali ke home</span>
-      </a>
-    </div>
-    
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-retro-border/30 pb-10">
-      <div class="flex flex-col gap-2">
-        <div class="inline-flex items-center gap-2 bg-retro-orange/10 border border-retro-orange/20 px-3 py-1 rounded-full font-mono text-[9px] text-retro-light tracking-widest self-start">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <span>Live playground</span>
-        </div>
-        <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white font-sans">
-          Api <span class="text-retro-orange font-mono font-medium">Playground</span>
-        </h1>
-        <p class="text-stone-400 text-sm max-w-xl font-sans">
-          Eksplorasi modul, saring plugin fungsional, dan luncurkan konsol pengujian interaktif kami secara instan tanpa hambatan.
-        </p>
-      </div>
+  <div class="ep-grid" id="grid" aria-live="polite"><p class="loading">Memuat katalog…</p></div>
+</main>
+<footer class="site-foot"><div class="inner">
+  <span>© <span id="year"></span> <span id="creator">Yannz2z</span> · Yannz API</span>
+  <nav aria-label="Kontak"><a id="wa" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a><a id="tg" href="#" target="_blank" rel="noopener noreferrer">Telegram</a><a id="ig" href="#" target="_blank" rel="noopener noreferrer">Instagram</a><a id="ch" href="#" target="_blank" rel="noopener noreferrer">Saluran WA</a><a id="mail" href="#">Email</a></nav>
+</div></footer>
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let catalog = {};
+let active = 'ALL';
+$('#year').textContent = new Date().getFullYear();
 
-      <div class="bg-retro-dark border border-retro-border/50 px-5 py-4 rounded-2xl flex items-center gap-4 shadow-xl self-start md:self-auto relative overflow-hidden group">
-        <div class="absolute inset-0 bg-gradient-to-r from-retro-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <div class="w-10 h-10 rounded-xl bg-retro-orange/15 border border-retro-orange/30 flex items-center justify-center text-retro-orange shadow-inner">
-          <i data-lucide="blocks" class="w-5 h-5"></i>
-        </div>
-        <div class="relative z-10">
-          <span class="block font-mono text-[8px] text-stone-400 tracking-widest font-black">Api tersedia</span>
-          <span id="api-counter-txt" class="text-base font-mono font-black text-white leading-none">... APIs</span>
-        </div>
-      </div>
-    </div>
+fetch('/api/set').then(r => r.json()).then(s => {
+  $('#web-title').textContent = s.webName || 'Yannz API';
+  $('#creator').textContent = s.creatorName || 'Yannz2z';
+  const links = { wa: s.whatsappLink, tg: s.telegramLink, ig: s.instagramLink, ch: s.whatsappChannelLink, mail: s.emailAddress ? 'mailto:' + s.emailAddress : '' };
+  for (const [id, href] of Object.entries(links)) { if (href) $('#' + id).href = href; else $('#' + id).hidden = true; }
+}).catch(() => {});
 
-    <div class="bg-retro-dark border border-retro-border/50 p-5 rounded-2xl flex flex-col gap-5 shadow-2xl relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-b from-retro-orange/[0.02] to-transparent pointer-events-none"></div>
-      <div class="relative">
-        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-500"></i>
-        <input type="text" id="playground-search" placeholder="Cari endpoint atau kata kunci (contoh: asupan, brat, sticker)..." class="w-full bg-[#0a0908]/90 border border-retro-border hover:border-retro-orange/30 focus:border-retro-orange text-stone-200 text-xs font-mono rounded-xl pl-12 pr-4 py-3.5 focus:outline-none transition-all placeholder:text-stone-600 shadow-inner focus:shadow-glow">
-      </div>
-
-      <div>
-        <span class="block font-mono text-[8px] text-retro-gray tracking-[0.2em] font-black mb-3">Kategori modul:</span>
-        <div class="flex flex-wrap gap-2.5" id="category-chips">
-          <button onclick="filterCategory('ALL')" id="chip-all" class="category-chip text-[9px] font-mono font-black bg-retro-orange text-retro-black px-4 py-2 rounded-xl transition-all duration-300 cursor-pointer tracking-wider shadow-sm">All</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[250px]" id="apis-grid-container">
-      <div class="col-span-full flex flex-col items-center justify-center py-20 text-retro-gray font-mono text-xs gap-3">
-        <div class="relative w-10 h-10 flex items-center justify-center">
-          <div class="absolute inset-0 border-2 border-retro-orange/10 rounded-full animate-pulse"></div>
-          <div class="absolute inset-0 border-2 border-t-retro-orange rounded-full animate-spin"></div>
-        </div>
-        <span class="tracking-widest animate-pulse uppercase text-[10px] font-bold mt-2">Memuat daftar API Hub...</span>
-      </div>
-    </div>
-
-  </main>
-
-  <footer class="border-t border-retro-border bg-retro-dark/95 backdrop-blur-md pt-14 pb-8 relative z-10">
-    <div class="max-w-7xl mx-auto px-6">
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-10 mb-10 pb-10 border-b border-retro-border/30">
-        
-        <div class="md:col-span-5 flex flex-col gap-4">
-          <div class="flex items-center gap-3">
-            <img id="footer-logo-img" src="https://img2.pixhost.to/images/9050/745481347_yannganteng-1783009788991.jpg" class="w-7 h-7 rounded-lg border border-retro-orange/30 object-cover shadow-md">
-            <span id="footer-brand-title" class="font-mono font-bold text-white uppercase tracking-wider text-xs">Yannz Api</span>
-          </div>
-          <p class="text-xs text-stone-400 leading-relaxed max-w-sm">
-            Platform integrasi API inovatif dengan kinerja modular yang andal. Menghubungkan imajinasi digital Anda dengan eksekusi kode backend mutakhir secara instan.
-          </p>
-          <span class="text-[10px] font-mono text-retro-gray mt-1">
-            Build with Craftsmanship by <b id="footer-creator" class="text-white">YannAjah</b>
-          </span>
-        </div>
-
-        <div class="md:col-span-7 flex flex-col justify-between">
-          <div>
-            <span class="block font-mono text-[10px] uppercase text-retro-light font-bold tracking-widest mb-4">HUBUNGI & IKUTI KAMI</span>
-            
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <a id="footer-wa" target="_blank" href="#" class="flex items-center gap-2 bg-retro-black/50 hover:bg-emerald-500/10 border border-retro-border hover:border-emerald-500/30 p-2.5 rounded-lg text-xs transition-all group text-stone-300 hover:text-white">
-                <i data-lucide="message-square" class="w-4.5 h-4.5 text-emerald-500 group-hover:scale-105 transition-transform"></i>
-                <div class="flex flex-col">
-                  <span class="font-mono text-[8px] text-retro-gray leading-none uppercase">WhatsApp</span>
-                  <span class="font-semibold text-[10px]">Chat Admin</span>
-                </div>
-              </a>
-              
-              <a id="footer-tg" target="_blank" href="#" class="flex items-center gap-2 bg-retro-black/50 hover:bg-sky-500/10 border border-retro-border hover:border-sky-500/30 p-2.5 rounded-lg text-xs transition-all group text-stone-300 hover:text-white">
-                <i data-lucide="send" class="w-4.5 h-4.5 text-sky-400 group-hover:scale-105 transition-transform"></i>
-                <div class="flex flex-col">
-                  <span class="font-mono text-[8px] text-retro-gray leading-none uppercase">Telegram</span>
-                  <span class="font-semibold text-[10px]">Hubungi Telegram</span>
-                </div>
-              </a>
-
-              <a id="footer-channel" target="_blank" href="#" class="flex items-center gap-2 bg-retro-black/50 hover:bg-retro-orange/10 border border-retro-border hover:border-retro-orange/30 p-2.5 rounded-lg text-xs transition-all group text-stone-300 hover:text-white">
-                <i data-lucide="radio" class="w-4.5 h-4.5 text-retro-orange group-hover:scale-105 transition-transform"></i>
-                <div class="flex flex-col">
-                  <span class="font-mono text-[8px] text-retro-gray leading-none uppercase">Saluran WA</span>
-                  <span class="font-semibold text-[10px]">Join Channel</span>
-                </div>
-              </a>
-
-              <a id="footer-ig" target="_blank" href="#" class="flex items-center gap-2 bg-retro-black/50 hover:bg-pink-500/10 border border-retro-border hover:border-pink-500/30 p-2.5 rounded-lg text-xs transition-all group text-stone-300 hover:text-white">
-                <i data-lucide="instagram" class="w-4.5 h-4.5 text-pink-500 group-hover:scale-105 transition-transform"></i>
-                <div class="flex flex-col">
-                  <span class="font-mono text-[8px] text-retro-gray leading-none uppercase">Instagram</span>
-                  <span class="font-semibold text-[10px]">Follow Updates</span>
-                </div>
-              </a>
-
-              <a id="footer-email" href="#" class="col-span-1 sm:col-span-2 flex items-center gap-2 bg-retro-black/50 hover:bg-amber-500/10 border border-retro-border hover:border-amber-500/30 p-2.5 rounded-lg text-xs transition-all group text-stone-300 hover:text-white">
-                <i data-lucide="mail" class="w-4.5 h-4.5 text-amber-500 group-hover:scale-105 transition-transform"></i>
-                <div class="flex flex-col">
-                  <span class="font-mono text-[8px] text-retro-gray leading-none uppercase">Email Resmi</span>
-                  <span class="font-semibold text-[10px] truncate" id="footer-email-txt">admin@example.com</span>
-                </div>
-              </a>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-mono text-retro-gray">
-        <div>
-          <span>© 2026</span>
-          <span class="text-retro-orange font-bold uppercase">Yannz Api</span>
-          <span>• Hak Cipta Dilindungi.</span>
-        </div>
-        <div class="flex gap-4 font-bold">
-          <a href="/home" class="hover:text-retro-orange transition-colors">Home</a>
-          <a href="/api/playground" class="text-retro-orange hover:text-white transition-colors">Playground</a>
-          <a href="/api" class="hover:text-retro-orange transition-colors">API Console</a>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    let allEndpoints = {};
-    let activeCategory = 'ALL';
-
-    fetch('/api/set')
-      .then(res => res.json())
-      .then(settings => {
-        const webName = settings.webName || 'Yannz Api';
-        document.title = "Playground - " + (settings.apiTitle || "Retro API Hub");
-        document.getElementById('favicon').href = "/api/logo-proxy";
-        const titleEl = document.getElementById('web-title');
-        if (titleEl) {
-          titleEl.innerHTML = webName.replace(/\s+/g, ' <span class="text-retro-orange font-light">//</span> ');
-        }
-        document.getElementById('footer-creator').innerText = settings.creatorName || 'YannAjah';
-        document.getElementById('footer-brand-title').innerText = webName;
-        
-        const logoImg = document.getElementById('nav-logo-img');
-        if (logoImg) logoImg.src = "/api/logo-proxy";
-        
-        const footerLogoImg = document.getElementById('footer-logo-img');
-        if (footerLogoImg) footerLogoImg.src = "/api/logo-proxy";
-
-        const footerWa = document.getElementById('footer-wa');
-        if (footerWa) footerWa.href = settings.whatsappLink || '#';
-        
-        const footerIg = document.getElementById('footer-ig');
-        if (footerIg) footerIg.href = settings.instagramLink || '#';
-        
-        const footerTg = document.getElementById('footer-tg');
-        if (footerTg) footerTg.href = settings.telegramLink || '#';
-        
-        const footerChannel = document.getElementById('footer-channel');
-        if (footerChannel) footerChannel.href = settings.whatsappChannelLink || '#';
-        
-        const footerEmail = document.getElementById('footer-email');
-        if (footerEmail) footerEmail.href = settings.emailAddress ? `mailto:${settings.emailAddress}` : '#';
-        
-        const footerEmailTxt = document.getElementById('footer-email-txt');
-        if (footerEmailTxt) footerEmailTxt.innerText = settings.emailAddress || 'admin@example.com';
-
-        loadEndpoints();
-      })
-      .catch(err => {
-        console.error("Error loading settings:", err);
-        loadEndpoints();
-      });
-
-    function loadEndpoints() {
-      fetch('/api/endpoints')
-        .then(res => res.json())
-        .then(data => {
-          allEndpoints = data.endpoints || {};
-          document.getElementById('api-counter-txt').innerText = `${data.total || 0} APIs`;
-
-          const chipsContainer = document.getElementById('category-chips');
-          Object.keys(allEndpoints).forEach(cat => {
-            const btn = document.createElement('button');
-            btn.className = "category-chip text-[9px] font-mono font-bold bg-[#0d0c0b] hover:bg-retro-orange/15 text-stone-300 hover:text-retro-orange border border-retro-border/60 px-4 py-2 rounded-xl transition-all duration-300 cursor-pointer tracking-wider";
-            btn.innerText = cat;
-            btn.id = `chip-${cat.toLowerCase()}`;
-            btn.onclick = () => filterCategory(cat);
-            chipsContainer.appendChild(btn);
-          });
-
-          renderApis();
-          setTimeout(dismissLoader, 300);
-        })
-        .catch(err => {
-          console.error("Error loading endpoints:", err);
-          setTimeout(dismissLoader, 300);
-        });
+function render() {
+  const q = $('#search').value.trim().toLowerCase();
+  const cards = [];
+  for (const [cat, items] of Object.entries(catalog)) {
+    if (active !== 'ALL' && active !== cat) continue;
+    for (const api of items) {
+      const path = api.cleanPath || api.path.split('?')[0];
+      if (q && ![api.name, api.desc, path, cat].some(v => String(v || '').toLowerCase().includes(q))) continue;
+      const tier = api.access?.minimum_tier || 'FREE';
+      const state = api.access?.status && api.access.status !== 'active' ? ['nonaktif', 'bad'] : api.access?.locked ? ['terkunci', 'warn'] : ['aktif', 'ok'];
+      cards.push(`<article class="ep">
+        <div class="ep-top"><span class="chip">${esc(cat)}</span><span class="chip ${state[1]}">${state[0]}</span></div>
+        <h2>${esc(api.name)}</h2>
+        <p>${esc(api.desc)}</p>
+        <div><span class="chip">GET</span><span class="chip">tier ${esc(tier)}</span></div>
+        <div class="ep-foot"><code title="${esc(path)}">${esc(path)}</code><a class="btn primary" href="/api?endpoint=${encodeURIComponent(path)}">Coba →</a></div>
+      </article>`);
     }
+  }
+  $('#grid').innerHTML = cards.length ? cards.join('') : '<div class="empty" style="grid-column:1/-1"><b>Tidak ada yang cocok.</b><br>Coba kata kunci atau kategori lain.</div>';
+}
 
-    function filterCategory(cat) {
-      activeCategory = cat;
-      const chips = document.querySelectorAll('.category-chip');
-      chips.forEach(chip => {
-        if (chip.id === `chip-${cat.toLowerCase()}`) {
-          chip.className = "category-chip text-[9px] font-mono font-black bg-retro-orange text-retro-black px-4 py-2 rounded-xl transition-all duration-300 cursor-pointer tracking-wider shadow-md";
-        } else {
-          chip.className = "category-chip text-[9px] font-mono font-bold bg-[#0d0c0b] hover:bg-retro-orange/15 text-stone-300 hover:text-retro-orange border border-retro-border/60 px-4 py-2 rounded-xl transition-all duration-300 cursor-pointer tracking-wider";
-        }
-      });
-      renderApis();
-    }
+fetch('/api/endpoints').then(r => r.json()).then(d => {
+  catalog = d.endpoints || {};
+  $('#api-counter').textContent = d.total ?? Object.values(catalog).flat().length;
+  $('#cats').insertAdjacentHTML('beforeend', Object.keys(catalog).map(c => `<button type="button" data-cat="${esc(c)}" aria-pressed="false">${esc(c)}</button>`).join(''));
+  render();
+}).catch(() => { $('#grid').innerHTML = '<p class="error">Katalog sementara tidak tersedia. Coba muat ulang.</p>'; });
 
-    document.getElementById('playground-search').addEventListener('input', () => {
-      renderApis();
-    });
-
-    function renderApis() {
-      const query = document.getElementById('playground-search').value.toLowerCase();
-      const container = document.getElementById('apis-grid-container');
-      container.innerHTML = '';
-
-      let renderCount = 0;
-
-      Object.keys(allEndpoints).forEach(category => {
-        if (activeCategory !== 'ALL' && activeCategory !== category) return;
-
-        const endpoints = allEndpoints[category];
-        const filtered = endpoints.filter(api => 
-          api.name.toLowerCase().includes(query) || 
-          api.desc.toLowerCase().includes(query) || 
-          api.path.toLowerCase().includes(query)
-        );
-
-        filtered.forEach(api => {
-          renderCount++;
-          const card = document.createElement('div');
-          card.className = "bg-retro-dark border border-retro-border/50 hover:border-retro-orange/40 rounded-2xl p-6 shadow-lg hover:shadow-glow hover:-translate-y-1.5 transition-all duration-350 flex flex-col justify-between group relative overflow-hidden";
-          
-          // Subtle hover gradient
-          const ambient = document.createElement('div');
-          ambient.className = "absolute -right-10 -top-10 w-24 h-24 orange-glow-blur opacity-0 group-hover:opacity-40 transition-opacity pointer-events-none";
-          card.appendChild(ambient);
-
-          const rawRoutePath = api.path.split('?')[0];
-
-          card.innerHTML = `
-            <div class="relative z-10">
-              <div class="flex items-center justify-between gap-2 mb-4">
-                <span class="text-[8px] font-mono font-black bg-[#0d0c0b] text-retro-orange border border-retro-orange/20 px-2.5 py-1 rounded-md tracking-wider">${category}</span>
-                <span class="text-[8px] font-mono font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-md">GET</span>
-              </div>
-              
-              <h3 class="font-mono font-black text-sm tracking-tight text-white mb-2 group-hover:text-retro-orange transition-colors">${api.name}</h3>
-              
-              <p class="text-xs text-stone-400 leading-relaxed mb-3 min-h-[40px] line-clamp-3 font-sans">${api.desc}</p><p class="text-[9px] font-mono text-stone-500 mb-3">Tier: ${api.access?.minimum_tier || 'FREE'} · ${api.access?.locked ? 'Locked' : 'Active'}</p>
-            </div>
-
-            <div class="border-t border-retro-border/30 pt-4 mt-2 relative z-10">
-              <div class="flex items-center justify-between gap-4">
-                <code class="text-[9px] font-mono text-stone-500 truncate select-all hover:text-stone-300 transition-colors" title="${rawRoutePath}">${rawRoutePath}</code>
-                <a href="/api?endpoint=${rawRoutePath}" class="flex-shrink-0 inline-flex items-center gap-1.5 bg-retro-orange/15 hover:bg-retro-orange border border-retro-orange/20 hover:border-retro-orange text-retro-orange hover:text-retro-black font-mono font-black text-[9px] px-4 py-2.5 rounded-xl transition-all duration-300">
-                  <span>Get Api</span>
-                  <i data-lucide="chevron-right" class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"></i>
-                </a>
-              </div>
-            </div>
-          `;
-          container.appendChild(card);
-        });
-      });
-
-      if (renderCount === 0) {
-        container.innerHTML = `
-          <div class="col-span-full flex flex-col items-center justify-center py-20 text-retro-gray font-mono text-xs gap-3">
-            <i data-lucide="alert-triangle" class="w-8 h-8 text-stone-700"></i>
-            <span class="uppercase tracking-widest font-black text-[10px]">No matches found</span>
-            <span class="text-stone-500 font-sans">Tidak ada endpoint API yang cocok dengan pencarian Anda.</span>
-          </div>
-        `;
-        window.lucide?.createIcons();
-      } else {
-        window.lucide?.createIcons();
-      }
-    }
-
-    function dismissLoader() {
-      const loader = document.getElementById('page-loader');
-      if (loader) {
-        loader.classList.add('opacity-0');
-        loader.classList.add('pointer-events-none');
-        setTimeout(() => {
-          loader.style.display = 'none';
-        }, 500);
-      }
-    }
-
-    window.lucide?.createIcons();
-    window.addEventListener('load', () => {
-      setTimeout(dismissLoader, 600);
-    });
-  </script>
+$('#cats').addEventListener('click', e => {
+  const b = e.target.closest('button[data-cat]'); if (!b) return;
+  active = b.dataset.cat;
+  document.querySelectorAll('#cats button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  render();
+});
+$('#search').addEventListener('input', render);
+</script>
 </body>
 </html>
