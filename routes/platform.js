@@ -155,7 +155,7 @@ router.post('/api/orders', sameOrigin, auth, async (req, res) => {
   if (wanted < current) return fail(res, 400, 'TIER_NOT_UPGRADE', `Tier kamu (${req.account.tier}) lebih tinggi dari ${tier}.`);
   // Same tier = extension; only possible when the current tier actually expires.
   if (wanted === current && !req.account.tierExpiresAt) return fail(res, 400, 'TIER_NOT_UPGRADE', `Tier ${tier} kamu tidak punya masa berlaku, jadi tidak perlu diperpanjang.`);
-  await orderService.expirePendingOrders();
+  await orderService.expirePendingOrdersSafe();
   const pending = (await query("SELECT count(*)::int AS n FROM orders WHERE user_id=$1 AND status='pending'", [req.account.id]))[0].n;
   const idem = String(req.get('Idempotency-Key') || '').slice(0, 100) || null;
   if (pending >= MAX_PENDING_ORDERS) {
@@ -185,7 +185,7 @@ async function paymentSettings() {
 }
 
 router.get('/api/orders', auth, async (req, res) => {
-  await orderService.expirePendingOrders();
+  await orderService.expirePendingOrdersSafe();
   const orders = await query(
     `SELECT o.id,o.order_code,o.tier,o.amount,o.status,o.created_at,o.expires_at,o.paid_at,
             COALESCE((to_jsonb(o.*) ->> 'duration_days')::int,30) AS duration_days,
@@ -221,7 +221,7 @@ router.get('/api/orders', auth, async (req, res) => {
 });
 
 async function pendingOrderFor(req) {
-  await orderService.expirePendingOrders();
+  await orderService.expirePendingOrdersSafe();
   return (await query("SELECT * FROM orders WHERE id=$1 AND user_id=$2 AND status='pending' AND expires_at>now()", [req.params.id, req.account.id]))[0];
 }
 
@@ -532,7 +532,7 @@ router.delete('/owner/api/endpoints/:id', sameOrigin, auth, owner, validId('id')
 
 // ---------------------------------------------------------------- owner: payments
 router.get('/owner/payments', auth, owner, async (req, res) => {
-  await orderService.expirePendingOrders();
+  await orderService.expirePendingOrdersSafe();
   const status = String(req.query.status || '').toLowerCase();
   const payments = await query(
     `SELECT p.id,p.order_id,p.provider,p.payment_method,p.transaction_id,p.provider_reference,p.amount,p.proof_url,p.status,p.verified_at,p.created_at,p.updated_at,
@@ -683,7 +683,9 @@ router.use((err, req, res, next) => {
   if (err?.isDatabaseError) {
     const c = classifyDatabaseError(err);
     console.error('Platform route failed:', { path: req.path, error: c.error, code: c.code });
-    return fail(res, 503, c.error === 'DATABASE_SCHEMA_OUTDATED' ? c.error : 'DATABASE_UNAVAILABLE', 'Layanan data sementara tidak tersedia.');
+    // dbCode is the SQLSTATE (e.g. 23514), never the SQL text or parameters: it lets the
+    // owner diagnose schema drift from a screenshot without access to server logs.
+    return fail(res, 503, c.error === 'DATABASE_SCHEMA_OUTDATED' ? c.error : 'DATABASE_UNAVAILABLE', 'Layanan data sementara tidak tersedia.', { dbCode: /^[0-9A-Z]{5}$/.test(c.code) ? c.code : null });
   }
   console.error('Platform route failed:', { path: req.path, name: err?.name || null, code: err?.code || null });
   return fail(res, 500, 'INTERNAL_ERROR', 'Terjadi kesalahan server.');

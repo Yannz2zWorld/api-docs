@@ -10,7 +10,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS tier_expires_at timestamptz;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS duration_days integer NOT NULL DEFAULT 30;
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'orders_duration_days_check') THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'orders_duration_days_check' AND conrelid = 'orders'::regclass) THEN
     IF EXISTS (SELECT 1 FROM orders WHERE duration_days NOT BETWEEN 7 AND 365) THEN
       RAISE WARNING 'orders_duration_days_check skipped: rows outside 7..365 exist';
     ELSE
