@@ -120,6 +120,15 @@ it('the hero scythe model is served as a small Draco GLB', async () => {
   assert.match(r.text, /KHR_draco_mesh_compression/);
 });
 
+it('the login hero loads a WebGL1-capable three.js build and preloads the scythe', async () => {
+  const r = await app.request('GET', '/');
+  assert.equal(r.status, 200);
+  // r163+ needs WebGL2; phones that only expose WebGL1 would fall back to the CSS scene.
+  assert.match(r.text, /three@0\.147\.0\/build\/three\.module\.js/);
+  assert.doesNotMatch(r.text, /three@0\.1[6-9]\d/);
+  assert.match(r.text, /rel="preload" href="\/assets\/scythe\.glb"/);
+});
+
 it('the 3D scene page is public and loads three.js from the CDN', async () => {
   for (const url of ['/3d', '/scythe']) {
     const r = await app.request('GET', url);

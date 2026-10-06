@@ -1,4 +1,5 @@
 // Yannz API — WebGL hero: the Crimson Requiem scythe (the /3d model, baked to a light GLB).
+// three r147 on purpose: later releases need WebGL2, and many phones only expose WebGL1.
 // Mounted on elements with [data-scene3d] ("core" on the login page, "stack" on the dashboard).
 // Until the model has loaded — or if WebGL, the CDN module or the model is unavailable — the
 // page keeps its CSS fallback. Rendering pauses when the scene is off-screen or the tab is
@@ -9,8 +10,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
+THREE.ColorManagement.legacyMode = false;   // colours as authored (sRGB), like the r15x defaults
+
 const MODEL_URL = '/assets/scythe.glb';
-const DRACO_PATH = 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/';
+const DRACO_PATH = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/libs/draco/gltf/';
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const COARSE = matchMedia('(pointer: coarse)').matches;
 // Phones, small screens and low-memory/low-core machines get the light path.
@@ -40,7 +43,7 @@ function glowTexture(size = 128, hardness = 0.15) {
   g.fillStyle = grad;
   g.fillRect(0, 0, size, size);
   const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
+  t.encoding = THREE.sRGBEncoding;
   return t;
 }
 
@@ -121,7 +124,8 @@ function mount(el) {
   const PR_MAX = Math.min(window.devicePixelRatio || 1, LITE ? 1 : 1.5), PR_MIN = 0.7;
   let pixelRatio = PR_MAX;
   renderer.setPixelRatio(pixelRatio);
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.physicallyCorrectLights = true;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.setClearColor(0x000000, 0);
@@ -187,10 +191,13 @@ function mount(el) {
     // Fit the scythe to the visible height (and width on narrow frames), then anchor it:
     // login keeps it to the upper right so the headline below stays clear; the dashboard centres it.
     const visH = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), visW = visH * camera.aspect;
-    let sx, sy, frac;
-    if (variant === 'stack') [sx, sy, frac] = [0.5, 0.48, 0.9];
-    else [sx, sy, frac] = w < 560 ? [0.7, 0.4, 0.66] : camera.aspect > 1.25 ? [0.68, 0.45, 0.76] : [0.66, 0.4, 0.68];
-    const fit = Math.min(visH * frac / size.y, visW * (variant === 'stack' ? 1.05 : 0.6) / size.x);
+    // [screen x, screen y, share of the height, share of the width]
+    let sx, sy, frac, wide;
+    if (variant === 'stack') [sx, sy, frac, wide] = [0.5, 0.48, 0.9, 1.05];
+    else if (camera.aspect < 0.7) [sx, sy, frac, wide] = [0.54, 0.34, 0.6, 0.86];   // tall, narrow panel
+    else if (w < 560) [sx, sy, frac, wide] = [0.7, 0.4, 0.66, 0.6];
+    else [sx, sy, frac, wide] = camera.aspect > 1.25 ? [0.68, 0.45, 0.76, 0.6] : [0.66, 0.4, 0.68, 0.6];
+    const fit = Math.min(visH * frac / size.y, visW * wide / size.x);
     root.position.copy(screenToWorld(sx, sy));
     root.scale.setScalar(fit);
   }
