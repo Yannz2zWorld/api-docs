@@ -17,7 +17,11 @@ const emailService = require('../services/emailService');
 
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
-const MANUAL_METHODS = ['DANA', 'GOPAY', 'QRIS', 'BANK_TRANSFER'];
+const { parseProofImage } = require('../lib/proofImage');
+const QRCode = require('qrcode');
+
+// Manual methods: QRIS (the owner's static QRIS image), DANA and GoPay transfers.
+const MANUAL_METHODS = ['QRIS', 'DANA', 'GOPAY'];
 const MAX_PENDING_ORDERS = 5;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -98,7 +102,7 @@ router.get('/api/dashboard', auth, async (req, res) => {
   const t = tiers.getTier(req.account.tier);
   res.json({
     success: true,
-    user: { id: req.account.id, name: req.account.name, email: req.account.email, picture: req.account.picture, tier: req.account.tier, isOwner: req.account.isOwner },
+    user: { id: req.account.id, name: req.account.name, email: req.account.email, picture: req.account.picture, tier: req.account.tier, tierExpiresAt: req.account.tierExpiresAt, isOwner: req.account.isOwner },
     usage: usagePayload(req.account.tier, used),
     apiKeys: { used: ks.filter(k => k.status === 'active').length, limit: finite(t.keys) }
   });
@@ -111,12 +115,19 @@ router.get('/api/keys', auth, async (req, res) => {
 
 router.post('/api/keys', sameOrigin, auth, async (req, res) => {
   try {
-    const made = await keys.createKey(req.account, req.body?.name, String(req.get('Idempotency-Key') || '').slice(0, 100) || null);
+    const customValue = typeof req.body?.custom_key === 'string' ? req.body.custom_key : null;
+    // Value-guessing via "already taken" answers: cap custom attempts per account per hour.
+    if (customValue && (await query("SELECT count(*)::int AS n FROM audit_logs WHERE actor_user_id=$1 AND action='api_key_custom_attempt' AND created_at>now()-interval '1 hour'", [req.account.id]))[0].n >= 20) {
+      return fail(res, 429, 'TOO_MANY_ATTEMPTS', 'Terlalu banyak percobaan custom key. Coba lagi dalam 1 jam.');
+    }
+    if (customValue) await audit.writeAudit({ actorUserId: req.account.id, action: 'api_key_custom_attempt', targetType: 'api_key', ipAddress: ip(req) });
+    const made = await keys.createKey(req.account, req.body?.name, String(req.get('Idempotency-Key') || '').slice(0, 100) || null, customValue);
     await audit.writeAudit({ actorUserId: req.account.id, action: 'api_key_create', targetType: 'api_key', targetId: made.record.id, ipAddress: ip(req) });
     res.status(201).json({ success: true, key: made.key, record: made.record, warning: 'Salin key sekarang. Plaintext hanya ditampilkan satu kali.' });
   } catch (e) {
     if (e.code === 'KEY_LIMIT' || e.code === 'KEYS_NOT_INCLUDED') return fail(res, 403, e.code, e.message);
-    if (e.code === 'IDEMPOTENCY_REPLAY') return fail(res, 409, e.code, e.message);
+    if (e.code === 'IDEMPOTENCY_REPLAY' || e.code === 'CUSTOM_KEY_TAKEN') return fail(res, 409, e.code, e.message);
+    if (e.code === 'INVALID_CUSTOM_KEY') return fail(res, 400, e.code, e.message);
     throw e;
   }
 });
@@ -134,7 +145,16 @@ router.post('/api/keys/:id/revoke', sameOrigin, auth, validId('id'), revokeOwnKe
 router.post('/api/orders', sameOrigin, auth, async (req, res) => {
   const tier = String(req.body?.tier || '').toUpperCase();
   if (!tiers.purchasable.includes(tier)) return fail(res, 400, 'INVALID_TIER', 'Paket pembelian tidak valid.');
-  if (tiers.getTier(tier).rank <= tiers.getTier(req.account.tier).rank) return fail(res, 400, 'TIER_NOT_UPGRADE', `Tier kamu (${req.account.tier}) sudah setara atau lebih tinggi dari ${tier}.`);
+  const rawDays = req.body?.duration_days ?? tiers.DURATION.default;
+  const days = Number(rawDays);
+  if (!Number.isInteger(days) || days < tiers.DURATION.min || days > tiers.DURATION.max) {
+    return fail(res, 400, 'INVALID_DURATION', `Durasi harus ${tiers.DURATION.min}–${tiers.DURATION.max} hari.`);
+  }
+  const current = tiers.getTier(req.account.tier).rank;
+  const wanted = tiers.getTier(tier).rank;
+  if (wanted < current) return fail(res, 400, 'TIER_NOT_UPGRADE', `Tier kamu (${req.account.tier}) lebih tinggi dari ${tier}.`);
+  // Same tier = extension; only possible when the current tier actually expires.
+  if (wanted === current && !req.account.tierExpiresAt) return fail(res, 400, 'TIER_NOT_UPGRADE', `Tier ${tier} kamu tidak punya masa berlaku, jadi tidak perlu diperpanjang.`);
   await orderService.expirePendingOrders();
   const pending = (await query("SELECT count(*)::int AS n FROM orders WHERE user_id=$1 AND status='pending'", [req.account.id]))[0].n;
   const idem = String(req.get('Idempotency-Key') || '').slice(0, 100) || null;
@@ -144,24 +164,31 @@ router.post('/api/orders', sameOrigin, auth, async (req, res) => {
     if (!replay) return fail(res, 429, 'TOO_MANY_PENDING_ORDERS', `Maksimal ${MAX_PENDING_ORDERS} order pending. Selesaikan atau tunggu order lama kedaluwarsa.`);
   }
   // Amount always comes from the server-side tier table; any client-sent amount is ignored.
-  const amount = tiers.TIERS[tier].price;
+  const amount = tiers.priceFor(tier, days);
   const code = `YAN-${tier}-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
   const rows = await query(
-    `INSERT INTO orders(user_id,order_code,tier,amount,status,expires_at,idempotency_key)
-     VALUES($1,$2,$3,$4,'pending',now()+interval '2 hours',$5)
-     ON CONFLICT(user_id,idempotency_key) WHERE idempotency_key IS NOT NULL DO UPDATE SET updated_at=orders.updated_at WHERE orders.tier=EXCLUDED.tier
-     RETURNING id,order_code,tier,amount,status,created_at,expires_at`,
-    [req.account.id, code, tier, amount, idem]
+    `INSERT INTO orders(user_id,order_code,tier,amount,status,expires_at,idempotency_key,duration_days)
+     VALUES($1,$2,$3,$4,'pending',now()+interval '2 hours',$5,$6)
+     ON CONFLICT(user_id,idempotency_key) WHERE idempotency_key IS NOT NULL DO UPDATE SET updated_at=orders.updated_at WHERE orders.tier=EXCLUDED.tier AND orders.duration_days=EXCLUDED.duration_days
+     RETURNING id,order_code,tier,amount,status,created_at,expires_at,duration_days`,
+    [req.account.id, code, tier, amount, idem, days]
   );
   if (!rows.length) return fail(res, 409, 'IDEMPOTENCY_CONFLICT', 'Idempotency key sudah dipakai untuk paket yang berbeda.');
-  await audit.writeAudit({ actorUserId: req.account.id, action: 'order_create', targetType: 'order', targetId: rows[0].id, metadata: { tier, amount }, ipAddress: ip(req) });
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'order_create', targetType: 'order', targetId: rows[0].id, metadata: { tier, amount, days }, ipAddress: ip(req) });
   res.status(201).json({ success: true, order: rows[0] });
 });
+
+async function paymentSettings() {
+  const row = (await query('SELECT to_jsonb(server_settings.*) AS s FROM server_settings WHERE id=1'))[0]?.s || {};
+  const account = (number, name) => (number ? { number, name: name || null } : null);
+  return { DANA: account(row.payment_dana_number, row.payment_dana_name), GOPAY: account(row.payment_gopay_number, row.payment_gopay_name) };
+}
 
 router.get('/api/orders', auth, async (req, res) => {
   await orderService.expirePendingOrders();
   const orders = await query(
     `SELECT o.id,o.order_code,o.tier,o.amount,o.status,o.created_at,o.expires_at,o.paid_at,
+            COALESCE((to_jsonb(o.*) ->> 'duration_days')::int,30) AS duration_days,
             p.id AS payment_id,p.provider,p.payment_method,p.status AS payment_status,p.proof_url,
             p.payment_url,p.qr_string,p.va_number,p.gateway_expires_at
        FROM orders o
@@ -169,7 +196,28 @@ router.get('/api/orders', auth, async (req, res) => {
       WHERE o.user_id=$1 ORDER BY o.created_at DESC LIMIT 100`,
     [req.account.id]
   );
-  res.json({ success: true, orders, manualMethods: MANUAL_METHODS, gatewayMethods: pakasir.METHODS, gatewayConfigured: pakasir.isConfigured(), contact: settings.whatsappLink, manualInstructions: process.env.MANUAL_PAYMENT_INSTRUCTIONS || null });
+  const accounts = await paymentSettings();
+  res.json({
+    success: true,
+    orders,
+    tier: req.account.tier,
+    tierExpiresAt: req.account.tierExpiresAt,
+    duration: tiers.DURATION,
+    prices: Object.fromEntries(tiers.purchasable.map(t => [t, tiers.TIERS[t].price])),
+    methods: {
+      QRIS_GATEWAY: { available: pakasir.isConfigured(), autoVerified: pakasir.isVerificationConfigured() },
+      QRIS: { available: true, image: '/assets/qris-manual.jpg' },
+      DANA: { available: Boolean(accounts.DANA), account: accounts.DANA },
+      GOPAY: { available: Boolean(accounts.GOPAY), account: accounts.GOPAY }
+    },
+    // Kept for older clients.
+    manualMethods: MANUAL_METHODS,
+    gatewayMethods: pakasir.METHODS,
+    gatewayConfigured: pakasir.isConfigured(),
+    ownerNotify: notifier.status(),
+    contact: settings.whatsappLink,
+    manualInstructions: process.env.MANUAL_PAYMENT_INSTRUCTIONS || null
+  });
 });
 
 async function pendingOrderFor(req) {
@@ -190,10 +238,10 @@ router.post('/api/orders/:id/pakasir', sameOrigin, auth, validId('id'), async (r
     console.error('Pakasir create failed:', { status: e?.response?.status || null, code: e?.code || null });
     return fail(res, 502, 'PAYMENT_PROVIDER_ERROR', 'Gateway pembayaran belum dapat memproses transaksi.');
   }
-  const tx = data?.transaction || data?.data || data || {};
+  const tx = data?.payment || data?.transaction || data?.data || data || {};
   const txnId = String(tx.txn_id || tx.transaction_id || order.order_code);
   const ref = String(tx.txn_id || tx.payment_number || tx.transaction_id || tx.reference || order.order_code);
-  const gateway = { txn_id: tx.txn_id || null, payment_link: tx.payment_link || null, qr_string: tx.qr_string || null, va_number: tx.va_number || tx.payment_number || null, expired_at: tx.expired_at || null, total_payment: tx.total_payment || order.amount };
+  const gateway = { txn_id: tx.txn_id || null, payment_link: tx.payment_link || null, qr_string: tx.qr_string || (method === 'qris' ? tx.payment_number : null) || null, va_number: tx.va_number || (method !== 'qris' ? tx.payment_number : null) || null, expired_at: tx.expired_at || null, total_payment: tx.total_payment || order.amount };
   const gatewayExpires = gateway.expired_at && !Number.isNaN(Date.parse(gateway.expired_at)) ? new Date(gateway.expired_at).toISOString() : null;
   const payment = (await query(
     `INSERT INTO payments(order_id,user_id,provider,payment_method,transaction_id,provider_reference,amount,status,payment_url,qr_string,va_number,gateway_expires_at)
@@ -206,38 +254,77 @@ router.post('/api/orders/:id/pakasir', sameOrigin, auth, validId('id'), async (r
   res.status(201).json({ success: true, payment, gateway, note: 'Status tetap pending sampai pembayaran terverifikasi server.' });
 });
 
+// The gateway's QRIS payload rendered as a scannable image (never leaves our server).
+router.get('/api/orders/:id/qr.svg', auth, validId('id'), async (req, res) => {
+  const row = (await query(
+    `SELECT p.qr_string FROM payments p JOIN orders o ON o.id=p.order_id
+      WHERE o.id=$1 AND o.user_id=$2 AND p.provider='pakasir' AND p.qr_string IS NOT NULL
+      ORDER BY p.created_at DESC LIMIT 1`,
+    [req.params.id, req.account.id]
+  ))[0];
+  if (!row) return fail(res, 404, 'QR_NOT_FOUND', 'QRIS untuk order ini belum dibuat.');
+  const svg = await QRCode.toString(row.qr_string, { type: 'svg', margin: 2, errorCorrectionLevel: 'M', color: { dark: '#000000', light: '#ffffff' } });
+  res.set('Content-Type', 'image/svg+xml');
+  res.set('Cache-Control', 'private, no-store');
+  res.send(svg);
+});
+
 router.post('/api/orders/:id/manual', sameOrigin, auth, validId('id'), async (req, res) => {
   const method = String(req.body?.method || '').toUpperCase();
-  if (!MANUAL_METHODS.includes(method)) return fail(res, 400, 'INVALID_PAYMENT_METHOD', 'Metode manual tidak valid.');
-  const proof = String(req.body?.proof_url || '').trim();
-  let proofUrl;
-  try { proofUrl = new URL(proof); } catch {}
-  if (!proofUrl || proofUrl.protocol !== 'https:' || proof.length > 2048) return fail(res, 400, 'INVALID_PROOF_URL', 'Bukti pembayaran harus berupa URL HTTPS yang valid.');
+  if (!MANUAL_METHODS.includes(method)) return fail(res, 400, 'INVALID_PAYMENT_METHOD', 'Metode manual tidak valid. Pilih QRIS, DANA atau GOPAY.');
+  if (method !== 'QRIS' && !(await paymentSettings())[method]) return fail(res, 400, 'PAYMENT_METHOD_UNAVAILABLE', `Nomor ${method} belum diatur owner. Pilih metode lain.`);
+  // Proof: an uploaded image (billing page) or, for API clients, an HTTPS link.
+  let image = null;
+  let proofUrl = null;
+  if (req.body?.proof_image !== undefined) {
+    image = parseProofImage(req.body.proof_image);
+    if (image.error === 'PROOF_TOO_LARGE') return fail(res, 413, image.error, 'Gambar bukti maksimal 2 MB.');
+    if (image.error) return fail(res, 400, image.error, 'Bukti harus gambar JPG, PNG atau WebP.');
+  } else {
+    const proof = String(req.body?.proof_url || '').trim();
+    let url;
+    try { url = new URL(proof); } catch {}
+    if (!url || url.protocol !== 'https:' || proof.length > 2048) return fail(res, 400, 'INVALID_PROOF_URL', 'Upload gambar bukti pembayaran (atau kirim URL HTTPS bukti).');
+    proofUrl = url.href;
+  }
   const order = await pendingOrderFor(req);
   if (!order) return fail(res, 404, 'ORDER_NOT_FOUND', 'Order tidak ditemukan atau kedaluwarsa.');
   let payment;
   try {
-    // payments_one_pending_manual_uidx (migration 005) makes "one pending proof per order" atomic.
+    // payments_one_pending_manual_uidx (migration 005) makes "one pending proof per order" atomic;
+    // the proof image is stored in the same statement.
     payment = (await query(
-      `INSERT INTO payments(order_id,user_id,provider,payment_method,amount,proof_url,status)
-       SELECT $1,$2,'manual',$3,$4,$5,'pending'
-        WHERE NOT EXISTS (SELECT 1 FROM payments WHERE order_id=$1 AND provider='manual' AND status='pending')
-       RETURNING id,status,proof_url,created_at`,
-      [order.id, req.account.id, method, order.amount, proofUrl.href]
+      `WITH p AS (
+         INSERT INTO payments(order_id,user_id,provider,payment_method,amount,proof_url,status)
+         SELECT $1,$2,'manual',$3,$4,$5,'pending'
+          WHERE NOT EXISTS (SELECT 1 FROM payments WHERE order_id=$1 AND provider='manual' AND status='pending')
+         RETURNING id,status,proof_url,created_at),
+       proof AS (
+         INSERT INTO payment_proofs(payment_id,mime,size_bytes,sha256,data)
+         SELECT p.id,$6,$7,$8,decode($9,'base64') FROM p WHERE $6::text IS NOT NULL RETURNING payment_id)
+       SELECT p.*, EXISTS(SELECT 1 FROM proof) AS has_proof FROM p`,
+      [order.id, req.account.id, method, order.amount, proofUrl, image?.mime || null, image?.size || null, image?.sha256 || null, image ? image.buffer.toString('base64') : null]
     ))[0];
   } catch (e) {
     if (e.code !== '23505') throw e;
   }
   if (!payment) return fail(res, 409, 'PAYMENT_ALREADY_SUBMITTED', 'Bukti pembayaran untuk order ini sudah dikirim dan sedang menunggu approval owner.');
-  await audit.writeAudit({ actorUserId: req.account.id, action: 'manual_payment_create', targetType: 'payment', targetId: payment.id, metadata: { method, amount: order.amount }, ipAddress: ip(req) });
-  const notice = await notifier.notifyManualPayment({ order: order.order_code, tier: order.tier, amount: order.amount, method });
+  const days = Number(order.duration_days || 30);
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'manual_payment_create', targetType: 'payment', targetId: payment.id, metadata: { method, amount: order.amount, days, upload: Boolean(image) }, ipAddress: ip(req) });
+  const notice = await notifier.notifyManualPayment({
+    orderCode: order.order_code, tier: order.tier, days, amount: order.amount, method, email: req.account.email,
+    panelUrl: `${req.protocol}://${req.get('host')}/owner#payments`, proof: image ? { buffer: image.buffer, mime: image.mime } : null
+  });
+  if (notice.sent) await query('UPDATE payments SET owner_notified=$2 WHERE id=$1', [payment.id, notice.channel]).catch(() => {});
   res.status(201).json({
     success: true,
     payment,
     status: 'PAYMENT_PENDING',
     instructions: process.env.MANUAL_PAYMENT_INSTRUCTIONS || 'Bukti diterima. Status menunggu approval owner.',
     contact: settings.whatsappLink,
-    notification: notice.sent ? 'sent' : 'not_configured'
+    notification: notice.sent ? 'sent' : notice.reason === 'TELEGRAM_NOT_CONFIGURED' ? 'not_configured' : 'failed',
+    notificationChannel: notice.sent ? notice.channel : null,
+    links: notice.links
   });
 });
 
@@ -282,6 +369,7 @@ router.get('/owner/users', auth, owner, async (req, res) => {
   const offset = Math.max(0, Number(req.query.offset) || 0);
   const rows = await query(
     `SELECT u.id,u.email,u.name,u.picture,u.tier,u.status,u.created_at,u.banned_at,u.ban_reason,
+            (to_jsonb(u.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at,
             COALESCE(d.request_count,0)::int AS used_today,
             (SELECT count(*)::int FROM api_keys k WHERE k.user_id=u.id AND k.status='active') AS active_keys
        FROM users u
@@ -291,17 +379,17 @@ router.get('/owner/users', auth, owner, async (req, res) => {
       ORDER BY u.created_at DESC LIMIT $4 OFFSET $5`,
     [`%${q.replace(/[\\%_]/g, m => '\\' + m)}%`, tier, status, limit, offset]
   );
-  res.json({ success: true, users: rows.map(u => { const m = users.mapUser(u); return { ...u, tier: m.tier, isOwner: m.isOwner }; }), limit, offset });
+  res.json({ success: true, users: rows.map(u => { const m = users.mapUser(u); return { ...u, storedTier: u.tier, tier: m.tier, tierExpiresAt: m.tierExpiresAt, isOwner: m.isOwner }; }), limit, offset });
 });
 
 router.get('/owner/users/:id', auth, owner, validId('id'), async (req, res) => {
-  const u = (await query('SELECT id,google_id,email,name,picture,tier,status,created_at,updated_at,banned_at,ban_reason,email_verified,(password_hash IS NOT NULL) AS has_password FROM users WHERE id=$1', [req.params.id]))[0];
+  const u = (await query("SELECT id,google_id,email,name,picture,tier,status,created_at,updated_at,banned_at,ban_reason,email_verified,(password_hash IS NOT NULL) AS has_password,(to_jsonb(users.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at FROM users WHERE id=$1", [req.params.id]))[0];
   if (!u) return fail(res, 404, 'NOT_FOUND', 'User tidak ditemukan.');
   const mapped = users.mapUser(u);
   const [daily, apiKeys, orders] = await Promise.all([
     query("SELECT usage_date::text AS date,request_count AS used FROM daily_quota_counters WHERE user_id=$1 ORDER BY usage_date DESC LIMIT 14", [u.id]),
     keys.listKeys(u.id),
-    query(`SELECT o.id,o.order_code,o.tier,o.amount,o.status,o.created_at,o.paid_at,p.provider,p.status AS payment_status
+    query(`SELECT o.id,o.order_code,o.tier,o.amount,o.status,o.created_at,o.paid_at,COALESCE((to_jsonb(o.*) ->> 'duration_days')::int,30) AS duration_days,p.provider,p.status AS payment_status
              FROM orders o LEFT JOIN LATERAL (SELECT provider,status FROM payments WHERE order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true
             WHERE o.user_id=$1 ORDER BY o.created_at DESC LIMIT 50`, [u.id])
   ]);
@@ -309,7 +397,7 @@ router.get('/owner/users/:id', auth, owner, validId('id'), async (req, res) => {
   const usedToday = daily.find(d => d.date === todayKey)?.used || 0;
   const { google_id, ...profile } = u;
   profile.loginMethods = [google_id ? 'google' : null, u.has_password ? 'password' : null].filter(Boolean);
-  res.json({ success: true, user: { ...profile, storedTier: u.tier, tier: mapped.tier, isOwner: mapped.isOwner }, usage: { ...usagePayload(mapped.tier, usedToday), history: daily }, apiKeys, apiKeyLimit: finite(tiers.getTier(mapped.tier).keys), orders });
+  res.json({ success: true, user: { ...profile, storedTier: u.tier, tier: mapped.tier, tierExpiresAt: mapped.tierExpiresAt, isOwner: mapped.isOwner }, usage: { ...usagePayload(mapped.tier, usedToday), history: daily }, apiKeys, apiKeyLimit: finite(tiers.getTier(mapped.tier).keys), orders });
 });
 
 async function protectedTarget(req) {
@@ -346,10 +434,17 @@ router.post('/owner/users/:id/unban', sameOrigin, auth, owner, validId('id'), as
 router.patch('/owner/users/:id/tier', sameOrigin, auth, owner, validId('id'), async (req, res) => {
   const tier = String(req.body?.tier || '').toUpperCase();
   if (!['FREE', 'SULTAN', 'SEPUH', 'DEWA'].includes(tier)) return fail(res, 400, 'INVALID_TIER', 'Tier tidak valid. OWNER hanya ditentukan oleh OWNER_EMAIL.');
+  // Optional duration: empty = no expiry. FREE never expires.
+  const days = req.body?.days === undefined || req.body?.days === null || req.body?.days === '' ? null : Number(req.body.days);
+  if (days !== null && (!Number.isInteger(days) || days < 1 || days > 3650)) return fail(res, 400, 'INVALID_DURATION', 'Durasi harus 1–3650 hari atau kosong (permanen).');
   const t = await protectedTarget(req);
   if (t.error) return fail(res, ...t.error);
-  const r = await query('UPDATE users SET tier=$2,updated_at=now() WHERE id=$1 RETURNING id,tier', [req.params.id, tier]);
-  await audit.writeAudit({ actorUserId: req.account.id, action: 'user_tier_change', targetType: 'user', targetId: req.params.id, metadata: { tier }, ipAddress: ip(req) });
+  const r = await query(
+    `UPDATE users SET tier=$2,tier_expires_at=CASE WHEN $2='FREE' OR $3::int IS NULL THEN NULL ELSE now()+make_interval(days=>$3::int) END,updated_at=now()
+      WHERE id=$1 RETURNING id,tier,tier_expires_at`,
+    [req.params.id, tier, days]
+  );
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'user_tier_change', targetType: 'user', targetId: req.params.id, metadata: { tier, days }, ipAddress: ip(req) });
   res.json({ success: true, user: r[0] });
 });
 
@@ -441,7 +536,10 @@ router.get('/owner/payments', auth, owner, async (req, res) => {
   const status = String(req.query.status || '').toLowerCase();
   const payments = await query(
     `SELECT p.id,p.order_id,p.provider,p.payment_method,p.transaction_id,p.provider_reference,p.amount,p.proof_url,p.status,p.verified_at,p.created_at,p.updated_at,
-            o.order_code,o.tier,o.status AS order_status,u.id AS user_id,u.email,u.name
+            to_jsonb(p.*) ->> 'owner_notified' AS owner_notified,
+            EXISTS(SELECT 1 FROM payment_proofs pp WHERE pp.payment_id=p.id) AS has_proof,
+            o.order_code,o.tier,o.status AS order_status,COALESCE((to_jsonb(o.*) ->> 'duration_days')::int,30) AS duration_days,
+            u.id AS user_id,u.email,u.name
        FROM payments p JOIN orders o ON o.id=p.order_id JOIN users u ON u.id=p.user_id
       WHERE ($1='' OR p.status=$1) ORDER BY p.created_at DESC LIMIT 250`,
     [status]
@@ -449,15 +547,30 @@ router.get('/owner/payments', auth, owner, async (req, res) => {
   res.json({ success: true, payments });
 });
 
-// Manual settlement is idempotent: only a pending manual payment on a pending order changes,
-// inside one statement (row locks via FOR UPDATE); a second approve/reject gets 409.
+// The uploaded proof image, owner only. Served as an inert image: no sniffing, no scripts.
+router.get('/owner/payments/:id/proof', auth, owner, validId('id'), async (req, res) => {
+  const row = (await query("SELECT mime,encode(data,'base64') AS b64 FROM payment_proofs WHERE payment_id=$1", [req.params.id]))[0];
+  if (!row) return fail(res, 404, 'PROOF_NOT_FOUND', 'Pembayaran ini tidak punya gambar bukti.');
+  res.set('Content-Type', row.mime);
+  res.set('Cache-Control', 'private, no-store');
+  res.set('Content-Security-Policy', "default-src 'none'; sandbox");
+  res.set('Content-Disposition', 'inline; filename="bukti-pembayaran"');
+  res.send(Buffer.from(row.b64, 'base64'));
+});
+
+// Owner settlement is idempotent: only a pending payment on a pending order changes, inside
+// one statement (row locks via FOR UPDATE); a second approve/reject gets 409. Gateway (Pakasir)
+// payments may also be approved by hand, e.g. after checking the Pakasir dashboard, because
+// automatic verification is off until PAKASIR_V2_VERIFY_URL is configured.
 async function settleManual(req, res, approve) {
   const row = await query(
-    `WITH candidate AS (SELECT p.id,p.order_id,p.user_id,p.amount,o.tier FROM payments p JOIN orders o ON o.id=p.order_id WHERE p.id=$1 AND p.provider='manual' AND p.status='pending' AND o.status='pending' AND p.amount=o.amount FOR UPDATE),
+    `WITH candidate AS (SELECT p.id,p.order_id,p.user_id,p.amount,p.provider,o.tier FROM payments p JOIN orders o ON o.id=p.order_id WHERE p.id=$1 AND p.provider IN ('manual','pakasir') AND p.status='pending' AND o.status='pending' AND p.amount=o.amount FOR UPDATE),
      upd_p AS (UPDATE payments p SET status=$2,verified_at=CASE WHEN $2='paid' THEN now() ELSE NULL END,updated_at=now() FROM candidate c WHERE p.id=c.id RETURNING p.id,p.order_id,p.user_id),
-     upd_o AS (UPDATE orders o SET status=$2,paid_at=CASE WHEN $2='paid' THEN now() ELSE NULL END,updated_at=now() FROM upd_p p WHERE o.id=p.order_id RETURNING o.user_id,o.tier,o.id),
-     upd_u AS (UPDATE users u SET tier=CASE WHEN $2='paid' AND (CASE u.tier WHEN 'OWNER' THEN 4 WHEN 'DEWA' THEN 3 WHEN 'SEPUH' THEN 2 WHEN 'SULTAN' THEN 1 ELSE 0 END)<(CASE upd_o.tier WHEN 'DEWA' THEN 3 WHEN 'SEPUH' THEN 2 ELSE 1 END) THEN upd_o.tier ELSE u.tier END,updated_at=now() FROM upd_o WHERE u.id=upd_o.user_id RETURNING u.id)
-     INSERT INTO audit_logs(actor_user_id,action,target_type,target_id,metadata,ip_address) SELECT $3,$4,'payment',$1,jsonb_build_object('decision',$2),$5::inet FROM upd_u RETURNING id`,
+     upd_o AS (UPDATE orders o SET status=$2,paid_at=CASE WHEN $2='paid' THEN now() ELSE NULL END,updated_at=now() FROM upd_p p WHERE o.id=p.order_id RETURNING o.user_id,o.tier,o.id,o.duration_days),
+     paid AS (SELECT * FROM upd_o WHERE $2='paid'),
+     upd_u AS (${orderService.applyPaidOrderSql('paid')})
+     INSERT INTO audit_logs(actor_user_id,action,target_type,target_id,metadata,ip_address)
+       SELECT $3,$4,'payment',$1,jsonb_build_object('decision',$2,'provider',(SELECT provider FROM candidate),'tier',(SELECT tier FROM upd_u),'tier_expires_at',(SELECT tier_expires_at FROM upd_u)),$5::inet FROM upd_o RETURNING id`,
     [req.params.id, approve ? 'paid' : 'rejected', req.account.id, approve ? 'payment_approve' : 'payment_reject', ip(req)]
   );
   if (!row.length) return fail(res, 409, 'PAYMENT_NOT_PENDING', 'Pembayaran tidak pending atau sudah diproses.');
@@ -468,8 +581,13 @@ router.post('/owner/payments/:id/reject', sameOrigin, auth, owner, validId('id')
 
 // ---------------------------------------------------------------- owner: server, audit, backup
 router.get('/owner/server', auth, owner, async (req, res) => {
-  const r = await query('SELECT maintenance_enabled,maintenance_message,updated_at FROM server_settings WHERE id=1');
-  res.json({ success: true, settings: r[0] || { maintenance_enabled: false, maintenance_message: '' } });
+  const r = await query('SELECT to_jsonb(server_settings.*) AS s FROM server_settings WHERE id=1');
+  const row = r[0]?.s || {};
+  res.json({ success: true, settings: {
+    maintenance_enabled: Boolean(row.maintenance_enabled), maintenance_message: row.maintenance_message || '', updated_at: row.updated_at || null,
+    payment_dana_number: row.payment_dana_number || '', payment_dana_name: row.payment_dana_name || '',
+    payment_gopay_number: row.payment_gopay_number || '', payment_gopay_name: row.payment_gopay_name || ''
+  }, notifications: notifier.status() });
 });
 
 router.patch('/owner/server', sameOrigin, auth, owner, async (req, res) => {
@@ -481,6 +599,24 @@ router.patch('/owner/server', sameOrigin, auth, owner, async (req, res) => {
     [enabled, message, req.account.id]
   );
   await audit.writeAudit({ actorUserId: req.account.id, action: 'maintenance_change', targetType: 'server_settings', metadata: { enabled }, ipAddress: ip(req) });
+  res.json({ success: true, settings: r[0] });
+});
+
+// Destination accounts buyers see for manual DANA / GoPay transfers. Empty = method hidden.
+router.patch('/owner/server/payments', sameOrigin, auth, owner, async (req, res) => {
+  const number = v => String(v || '').replace(/[^\d+]/g, '').slice(0, 20);
+  const name = v => String(v || '').trim().slice(0, 60);
+  const values = [number(req.body?.payment_dana_number), name(req.body?.payment_dana_name), number(req.body?.payment_gopay_number), name(req.body?.payment_gopay_name)];
+  for (const n of [values[0], values[2]]) if (n && !/^\+?\d{8,16}$/.test(n)) return fail(res, 400, 'INVALID_NUMBER', 'Nomor harus 8–16 digit.');
+  const r = await query(
+    `INSERT INTO server_settings(id,payment_dana_number,payment_dana_name,payment_gopay_number,payment_gopay_name,updated_at,updated_by)
+     VALUES(1,NULLIF($1,''),NULLIF($2,''),NULLIF($3,''),NULLIF($4,''),now(),$5)
+     ON CONFLICT(id) DO UPDATE SET payment_dana_number=EXCLUDED.payment_dana_number,payment_dana_name=EXCLUDED.payment_dana_name,
+       payment_gopay_number=EXCLUDED.payment_gopay_number,payment_gopay_name=EXCLUDED.payment_gopay_name,updated_at=now(),updated_by=EXCLUDED.updated_by
+     RETURNING payment_dana_number,payment_dana_name,payment_gopay_number,payment_gopay_name`,
+    [...values, req.account.id]
+  );
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'payment_settings_change', targetType: 'server_settings', ipAddress: ip(req) });
   res.json({ success: true, settings: r[0] });
 });
 
@@ -525,8 +661,8 @@ router.post('/webhooks/pakasir', async (req, res) => {
   if (!verified) return fail(res, 202, 'PAYMENT_NOT_VERIFIED', 'Transaksi belum terverifikasi oleh provider.');
   const tx = await query(
     `WITH upd_p AS (UPDATE payments SET status='paid',verified_at=now(),updated_at=now() WHERE id=(SELECT id FROM payments WHERE order_id=$1 AND provider='pakasir' AND status='pending' AND amount=$2 ORDER BY created_at DESC LIMIT 1) RETURNING id,order_id,user_id),
-     upd_o AS (UPDATE orders SET status='paid',paid_at=now(),updated_at=now() WHERE id=$1 AND status='pending' AND amount=$2 AND EXISTS(SELECT 1 FROM upd_p) RETURNING user_id,tier,id),
-     upd_u AS (UPDATE users u SET tier=CASE WHEN (CASE u.tier WHEN 'OWNER' THEN 4 WHEN 'DEWA' THEN 3 WHEN 'SEPUH' THEN 2 WHEN 'SULTAN' THEN 1 ELSE 0 END)<(CASE upd_o.tier WHEN 'DEWA' THEN 3 WHEN 'SEPUH' THEN 2 ELSE 1 END) THEN upd_o.tier ELSE u.tier END,updated_at=now() FROM upd_o WHERE u.id=upd_o.user_id RETURNING u.id)
+     upd_o AS (UPDATE orders SET status='paid',paid_at=now(),updated_at=now() WHERE id=$1 AND status='pending' AND amount=$2 AND EXISTS(SELECT 1 FROM upd_p) RETURNING user_id,tier,id,duration_days),
+     upd_u AS (${orderService.applyPaidOrderSql('upd_o')})
      INSERT INTO audit_logs(action,target_type,target_id,metadata) SELECT 'pakasir_webhook_paid','order',$1,jsonb_build_object('amount',$2::int) FROM upd_u RETURNING id`,
     [order.id, amount]
   );

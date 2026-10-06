@@ -10,19 +10,53 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
+<style>
+  .pay-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .acct { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); margin: 10px 0; }
+  .acct code { font-size: 18px; letter-spacing: .04em; }
+  .order { padding: 14px 0; border-top: 1.5px solid var(--edge-soft); }
+  .order:first-child { border-top: 0; }
+  .order .row { margin-top: 8px; }
+  .qris-static { max-width: 300px; width: 100%; border-radius: 12px; display: block; margin: 10px auto; }
+  #custom-days { width: 110px; }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+</style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing" aria-current="page">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing" aria-current="page">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
 <main class="wrap">
   <h1>Billing &amp; Orders</h1>
   <p class="lead loading" id="current">Memuat akun…</p>
 
-  <section class="panel">
+  <section class="panel" id="new-order">
     <h2>Order baru</h2>
-    <div class="row"><select id="tier" aria-label="Paket"></select><button id="order-btn" class="primary" type="button">Buat order</button></div>
-    <p id="notice" aria-live="polite"></p>
-    <p><small>Harga ditentukan server. Order berlaku 2 jam. Tier baru aktif hanya setelah pembayaran terverifikasi server atau disetujui owner.</small></p>
+    <div class="steps">
+      <div class="step">
+        <h3>Pilih tier</h3>
+        <div class="choices" id="tiers" role="radiogroup" aria-label="Tier"><p class="loading">Memuat paket…</p></div>
+      </div>
+      <div class="step">
+        <h3>Atur durasi</h3>
+        <div class="seg" id="durations" role="radiogroup" aria-label="Durasi"></div>
+        <div class="row" id="custom-row" hidden>
+          <input id="custom-days" type="number" inputmode="numeric" min="7" max="365" value="30" aria-label="Durasi custom (hari)"><span class="muted">hari (7–365)</span>
+        </div>
+      </div>
+      <div class="step">
+        <h3>Pilih pembayaran</h3>
+        <div class="choices" id="methods" role="radiogroup" aria-label="Metode pembayaran"></div>
+      </div>
+      <div class="step">
+        <h3>Ringkasan</h3>
+        <div class="summary-box" id="summary" aria-live="polite"></div>
+        <button id="order-btn" class="primary" type="button">Buat order &amp; bayar</button>
+        <p id="notice" aria-live="polite"></p>
+        <p><small>Harga dihitung server dari harga per 30 hari. Order berlaku 2 jam. Tier aktif setelah pembayaran terverifikasi atau disetujui owner. Upgrade ke tier lebih tinggi memulai masa aktif baru; membeli tier yang sama memperpanjang masa aktif.</small></p>
+      </div>
+    </div>
   </section>
+
+  <section class="panel" id="checkout" hidden></section>
 
   <section class="panel">
     <h2>Riwayat order</h2>
@@ -33,89 +67,211 @@
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const rp = n => 'Rp' + Number(n).toLocaleString('id-ID');
-const when = v => v ? new Date(v).toLocaleString('id-ID') : '—';
-const LABEL = { qris: 'QRIS (otomatis)', payment_link: 'Payment link (otomatis)', bri_va: 'BRI VA', bni_va: 'BNI VA', cimb_niaga_va: 'CIMB Niaga VA', permata_va: 'Permata VA', maybank_va: 'Maybank VA', bnc_va: 'BNC VA', artha_graha_va: 'Artha Graha VA', sampoerna_va: 'Sampoerna VA', DANA: 'DANA (manual)', GOPAY: 'GoPay (manual)', QRIS: 'QRIS (manual)', BANK_TRANSFER: 'Transfer bank (manual)' };
-let ctx = { gatewayMethods: [], manualMethods: [], gatewayConfigured: false };
+const when = v => v ? new Date(v).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+const RANK = ['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'];
+const PRESETS = [[7, '7 hari'], [14, '14 hari'], [30, '1 bulan'], [90, '3 bulan'], [180, '6 bulan'], [365, '1 tahun']];
+const METHOD = {
+  QRIS_GATEWAY: { name: 'QRIS otomatis', hint: 'Scan QR, diverifikasi gateway' },
+  QRIS: { name: 'QRIS manual', hint: 'Scan QRIS owner + upload bukti' },
+  DANA: { name: 'DANA', hint: 'Transfer manual + upload bukti' },
+  GOPAY: { name: 'GoPay', hint: 'Transfer manual + upload bukti' }
+};
+let ctx = null;      // GET /api/orders payload
+let account = null;  // /api/dashboard user
+let tiers = [];
 let orderKey = crypto.randomUUID();
 
 async function api(url, opts = {}) {
   const r = await fetch(url, { credentials: 'same-origin', ...opts });
   if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status})`);
+  if (!r.ok) throw Object.assign(Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status})`), { code: d.error });
   return d;
 }
+const post = (url, body, headers = {}) => api(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
+const priceFor = (tier, days) => Math.ceil((tiers.find(t => t.name === tier).price * days / 30) / 100) * 100;
+const picked = name => document.querySelector(`input[name=${name}]:checked`)?.value;
+const days = () => picked('days') === 'custom' ? Number($('#custom-days').value) : Number(picked('days'));
 
-async function loadPlans() {
-  try {
-    const [dash, t] = await Promise.all([api('/api/dashboard'), api('/api/tiers')]);
-    const rank = ['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'];
-    const mine = rank.indexOf(dash.user.tier);
-    $('#current').classList.remove('loading');
-    $('#current').textContent = `Tier saat ini: ${dash.user.tier}.`;
-    const options = t.tiers.filter(x => x.purchasable && rank.indexOf(x.name) > mine);
-    $('#tier').innerHTML = options.map(x => `<option value="${esc(x.name)}">${esc(x.name)} — ${rp(x.price)} · ${Number(x.dailyLimit).toLocaleString('id-ID')} req/hari</option>`).join('');
-    const want = new URLSearchParams(location.search).get('tier');
-    if (want && options.some(o => o.name === want)) $('#tier').value = want;
-    $('#order-btn').disabled = !options.length;
-    if (!options.length) $('#notice').textContent = 'Kamu sudah berada di paket tertinggi.';
-  } catch (e) { $('#current').textContent = e.message; }
+function renderPlans() {
+  const mine = RANK.indexOf(account.tier);
+  $('#current').classList.remove('loading');
+  $('#current').innerHTML = `Tier saat ini: <b>${esc(account.tier)}</b>${account.tier === 'FREE' || account.tier === 'OWNER' ? '' : account.tierExpiresAt ? ` · aktif sampai <b>${when(account.tierExpiresAt)}</b>` : ' · permanen'}.`;
+  const want = new URLSearchParams(location.search).get('tier');
+  const cards = tiers.filter(t => t.purchasable).map(t => {
+    const r = RANK.indexOf(t.name);
+    const extend = r === mine && account.tierExpiresAt;
+    const allowed = r > mine || extend;
+    return `<label class="choice"${allowed ? '' : ' aria-disabled="true" style="opacity:.45;cursor:not-allowed"'}>
+      <input type="radio" name="tier" value="${esc(t.name)}"${allowed ? '' : ' disabled'}>
+      <b>${esc(t.name)}${extend ? ' · perpanjang' : ''}</b>
+      <span>${rp(t.price)} <small>/ 30 hari</small></span>
+      <small>${Number(t.dailyLimit).toLocaleString('id-ID')} req/hari · ${t.apiKeys === null ? 'key tanpa batas' : t.apiKeys + ' API key'}</small>
+    </label>`;
+  }).join('');
+  $('#tiers').innerHTML = cards;
+  const enabled = [...document.querySelectorAll('input[name=tier]:not([disabled])')];
+  const first = enabled.find(i => i.value === want) || enabled[0];
+  if (first) first.checked = true;
+  else { $('#order-btn').disabled = true; $('#notice').textContent = 'Kamu sudah berada di paket tertinggi.'; }
+
+  $('#durations').innerHTML = PRESETS.map(([d, label]) => `<label><input type="radio" name="days" value="${d}"${d === ctx.duration.default ? ' checked' : ''}> ${label}</label>`).join('') + '<label><input type="radio" name="days" value="custom"> Custom</label>';
+  $('#custom-days').min = ctx.duration.min; $('#custom-days').max = ctx.duration.max;
+
+  $('#methods').innerHTML = Object.entries(METHOD).map(([key, m]) => {
+    const info = ctx.methods[key];
+    const why = info.available ? m.hint : key === 'QRIS_GATEWAY' ? 'Belum dikonfigurasi' : 'Nomor belum diatur owner';
+    return `<label class="choice"${info.available ? '' : ' style="opacity:.45;cursor:not-allowed"'}><input type="radio" name="method" value="${key}"${info.available ? '' : ' disabled'}><b>${m.name}</b><small>${esc(why)}</small></label>`;
+  }).join('');
+  const firstMethod = document.querySelector('input[name=method]:not([disabled])');
+  if (firstMethod) firstMethod.checked = true;
+  updateSummary();
 }
 
-function paymentState(o) {
-  if (o.status === 'paid') return '<div class="box">✅ Lunas &amp; terverifikasi. Tier sudah aktif.</div>';
-  if (o.status !== 'pending') return `<div class="box">Order ${esc(o.status)}.${o.status === 'expired' ? ' Buat order baru bila ingin membeli lagi.' : ''}</div>`;
-  if (o.provider === 'manual' && o.payment_status === 'pending') return '<div class="box">⏳ Bukti terkirim — menunggu approval owner. Tier belum berubah.</div>';
-  let gateway = '';
-  if (o.provider === 'pakasir' && o.payment_status === 'pending') {
-    gateway = `<div class="box">⏳ Menunggu pembayaran &amp; verifikasi server.${o.payment_url ? ` <a href="${esc(o.payment_url)}" target="_blank" rel="noopener noreferrer">Buka halaman pembayaran</a>` : ''}${o.va_number ? `<br>Nomor VA: <code>${esc(o.va_number)}</code>` : ''}${o.qr_string ? `<br>QR string: <code>${esc(o.qr_string)}</code>` : ''}${o.gateway_expires_at ? `<br><small>Berlaku sampai ${when(o.gateway_expires_at)}</small>` : ''}</div>`;
-  }
-  const methods = [...(ctx.gatewayConfigured ? ctx.gatewayMethods.filter(m => m === 'qris' || m === 'payment_link' || Number(o.amount) >= 10000) : []), ...ctx.manualMethods];
-  return gateway + `<form class="row" data-pay="${esc(o.id)}" style="margin-top:10px">
-    <select name="method" aria-label="Metode pembayaran">${methods.map(m => `<option value="${esc(m)}">${esc(LABEL[m] || m)}</option>`).join('')}</select>
-    <input name="proof" type="url" placeholder="URL HTTPS bukti transfer (khusus manual)" aria-label="URL bukti pembayaran">
-    <button class="primary" type="submit">Lanjutkan</button>
-  </form>`;
+function updateSummary() {
+  $('#custom-row').hidden = picked('days') !== 'custom';
+  const tier = picked('tier'), d = days(), m = picked('method');
+  const okDays = Number.isInteger(d) && d >= ctx.duration.min && d <= ctx.duration.max;
+  if (!tier) { $('#summary').innerHTML = '<span class="muted">Tidak ada paket yang bisa dibeli.</span>'; return; }
+  $('#summary').innerHTML = okDays
+    ? `<span>${esc(tier)} · ${d} hari · ${esc(METHOD[m]?.name || '—')}</span><span class="total">${rp(priceFor(tier, d))}</span><small>Aktif sampai ±${when(Date.now() + d * 864e5)} jika dibayar hari ini${tier === account.tier && account.tierExpiresAt ? ' (ditambahkan ke masa aktif sekarang)' : ''}.</small>`
+    : `<span class="error">Durasi harus ${ctx.duration.min}–${ctx.duration.max} hari.</span>`;
+  $('#order-btn').disabled = !okDays || !m;
 }
-
-async function loadOrders() {
-  try {
-    const d = await api('/api/orders');
-    ctx = d;
-    const help = [d.manualInstructions ? esc(d.manualInstructions) : 'Untuk pembayaran manual, hubungi owner untuk nomor tujuan, lalu kirim URL HTTPS bukti transfer (mis. tautan file di Google Drive/storage).', d.contact ? `Kontak: <a href="${esc(d.contact)}" target="_blank" rel="noopener noreferrer">WhatsApp owner</a>` : '', d.gatewayConfigured ? '' : 'Pembayaran otomatis belum aktif.'].filter(Boolean).join(' ');
-    $('#orders').innerHTML = (d.orders.length ? d.orders.map(o => `<div class="order"><b>${esc(o.order_code)}</b> · ${esc(o.tier)} · ${rp(o.amount)}<br><span class="chip ${esc(o.status)}">order: ${esc(o.status)}</span>${o.payment_status ? `<span class="chip ${esc(o.payment_status)}">bayar: ${esc(o.payment_status)}</span>` : ''}<br><small>Dibuat ${when(o.created_at)}${o.status === 'pending' ? ' · berlaku sampai ' + when(o.expires_at) : ''}${o.paid_at ? ' · lunas ' + when(o.paid_at) : ''}</small>${paymentState(o)}</div>`).join('') : '<p>Belum ada order.</p>') + `<p><small>${help}</small></p>`;
-  } catch (e) { $('#orders').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
-}
+$('#new-order').addEventListener('change', updateSummary);
+$('#custom-days').addEventListener('input', updateSummary);
 
 $('#order-btn').addEventListener('click', async () => {
   const btn = $('#order-btn'); btn.disabled = true; $('#notice').textContent = 'Membuat order…';
   try {
-    const d = await api('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': orderKey }, body: JSON.stringify({ tier: $('#tier').value }) });
+    const d = await post('/api/orders', { tier: picked('tier'), duration_days: days() }, { 'Idempotency-Key': orderKey });
     orderKey = crypto.randomUUID();
-    $('#notice').textContent = `Order ${d.order.order_code} dibuat (${rp(d.order.amount)}). Pilih metode pembayaran di bawah.`;
-    loadOrders();
+    $('#notice').textContent = `Order ${d.order.order_code} dibuat.`;
+    await loadOrders();
+    openCheckout(ctx.orders.find(o => o.id === d.order.id) || d.order, picked('method'));
   } catch (e) { $('#notice').textContent = e.message; }
-  finally { btn.disabled = false; }
+  finally { btn.disabled = false; updateSummary(); }
 });
 
-$('#orders').addEventListener('submit', async e => {
-  const form = e.target.closest('form[data-pay]'); if (!form) return;
-  e.preventDefault();
-  const id = form.dataset.pay, method = form.querySelector('[name=method]').value, manual = ctx.manualMethods.includes(method);
-  const body = { method };
-  if (manual) {
-    body.proof_url = form.querySelector('[name=proof]').value.trim();
-    if (!/^https:\/\//i.test(body.proof_url)) { alert('Pembayaran manual butuh URL HTTPS bukti transfer.'); return; }
+// ---------------------------------------------------------------- checkout
+function openCheckout(order, method) {
+  const box = $('#checkout');
+  box.hidden = false;
+  const options = Object.keys(METHOD).filter(k => ctx.methods[k].available);
+  box.innerHTML = `<div class="pay-head"><h2>Bayar ${esc(order.order_code)}</h2><span class="chip pending">${esc(order.tier)} · ${Number(order.duration_days || 30)} hari</span></div>
+    <p class="total" style="font:700 30px 'Space Grotesk',sans-serif;margin:4px 0">${rp(order.amount)}</p>
+    <p><small>Order berlaku sampai ${when(order.expires_at)}.</small></p>
+    <div class="seg" role="radiogroup" aria-label="Metode">${options.map(k => `<label><input type="radio" name="co-method" value="${k}"${k === method ? ' checked' : ''}> ${METHOD[k].name}</label>`).join('')}</div>
+    <div id="co-body"></div>`;
+  box.querySelector('.seg').addEventListener('change', e => renderMethod(order, e.target.value));
+  renderMethod(order, options.includes(method) ? method : options[0]);
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderMethod(order, method) {
+  const body = $('#co-body');
+  if (method === 'QRIS_GATEWAY') {
+    body.innerHTML = '<p class="loading">Membuat QRIS…</p>';
+    post(`/api/orders/${encodeURIComponent(order.id)}/pakasir`, { method: 'qris' }).then(d => {
+      const total = d.gateway?.total_payment || order.amount;
+      body.innerHTML = `<div class="qr-box"><img src="/api/orders/${encodeURIComponent(order.id)}/qr.svg?t=${Date.now()}" alt="QRIS pembayaran ${esc(order.order_code)}" width="280" height="280"><b>${rp(total)}</b><small>${d.gateway?.expired_at ? 'Berlaku sampai ' + when(d.gateway.expired_at) : ''}</small></div>
+        <p>Scan dengan aplikasi e-wallet / m-banking yang mendukung QRIS. ${Number(total) !== Number(order.amount) ? 'Total sudah termasuk biaya gateway.' : ''}</p>
+        <p class="notice">${ctx.methods.QRIS_GATEWAY.autoVerified ? 'Tier aktif otomatis setelah pembayaran terverifikasi.' : 'Setelah bayar, owner memverifikasi pembayaran di dashboard gateway lalu mengaktifkan tier kamu.'}</p>
+        <div class="links"><button type="button" class="ghost" id="co-refresh">Saya sudah bayar — cek status</button></div>`;
+      $('#co-refresh').onclick = () => loadOrders();
+    }).catch(e => { body.innerHTML = `<p class="error">${esc(e.message)}</p>`; });
+    return;
   }
-  form.querySelector('button').disabled = true;
+  let instructions = '';
+  if (method === 'QRIS') {
+    instructions = `<img class="qris-static" src="${esc(ctx.methods.QRIS.image)}" alt="QRIS Yannz2z"><p>Scan QRIS di atas lalu <b>masukkan nominal ${rp(order.amount)}</b> tepat.</p>`;
+  } else {
+    const acct = ctx.methods[method].account;
+    instructions = `<p>Transfer <b>${rp(order.amount)}</b> ke ${METHOD[method].name}:</p>
+      <div class="acct"><code id="acct-number">${esc(acct.number)}</code>${acct.name ? `<span class="muted">a.n. ${esc(acct.name)}</span>` : ''}<button type="button" class="sm ghost" id="copy-number">Salin</button></div>`;
+  }
+  body.innerHTML = `${instructions}
+    <h3>Upload bukti pembayaran</h3>
+    <input type="file" id="proof" accept="image/*" hidden>
+    <label class="dropzone" id="drop" for="proof"><span id="drop-text">Tap untuk pilih screenshot bukti transfer (JPG/PNG, maks 2 MB setelah dikompres)</span></label>
+    <button type="button" class="primary" id="send-proof" disabled>Kirim bukti ke owner</button>
+    <div id="proof-msg" aria-live="polite"></div>`;
+  $('#copy-number')?.addEventListener('click', e => navigator.clipboard.writeText($('#acct-number').textContent).then(() => { e.target.textContent = 'Tersalin ✓'; }));
+  let dataUrl = null;
+  $('#proof').addEventListener('change', async e => {
+    const file = e.target.files[0]; if (!file) return;
+    $('#drop').innerHTML = '<span class="loading">Memproses gambar…</span>';
+    try {
+      dataUrl = await compress(file);
+      $('#drop').innerHTML = `<img src="${dataUrl}" alt="Pratinjau bukti"><small>${esc(file.name)} · tap untuk ganti</small>`;
+      $('#send-proof').disabled = false;
+    } catch (err) { $('#drop').innerHTML = `<span class="error">${esc(err.message)}</span>`; dataUrl = null; $('#send-proof').disabled = true; }
+  });
+  $('#send-proof').addEventListener('click', async e => {
+    if (!dataUrl) return;
+    e.target.disabled = true; $('#proof-msg').innerHTML = '<p class="loading">Mengirim bukti…</p>';
+    try {
+      const d = await post(`/api/orders/${encodeURIComponent(order.id)}/manual`, { method, proof_image: dataUrl });
+      const told = d.notification === 'sent' ? 'Owner sudah menerima bukti kamu lewat Telegram.' : 'Bukti tersimpan dan tampil di panel owner.';
+      $('#co-body').innerHTML = `<div class="notice">✅ Bukti terkirim. ${told} Tier aktif setelah owner menyetujui.</div>
+        <p>Mau konfirmasi langsung? Kirim pesan ke owner (lampirkan screenshot yang sama):</p>
+        <div class="links">${d.links?.whatsapp ? `<a class="btn primary" href="${esc(d.links.whatsapp)}" target="_blank" rel="noopener noreferrer">Kirim via WhatsApp</a>` : ''}${d.links?.telegram ? `<a class="btn" href="${esc(d.links.telegram)}" target="_blank" rel="noopener noreferrer">Kirim via Telegram</a>` : ''}</div>`;
+      loadOrders();
+    } catch (err) { $('#proof-msg').innerHTML = `<p class="error">${esc(err.message)}</p>`; e.target.disabled = false; }
+  });
+}
+
+// Screenshots are re-encoded as JPEG (max 1600 px) so uploads stay small on mobile data.
+async function compress(file) {
+  if (!file.type.startsWith('image/')) throw Error('File harus gambar.');
+  const img = await new Promise((resolve, reject) => {
+    const el = new Image(); el.onload = () => resolve(el); el.onerror = () => reject(Error('Gambar tidak bisa dibaca. Coba screenshot JPG/PNG.'));
+    el.src = URL.createObjectURL(file);
+  });
+  const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(img.naturalWidth * scale); canvas.height = Math.round(img.naturalHeight * scale);
+  const g = canvas.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, canvas.width, canvas.height); g.drawImage(img, 0, 0, canvas.width, canvas.height);
+  URL.revokeObjectURL(img.src);
+  for (const q of [0.85, 0.7, 0.55, 0.4]) {
+    const out = canvas.toDataURL('image/jpeg', q);
+    if (out.length * 0.75 < 1.9 * 1024 * 1024) return out;
+  }
+  throw Error('Gambar terlalu besar. Crop screenshot lalu coba lagi.');
+}
+
+// ---------------------------------------------------------------- history
+function orderState(o) {
+  if (o.status === 'paid') return '<p class="notice">✅ Lunas. Tier sudah aktif.</p>';
+  if (o.status !== 'pending') return `<p><small>Order ${esc(o.status)}.</small></p>`;
+  if (o.provider === 'manual' && o.payment_status === 'pending') return '<p><small>⏳ Bukti terkirim — menunggu approval owner.</small></p>';
+  return `<div class="row"><button type="button" class="primary sm" data-pay="${esc(o.id)}">${o.provider === 'pakasir' ? 'Lihat QR / ganti metode' : 'Bayar sekarang'}</button></div>`;
+}
+
+async function loadOrders() {
   try {
-    await api(`/api/orders/${encodeURIComponent(id)}/${manual ? 'manual' : 'pakasir'}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  } catch (err) { alert(err.message); }
-  loadOrders();
+    ctx = await api('/api/orders');
+    $('#orders').innerHTML = ctx.orders.length ? ctx.orders.map(o => `<div class="order">
+        <b>${esc(o.tier)}</b> · ${Number(o.duration_days || 30)} hari · ${rp(o.amount)}<br>
+        <code>${esc(o.order_code)}</code><br>
+        <span class="chip ${esc(o.status)}">order: ${esc(o.status)}</span>${o.payment_status ? `<span class="chip ${esc(o.payment_status)}">bayar: ${esc(o.payment_status)}${o.payment_method ? ' · ' + esc(o.payment_method) : ''}</span>` : ''}<br>
+        <small>Dibuat ${when(o.created_at)}${o.status === 'pending' ? ' · berlaku sampai ' + when(o.expires_at) : ''}${o.paid_at ? ' · lunas ' + when(o.paid_at) : ''}</small>
+        ${orderState(o)}</div>`).join('') : '<p>Belum ada order.</p>';
+  } catch (e) { $('#orders').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
+}
+$('#orders').addEventListener('click', e => {
+  const id = e.target.dataset.pay; if (!id) return;
+  const o = ctx.orders.find(x => x.id === id);
+  openCheckout(o, o.provider === 'pakasir' ? 'QRIS_GATEWAY' : Object.keys(METHOD).find(k => ctx.methods[k].available));
 });
 
-loadPlans();
-loadOrders();
+(async () => {
+  try {
+    const [dash, t] = await Promise.all([api('/api/dashboard'), api('/api/tiers'), loadOrders()]);
+    account = dash.user; tiers = t.tiers;
+    renderPlans();
+  } catch (e) { $('#current').textContent = e.message; }
+})();
 </script>
 </body>
 </html>

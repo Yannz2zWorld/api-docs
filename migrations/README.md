@@ -7,8 +7,9 @@ Apply in order to the configured Neon database (Neon SQL editor or `psql "$DATAB
 4. `004_payments_amount.sql` — adds `payments.amount` to a pre-existing `payments` table, filled from the linked order.
 5. `005_integrity.sql` — `users.session_version` (server-side logout), Pakasir gateway columns, the unique indexes `ON CONFLICT` needs, one pending manual proof per order, and CHECK/foreign-key constraints. Constraints are added only when existing rows already comply; otherwise a WARNING is printed and the data is left unchanged. **Run before deploying the Part 2 code.**
 6. `006_password_auth.sql` — email + password login: makes `users.google_id` nullable, adds `password_hash`, `email_verified`, lockout columns and the `auth_codes` table (hashed one-time codes). Run before deploying the email/password login code.
+7. `007_billing_custom_keys.sql` — `users.tier_expires_at` (tier durations), `orders.duration_days` (7..365, existing orders = 30), `payment_proofs` (uploaded proof images), `payments.owner_notified`, DANA/GoPay account columns on `server_settings`, `api_keys.custom`, and `api_key_failures` (invalid-key throttling). Existing tiers keep no expiry. Login, sessions and existing keys keep working if the code is deployed first, but run it before using the new billing/custom-key features.
 
-Both files are additive/idempotent (`CREATE ... IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`) and never drop data. The application does not run DDL at request time.
+All files are additive/idempotent (`CREATE ... IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`) and never drop data. The application does not run DDL at request time.
 
 If an existing `users` table predates these files, inspect it first: `users.id` must be `uuid` because `002_platform.sql` references it from foreign keys. Every row's `google_id` and `lower(email)` must be unique, or the unique indexes in 002 will fail to build.
 

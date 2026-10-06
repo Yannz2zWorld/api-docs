@@ -10,6 +10,5 @@ module.exports = {
   instagramLink: "https://www.instagram.com/yannznms10?igsh=OXRlc2g1MHIydGky",
   telegramLink: "https://t.me/Yannz2z",
   whatsappChannelLink: "https://whatsapp.com/channel/0029VbCBj0N3LdQTosP3Hj0T",
-  emailAddress: "yannzworld@gmail.com",
-  apiKeys: []
+  emailAddress: "yannzworld@gmail.com"
 };
