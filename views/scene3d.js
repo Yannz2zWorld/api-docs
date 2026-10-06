@@ -85,21 +85,36 @@ function loadRoxy() {
   return roxyPromise;
 }
 
-// Anime look: 3-step cel shading (colour kept, light quantised) + inverted-hull outline.
-// Baked AO / hair gradient arrive as vertex colours. The display disc stays glossy PBR.
-function celGradient() {
-  const data = new Uint8Array([118, 118, 118, 255, 196, 196, 196, 255, 255, 255, 255, 255]);
-  const t = new THREE.DataTexture(data, 3, 1, THREE.RGBAFormat);
+// Anime look: cel shading (colour kept, light quantised) + inverted-hull outline.
+// Face decal is unlit like TV anime; skin gets a soft 2-step ramp so the face stays smooth;
+// alpha-card hair keeps its cut-out and skips the outline. The display disc stays glossy PBR.
+function celGradient(steps) {
+  const data = new Uint8Array(steps.flatMap(v => [v, v, v, 255]));
+  const t = new THREE.DataTexture(data, steps.length, 1, THREE.RGBAFormat);
   t.minFilter = t.magFilter = THREE.NearestFilter;
   t.needsUpdate = true;
   return t;
 }
 function animeMaterials(model) {
-  const gradientMap = celGradient();
-  const outline = new THREE.MeshBasicMaterial({ color: 0x1a1830, side: THREE.BackSide });
-  outline.onBeforeCompile = shader => {
-    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(normal) * 0.0024;');
+  const gradientMap = celGradient([118, 196, 255]);
+  const skinMap = celGradient([222, 255]);
+  model.updateMatrixWorld(true);
+  const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
+  const outlineWorld = Math.max(size.x, size.y, size.z) * 0.0012;
+  const outlines = new Map();
+  const outlineFor = width => {
+    const key = width.toPrecision(3);
+    if (!outlines.has(key)) {
+      const m = new THREE.MeshBasicMaterial({ color: 0x1a1830, side: THREE.BackSide });
+      m.onBeforeCompile = shader => {
+        shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>\n  transformed += normalize(normal) * ${Number(key).toExponential(4)};`);
+      };
+      m.customProgramCacheKey = () => 'outline' + key;
+      outlines.set(key, m);
+    }
+    return outlines.get(key);
   };
+  const scale = new THREE.Vector3();
   const meshes = [];
   model.traverse(o => { if (o.isMesh) meshes.push(o); });
   for (const mesh of meshes) {
@@ -109,13 +124,33 @@ function animeMaterials(model) {
       mesh.material = new THREE.MeshPhysicalMaterial({ color: src.color, metalness: src.metalness, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 0.9 });
       continue;
     }
-    const m = new THREE.MeshToonMaterial({ color: src.color.clone(), map: src.map || null, gradientMap, vertexColors: Boolean(mesh.geometry.attributes.color) });
-    if (name === 'Gold') m.emissive = new THREE.Color(0x3a2a08);
-    if (name === 'Face') { m.transparent = true; m.alphaTest = 0.35; m.depthWrite = false; m.polygonOffset = true; m.polygonOffsetFactor = -2; m.vertexColors = false; }
+    const cutout = src.transparent || src.alphaTest > 0;
+    let m;
+    if (name === 'Face') {
+      m = new THREE.MeshBasicMaterial({ map: src.map || null, transparent: true, alphaTest: 0.35, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+      // Anime trick: eyes/brows read through the bangs. Each vertex slides toward the camera along
+      // its view ray (screen position unchanged), so the decal wins against hair a few cm in front
+      // but stays hidden behind the hand or the hat brim.
+      m.onBeforeCompile = shader => {
+        shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
+  float facePull = 0.028 * length(modelMatrix[0].xyz);
+  mvPosition.xyz *= max(0.0, 1.0 - facePull / length(mvPosition.xyz));
+  gl_Position = projectionMatrix * mvPosition;`);
+      };
+      m.customProgramCacheKey = () => 'anime-face';
+    } else {
+      m = new THREE.MeshToonMaterial({
+        color: src.color.clone(), map: src.map || null, side: src.side,
+        gradientMap: /^Skin/.test(name) ? skinMap : gradientMap,
+        vertexColors: Boolean(mesh.geometry.attributes.color) && !src.map,
+      });
+      if (cutout) { m.alphaTest = 0.45; m.side = THREE.DoubleSide; }
+      if (name === 'Gold') m.emissive = new THREE.Color(0x3a2a08);
+    }
     m.name = name;
     mesh.material = m;
-    if (name !== 'Face' && !/Button|Rivet|Clasp/.test(mesh.name)) {
-      const hull = new THREE.Mesh(mesh.geometry, outline);
+    if (name !== 'Face' && !cutout && !/Button|Rivet|Clasp/.test(mesh.name)) {
+      const hull = new THREE.Mesh(mesh.geometry, outlineFor(outlineWorld / (mesh.getWorldScale(scale).x || 1)));
       hull.name = mesh.name + '_outline';
       mesh.add(hull);
     }
@@ -162,7 +197,7 @@ function addRoxy(group, tex, { height = 3, feetY = -1.5, x = 0, z = 0, yaw = 0 }
       const intro = Math.min(1, (performance.now() - born) / 900);
       holder.scale.setScalar(0.85 + 0.15 * (1 - Math.pow(1 - intro, 3)));
       // display turntable: slow swing, nudged by the pointer
-      model.rotation.y = Math.sin(t * 0.32) * 0.45 + (pointer ? pointer.x * 0.3 : 0);
+      model.rotation.y = -0.22 - yaw + Math.sin(t * 0.32) * 0.22 + (pointer ? pointer.x * 0.15 : 0);   // kept on the side where the saluting hand never hides the face
       if (head) { head.rotation.y = (pointer ? pointer.x * 0.25 : 0); head.rotation.x = (pointer ? pointer.y * 0.1 : 0) + Math.sin(t * 0.9) * 0.015; head.rotation.z = Math.sin(t * 0.7) * 0.02; }
       if (hat) hat.rotation.z = Math.sin(t * 1.3) * 0.015;
       if (staff) staff.rotation.z = Math.sin(t * 0.8) * 0.01;
@@ -176,7 +211,7 @@ function buildCore(root, tex) {
   const group = new THREE.Group();
   root.add(group);
 
-  const roxy = addRoxy(group, tex, { height: 4.1, feetY: -2.2 });
+  const roxy = addRoxy(group, tex, { height: 4.1, feetY: -2.4 });
   const heart = glow(tex, 3.4, 0.12);
   group.add(heart);
 
@@ -434,3 +469,4 @@ function mount(el) {
 }
 
 if (hasWebGL()) document.querySelectorAll('[data-scene3d]').forEach(el => { try { mount(el); } catch (e) { console.warn('3D scene unavailable:', e && e.message); } });
+export { loadRoxy, animeMaterials };
