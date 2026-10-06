@@ -13,6 +13,7 @@
 <style>
   .hero-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
   .counter { font: 700 13px "DM Mono", monospace; color: var(--muted); }
+  .hero-row .lead, .hero-row h1 { padding-right: clamp(60px, 13vw, 110px); }
   .counter b { color: var(--ink); font-size: 22px; font-family: "Space Grotesk", sans-serif; }
   .toolbar { display: grid; gap: 12px; margin: 22px 0 6px; }
   .toolbar input[type=search] { width: 100%; font-size: 15px; padding: 13px 14px; }
@@ -37,6 +38,7 @@
 <body>
 <header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span><span id="web-title">Yannz API</span></a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground" aria-current="page">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
 <main class="wrap wide">
+  <img class="title-mascot tall" src="/assets/roxy/pixel.webp" alt="" aria-hidden="true" width="250" height="420">
   <div class="hero-row">
     <div>
       <span class="kicker">Katalog endpoint</span>
@@ -90,7 +92,7 @@ function render() {
       </article>`);
     }
   }
-  $('#grid').innerHTML = cards.length ? cards.join('') : '<div class="empty" style="grid-column:1/-1"><b>Tidak ada yang cocok.</b><br>Coba kata kunci atau kategori lain.</div>';
+  $('#grid').innerHTML = cards.length ? cards.join('') : '<div class="state" style="grid-column:1/-1"><img src="/assets/roxy/stare.webp" alt="" width="300" height="300"><div><b>Tidak ada yang cocok.</b>Coba kata kunci atau kategori lain.</div></div>';
 }
 
 fetch('/api/endpoints').then(r => r.json()).then(d => {

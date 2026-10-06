@@ -35,7 +35,11 @@
   .media { padding: 12px; display: grid; place-items: center; gap: 8px; }
   .media img, .media video { max-width: 100%; max-height: 60vh; border-radius: 10px; border: 2px solid var(--edge-soft); }
   .media audio { width: 100%; }
-  .err-box { margin: 12px; padding: 12px 14px; border: 2px solid var(--bad); border-radius: 10px; color: #fecaca; background: rgba(252, 165, 165, .06); }
+  .err-box { margin: 12px; padding: 12px 14px; border: 2px solid var(--bad); border-radius: 10px; color: #fecaca; background: rgba(252, 165, 165, .06); display: flex; align-items: center; gap: 12px; }
+  .err-box::before { content: ""; width: 48px; height: 48px; flex: 0 0 auto; border-radius: 50%; background: url(/assets/roxy/sweat.webp) center / cover; }
+  .err-box[hidden] { display: none; }
+  .idle { display: grid; justify-items: center; gap: 6px; color: var(--muted); font: 12px "DM Mono", monospace; text-align: center; }
+  .idle img { width: 92px; height: auto; image-rendering: auto; animation: mascot-float 4.8s ease-in-out infinite; }
   .term-foot { display: flex; justify-content: space-between; gap: 8px; padding: 8px 12px; border-top: 2px solid var(--edge-soft); color: var(--faint); font: 12px "DM Mono", monospace; flex-wrap: wrap; }
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -45,6 +49,7 @@
 <body>
 <header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span><span id="web-title">Yannz API</span></a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api" aria-current="page">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
 <main class="wrap wide">
+  <img class="title-mascot" src="/assets/roxy/wave.webp" alt="" aria-hidden="true" width="380" height="400">
   <span class="kicker">Sandbox</span>
   <h1>API Sandbox</h1>
   <p class="lead">Jalankan endpoint langsung dari browser. Tanpa key, Sandbox memakai sesi login dan kuota harian akunmu.</p>
@@ -194,10 +199,12 @@ function resetConsoleMonitor() {
   if (mediaUrl) { URL.revokeObjectURL(mediaUrl); mediaUrl = null; }
   $('#response-status').className = 'chip'; $('#response-status').textContent = 'belum ada request';
   $('#response-meta').textContent = ''; $('#content-type').textContent = '—';
-  $('#output-error').hidden = true; $('#output-media').hidden = true; $('#output-media').innerHTML = '';
-  $('#sandbox-output-text').textContent = 'Isi parameter lalu klik “Kirim permintaan”.';
+  $('#output-error').hidden = true;
+  $('#output-media').innerHTML = '<div class="idle"><img src="/assets/roxy/pixel.webp" alt="" width="250" height="420">Roxy siap. Isi parameter lalu klik “Kirim permintaan”.</div>';
+  $('#output-media').hidden = false;
+  $('#sandbox-output-text').textContent = '';
 }
-function showConsoleError(message) { $('#output-error').textContent = message; $('#output-error').hidden = false; }
+function showConsoleError(message) { $('#output-media').hidden = true; $('#output-error').textContent = message; $('#output-error').hidden = false; }
 
 // Shows the server's own message plus its stable error code (never a guessed reason).
 function describeApiError(status, data) {
@@ -224,7 +231,8 @@ async function executeApiSandbox() {
   const headers = key ? { Authorization: `Bearer ${key}` } : { 'X-Yannz-Client': 'web' };
   const btn = $('#execute-btn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Memproses…';
-  $('#sandbox-output-text').textContent = 'Menunggu respons…';
+  $('#output-media').innerHTML = '<div class="idle"><img src="/assets/roxy/sleepy.webp" alt="" width="347" height="360">Menunggu respons…</div>';
+  $('#sandbox-output-text').textContent = '';
   const started = performance.now();
   try {
     const res = await fetch(requestPath(), { headers, credentials: 'same-origin' });
@@ -241,6 +249,7 @@ async function executeApiSandbox() {
       sessionInfo.usage = { used: limit - Number(remaining), limit, remaining: Number(remaining) };
       renderSessionStatus();
     }
+    $('#output-media').hidden = true; $('#output-media').innerHTML = '';
     if (type.includes('application/json')) {
       const data = await res.json();
       $('#sandbox-output-text').textContent = JSON.stringify(data, null, 2);
@@ -257,6 +266,7 @@ async function executeApiSandbox() {
       $('#sandbox-output-text').textContent = await res.text();
     }
   } catch (err) {
+    $('#output-media').hidden = true;
     showConsoleError(`Koneksi terputus: ${err.message || err}`);
     $('#sandbox-output-text').textContent = '';
   } finally {

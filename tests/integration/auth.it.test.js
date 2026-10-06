@@ -110,3 +110,20 @@ it('the WebGL scene module is served as JavaScript', async () => {
   assert.match(r.headers['content-type'], /javascript/);
   assert.match(r.text, /from 'three'/);
 });
+
+it('Roxy assets: the Blender GLB and whitelisted sticker images are served; others are not', async () => {
+  const glb = await new Promise((resolve, reject) => {
+    require('node:http').get(app.origin + '/assets/roxy.glb', res => {
+      const chunks = []; res.on('data', c => chunks.push(c)); res.on('end', () => resolve({ status: res.statusCode, type: res.headers['content-type'], body: Buffer.concat(chunks) }));
+    }).on('error', reject);
+  });
+  assert.equal(glb.status, 200);
+  assert.match(glb.type, /model\/gltf-binary/);
+  assert.equal(glb.body.toString('ascii', 0, 4), 'glTF');
+  for (const name of ['sleepy', 'stare', 'pixel', 'field', 'wave', 'smile', 'sweat']) {
+    const r = await app.request('GET', `/assets/roxy/${name}.webp`);
+    assert.equal(r.status, 200, name);
+    assert.match(r.headers['content-type'], /image\/webp/);
+  }
+  assert.equal((await app.request('GET', '/assets/roxy/secret.webp')).status, 404);
+});

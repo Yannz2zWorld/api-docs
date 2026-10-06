@@ -15,11 +15,13 @@
 <body>
 <header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing" aria-current="page">Pricing</a></nav></div></header>
 <main class="wrap wide">
+  <img class="title-mascot" src="/assets/roxy/smile.webp" alt="" aria-hidden="true" width="300" height="300">
   <h1>Pilih paket sesuai kebutuhan.</h1>
   <p class="lead">Kuota dihitung per hari (reset 00:00 UTC) dan hanya request yang berhasil yang dihitung. Harga final ditentukan server saat order dibuat.</p>
   <div class="grid" id="grid" aria-live="polite"><p class="loading">Memuat paket…</p></div>
   <p id="result" role="status"></p>
   <small>OWNER adalah peran operasional dan tidak dijual.</small>
+  <img class="banner-art" src="/assets/roxy/field.webp" alt="Roxy di padang rumput" width="720" height="1280" loading="lazy">
 </main>
 <script>
 const $ = s => document.querySelector(s);

@@ -184,3 +184,28 @@ dialog::backdrop { background: rgba(0, 0, 0, .65); backdrop-filter: blur(3px); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- Roxy mascots (Mushoku Tensei art supplied by the owner; decorative only) */
+.wrap { position: relative; }
+.title-mascot { position: absolute; top: 6px; right: 16px; width: clamp(78px, 17vw, 132px); height: auto; pointer-events: none; user-select: none; filter: drop-shadow(5px 5px 0 var(--drop)); animation: mascot-float 4.8s ease-in-out infinite; z-index: 1; }
+.wrap > h1, .wrap > .lead { padding-right: clamp(86px, 19vw, 150px); }
+@keyframes mascot-float { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-6px) rotate(1.5deg); } }
+.loading::before, .error::before, .notice::before {
+  content: ""; display: inline-block; width: 1.9em; height: 1.9em; margin-right: .5em; vertical-align: middle;
+  background: center / contain no-repeat; flex: 0 0 auto;
+}
+.loading::before { background-image: url(/assets/roxy/sleepy.webp); }
+.error::before { background-image: url(/assets/roxy/sweat.webp); border-radius: 50%; }
+.notice::before { background-image: url(/assets/roxy/stare.webp); }
+.no-mascot::before { display: none !important; }
+.state { display: flex; align-items: center; gap: 16px; padding: 14px 4px; color: var(--muted); }
+.state img { width: 84px; height: auto; flex: 0 0 auto; filter: drop-shadow(4px 4px 0 var(--drop)); }
+.state b { color: var(--ink); display: block; font: 700 16px "Space Grotesk", sans-serif; margin-bottom: 2px; }
+.banner-art { display: block; width: 100%; max-height: 260px; object-fit: cover; object-position: 50% 30%; border: var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin: 18px 0 6px; }
+@media (max-width: 640px) {
+  .title-mascot { top: 2px; right: 10px; }
+  .state img { width: 64px; }
+}
+@media (prefers-reduced-motion: reduce) { .title-mascot { animation: none; } }
+.notice.ok::before { background-image: url(/assets/roxy/smile.webp); }
+.title-mascot.tall { width: clamp(50px, 10vw, 82px); }

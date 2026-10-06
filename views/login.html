@@ -37,7 +37,11 @@
     .r1{width:430px;height:150px;transform:translate(-50%,-50%) rotateX(65deg) rotateZ(12deg);animation:ring1 9s linear infinite}.r2{width:370px;height:130px;transform:translate(-50%,-50%) rotateY(70deg) rotateZ(-20deg);border-style:dashed;animation:ring2 12s linear infinite}.r3{width:520px;height:190px;transform:translate(-50%,-50%) rotateX(75deg) rotateZ(-35deg);border-width:1px;animation:ring1 15s linear infinite reverse}
     .dot{position:absolute;width:10px;height:10px;background:var(--yellow);border:2px solid var(--edge);border-radius:50%;box-shadow:2px 2px 0 var(--drop);animation:drift 4s ease-in-out infinite}.d1{left:18%;top:27%}.d2{right:20%;top:37%;animation-delay:-1.3s}.d3{left:28%;bottom:22%;animation-delay:-2.2s}.d4{right:12%;bottom:18%;animation-delay:-.7s}
     .login{display:flex;align-items:center;justify-content:center;padding:30px;background:var(--paper);position:relative;z-index:4}
-    .panel{width:min(100%,430px)}
+    .panel{width:min(100%,430px);position:relative}
+    .panel-mascot{position:absolute;right:118px;top:-80px;width:96px;height:auto;pointer-events:none;filter:drop-shadow(4px 4px 0 #3f3f46);animation:mascot-bob 4.6s ease-in-out infinite}
+    @keyframes mascot-bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+    @media(max-width:520px){.panel-mascot{width:76px;top:-64px;right:112px}}
+    @media(prefers-reduced-motion:reduce){.panel-mascot{animation:none}}
     .panel-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}.panel-label{font:500 10px 'DM Mono';letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
     .secure{display:inline-flex;gap:6px;align-items:center;font:500 9px 'DM Mono';padding:7px 9px;border:2px solid var(--edge);border-radius:999px;background:var(--surface-2);box-shadow:2px 2px 0 var(--drop)}.secure i{width:12px;height:12px;color:#d4d4d8}
     .panel h2{font:700 42px/1 'Space Grotesk';letter-spacing:-.06em;margin:0 0 9px}.panel-sub{color:var(--muted);font-size:13px;line-height:1.55;margin:0 0 27px}
@@ -125,6 +129,7 @@
   </section>
   <section class="login">
     <div class="panel">
+      <img class="panel-mascot" src="/assets/roxy/wave.webp" alt="" aria-hidden="true" width="380" height="400">
       <div class="panel-top"><span class="panel-label">Account access</span><span class="secure"><i data-lucide="shield-check"></i> Secure session</span></div>
       <div class="tabs" role="tablist" aria-label="Pilih masuk atau daftar">
         <button type="button" role="tab" data-tab="login" aria-selected="true">Masuk</button>
