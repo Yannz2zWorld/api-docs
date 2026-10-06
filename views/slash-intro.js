@@ -1,6 +1,7 @@
-// Yannz API — page-load intro for the scythe pages (login, dashboard): a scythe slash cuts the
-// dark cover in two, blood sprays and drips from the cut, the halves fall apart, and then the
-// 3D scythe makes its entrance (scene3d.js waits for the "slash:done" event).
+// Yannz API — page-load intro for the scythe pages (login, dashboard), about 5 s: red builds up in
+// the dark, a scythe slash cuts the cover, blood sprays and keeps dripping from the cut while the
+// slit widens, the halves fall apart, and then the 3D scythe makes its entrance (scene3d.js waits
+// for the "slash:done" event).
 // The cover (#slash-intro) is in the HTML so it is there from the first paint; if this script
 // never runs, a CSS fallback fades it out. prefers-reduced-motion hides it entirely.
 (function () {
@@ -49,7 +50,8 @@
   }
 
   // Timeline (ms)
-  const T_SWING = 110, T_CUT = 330, T_SPLIT = 420, T_FALL = 700, T_END = 1450;
+  // build-up → swing → impact → bleeding slit → halves fall → blood settles
+  const T_SWING = 950, T_CUT = 1400, T_SPLIT = 2900, T_FALL = 1300, T_END = 5000;
   const N = LITE ? 70 : 150;
   let drops = [], blots = [], drips = [], spawned = false;
 
@@ -57,11 +59,11 @@
     spawned = true;
     for (let i = 0; i < N; i++) {
       const u = rand(0.05, 0.95), p = point(c, u), n = normal(c, u), side = Math.random() < 0.5 ? 1 : -1;
-      const sp = rand(260, 900) * (LITE ? 0.85 : 1);
+      const sp = rand(200, 760) * (LITE ? 0.85 : 1);
       drops.push({
         x: p.x, y: p.y,
         vx: n.x * side * sp + rand(-160, 60), vy: n.y * side * sp + rand(-120, 120),
-        r: rand(1.2, 4.6), c: BLOOD[(Math.random() * BLOOD.length) | 0], life: rand(0.7, 1.15)
+        r: rand(1.2, 4.6), c: BLOOD[(Math.random() * BLOOD.length) | 0], born: T_CUT, life: rand(1.4, 2.6)
       });
     }
     for (let i = 0; i < (LITE ? 12 : 22); i++) {
@@ -84,7 +86,7 @@
     ctx.closePath();
   }
 
-  function drawHalf(c, side, shift, alpha, k) {
+  function drawHalf(c, side, shift, alpha, k, grow) {
     const mid = normal(c, 0.5);
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -124,7 +126,7 @@
       ctx.globalAlpha = alpha;
       ctx.translate(mid.x * shift, mid.y * shift - shift * 0.1);
       for (const d of drips) {
-        const p = point(c, d.u), l = d.len * d.speed * k;
+        const p = point(c, d.u), l = d.len * d.speed * k * grow;
         const g = ctx.createLinearGradient(p.x, p.y, p.x, p.y + l);
         g.addColorStop(0, d.c); g.addColorStop(1, 'rgba(143,10,29,0)');
         ctx.fillStyle = g;
@@ -169,32 +171,44 @@
     ctx.clearRect(0, 0, W, H);
 
     // Screen shake on impact
-    const shake = t > T_CUT - 40 && t < T_CUT + 220 ? (1 - (t - T_CUT + 40) / 260) * 9 * k : 0;
+    const shake = t > T_CUT - 40 && t < T_CUT + 360 ? (1 - (t - T_CUT + 40) / 400) * 10 * k : 0;
     if (shake > 0) ctx.translate(rand(-shake, shake), rand(-shake, shake));
 
     // Cover halves: whole until the cut, then they fall apart
     const sp = clamp01((t - T_SPLIT) / T_FALL);
     // the slit opens at once (page shows through the cut), then the halves fall away
-    const shift = sp * sp * Math.hypot(W, H) * 0.9 + easeOut(clamp01((t - T_CUT) / 220)) * 28 * k;
+    const shift = sp * sp * Math.hypot(W, H) * 0.9 + easeOut(clamp01((t - T_CUT) / (T_SPLIT - T_CUT))) * 46 * k;
+    const grow = easeOut(clamp01((t - T_CUT) / 1800));   // drips run longer while the slit holds
     const coverAlpha = 1 - clamp01((t - T_SPLIT - T_FALL * 0.6) / (T_FALL * 0.4));
     if (t < T_CUT) {
       ctx.fillStyle = BG;
       ctx.fillRect(-20, -20, W + 40, H + 40);
       // a breath of red before the swing
       const g = ctx.createRadialGradient(W * 0.62, H * 0.42, 0, W * 0.62, H * 0.42, Math.max(W, H) * 0.7);
-      g.addColorStop(0, `rgba(200,32,47,${0.1 * clamp01(t / T_CUT)})`);
+      const breath = clamp01(t / T_SWING) * (0.12 + 0.05 * Math.sin(t / 140));
+      g.addColorStop(0, `rgba(200,32,47,${breath})`);
       g.addColorStop(1, 'rgba(200,32,47,0)');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
+      // a faint glint runs along where the blade will cut, twice, before the swing
+      if (t > 250 && t < T_SWING) {
+        const u = ((t - 250) / ((T_SWING - 250) / 2)) % 1;
+        drawSwing(c, clamp01(u + 0.08), clamp01(u - 0.08), 0.22);
+      }
     } else if (t < T_SPLIT + T_FALL) {
       if (!spawned) spawn(c);
-      drawHalf(c, 1, shift, coverAlpha, k);
-      drawHalf(c, -1, shift, coverAlpha, k);
+      drawHalf(c, 1, shift, coverAlpha, k, grow);
+      drawHalf(c, -1, shift, coverAlpha, k, grow);
+      // blood keeps falling from the upper lip of the cut while the slit holds open
+      if (t > T_CUT + 120 && t < T_SPLIT + 300 && Math.random() < (LITE ? 0.35 : 0.6)) {
+        const u = rand(0.08, 0.92), p = point(c, u), n = normal(c, 0.5);
+        drops.push({ x: p.x + n.x * shift, y: p.y + n.y * shift - shift * 0.1, vx: rand(-30, 30), vy: rand(20, 120), r: rand(1.4, 3.2), c: BLOOD[2 + ((Math.random() * 3) | 0)], born: t, life: rand(1.1, 1.8) });
+      }
     }
 
     // Red flash on impact
-    if (t > T_CUT && t < T_CUT + 300) {
-      ctx.fillStyle = `rgba(200,32,47,${0.32 * (1 - (t - T_CUT) / 300)})`;
+    if (t > T_CUT && t < T_CUT + 450) {
+      ctx.fillStyle = `rgba(200,32,47,${0.36 * (1 - (t - T_CUT) / 450)})`;
       ctx.fillRect(-20, -20, W + 40, H + 40);
     }
 
@@ -208,11 +222,11 @@
     // Blood spray
     if (spawned) {
       for (const d of drops) {
-        d.vy += 1500 * dt;
+        d.vy += 1100 * dt;
         d.vx *= 1 - 0.8 * dt;
         d.x += d.vx * dt;
         d.y += d.vy * dt;
-        const age = (t - T_CUT) / 1000, a = clamp01(1 - age / d.life);
+        const age = (t - d.born) / 1000, a = clamp01(1 - age / d.life);
         if (a <= 0) continue;
         const v = Math.hypot(d.vx, d.vy), stretch = 1 + Math.min(3, v / 420);
         ctx.save();

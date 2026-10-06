@@ -13,6 +13,10 @@ const SCRIPTS = ['build/three.min.js', 'examples/js/loaders/GLTFLoader.js', 'exa
 const DEBUG = /[?&]debug3d\b/.test(location.search);
 let THREE;
 
+// The pages hide their CSS fallback (html.scene-pending) while the 3D scene loads; put it back
+// whenever the scene can't be shown.
+const fallback = () => document.documentElement.classList.remove('scene-pending');
+
 let debugBox = null;
 function note(msg) {
   if (!DEBUG) return;
@@ -132,6 +136,7 @@ function mount(el) {
     renderer = new THREE.WebGLRenderer({ antialias: !LITE, alpha: true, powerPreference: 'high-performance' });
   } catch (e) {
     note('renderer failed: ' + (e && e.message));
+    fallback();
     return;
   }
   note(variant + ': renderer ' + (renderer.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1') + ', lite=' + LITE + ', loading model');
@@ -354,6 +359,7 @@ function mount(el) {
     afterIntro(() => {
       el.classList.add('is-ready');
       document.documentElement.classList.add('webgl-' + variant);
+      fallback();   // the webgl-* class now keeps the CSS scene hidden
       note(variant + ': model ready, showing the scythe');
       start();
     });
@@ -361,6 +367,7 @@ function mount(el) {
     // Keep the CSS fallback; free the GPU context.
     console.warn('3D model unavailable:', err && err.message);
     note('model failed: ' + (err && err.message || err));
+    fallback();
     draco.dispose();
     renderer.dispose();
     renderer.domElement.remove();
@@ -372,7 +379,7 @@ function afterIntro(fn) {
   let ran = false;
   const go = () => { if (!ran) { ran = true; fn(); } };
   document.addEventListener('slash:done', go, { once: true });
-  setTimeout(go, 4000);   // never wait on the intro forever
+  setTimeout(go, 8000);   // never wait on the intro forever (it runs about 5 s)
 }
 
 function loadScript(src) {
@@ -389,13 +396,13 @@ function loadScript(src) {
 function boot() {
   const els = document.querySelectorAll('[data-scene3d]');
   if (!els.length) return;
-  if (!hasWebGL()) { note('WebGL is not available in this browser: keeping the CSS scene'); return; }
+  if (!hasWebGL()) { note('WebGL is not available in this browser: keeping the CSS scene'); fallback(); return; }
   note('WebGL ok, loading three.js');
   Promise.all(SCRIPTS.map(f => loadScript(CDN + f))).then(() => {
     THREE = window.THREE;
     THREE.ColorManagement.legacyMode = false;   // colours as authored (sRGB), like the r15x defaults
-    els.forEach(el => { try { mount(el); } catch (e) { console.warn('3D scene unavailable:', e && e.message); note('mount failed: ' + (e && e.message)); } });
-  }, e => { console.warn('3D scene unavailable:', e.message); note(e.message); });
+    els.forEach(el => { try { mount(el); } catch (e) { console.warn('3D scene unavailable:', e && e.message); note('mount failed: ' + (e && e.message)); fallback(); } });
+  }, e => { console.warn('3D scene unavailable:', e.message); note(e.message); fallback(); });
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

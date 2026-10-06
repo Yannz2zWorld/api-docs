@@ -115,9 +115,12 @@
   </style>
   <link rel="preload" href="/assets/scythe.glb" as="fetch" type="model/gltf-binary" crossorigin>
   <style>.turnstile{margin:14px 0 2px;min-height:65px}.turnstile[hidden]{display:none}</style>
+  <!-- Hide the CSS fallback while the 3D scythe loads; scene3d.js brings it back if 3D fails. -->
+  <script>document.documentElement.classList.add('scene-pending');setTimeout(function(){document.documentElement.classList.remove('scene-pending')},20000)</script>
+  <style>html.scene-pending .stage{opacity:0;visibility:hidden}</style>
   <style>#slash-intro{position:fixed;inset:0;z-index:300;background:#0b0b0c;pointer-events:none;animation:slash-fallback .4s ease 2.8s forwards}@keyframes slash-fallback{to{opacity:0;visibility:hidden}}@media (prefers-reduced-motion:reduce){#slash-intro{display:none}}</style>
-  <script defer src="/assets/slash-intro.js?v=1"></script>
-  <script defer src="/assets/scene3d.js?v=6"></script>
+  <script defer src="/assets/slash-intro.js?v=2"></script>
+  <script defer src="/assets/scene3d.js?v=7"></script>
 </head>
 <body>
 <div id="slash-intro" aria-hidden="true"></div>
