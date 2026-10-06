@@ -104,11 +104,11 @@ it('the shared theme stylesheet is served for the account pages', async () => {
   assert.match(r.text, /--bg:\s*#0b0b0c/);
 });
 
-it('the WebGL scene module is served as JavaScript', async () => {
+it('the WebGL scene script is served as JavaScript', async () => {
   const r = await app.request('GET', '/assets/scene3d.js');
   assert.equal(r.status, 200);
   assert.match(r.headers['content-type'], /javascript/);
-  assert.match(r.text, /from 'three'/);
+  assert.match(r.text, /window\.THREE/);
 });
 
 it('the hero scythe model is served as a small Draco GLB', async () => {
