@@ -39,7 +39,7 @@ STEP 1 - PERSIAPAN SERVER:
 
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl git software-properties-common
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 STEP 2 - CLONE PROJECT:
@@ -95,7 +95,7 @@ CATATAN PENTING
 ================================================================================
 
 - Jangan hardcode API key di file HTML atau client-side
-- Selalu gunakan route /ai/gemini sebagai proxy server-side
+- Node.js 20 atau lebih baru (Vercel project memakai 24.x)
 - Untuk local testing: node index.js lalu buka http://localhost:3000
 
 ================================================================================
@@ -169,12 +169,16 @@ Google Cloud Console checklist (OAuth 2.0 Client ID, type "Web application"):
 1. `npm install`
 2. Take a Neon backup/branch and inspect the existing `users` table (`users.id` must be uuid).
 3. Apply, in order, in the Neon SQL Editor: `migrations/001_users.sql`, `002_platform.sql`,
-   `003_backfill_columns.sql`, `004_payments_amount.sql`, `005_integrity.sql`, `006_password_auth.sql`.
+   `003_backfill_columns.sql`, `004_payments_amount.sql`, `005_integrity.sql`, `006_password_auth.sql`,
+   `007_billing_custom_keys.sql`.
    All are idempotent and additive (no DROP, no data rewrite). 005 prints a WARNING
    (not an error) for any constraint it skips because existing rows do not comply.
 4. **Run 005 BEFORE deploying this version.** The code reads `users.session_version`
    and the new `payments` gateway columns; without them login answers
    `503 DATABASE_SCHEMA_OUTDATED`. 005 is safe for the previous code version too.
+   **Run 007 before (or right after) deploying the billing/custom-key version.** Login,
+   sessions, existing keys and the gateway keep working without 007 (tested), but tier
+   durations, proof uploads, custom keys and payment settings need it.
 5. `GET /health/database` must return `{"database":"connected","schema":"ok"}`; it also
    checks the unique indexes `ON CONFLICT` relies on (reported as `unique:table(cols)`).
 6. Configure secrets only in Vercel environment settings, deploy a preview, verify, promote.
@@ -227,11 +231,21 @@ nothing is claimed as sent). The owner panel Status tab shows which provider is 
 | DEWA   | Rp25.000 | 100.000      | unlimited       | up to DEWA |
 | OWNER  | not sold | unlimited    | unlimited       | everything, incl. locked endpoints |
 
-OWNER is decided only by `OWNER_EMAIL` (case-insensitive). A `users.tier='OWNER'`
-value never grants owner rights (it is treated as FREE), and the owner panel
-cannot assign OWNER. Paid tiers are permanent until the owner changes them (no
-expiry/renewal is implemented). Downgrading a user does not revoke keys above
-the new cap; those keys keep working with the lower tier's quota.
+Prices are per 30 days. OWNER is decided only by `OWNER_EMAIL` (case-insensitive).
+A `users.tier='OWNER'` value never grants owner rights (it is treated as FREE), and
+the owner panel cannot assign OWNER.
+
+Durations (IMPLEMENTED, migration 007): a purchase lasts 7–365 days (default 30) and
+costs `ceil(price × days / 30)` rounded up to Rp100 (e.g. SULTAN 7 days Rp1.200, 1 year
+Rp60.900). When the payment is approved the tier gets `users.tier_expires_at`:
+- buying a higher tier than the current (unexpired) one: switch now, expiry = now + days
+  (remaining time on the old tier is not carried over);
+- buying the same tier: the expiry is extended from max(expiry, now);
+- an older cheaper order approved later never downgrades.
+After `tier_expires_at` the account is treated as FREE everywhere (sessions, API keys,
+quota, key cap) without any job. Tiers granted before migration 007 or set by the owner
+without a duration have no expiry. Downgrading/expiry does not revoke keys above the new
+cap; they keep working with the lower tier's quota.
 
 ## Daily quota (IMPLEMENTED)
 
@@ -251,8 +265,18 @@ the new cap; those keys keep working with the lower tier's quota.
 
 ## API keys (IMPLEMENTED)
 
-- `yannz_live_` + 32 random bytes; only a SHA-256 hash and a short display prefix are
-  stored; plaintext is returned once at creation.
+- Generated keys: `yannz_live_` + 32 random bytes.
+- Custom keys (IMPLEMENTED, migration 007): paid users may choose the key value itself,
+  e.g. `Yannz2z` (`custom_key` in `POST /api/keys`; 6–64 characters `A-Z a-z 0-9 _ -`,
+  case-sensitive, the `yannz_live_` prefix is reserved). Values are unique across all
+  users and never reusable, even after revocation (`409 CUSTOM_KEY_TAKEN`). Only the
+  first 3 characters are shown afterwards. A short value is easier to guess than a
+  generated key; the page says so. Max 20 custom-value attempts per account per hour.
+- Only a SHA-256 hash and a short display prefix are stored; plaintext is returned once.
+- Guessing protection: 30 invalid keys from one IP within 15 minutes block key
+  authentication from that IP for the rest of the window (`429 TOO_MANY_INVALID_KEYS`,
+  stored in `api_key_failures`; tune with `INVALID_KEY_LIMIT_PER_15MIN`). Logged-in
+  sandbox use is unaffected.
 - Send `Authorization: Bearer <key>` or `x-api-key: <key>`. Query-string keys are not accepted.
 - Caps per tier are enforced in a transaction with a per-user lock (no race).
 - Revoked keys fail immediately with `401 API_KEY_REVOKED`; unknown keys `401 INVALID_API_KEY`.
@@ -283,7 +307,9 @@ Status (DB/schema, env presence without values, payment and notification
 configuration, plugin vs registry), dashboard stats, users (search/filter, detail
 with 14-day usage, keys, orders; ban/unban/approve/tier change/key revoke/delete),
 endpoints (tier, lock, enable/disable, metadata create/delete), payments
-(filter, approve/reject manual payments), maintenance, audit log, JSON backup.
+(filter, proof image preview, approve/reject manual and QRIS-gateway payments),
+server settings (maintenance, DANA/GoPay destination accounts, Telegram status), audit
+log, JSON backup. Tier changes can carry a duration in days (empty = permanent).
 Every owner route is authorized server-side (`OWNER_REQUIRED`), state-changing
 routes are same-origin only, destructive UI actions require confirmation (user
 delete requires typing the email). The owner account cannot be banned, demoted
@@ -291,32 +317,54 @@ or deleted from the panel.
 
 ## Billing and payments
 
-Orders: `POST /api/orders` with `{tier}`; the amount always comes from the tier
-table (client amounts ignored), only upgrades are allowed, at most 5 pending orders
-per user, optional `Idempotency-Key`. Orders expire after 2 hours unless a manual
-proof is waiting for review. States: order `pending|paid|rejected|expired`, payment
-`pending|paid|rejected|expired`.
+Flow on /billing: pick tier -> duration (7, 14, 30, 90, 180, 365 days or custom 7–365;
+default 30) -> payment method -> pay. `POST /api/orders` takes `{tier, duration_days}`;
+the amount always comes from the server (client amounts ignored); only upgrades or
+same-tier extensions are allowed, at most 5 pending orders per user, optional
+`Idempotency-Key`. Orders expire after 2 hours unless a manual proof is waiting for
+review. States: order `pending|paid|rejected|expired`, payment `pending|paid|rejected|expired`.
 
-Manual payment (IMPLEMENTED): the user submits method + HTTPS proof URL
-(`PAYMENT_PENDING`, one pending proof per order); the owner approves (tier upgrade,
-once, audited) or rejects. Approval is idempotent (`409 PAYMENT_NOT_PENDING` on a
-second decision). LIMITATION: no file upload/object storage; the proof is a
-user-supplied HTTPS link the owner must check.
+Payment methods:
+| Method | How | Settles |
+|---|---|---|
+| QRIS otomatis | Pakasir transaction; the QR payload is rendered as an image by `/api/orders/:id/qr.svg` | webhook + provider lookup (if `PAKASIR_V2_VERIFY_URL` is set), or owner approval |
+| QRIS manual | the owner's static QRIS (`views/assets/qris-manual.jpg`); buyer enters the exact amount | owner approval |
+| DANA | transfer to the number set in Owner > Server & Pembayaran | owner approval |
+| GoPay | same, GoPay number | owner approval |
+DANA/GoPay are hidden until the owner sets a number. QRIS gateway is hidden without
+`PAKASIR_PROJECT` + `PAKASIR_API_KEY`.
+
+Manual proof (IMPLEMENTED): the buyer uploads a screenshot (re-encoded in the browser to
+JPEG ≤ 1600 px; the server accepts only real JPEG/PNG/WebP bytes, ≤ 2 MB, stored in
+`payment_proofs`, one pending proof per order). API clients may send `proof_url` (HTTPS)
+instead. The owner sees the image in the Payments tab (`/owner/payments/:id/proof`,
+owner-only, served with `Content-Security-Policy: sandbox`) and approves (tier change
+with expiry, once, audited) or rejects. Approval is idempotent (`409 PAYMENT_NOT_PENDING`).
+
+Owner notification:
+- Telegram (IMPLEMENTED, NOT VERIFIED against the live Telegram API): with
+  `TELEGRAM_BOT_TOKEN` and `TELEGRAM_OWNER_CHAT_ID` set, every manual payment sends the
+  proof photo with order, tier, duration, amount, method and buyer email to the owner's
+  chat. Failures never block the payment; the response says `sent`, `failed` or
+  `not_configured`. Setup: create a bot with @BotFather (token), send any message to the
+  bot, then open `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy
+  `message.chat.id`. Set both in Vercel (token as Sensitive), redeploy.
+- WhatsApp: no automated WhatsApp API is integrated (it needs a paid/approved provider).
+  After uploading, the buyer gets a "Kirim via WhatsApp" button: a `wa.me` link to
+  `OWNER_WA` (or the number in `settings.js`) with the order details prefilled; the buyer
+  attaches the screenshot themselves.
 
 Pakasir (IMPLEMENTED, NOT VERIFIED against the live provider): transaction creation
-uses `PAKASIR_PROJECT` + `PAKASIR_API_KEY`; the payment link/VA/QR is stored and
-shown on /billing. Creating a payment never marks it paid. The webhook
-(`POST /webhooks/pakasir`) checks project, `completed` status, order code and amount
-against the database, then requires a server-side provider lookup via
-`PAKASIR_V2_VERIFY_URL` (template with `{project}`, `{order_id}`, `{amount}`).
-Without that variable automatic settlement is DISABLED (fail-closed, `202
-PAYMENT_NOT_VERIFIED`). Settlement is idempotent: replays and concurrent duplicates
-upgrade once (`duplicate: true`). The official Pakasir verification endpoint could
-not be confirmed from the development environment, so no URL is shipped; configure
-it only from Pakasir's official documentation and test it with a sandbox payment.
-
-WhatsApp notification: NOT CONFIGURED. `services/ownerNotificationService.js` is an
-adapter with no provider; it reports `not_configured` and never claims delivery.
+uses `PAKASIR_PROJECT` + `PAKASIR_API_KEY`. Creating a payment never marks it paid. The
+webhook (`POST /webhooks/pakasir`) checks project, `completed` status, order code and
+amount against the database, then requires a server-side provider lookup via
+`PAKASIR_V2_VERIFY_URL` (template with `{project}`, `{order_id}`, `{amount}`, `{api_key}`).
+Pakasir's API documentation has described a transaction-detail lookup of the form
+`https://app.pakasir.com/api/transactiondetail?project={project}&amount={amount}&order_id={order_id}&api_key={api_key}`
+(NOT VERIFIED from the development environment: pakasir.com was unreachable). Confirm
+it in your Pakasir docs and test with a sandbox payment before relying on it. Without the variable automatic settlement is DISABLED (fail-closed,
+`202 PAYMENT_NOT_VERIFIED`) and the owner approves QRIS-gateway payments by hand after
+checking the Pakasir dashboard. Settlement is idempotent (`duplicate: true` on replays).
 
 ## Error contract
 
@@ -324,9 +372,11 @@ Responses use `{success:false, error:<CODE>, message}`. Codes: AUTH_REQUIRED,
 INVALID_CREDENTIAL, INVALID_API_KEY, API_KEY_REVOKED, ACCOUNT_RESTRICTED,
 CSRF_BLOCKED, QUOTA_EXCEEDED, TIER_RESTRICTED, ENDPOINT_LOCKED,
 ENDPOINT_UNAVAILABLE, MAINTENANCE, UPSTREAM_FAILED, OWNER_REQUIRED, KEY_LIMIT,
-KEYS_NOT_INCLUDED, INVALID_TIER, TIER_NOT_UPGRADE, TOO_MANY_PENDING_ORDERS,
+KEYS_NOT_INCLUDED, INVALID_CUSTOM_KEY, CUSTOM_KEY_TAKEN, TOO_MANY_INVALID_KEYS,
+INVALID_TIER, INVALID_DURATION, TIER_NOT_UPGRADE, TOO_MANY_PENDING_ORDERS,
 PAYMENT_PENDING (status), PAYMENT_NOT_VERIFIED, PAYMENT_NOT_PENDING,
-PAYMENT_NOT_CONFIGURED, INVALID_PAYMENT, INVALID_PROOF_URL, NOT_FOUND,
+PAYMENT_NOT_CONFIGURED, PAYMENT_METHOD_UNAVAILABLE, INVALID_PAYMENT, INVALID_PROOF_URL,
+INVALID_PROOF_IMAGE, PROOF_TOO_LARGE, QR_NOT_FOUND, NOT_FOUND,
 INVALID_JSON, DATABASE_UNAVAILABLE, DATABASE_SCHEMA_OUTDATED. SQL errors and stack
 traces are never returned; logs contain codes/stages only (no tokens, keys,
 cookies or secrets).
@@ -339,29 +389,54 @@ cookies or secrets).
 - Pages: `/`, `/home`, `/api` (Sandbox), `/api/playground`, `/pricing`, `/keys`, `/billing`, `/owner`
 - `GET /usage`, `GET /api/dashboard`
 - `GET|POST /api/keys`, `DELETE /api/keys/:id`, `POST /api/keys/:id/revoke`
-- `GET|POST /api/orders`, `POST /api/orders/:id/pakasir`, `POST /api/orders/:id/manual`
+- `GET|POST /api/orders`, `POST /api/orders/:id/pakasir`, `GET /api/orders/:id/qr.svg`, `POST /api/orders/:id/manual`
 - Owner: `/owner/status`, `/owner/dashboard`, `/owner/users[/:id]` (+ ban, unban,
   approve, tier, delete, keys/:keyId/revoke), `/owner/api/endpoints[/:id]` (+ lock,
-  unlock), `/owner/payments` (+ approve, reject), `/owner/server`, `/owner/audit`, `/owner/backup`
+  unlock), `/owner/payments` (+ approve, reject, `:id/proof`), `/owner/server`,
+  `/owner/server/payments`, `/owner/audit`, `/owner/backup`
 - `POST /webhooks/pakasir`
 
 ## Verification status
 
-- IMPLEMENTED and VERIFIED locally (PostgreSQL 16, Chromium): everything above
-  except where marked otherwise. `npm test` with TEST_DATABASE_URL: all pass.
-- NOT VERIFIED in production: Google login end-to-end on apiz2z.vercel.app, Vercel
-  build/runtime logs, Neon production data shape beyond the health check, Pakasir
-  live/sandbox payments and webhook, any WhatsApp delivery.
-- NOT CONFIGURED: WhatsApp provider, object storage for proofs, Pakasir verification URL,
-  email provider (until EMAIL_FROM + SMTP_* or RESEND_API_KEY are set).
-- Email delivery was verified locally against a test SMTP server and a stubbed Resend API;
-  real delivery to inboxes (spam placement, Gmail limits) is NOT VERIFIED.
+- VERIFIED locally (PostgreSQL 16, Chromium 343/360/390/768/1280 px): everything above
+  except where marked otherwise. `npm test` with TEST_DATABASE_URL: 112/112 pass.
+- VERIFIED in production by the owner: migrations 001–006 applied, `schema: ok`, Google
+  login works, password-reset email from YannApi arrives. Latest production deployment
+  (main @ 97db1fa) is READY on Vercel (Node 24.x).
+- NOT VERIFIED in production: this branch's changes until merged/deployed (run 007),
+  Pakasir live payments/webhook/lookup URL, Telegram delivery, WebGL performance on real
+  phones/GPUs, Vercel runtime logs (not accessible from the development environment).
+- NOT CONFIGURED: automated WhatsApp sending (by design: wa.me link instead), Telegram
+  (until TELEGRAM_* is set), Pakasir verification URL.
+
+## Known limitations
+
+- The per-IP rate limiter is in-memory per serverless instance (best effort). Quota,
+  key caps and invalid-key throttling are enforced in PostgreSQL.
+- Proof images live in PostgreSQL (≤ 2 MB each, typically 100–400 KB after browser
+  compression). Prune old rows from `payment_proofs` if storage gets tight.
+- Upgrading to a higher tier does not carry over remaining days of the old tier.
+- Custom key values are only as strong as their length; 6-character values are guessable
+  in principle (throttled to 30 wrong guesses per IP per 15 minutes).
+- `/api` and `/api/playground` load fonts from Google Fonts; the login/home 3D scenes
+  load Three.js from jsDelivr (CSS fallback without WebGL).
+
+## Security housekeeping (owner)
+
+- Delete the unused Vercel variables `OWNER_API_KEY` and `OWNER_PANEL_PASSWORD` (no code
+  reads them). Mark `AUTH_SECRET`, `SMTP_PASS`, `PAKASIR_API_KEY`, `TELEGRAM_BOT_TOKEN` and
+  `DATABASE_URL` as Sensitive in Vercel.
+- An old commit of `settings.js` contained a hard-coded API key. It no longer grants
+  access (keys are per-user and hashed now), but treat that value as public: never reuse
+  it, including as a custom key.
 
 ## Smoke checks after deploy
 
 - `GET /health` -> `{"status":"ok"}`; `GET /health/database` -> `schema: ok`.
 - `GET /auth/me` signed out -> 401; after Google login -> user plus usage/key limits.
 - `/api` signed in as FREE: run "Ping" without a key -> 200, quota decreases by 1.
-- `/keys` as a paid user: create a key, `curl -H "Authorization: Bearer <key>" /api/tools/ping`, revoke it, repeat -> 401 API_KEY_REVOKED.
+- `/keys` as a paid user: create a key (generated or custom), `curl -H "Authorization: Bearer <key>" /api/tools/ping`, revoke it, repeat -> 401 API_KEY_REVOKED.
+- `/billing`: pick tier + duration + QRIS manual, upload a screenshot -> owner sees it in Payments
+  (and on Telegram if configured); approve -> tier shows "aktif sampai <date>".
 - `/owner` -> Status tab shows schema ok and the expected configuration; non-owners get 403.
 - Logout, then reuse the old cookie (e.g. another browser) -> /auth/me 401.
