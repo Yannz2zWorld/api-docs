@@ -31,8 +31,8 @@ module.exports = function authRouter({ issueSession }) {
     next();
   });
 
-  // Cloudflare Turnstile on the forms a bot would hammer (no-op until the keys are configured).
-  router.use(['/auth/login', '/auth/register', '/auth/password/forgot', '/auth/email/resend'], turnstile.guard());
+  // Cloudflare Turnstile on every sign-in form (no-op until the keys are configured).
+  router.use(['/auth/login', '/auth/register', '/auth/email/verify', '/auth/email/resend', '/auth/password/forgot', '/auth/password/reset'], turnstile.guard());
 
   async function sendCode(user, purpose) {
     const issued = await codes.issueCode(user.id, purpose);

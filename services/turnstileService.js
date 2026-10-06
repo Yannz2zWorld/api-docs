@@ -1,8 +1,8 @@
 'use strict';
-// Cloudflare Turnstile: bot check on the email/password forms (login, register, forgot password,
-// resend code). Off until both keys are set in the environment, so the forms keep working before
-// setup. Config: TURNSTILE_SITE_KEY (public, shown to the browser) and TURNSTILE_SECRET_KEY (server
-// only, never logged or returned). Google sign-in has Google's own bot protection and is not gated.
+// Cloudflare Turnstile: every way of signing in (email/password, register, email code, password
+// reset, Google button and Google redirect) needs a passed Turnstile check. Off until both keys are
+// set in the environment, so sign-in keeps working before setup. Config: TURNSTILE_SITE_KEY (public,
+// shown to the browser) and TURNSTILE_SECRET_KEY (server only, never logged or returned).
 const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
 const siteKey = () => process.env.TURNSTILE_SITE_KEY || '';
@@ -43,4 +43,16 @@ function guard() {
   };
 }
 
-module.exports = { siteKey, isEnabled, verify, guard };
+// For the Google redirect flow (GET /auth/google?ts=<token>): without a passed check the browser is
+// sent back to the login page instead of to Google, so no OAuth state is ever issued.
+function redirectGuard(back = '/?auth=turnstile') {
+  return async (req, res, next) => {
+    if (!isEnabled()) return next();
+    const ip = (req.ip || '').replace(/^::ffff:/, '') || undefined;
+    const result = await verify(req.query.ts, ip);
+    if (result.ok) return next();
+    res.redirect(back);
+  };
+}
+
+module.exports = { siteKey, isEnabled, verify, guard, redirectGuard };

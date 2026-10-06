@@ -121,7 +121,7 @@
     .brand-mark,.submit{border-color:var(--edge)}.google{background:#f4f4f5;border-color:#f4f4f5;color:#0b0b0c}.google:hover{background:#e4e4e7;color:#0b0b0c}.google-icon{background:#f4f4f5;border-color:#0b0b0c;color:#0b0b0c}#google-fallback{color:#0b0b0c}
   </style>
   <link rel="preload" href="/assets/scythe.glb" as="fetch" type="model/gltf-binary" crossorigin>
-  <style>.turnstile{margin:14px 0 2px;min-height:65px}.turnstile[hidden]{display:none}</style>
+  <style>.turnstile{margin:14px 0 2px;min-height:65px}.turnstile[hidden]{display:none}.oauth.ts-locked #google-oauth,.oauth.ts-locked #google-fallback{pointer-events:none;opacity:.4;filter:grayscale(1)}.ts-note{font:500 10px 'DM Mono',monospace;color:#a1a1aa;margin:8px 0 0;text-align:center}.ts-note[hidden]{display:none}</style>
   <!-- Hide the CSS fallback while the 3D scythe loads; scene3d.js brings it back if 3D fails. -->
   <script>document.documentElement.classList.add('scene-pending');setTimeout(function(){document.documentElement.classList.remove('scene-pending')},20000)</script>
   <style>html.scene-pending .stage{opacity:0;visibility:hidden}</style>
@@ -197,6 +197,7 @@
         <div class="divider"><span>atau</span></div>
         <div id="google-oauth" aria-live="polite"></div>
         <a class="google" id="google-fallback" href="/auth/google"><span class="google-icon">G</span><span>Continue with Google</span></a>
+        <p class="ts-note" id="ts-note" hidden>Selesaikan verifikasi Cloudflare di atas untuk lanjut dengan Google.</p>
         <div id="google-message" class="message" aria-live="polite"></div>
       </div>
       <p class="oauth-note">Sandi di-hash di server (scrypt) dan sesi disimpan di cookie HttpOnly yang aman.</p>
@@ -222,6 +223,7 @@
   const authParam=new URLSearchParams(location.search).get('auth');
   if(authParam==='restricted'){message.className='message';message.textContent='Akun ini sedang dibatasi. Hubungi owner.'}
   if(authParam==='account_missing'){message.className='message';message.textContent='Sesi tidak valid. Silakan login lagi.'}
+  if(authParam==='turnstile'){message.className='message';message.textContent='Selesaikan verifikasi keamanan Cloudflare dulu, lalu coba masuk lagi.'}
 
 
   function showGoogleError(text){const el=$('#google-message');el.className='message';el.textContent=text;}
@@ -233,9 +235,14 @@
   }
   async function handleGoogleCredential(response){
     if(!response?.credential){showGoogleError('Google tidak mengembalikan credential.');return;}
+    // Google sign-in also needs the Cloudflare check (the server refuses it otherwise).
+    if(ts.enabled&&!ts.token){showGoogleError('Selesaikan verifikasi Cloudflare dulu, lalu klik Google lagi.');return;}
     try{
       message.className='message';message.textContent='';
-      const r=await fetch('/auth/google/credential',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:response.credential})});
+      const body={credential:response.credential};if(ts.enabled)body.turnstileToken=ts.token;
+      let r;
+      try{r=await fetch('/auth/google/credential',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
+      finally{if(ts.enabled)tsReset();}
       const data=await r.json().catch(()=>({}));
       if(!r.ok) throw new Error((data.message||'Google login gagal.')+(data.error?` (${data.error})`:''));
       startGoogleLoading();
@@ -293,17 +300,26 @@
     if(history.replaceState)history.replaceState(null,'',view==='login'?location.pathname+location.search:'#'+view);
   }
   // ---------------- Cloudflare Turnstile (only when the server has keys configured)
-  const GATED=['/auth/login','/auth/register','/auth/password/forgot','/auth/email/resend'];
+  const GATED=['/auth/login','/auth/register','/auth/email/verify','/auth/email/resend','/auth/password/forgot','/auth/password/reset'];
   const ts={enabled:false,widget:null,token:''};
+  // Until the check passes, the Google button and link are locked.
+  function tsLock(){const locked=ts.enabled&&!ts.token;$('#oauth-block').classList.toggle('ts-locked',locked);$('#ts-note').hidden=!locked;}
+  function tsReset(){ts.token='';tsLock();try{window.turnstile.reset(ts.widget);}catch{}}
+  $('#google-fallback').addEventListener('click',e=>{
+    if(!ts.enabled)return;
+    e.preventDefault();
+    if(!ts.token)return showGoogleError('Selesaikan verifikasi Cloudflare dulu.');
+    location.href='/auth/google?ts='+encodeURIComponent(ts.token);
+  });
   authConfig.then(cfg=>{
     if(!cfg.turnstileSiteKey)return;
-    ts.enabled=true;
+    ts.enabled=true;tsLock();
     const host=$('#cf-turnstile');host.hidden=false;
     const s=document.createElement('script');
     s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;
     s.onload=()=>{ts.widget=window.turnstile.render(host,{sitekey:cfg.turnstileSiteKey,theme:'dark',size:'flexible',language:'id',
-      callback:t=>{ts.token=t;},'expired-callback':()=>{ts.token='';},'error-callback':()=>{ts.token='';}});};
-    s.onerror=()=>say('Verifikasi Cloudflare gagal dimuat. Muat ulang halaman atau masuk dengan Google.');
+      callback:t=>{ts.token=t;tsLock();},'expired-callback':()=>{ts.token='';tsLock();},'error-callback':()=>{ts.token='';tsLock();}});};
+    s.onerror=()=>say('Verifikasi Cloudflare gagal dimuat. Muat ulang halaman, lalu coba lagi.');
     document.head.appendChild(s);
   });
   async function post(path,body){
@@ -318,7 +334,7 @@
       return {ok:r.ok,status:r.status,data};
     }finally{
       // Each token works once: get a fresh one for the next attempt.
-      if(gated){ts.token='';try{window.turnstile.reset(ts.widget);}catch{}}
+      if(gated)tsReset();
     }
   }
   const errText=d=>(d.message||'Permintaan gagal.')+(d.error?` (${d.error})`:'');

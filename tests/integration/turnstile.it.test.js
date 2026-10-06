@@ -43,13 +43,31 @@ it('when enabled the login page gets the site key, never the secret', async () =
   assert.doesNotMatch(cfg.text, /secret-test/);
 });
 
-it('login, register, forgot password and resend need a valid token', async () => {
+it('every sign-in route needs a valid token: email/password, register, codes, reset and Google', async () => {
   enable();
-  for (const [url, body] of [['/auth/login', {}], ['/auth/register', { name: 'Bot', password: 'abcd1234' }], ['/auth/password/forgot', {}], ['/auth/email/resend', {}]]) {
+  for (const [url, body] of [
+    ['/auth/login', {}], ['/auth/register', { name: 'Bot', password: 'abcd1234' }], ['/auth/email/verify', { code: '123456' }],
+    ['/auth/email/resend', {}], ['/auth/password/forgot', {}], ['/auth/password/reset', { code: '123456', password: 'abcd1234' }],
+    ['/auth/google/credential', { credential: 'x.y.z' }]
+  ]) {
     const r = await app.request('POST', url, { headers: { origin: app.origin }, body: { email: 'bot@example.test', ...body } });
     assert.deepEqual([r.status, r.json.error], [400, 'TURNSTILE_REQUIRED'], url);
   }
   assert.equal(calls.length, 0, 'no token: Cloudflare is not even asked');
+});
+
+it('the Google redirect flow is sent back to the login page without a passed check', async () => {
+  enable();
+  let r = await app.request('GET', '/auth/google');
+  assert.equal(r.status, 302);
+  assert.equal(r.headers.location, '/?auth=turnstile');
+  assert.doesNotMatch(String(r.headers['set-cookie'] || ''), /oauth_state/, 'no OAuth state is issued');
+  verdict = { status: 200, json: { success: false } };
+  r = await app.request('GET', '/auth/google?ts=tok-bad');
+  assert.equal(r.headers.location, '/?auth=turnstile');
+  verdict = { status: 200, json: { success: true } };
+  r = await app.request('GET', '/auth/google?ts=tok-ok');
+  assert.notEqual(r.headers.location, '/?auth=turnstile', 'a passed check continues to Google');
 });
 
 it('a passing token lets the request through; the secret and token go to Cloudflare only', async () => {
@@ -71,9 +89,10 @@ it('a rejected token is refused, and an unreachable Cloudflare fails closed', as
   assert.deepEqual([r.status, r.json.error], [503, 'TURNSTILE_UNAVAILABLE']);
 });
 
-it('verifying an email code and resetting a password are not gated (they need the emailed code)', async () => {
+it('Google sign-in with a passing token reaches the Google token check', async () => {
   enable();
-  const r = await app.request('POST', '/auth/email/verify', { headers: { origin: app.origin }, body: { email: 'nobody@example.test', code: '123456' } });
-  assert.equal(r.json.error, 'INVALID_CODE');
-  assert.equal(calls.length, 0);
+  const r = await app.request('POST', '/auth/google/credential', { headers: { origin: app.origin }, body: { credential: 'not-a-real-id-token', turnstileToken: 'tok-ok' } });
+  assert.notEqual(r.json.error, 'TURNSTILE_REQUIRED');
+  assert.notEqual(r.json.error, 'TURNSTILE_FAILED');
+  assert.equal(calls.length, 1);
 });
