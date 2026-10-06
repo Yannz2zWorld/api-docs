@@ -401,14 +401,19 @@ function makeTextures(){
    ============================================================ */
 const stage=$('#stage');
 let renderer;
-try { renderer=new THREE.WebGLRenderer({antialias:true, alpha:true, powerPreference:'high-performance'}); }
+// Lighter rendering on phones / small or low-memory devices (antialias off, 1x resolution, fewer lights and
+// particles); every device gets dynamic resolution that steps down when the frame rate drops.
+const LITE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600 || (navigator.deviceMemory || 8) <= 4 || (navigator.hardwareConcurrency || 8) <= 4;
+const PR_MAX = Math.min(window.devicePixelRatio || 1, LITE ? 1 : 1.35), PR_MIN = 0.6;
+let pixelRatio = PR_MAX;
+try { renderer=new THREE.WebGLRenderer({antialias:!LITE, alpha:true, powerPreference:'high-performance'}); }
 catch(e){ fail('WebGL tidak aktif di perangkat atau browser ini, jadi model 3D tidak bisa ditampilkan.'); return; }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 1.75));
+renderer.setPixelRatio(pixelRatio);
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.18;
 renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.shadowMap.type=THREE.PCFShadowMap;
 renderer.setClearColor(0x000000,0);
 stage.appendChild(renderer.domElement);
 
@@ -679,8 +684,9 @@ function buildBlade(){
   for(const g of [eg1,eg2]){ const m=new THREE.Mesh(g,glowMat); m.renderOrder=2; grp.add(m); glowObjects.push(m); }
 
   // crimson light cast onto nearby bone and metal
-  for(const [t,z] of [[.24,.6],[.24,-.6],[.68,.6],[.68,-.6]]){
-    const f=bladeFrame(t); const L=new THREE.PointLight(0xff1a2c,1.0,3.2,2);
+  // two lights (one on light devices) carry the glow that four used to: each point light costs every pixel
+  for(const [t,z] of (LITE ? [[.46,.6]] : [[.3,.6],[.62,-.6]])){
+    const f=bladeFrame(t); const L=new THREE.PointLight(0xff1a2c,LITE?2.2:1.7,4.2,2);
     L.position.copy(f.e.clone().lerp(f.s,.3)).add(V3(0,0,z)); grp.add(L); redLights.push(L);
   }
   return grp;
@@ -1220,7 +1226,7 @@ const AudioFX={
 /* ============================================================
    PARTICLES: embers, sparks, blood mist (additive point sprites)
    ============================================================ */
-const PMAX=2200;
+const PMAX=LITE?1100:2200;
 const pPos=new Float32Array(PMAX*3), pVel=new Float32Array(PMAX*3), pCol=new Float32Array(PMAX*3);
 const pAlpha=new Float32Array(PMAX), pSize=new Float32Array(PMAX), pBase=new Float32Array(PMAX);
 const pLife=new Float32Array(PMAX), pMaxL=new Float32Array(PMAX), pGrav=new Float32Array(PMAX), pDrag=new Float32Array(PMAX);
@@ -1275,7 +1281,7 @@ function updateParticles(dt,time){
    DARK AURA: fast black / dark-crimson smoke wisps clinging to the scythe
    (normal-blended so it can actually darken, unlike additive glow)
    ============================================================ */
-const SMAX=4200;
+const SMAX=LITE?1800:4200;
 const sPos=new Float32Array(SMAX*3), sVel=new Float32Array(SMAX*3), sCol=new Float32Array(SMAX*3);
 const sAlpha=new Float32Array(SMAX), sSize=new Float32Array(SMAX), sBase=new Float32Array(SMAX), sSeed=new Float32Array(SMAX);
 const sLife=new Float32Array(SMAX), sMaxL=new Float32Array(SMAX), sGrav=new Float32Array(SMAX), sDrag=new Float32Array(SMAX), sOp=new Float32Array(SMAX);
@@ -2172,9 +2178,23 @@ function countStats(){
    ============================================================ */
 const clock=new THREE.Clock(); let time=0;
 const _shk=new THREE.Vector3();
+// dynamic resolution: average the frame time over ~1.5 s, step the pixel ratio down when slow, up when smooth
+const perf={t:0,n:0,good:0};
+function adaptResolution(raw){
+  perf.t+=raw; perf.n++;
+  if(perf.t<1.5) return;
+  const fps=perf.n/perf.t; perf.t=0; perf.n=0;
+  let next=pixelRatio;
+  if(fps<40 && pixelRatio>PR_MIN){ next=Math.max(PR_MIN,pixelRatio-(fps<25?0.25:0.15)); perf.good=0; }
+  else if(fps>57 && pixelRatio<PR_MAX){ if(++perf.good>=2){ next=Math.min(PR_MAX,pixelRatio+0.1); perf.good=0; } }
+  else perf.good=0;
+  if(Math.abs(next-pixelRatio)>0.01){ pixelRatio=next; renderer.setPixelRatio(pixelRatio); resize(); }
+}
 function animate(){
   requestAnimationFrame(animate);
-  let dt=Math.min(.05,clock.getDelta()); if(hitStop>0){ hitStop-=dt; dt*=.15; } time+=dt;
+  const rawDt=clock.getDelta();
+  if(rawDt<0.5) adaptResolution(rawDt);
+  let dt=Math.min(.05,rawDt); if(hitStop>0){ hitStop-=dt; dt*=.15; } time+=dt;
   if(tween&&controls){
     const k=clamp((performance.now()-tween.start)/tween.dur,0,1), e=easeIO(k);
     controls.target.lerpVectors(tween.t0,tween.t1,e);
