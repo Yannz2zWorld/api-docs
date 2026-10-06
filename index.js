@@ -489,7 +489,7 @@ function issueSession(res, sub, account, provider = 'google') {
 
 // Each stage reports its own stable error code so a production failure can be traced
 // from the response body or the Vercel log line without logging tokens or secrets.
-app.post('/auth/google/credential', async (req, res) => {
+app.post('/auth/google/credential', turnstile.guard(), async (req, res) => {
   const fail = (status, error, message, log) => {
     if (log) console.error('Google credential/login failed:', log);
     return res.status(status).json({ success: false, error, message });
@@ -557,7 +557,7 @@ app.post('/auth/google/credential', async (req, res) => {
   return res.json({ success: true, redirect: '/home' });
 });
 
-app.get('/auth/google', (req, res) => {
+app.get('/auth/google', turnstile.redirectGuard(), (req, res) => {
   try {
     const state = randomState();
     const client = createOAuthClient();
