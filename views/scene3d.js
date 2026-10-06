@@ -10,7 +10,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const COARSE = matchMedia('(pointer: coarse)').matches;
-const BG = 0x0b0b0c;
+const BG = 0x0c0e1c;
 
 function hasWebGL() {
   try {
@@ -60,21 +60,22 @@ function particles(count, spread, texture) {
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  return new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.07, map: texture, color: 0xd4d4d8, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }));
+  return new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.07, map: texture, color: 0xb9c3ff, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }));
 }
 
 function floor(y) {
-  const grid = new THREE.GridHelper(48, 48, 0x52525b, 0x26262b);
+  const grid = new THREE.GridHelper(48, 48, 0x4a5290, 0x1d2245);
   grid.position.y = y;
   grid.material.transparent = true;
   grid.material.opacity = 0.55;
   return grid;
 }
 
-// ---------------------------------------------------------------- Roxy (Blender model, toon shaded)
-// The GLB is a stylised full-body Roxy Migurdia built in Blender (views/assets/roxy.glb, Draco).
-// PBR materials from the file are swapped for 3-step toon shading plus an inverted-hull outline
-// so she reads like the anime. Nodes "Head", "Hat" and "Staff" are animated in place.
+// ---------------------------------------------------------------- Roxy (Blender scale figure)
+// views/assets/roxy.glb is a detailed Roxy Migurdia figure on a display base, built in Blender
+// (tools/roxy). Ambient occlusion and paint gradients are baked into vertex colours; here the
+// materials become physically based "PVC figure" materials (clearcoat gloss, cloth sheen).
+// Nodes "Head", "Hat" and "Staff" are animated in place.
 let roxyPromise;
 function loadRoxy() {
   if (!roxyPromise) {
@@ -84,33 +85,36 @@ function loadRoxy() {
   return roxyPromise;
 }
 
-function toonGradient() {
-  const data = new Uint8Array([90, 90, 90, 255, 175, 175, 175, 255, 255, 255, 255, 255]);
+// Anime look: 3-step cel shading (colour kept, light quantised) + inverted-hull outline.
+// Baked AO / hair gradient arrive as vertex colours. The display disc stays glossy PBR.
+function celGradient() {
+  const data = new Uint8Array([118, 118, 118, 255, 196, 196, 196, 255, 255, 255, 255, 255]);
   const t = new THREE.DataTexture(data, 3, 1, THREE.RGBAFormat);
   t.minFilter = t.magFilter = THREE.NearestFilter;
   t.needsUpdate = true;
   return t;
 }
-
-function toonify(model) {
-  const gradientMap = toonGradient();
-  const outline = new THREE.MeshBasicMaterial({ color: 0x14131a, side: THREE.BackSide });
+function animeMaterials(model) {
+  const gradientMap = celGradient();
+  const outline = new THREE.MeshBasicMaterial({ color: 0x1a1830, side: THREE.BackSide });
   outline.onBeforeCompile = shader => {
-    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(normal) * 0.0042;');
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(normal) * 0.0024;');
   };
   const meshes = [];
   model.traverse(o => { if (o.isMesh) meshes.push(o); });
   for (const mesh of meshes) {
     const src = mesh.material;
     const name = src.name || '';
-    const toon = new THREE.MeshToonMaterial({ color: src.color.clone(), map: src.map || null, gradientMap });
-    // Near-black cloth would vanish against the dark page: lift it to a readable charcoal.
-    const hsl = toon.color.getHSL({});
-    if (hsl.l < 0.12) toon.color.setHSL(hsl.h, hsl.s, 0.12 + hsl.l * 0.6);
-    if (name === 'Face') { toon.transparent = true; toon.alphaTest = 0.35; toon.depthWrite = false; toon.polygonOffset = true; toon.polygonOffsetFactor = -2; }
-    if (name === 'Crystal') { toon.emissive = new THREE.Color(0x4aa3ff); toon.emissiveIntensity = 1.4; mesh.userData.crystal = true; }
-    mesh.material = toon;
-    if (name !== 'Face' && name !== 'Crystal' && !mesh.name.startsWith('Diamond')) {
+    if (/Base/.test(name)) {
+      mesh.material = new THREE.MeshPhysicalMaterial({ color: src.color, metalness: src.metalness, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 0.9 });
+      continue;
+    }
+    const m = new THREE.MeshToonMaterial({ color: src.color.clone(), map: src.map || null, gradientMap, vertexColors: Boolean(mesh.geometry.attributes.color) });
+    if (name === 'Gold') m.emissive = new THREE.Color(0x3a2a08);
+    if (name === 'Face') { m.transparent = true; m.alphaTest = 0.35; m.depthWrite = false; m.polygonOffset = true; m.polygonOffsetFactor = -2; m.vertexColors = false; }
+    m.name = name;
+    mesh.material = m;
+    if (name !== 'Face' && !/Button|Rivet|Clasp/.test(mesh.name)) {
       const hull = new THREE.Mesh(mesh.geometry, outline);
       hull.name = mesh.name + '_outline';
       mesh.add(hull);
@@ -119,52 +123,26 @@ function toonify(model) {
   return model;
 }
 
-// Glowing magic circle under her feet (additive, so it never darkens the page).
-function magicCircle(radius) {
-  const size = 512;
-  const c = document.createElement('canvas');
-  c.width = c.height = size;
-  const g = c.getContext('2d');
-  g.translate(size / 2, size / 2);
-  g.strokeStyle = 'rgba(255,255,255,0.95)';
-  const ring = (r, w) => { g.lineWidth = w; g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.stroke(); };
-  ring(250, 4); ring(232, 2); ring(160, 3); ring(110, 1.5);
-  for (let k = 0; k < 2; k++) {               // two interlaced triangles
-    g.beginPath();
-    for (let i = 0; i <= 3; i++) {
-      const a = -Math.PI / 2 + k * Math.PI / 3 + i * (2 * Math.PI / 3);
-      g[i ? 'lineTo' : 'moveTo'](Math.cos(a) * 160, Math.sin(a) * 160);
-    }
-    g.lineWidth = 2; g.stroke();
-  }
-  g.font = '600 20px "DM Mono", monospace';
-  g.fillStyle = 'rgba(255,255,255,0.9)';
-  const runes = 'ᚱᛟᚷᛉᛁ ᛗᛁᚷᚢᚱᛞᛁᚨ ✦ ';
-  for (let i = 0; i < 36; i++) {
-    g.save(); g.rotate(i * Math.PI * 2 / 36); g.fillText(runes[i % runes.length], -6, -236 + 16); g.restore();
-  }
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(radius * 2, radius * 2), new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
-  mesh.rotation.x = -Math.PI / 2;
-  return mesh;
-}
-
-// Adds Roxy (height `height`, feet at `feetY`) to `group`; returns an updater safe to call before load.
 function addRoxy(group, tex, { height = 3, feetY = -1.5, x = 0, z = 0, yaw = 0 } = {}) {
   const holder = new THREE.Group();
   holder.position.set(x, feetY, z);
   holder.rotation.y = yaw;
   group.add(holder);
-  const circle = magicCircle(height * 0.42);
-  circle.position.y = 0.01;
-  holder.add(circle);
-  const aura = glow(tex, height * 0.9, 0.08);
+  const aura = glow(tex, height * 0.95, 0.08);
+  aura.material.color = new THREE.Color(0x8fa2ff);
   aura.position.y = height * 0.5;
   holder.add(aura);
-  let model = null, head = null, hat = null, staff = null, crystal = null, born = 0;
+  const spot = new THREE.SpotLight(0xdfe4ff, 7, height * 3, 0.5, 0.6, 1.5);
+  spot.position.set(height * 0.4, height * 1.4, height * 0.9);
+  spot.target.position.set(0, height * 0.45, 0);
+  holder.add(spot, spot.target);
+  const rimLight = new THREE.DirectionalLight(0x9fb0ff, 2.2);
+  rimLight.position.set(-height, height * 1.2, -height * 1.5);
+  holder.add(rimLight);
+  let model = null, head = null, hat = null, staff = null, born = 0;
+  const glows = [];
   loadRoxy().then(scene => {
-    model = toonify(scene.clone(true));
+    model = animeMaterials(scene.clone(true));
     const box = new THREE.Box3().setFromObject(model);
     const s = height / (box.max.y - box.min.y);
     model.scale.setScalar(s);
@@ -173,28 +151,22 @@ function addRoxy(group, tex, { height = 3, feetY = -1.5, x = 0, z = 0, yaw = 0 }
     head = model.getObjectByName('Head');
     hat = model.getObjectByName('Hat');
     staff = model.getObjectByName('Staff');
-    model.traverse(o => { if (o.userData.crystal) crystal = o; });
+    model.traverse(o => { if (o.userData.glow) glows.push(o.material); });
     born = performance.now();
   }).catch(err => console.warn('Roxy model unavailable:', err && err.message));
-  const headBase = new THREE.Euler();
   return {
     holder,
     update(t, dt, pointer) {
-      circle.rotation.z += dt * 0.25;
-      circle.material.opacity = 0.42 + Math.sin(t * 1.6) * 0.1;
       aura.material.opacity = 0.06 + Math.sin(t * 1.1) * 0.02;
       if (!model) return;
       const intro = Math.min(1, (performance.now() - born) / 900);
-      const ease = 1 - Math.pow(1 - intro, 3);
-      model.position.x = 0;
-      holder.scale.setScalar(0.85 + 0.15 * ease);
-      model.position.y = model.position.y; // feet stay on the circle
-      model.rotation.y = (pointer ? pointer.x * 0.35 : 0) + Math.sin(t * 0.4) * 0.05;
-      model.scale.y = model.scale.x * (1 + Math.sin(t * 2.1) * 0.006);    // breathing
-      if (head) { head.rotation.y = (pointer ? pointer.x * 0.35 : 0); head.rotation.x = (pointer ? pointer.y * 0.12 : 0) + Math.sin(t * 0.9) * 0.02; head.rotation.z = Math.sin(t * 0.7) * 0.03; }
-      if (hat) hat.rotation.z = Math.sin(t * 1.3) * 0.02;
-      if (staff) staff.rotation.z = Math.sin(t * 0.8) * 0.015;
-      if (crystal) crystal.material.emissiveIntensity = 1.1 + Math.sin(t * 3) * 0.45;
+      holder.scale.setScalar(0.85 + 0.15 * (1 - Math.pow(1 - intro, 3)));
+      // display turntable: slow swing, nudged by the pointer
+      model.rotation.y = Math.sin(t * 0.32) * 0.45 + (pointer ? pointer.x * 0.3 : 0);
+      if (head) { head.rotation.y = (pointer ? pointer.x * 0.25 : 0); head.rotation.x = (pointer ? pointer.y * 0.1 : 0) + Math.sin(t * 0.9) * 0.015; head.rotation.z = Math.sin(t * 0.7) * 0.02; }
+      if (hat) hat.rotation.z = Math.sin(t * 1.3) * 0.015;
+      if (staff) staff.rotation.z = Math.sin(t * 0.8) * 0.01;
+      for (const m of glows) m.emissiveIntensity = 1.1 + Math.sin(t * 3) * 0.5;
     }
   };
 }
@@ -214,7 +186,7 @@ function buildCore(root, tex) {
   shell.add(verts);
   group.add(shell);
 
-  const ringMat = new THREE.MeshStandardMaterial({ color: 0xa1a1aa, metalness: 0.9, roughness: 0.3 });
+  const ringMat = new THREE.MeshStandardMaterial({ color: 0x8fa0ff, metalness: 0.9, roughness: 0.3 });
   const nodeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1.6, roughness: 0.4 });
   const linkMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.14 });
   const rings = [
@@ -284,14 +256,14 @@ function buildStack(root, tex) {
   const slabGeo = new RoundedBoxGeometry(W, H, D, 4, 0.1);
   const boxEdges = new THREE.BoxGeometry(W, H, D);
   const layers = [
-    { color: 0x141416, line: 0xd4d4d8 },
-    { color: 0x1d1d21, line: 0xd4d4d8 },
-    { color: 0xf4f4f5, line: 0x0b0b0c }
+    { color: 0x141831, line: 0xb9c3ff },
+    { color: 0x1b2040, line: 0xb9c3ff },
+    { color: 0xe6eaff, line: 0x0c0e1c }
   ].map((cfg, i) => {
     const slab = new THREE.Mesh(slabGeo, new THREE.MeshPhysicalMaterial({ color: cfg.color, metalness: i === 2 ? 0.1 : 0.45, roughness: i === 2 ? 0.35 : 0.28, clearcoat: 1, clearcoatRoughness: 0.12, envMapIntensity: 0.9 }));
     slab.add(edges(boxEdges, cfg.line, i === 2 ? 0.9 : 0.6));
     // Port "chips" on each layer: a hint of the gateway's modules.
-    const chipMat = new THREE.MeshStandardMaterial({ color: i === 2 ? 0x18181b : 0xe4e4e7, emissive: i === 2 ? 0x000000 : 0xffffff, emissiveIntensity: i === 2 ? 0 : 0.35, roughness: 0.4 });
+    const chipMat = new THREE.MeshStandardMaterial({ color: i === 2 ? 0x151935 : 0xc4cdff, emissive: i === 2 ? 0x000000 : 0xffffff, emissiveIntensity: i === 2 ? 0 : 0.35, roughness: 0.4 });
     for (let c = 0; c < 4; c++) {
       const chip = new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.06, 0.26, 2, 0.02), chipMat);
       chip.position.set(-1.05 + c * 0.7, H / 2 + 0.03, D / 2 - 0.35);
@@ -346,7 +318,7 @@ function mount(el) {
   }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, COARSE ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.setClearColor(0x000000, 0);
   renderer.domElement.setAttribute('aria-hidden', 'true');
@@ -364,7 +336,7 @@ function mount(el) {
   const rim = new THREE.DirectionalLight(0xffffff, 1.6);
   rim.position.set(-5, 2, -6);
   const follow = new THREE.PointLight(0xffffff, 18, 14, 2);
-  scene.add(key, rim, follow, new THREE.HemisphereLight(0xffffff, 0x0b0b0c, 0.35));
+  scene.add(key, rim, follow, new THREE.HemisphereLight(0xffffff, 0x0c0e1c, 0.35));
 
   const tex = glowTexture();
   const root = new THREE.Group();
