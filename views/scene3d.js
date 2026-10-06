@@ -125,63 +125,6 @@ function dressModel(model) {
   return pulse;
 }
 
-// Login only: a display case around the scythe, drawn in the site's border style — light square
-// edges, crimson corner blocks, faint glass, a plinth with a name plate. Sized from the model.
-function buildCase(size) {
-  const group = new THREE.Group();
-  const W = size.x + 1.6, H = size.y + 1.4, D = Math.max(size.z + 2.6, 3.6), T = 0.16, PH = 1.2;
-  const edgeMat = new THREE.MeshStandardMaterial({ color: 0xe4e4e7, roughness: 0.45, metalness: 0.25 });
-  const cornerMat = new THREE.MeshStandardMaterial({ color: 0xc8202f, roughness: 0.4, metalness: 0.3, emissive: 0x2a0006 });
-  const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); group.add(m); return m; };
-  for (const y of [-H / 2, H / 2]) for (const z of [-D / 2, D / 2]) add(new THREE.BoxGeometry(W, T, T), edgeMat, 0, y, z);
-  for (const x of [-W / 2, W / 2]) for (const z of [-D / 2, D / 2]) add(new THREE.BoxGeometry(T, H, T), edgeMat, x, 0, z);
-  for (const x of [-W / 2, W / 2]) for (const y of [-H / 2, H / 2]) add(new THREE.BoxGeometry(T, T, D), edgeMat, x, y, 0);
-  const corner = new THREE.BoxGeometry(T * 2, T * 2, T * 2);
-  for (const x of [-W / 2, W / 2]) for (const y of [-H / 2, H / 2]) for (const z of [-D / 2, D / 2]) add(corner, cornerMat, x, y, z);
-
-  // Glass: barely there, plus one diagonal glint on the front pane.
-  const glass = add(new THREE.BoxGeometry(W, H, D), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.DoubleSide }), 0, 0, 0);
-  glass.renderOrder = 2;
-  const glint = add(new THREE.PlaneGeometry(0.55, H * 0.62), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.06, depthWrite: false, blending: THREE.AdditiveBlending }), -W * 0.22, H * 0.08, D / 2 + 0.01);
-  glint.rotation.z = 0.35;
-
-  // Back pane: a faint 1-unit grid, like the dotted grid on the pages.
-  const grid = [];
-  for (let x = -Math.floor(W / 2); x <= W / 2; x++) grid.push(x, -H / 2, -D / 2 + 0.02, x, H / 2, -D / 2 + 0.02);
-  for (let y = -Math.floor(H / 2); y <= H / 2; y++) grid.push(-W / 2, y, -D / 2 + 0.02, W / 2, y, -D / 2 + 0.02);
-  const gridGeo = new THREE.BufferGeometry();
-  gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(grid, 3));
-  group.add(new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: 0x52525b, transparent: true, opacity: 0.35 })));
-
-  // Plinth and name plate.
-  const plinthY = -H / 2 - T / 2 - PH / 2;
-  const plinthGeo = new THREE.BoxGeometry(W + 1, PH, D + 1);
-  add(plinthGeo, new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.6, metalness: 0.2 }), 0, plinthY, 0)
-    .add(new THREE.LineSegments(new THREE.EdgesGeometry(plinthGeo), new THREE.LineBasicMaterial({ color: 0xd4d4d8 })));
-  const c = document.createElement('canvas');
-  c.width = 1024; c.height = 128;
-  const plate = new THREE.CanvasTexture(c);
-  plate.encoding = THREE.sRGBEncoding;
-  plate.anisotropy = 4;
-  const drawPlate = () => {
-    const g = c.getContext('2d');
-    g.fillStyle = '#0b0b0c'; g.fillRect(0, 0, 1024, 128);
-    g.strokeStyle = '#d4d4d8'; g.lineWidth = 6; g.strokeRect(3, 3, 1018, 122);
-    g.fillStyle = '#c8202f'; g.beginPath(); g.arc(56, 64, 11, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#f4f4f5'; g.font = '700 46px "Space Grotesk", "Outfit", sans-serif'; g.textBaseline = 'middle';
-    g.fillText('CRIMSON REQUIEM', 88, 66);
-    g.fillStyle = '#a1a1aa'; g.font = '500 26px "DM Mono", monospace'; g.textAlign = 'right';
-    g.fillText('YANNZ API / 3D', 990, 68);
-    plate.needsUpdate = true;
-  };
-  drawPlate();
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawPlate);
-  add(new THREE.PlaneGeometry((W + 1) * 0.8, (W + 1) * 0.8 / 8), new THREE.MeshBasicMaterial({ map: plate, toneMapped: false }), 0, plinthY, (D + 1) / 2 + 0.01);
-
-  // Whole display (case + plinth) for framing; offsetY recentres it on the root.
-  return { group, size: new THREE.Vector3(W + 1, H + T + PH, D + 1), offsetY: (T + PH) / 2 };
-}
-
 function mount(el) {
   const variant = el.dataset.scene3d;
   let renderer;
@@ -223,20 +166,21 @@ function mount(el) {
   const root = new THREE.Group();          // placed on screen by resize()
   const spin = new THREE.Group();          // slow turn + pointer response
   const tilt = new THREE.Group();          // the scythe leans across the frame
-  tilt.rotation.z = variant === 'stack' ? -0.42 : 0;    // upright on its stand inside the login case
+  tilt.rotation.z = variant === 'stack' ? -0.42 : -0.32;
   root.add(spin);
   spin.add(tilt);
   scene.add(root);
 
   const halo = glow(tex, 1, 0.16, RED);    // a cheap red bloom behind the head instead of real post-processing
   const floorGlow = glow(tex, 1, 0.22, RED);
-  if (variant === 'stack') root.add(floorGlow);
+  root.add(floorGlow);
   const fx = embers(LITE ? 90 : 220, glowTexture(64, 0.3));
   spin.add(fx.points);                     // embers turn with the display
   const motes = dust(LITE ? 160 : 420, 10, glowTexture(64, 0.3));
   scene.add(motes);
 
-  let model = null, pulse = [], size = new THREE.Vector3(1, 1, 1), frameSize = size, baseY = 0;
+  let model = null, pulse = [], size = new THREE.Vector3(1, 1, 1);
+  let entrance = REDUCED ? 1 : 0;          // 0 → 1 while the scythe makes its entrance after the slash intro
 
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
   window.addEventListener('pointermove', e => {
@@ -265,10 +209,10 @@ function mount(el) {
     // [screen x, screen y, share of the height, share of the width]
     let sx, sy, frac, wide;
     if (variant === 'stack') [sx, sy, frac, wide] = [0.5, 0.48, 0.9, 1.05];
-    else if (camera.aspect < 0.7) [sx, sy, frac, wide] = [0.54, 0.33, 0.56, 0.86];   // tall, narrow panel
-    else if (w < 560) [sx, sy, frac, wide] = [0.74, 0.37, 0.6, 0.55];
-    else [sx, sy, frac, wide] = camera.aspect > 1.25 ? [0.7, 0.42, 0.62, 0.5] : [0.68, 0.38, 0.62, 0.55];
-    const fit = Math.min(visH * frac / frameSize.y, visW * wide / frameSize.x);
+    else if (camera.aspect < 0.7) [sx, sy, frac, wide] = [0.54, 0.34, 0.6, 0.86];   // tall, narrow panel
+    else if (w < 560) [sx, sy, frac, wide] = [0.7, 0.4, 0.66, 0.6];
+    else [sx, sy, frac, wide] = camera.aspect > 1.25 ? [0.68, 0.45, 0.76, 0.6] : [0.66, 0.4, 0.68, 0.6];
+    const fit = Math.min(visH * frac / size.y, visW * wide / size.x);
     root.position.copy(screenToWorld(sx, sy));
     root.scale.setScalar(fit);
   }
@@ -332,14 +276,18 @@ function mount(el) {
       if (!drag.active) { drag.yaw += drag.v * dt; drag.v *= Math.exp(-dt * 3); }
       const idle = drag.active ? 0 : Math.min(1, Math.max(0, (performance.now() - drag.last) / 1000 - 1.5));
       drag.sway += (idle - drag.sway) * Math.min(1, dt * 1.5);
-      spin.rotation.y = drag.yaw + (Math.sin(t * 0.32) * (variant === 'stack' ? 0.75 : 0.55) + pointer.x * 0.35) * drag.sway;
+      // Entrance: it spins in from behind, grows with a little overshoot, and flares red.
+      if (entrance < 1 && el.classList.contains('is-ready')) entrance = Math.min(1, entrance + dt / 1.4);
+      const inE = 1 - Math.pow(1 - entrance, 3), back = 1 + 2.2 * Math.pow(entrance - 1, 3) + 1.2 * Math.pow(entrance - 1, 2);
+      spin.scale.setScalar(0.72 + 0.28 * back);
+      spin.rotation.y = drag.yaw - (1 - inE) * 2.6 + (Math.sin(t * 0.32) * (variant === 'stack' ? 0.75 : 0.55) + pointer.x * 0.35) * drag.sway;
       spin.rotation.x = drag.pitch + pointer.y * 0.12 * drag.sway;
-      spin.position.y = baseY;
       tilt.position.y = Math.sin(t * 0.9) * 0.06;
       const beat = 0.82 + Math.sin(t * 2.1) * 0.12 + Math.sin(t * 5.3) * 0.06;
       for (const p of pulse) p.m[p.key] = p.base * beat;
-      blade.intensity = 9 * beat;
-      halo.material.opacity = 0.14 * beat;
+      const flare = 1 + 3 * (1 - inE);
+      blade.intensity = 9 * beat * flare;
+      halo.material.opacity = Math.min(0.6, 0.14 * beat * flare);
       fx.update(t, size.x * 0.9, size.y);
     }
     motes.rotation.y += dt * 0.012;
@@ -398,20 +346,17 @@ function mount(el) {
     halo.scale.setScalar(size.y * 0.75);
     floorGlow.position.set(0, -size.y * 0.52, -0.5);
     floorGlow.scale.set(size.x * 1.4, size.y * 0.18, 1);
-    if (variant !== 'stack') {
-      const display = buildCase(size);
-      spin.add(display.group);
-      frameSize = display.size;
-      baseY = display.offsetY;
-    }
     el.style.pointerEvents = 'auto';
     resize();
     t = 2.4;
     frame();
-    el.classList.add('is-ready');
-    document.documentElement.classList.add('webgl-' + variant);
-    note(variant + ': model ready, showing the scythe');
-    start();
+    // Show it once the slash intro (slash-intro.js) has cut the page open.
+    afterIntro(() => {
+      el.classList.add('is-ready');
+      document.documentElement.classList.add('webgl-' + variant);
+      note(variant + ': model ready, showing the scythe');
+      start();
+    });
   }, undefined, err => {
     // Keep the CSS fallback; free the GPU context.
     console.warn('3D model unavailable:', err && err.message);
@@ -420,6 +365,14 @@ function mount(el) {
     renderer.dispose();
     renderer.domElement.remove();
   });
+}
+
+function afterIntro(fn) {
+  if (window.__slashDone || !document.getElementById('slash-intro')) return fn();
+  let ran = false;
+  const go = () => { if (!ran) { ran = true; fn(); } };
+  document.addEventListener('slash:done', go, { once: true });
+  setTimeout(go, 4000);   // never wait on the intro forever
 }
 
 function loadScript(src) {
