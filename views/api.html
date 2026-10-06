@@ -35,6 +35,12 @@
   .media { padding: 12px; display: grid; place-items: center; gap: 8px; }
   .media img, .media video { max-width: 100%; max-height: 60vh; border-radius: 10px; border: 2px solid var(--edge-soft); }
   .media audio { width: 100%; }
+  .media .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; width: 100%; }
+  .media .gallery img { width: 100%; height: 100%; max-height: 260px; object-fit: cover; }
+  .media .variants, .media .media-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .media .variants button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .media .music { width: 100%; display: grid; gap: 4px; font: 11px "DM Mono", monospace; color: var(--muted); }
+  .media-note { margin: 12px 12px 0; font: 12px "DM Mono", monospace; color: var(--muted); }
   .err-box { margin: 12px; padding: 12px 14px; border: 2px solid var(--bad); border-radius: 10px; color: #fecaca; background: rgba(252, 165, 165, .06); }
   .term-foot { display: flex; justify-content: space-between; gap: 8px; padding: 8px 12px; border-top: 2px solid var(--edge-soft); color: var(--faint); font: 12px "DM Mono", monospace; flex-wrap: wrap; }
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; }
@@ -95,6 +101,7 @@
         <div class="term-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><small id="response-meta"></small></div>
         <div id="output-error" class="err-box" hidden></div>
         <div id="output-media" class="media" hidden></div>
+        <p id="media-note" class="media-note" hidden></p>
         <pre id="sandbox-output-text">Pilih endpoint, isi parameter, lalu klik “Kirim permintaan”.</pre>
         <div class="term-foot"><span id="content-type">—</span><button type="button" class="sm ghost" id="copy-output">Salin hasil</button></div>
       </div>
@@ -195,6 +202,7 @@ function resetConsoleMonitor() {
   $('#response-status').className = 'chip'; $('#response-status').textContent = 'belum ada request';
   $('#response-meta').textContent = ''; $('#content-type').textContent = '—';
   $('#output-error').hidden = true; $('#output-media').hidden = true; $('#output-media').innerHTML = '';
+  $('#media-note').hidden = true; $('#sandbox-output-text').hidden = false;
   $('#sandbox-output-text').textContent = 'Isi parameter lalu klik “Kirim permintaan”.';
 }
 function showConsoleError(message) { $('#output-error').textContent = message; $('#output-error').hidden = false; }
@@ -245,6 +253,7 @@ async function executeApiSandbox() {
       const data = await res.json();
       $('#sandbox-output-text').textContent = JSON.stringify(data, null, 2);
       if (!ok || data.status === false || data.success === false) showConsoleError(describeApiError(res.status, data));
+      else showJsonMedia(data);
     } else if (/^(image|audio|video)\//.test(type)) {
       const blob = await res.blob();
       mediaUrl = URL.createObjectURL(blob);
@@ -264,6 +273,110 @@ async function executeApiSandbox() {
   }
 }
 $('#execute-btn').addEventListener('click', executeApiSandbox);
+
+// ---------------------------------------------------------------- media inside JSON results
+// Endpoints like the TikTok downloader answer with JSON that links to the actual video/photos.
+// The console shows that media (video player, photo gallery, music) with the JSON behind a toggle;
+// if the media cannot be shown, it falls back to the plain JSON.
+const MEDIA_EXT = { image: /\.(jpe?g|png|webp|gif|avif|bmp)(\?|#|$)/i, video: /\.(mp4|webm|mov|m4v)(\?|#|$)/i, audio: /\.(mp3|m4a|aac|ogg|oga|wav|opus|flac)(\?|#|$)/i };
+const MEDIA_KEY = { image: /(photo|image|img|thumb|cover|picture|poster|avatar)/i, video: /(video|play|mp4|watermark|nowm)/i, audio: /(music|audio|mp3|sound|song)/i };
+const VARIANT_LABEL = { nowatermark: 'Tanpa WM', nowatermark_hd: 'HD', watermark: 'Dengan WM' };
+const isHttp = v => typeof v === 'string' && /^https?:\/\/\S+$/i.test(v);
+function kindOf(url, key) {
+  for (const k of ['video', 'audio', 'image']) if (MEDIA_EXT[k].test(url)) return k;
+  for (const k of ['audio', 'video', 'image']) if (MEDIA_KEY[k].test(key || '')) return k;
+  return null;
+}
+function findMedia(data) {
+  const byUrl = new Map();
+  let budget = 600;
+  // An item's own { type } (e.g. "photo") wins over the key it was first seen under (e.g. "cover").
+  const add = (kind, url, label, typed) => {
+    if (!kind || !isHttp(url)) return;
+    const hit = byUrl.get(url);
+    if (!hit) byUrl.set(url, { kind, url, label: String(label || ''), typed });
+    else if (typed && !hit.typed) Object.assign(hit, { kind, label: String(label || ''), typed });
+  };
+  (function walk(v, key, depth) {
+    if (v === null || v === undefined || --budget < 0 || depth > 8) return;
+    if (typeof v === 'string') return add(kindOf(v, key), v, key);
+    if (Array.isArray(v)) return v.forEach(x => walk(x, key, depth + 1));
+    if (typeof v !== 'object') return;
+    // { type: "photo" | "nowatermark" | …, url } items (the TikTok shape)
+    if (isHttp(v.url) && typeof v.type === 'string') add(/photo|image|slide/i.test(v.type) ? 'image' : /music|audio/i.test(v.type) ? 'audio' : 'video', v.url, v.type, true);
+    for (const [k, x] of Object.entries(v)) walk(x, k === 'url' ? (v.type || key) : k, depth + 1);
+  })(data, '', 0);
+  const found = [...byUrl.values()];
+  const decor = /avatar|author|profile|icon|logo/i;
+  const images = found.filter(m => m.kind === 'image');
+  return {
+    videos: found.filter(m => m.kind === 'video').sort((a, b) => rank(a.label) - rank(b.label)),
+    photos: images.filter(m => /photo|image|slide/i.test(m.label) || !/cover|thumb|poster/i.test(m.label)).filter(m => !decor.test(m.label)),
+    poster: images.find(m => /cover|thumb|poster/i.test(m.label)),
+    audio: found.find(m => m.kind === 'audio')
+  };
+}
+function rank(label) { const order = ['nowatermark', 'nowatermark_hd', 'video', 'play', 'hdplay', 'watermark', 'wmplay']; const i = order.indexOf(label); return i < 0 ? order.length : i; }
+function el(tag, props = {}, kids = []) { const e = document.createElement(tag); Object.assign(e, props); kids.forEach(k => e.append(k)); return e; }
+
+function showJsonMedia(data) {
+  const m = findMedia(data);
+  const box = $('#output-media'), pre = $('#sandbox-output-text'), note = $('#media-note');
+  if (!m.videos.length && !m.photos.length && !m.audio) return;          // plain JSON result
+  const fallback = why => {
+    box.hidden = true; box.innerHTML = '';
+    pre.hidden = false; note.hidden = false; note.textContent = why + ' Menampilkan JSON.';
+  };
+  const jsonToggle = el('button', { type: 'button', className: 'sm ghost', textContent: 'Lihat JSON' });
+  jsonToggle.addEventListener('click', () => { pre.hidden = !pre.hidden; jsonToggle.textContent = pre.hidden ? 'Lihat JSON' : 'Sembunyikan JSON'; });
+  const open = url => el('a', { className: 'btn sm', href: url, target: '_blank', rel: 'noopener noreferrer', textContent: 'Buka / unduh' });
+  box.innerHTML = '';
+
+  if (m.videos.length) {
+    // Video: try each variant in turn; fall back to JSON only when none plays.
+    const video = el('video', { controls: true, playsInline: true, preload: 'metadata' });
+    if (m.poster) video.poster = m.poster.url;
+    const actions = el('div', { className: 'media-actions' });
+    const variants = el('div', { className: 'variants' });
+    let current = 0;
+    const play = i => {
+      current = i; video.src = m.videos[i].url;
+      [...variants.children].forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
+      actions.replaceChildren(open(m.videos[i].url), jsonToggle);
+    };
+    m.videos.forEach((v, i) => {
+      const b = el('button', { type: 'button', className: 'sm', textContent: VARIANT_LABEL[v.label] || v.label || `Video ${i + 1}` });
+      b.addEventListener('click', () => play(i));
+      variants.append(b);
+    });
+    video.addEventListener('error', () => {
+      const next = m.videos.findIndex((_, i) => i > current);
+      if (next >= 0) play(next); else fallback('Video tidak bisa diputar di browser.');
+    });
+    box.append(video);
+    if (m.videos.length > 1) box.append(variants);
+    box.append(actions);
+    play(0);
+  } else if (m.photos.length) {
+    // Photos (e.g. a TikTok slideshow): a gallery; broken images drop out, all broken → JSON.
+    const gallery = el('div', { className: m.photos.length > 1 ? 'gallery' : '' });
+    let alive = m.photos.length;
+    m.photos.forEach((p, i) => {
+      const img = el('img', { src: p.url, alt: `Hasil ${i + 1}`, loading: 'lazy', referrerPolicy: 'no-referrer' });
+      img.addEventListener('error', () => { img.remove(); if (--alive === 0) fallback('Gambar tidak bisa dimuat.'); });
+      gallery.append(el('a', { href: p.url, target: '_blank', rel: 'noopener noreferrer' }, [img]));
+    });
+    box.append(gallery, el('div', { className: 'media-actions' }, [jsonToggle]));
+  }
+  if (m.audio) {
+    const audio = el('audio', { controls: true, preload: 'none', src: m.audio.url });
+    audio.addEventListener('error', () => audio.parentElement && audio.parentElement.remove());
+    box.append(el('div', { className: 'music' }, [el('span', { textContent: m.videos.length || m.photos.length ? 'Musik' : 'Audio' }), audio]));
+    if (!m.videos.length && !m.photos.length) box.append(el('div', { className: 'media-actions' }, [open(m.audio.url), jsonToggle]));
+  }
+  box.hidden = false;
+  pre.hidden = true;
+}
 
 const flash = (btn, text) => { const old = btn.textContent; btn.textContent = text; setTimeout(() => { btn.textContent = old; }, 1400); };
 $('#copy-url').addEventListener('click', e => navigator.clipboard.writeText($('#active-request-url').textContent).then(() => flash(e.target, 'Tersalin ✓')));
