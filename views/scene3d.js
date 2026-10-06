@@ -5,12 +5,10 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const COARSE = matchMedia('(pointer: coarse)').matches;
-const BG = 0x0c0e1c;
+const BG = 0x0b0b0c;
 
 function hasWebGL() {
   try {
@@ -60,150 +58,15 @@ function particles(count, spread, texture) {
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  return new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.07, map: texture, color: 0xb9c3ff, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }));
+  return new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.07, map: texture, color: 0xd4d4d8, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }));
 }
 
 function floor(y) {
-  const grid = new THREE.GridHelper(48, 48, 0x4a5290, 0x1d2245);
+  const grid = new THREE.GridHelper(48, 48, 0x52525b, 0x26262b);
   grid.position.y = y;
   grid.material.transparent = true;
   grid.material.opacity = 0.55;
   return grid;
-}
-
-// ---------------------------------------------------------------- Roxy (Blender scale figure)
-// views/assets/roxy.glb is a detailed Roxy Migurdia figure on a display base, built in Blender
-// (tools/roxy). Ambient occlusion and paint gradients are baked into vertex colours; here the
-// materials become physically based "PVC figure" materials (clearcoat gloss, cloth sheen).
-// Nodes "Head", "Hat" and "Staff" are animated in place.
-let roxyPromise;
-function loadRoxy() {
-  if (!roxyPromise) {
-    const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/');
-    roxyPromise = new GLTFLoader().setDRACOLoader(draco).loadAsync('/assets/roxy.glb').then(g => g.scene);
-  }
-  return roxyPromise;
-}
-
-// Anime look: cel shading (colour kept, light quantised) + inverted-hull outline.
-// Face decal is unlit like TV anime; skin gets a soft 2-step ramp so the face stays smooth;
-// alpha-card hair keeps its cut-out and skips the outline. The display disc stays glossy PBR.
-function celGradient(steps) {
-  const data = new Uint8Array(steps.flatMap(v => [v, v, v, 255]));
-  const t = new THREE.DataTexture(data, steps.length, 1, THREE.RGBAFormat);
-  t.minFilter = t.magFilter = THREE.NearestFilter;
-  t.needsUpdate = true;
-  return t;
-}
-function animeMaterials(model) {
-  const gradientMap = celGradient([118, 196, 255]);
-  const skinMap = celGradient([222, 255]);
-  model.updateMatrixWorld(true);
-  const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
-  const outlineWorld = Math.max(size.x, size.y, size.z) * 0.0012;
-  const outlines = new Map();
-  const outlineFor = width => {
-    const key = width.toPrecision(3);
-    if (!outlines.has(key)) {
-      const m = new THREE.MeshBasicMaterial({ color: 0x1a1830, side: THREE.BackSide });
-      m.onBeforeCompile = shader => {
-        shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>\n  transformed += normalize(normal) * ${Number(key).toExponential(4)};`);
-      };
-      m.customProgramCacheKey = () => 'outline' + key;
-      outlines.set(key, m);
-    }
-    return outlines.get(key);
-  };
-  const scale = new THREE.Vector3();
-  const meshes = [];
-  model.traverse(o => { if (o.isMesh) meshes.push(o); });
-  for (const mesh of meshes) {
-    const src = mesh.material;
-    const name = src.name || '';
-    if (/Base/.test(name)) {
-      mesh.material = new THREE.MeshPhysicalMaterial({ color: src.color, metalness: src.metalness, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 0.9 });
-      continue;
-    }
-    const cutout = src.transparent || src.alphaTest > 0;
-    let m;
-    if (name === 'Face') {
-      m = new THREE.MeshBasicMaterial({ map: src.map || null, transparent: true, alphaTest: 0.35, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
-      // Anime trick: eyes/brows read through the bangs. Each vertex slides toward the camera along
-      // its view ray (screen position unchanged), so the decal wins against hair a few cm in front
-      // but stays hidden behind the hand or the hat brim.
-      m.onBeforeCompile = shader => {
-        shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
-  float facePull = 0.028 * length(modelMatrix[0].xyz);
-  mvPosition.xyz *= max(0.0, 1.0 - facePull / length(mvPosition.xyz));
-  gl_Position = projectionMatrix * mvPosition;`);
-      };
-      m.customProgramCacheKey = () => 'anime-face';
-    } else {
-      m = new THREE.MeshToonMaterial({
-        color: src.color.clone(), map: src.map || null, side: src.side,
-        gradientMap: /^Skin/.test(name) ? skinMap : gradientMap,
-        vertexColors: Boolean(mesh.geometry.attributes.color) && !src.map,
-      });
-      if (cutout) { m.alphaTest = 0.45; m.side = THREE.DoubleSide; }
-      if (name === 'Gold') m.emissive = new THREE.Color(0x3a2a08);
-    }
-    m.name = name;
-    mesh.material = m;
-    if (name !== 'Face' && !cutout && !/Button|Rivet|Clasp/.test(mesh.name)) {
-      const hull = new THREE.Mesh(mesh.geometry, outlineFor(outlineWorld / (mesh.getWorldScale(scale).x || 1)));
-      hull.name = mesh.name + '_outline';
-      mesh.add(hull);
-    }
-  }
-  return model;
-}
-
-function addRoxy(group, tex, { height = 3, feetY = -1.5, x = 0, z = 0, yaw = 0 } = {}) {
-  const holder = new THREE.Group();
-  holder.position.set(x, feetY, z);
-  holder.rotation.y = yaw;
-  group.add(holder);
-  const aura = glow(tex, height * 0.95, 0.08);
-  aura.material.color = new THREE.Color(0x8fa2ff);
-  aura.position.y = height * 0.5;
-  holder.add(aura);
-  const spot = new THREE.SpotLight(0xdfe4ff, 7, height * 3, 0.5, 0.6, 1.5);
-  spot.position.set(height * 0.4, height * 1.4, height * 0.9);
-  spot.target.position.set(0, height * 0.45, 0);
-  holder.add(spot, spot.target);
-  const rimLight = new THREE.DirectionalLight(0x9fb0ff, 2.2);
-  rimLight.position.set(-height, height * 1.2, -height * 1.5);
-  holder.add(rimLight);
-  let model = null, head = null, hat = null, staff = null, born = 0;
-  const glows = [];
-  loadRoxy().then(scene => {
-    model = animeMaterials(scene.clone(true));
-    const box = new THREE.Box3().setFromObject(model);
-    const s = height / (box.max.y - box.min.y);
-    model.scale.setScalar(s);
-    model.position.y = -box.min.y * s;
-    holder.add(model);
-    head = model.getObjectByName('Head');
-    hat = model.getObjectByName('Hat');
-    staff = model.getObjectByName('Staff');
-    model.traverse(o => { if (o.userData.glow) glows.push(o.material); });
-    born = performance.now();
-  }).catch(err => console.warn('Roxy model unavailable:', err && err.message));
-  return {
-    holder,
-    update(t, dt, pointer) {
-      aura.material.opacity = 0.06 + Math.sin(t * 1.1) * 0.02;
-      if (!model) return;
-      const intro = Math.min(1, (performance.now() - born) / 900);
-      holder.scale.setScalar(0.85 + 0.15 * (1 - Math.pow(1 - intro, 3)));
-      // display turntable: slow swing, nudged by the pointer
-      model.rotation.y = -0.22 - yaw + Math.sin(t * 0.32) * 0.22 + (pointer ? pointer.x * 0.15 : 0);   // kept on the side where the saluting hand never hides the face
-      if (head) { head.rotation.y = (pointer ? pointer.x * 0.25 : 0); head.rotation.x = (pointer ? pointer.y * 0.1 : 0) + Math.sin(t * 0.9) * 0.015; head.rotation.z = Math.sin(t * 0.7) * 0.02; }
-      if (hat) hat.rotation.z = Math.sin(t * 1.3) * 0.015;
-      if (staff) staff.rotation.z = Math.sin(t * 0.8) * 0.01;
-      for (const m of glows) m.emissiveIntensity = 1.1 + Math.sin(t * 3) * 0.5;
-    }
-  };
 }
 
 // ---------------------------------------------------------------- login: chrome core
@@ -211,17 +74,20 @@ function buildCore(root, tex) {
   const group = new THREE.Group();
   root.add(group);
 
-  const roxy = addRoxy(group, tex, { height: 4.1, feetY: -2.4 });
-  const heart = glow(tex, 3.4, 0.12);
+  const gemGeo = new THREE.IcosahedronGeometry(1.05, 0);
+  const gem = new THREE.Mesh(gemGeo, new THREE.MeshPhysicalMaterial({ color: 0xe4e4e7, metalness: 1, roughness: 0.16, clearcoat: 1, clearcoatRoughness: 0.08, flatShading: true, envMapIntensity: 1.25 }));
+  gem.add(edges(gemGeo, 0x0b0b0c, 0.55));
+  group.add(gem);
+  const heart = glow(tex, 3.4, 0.22);
   group.add(heart);
 
-  const shellGeo = new THREE.IcosahedronGeometry(2.6, 1);
-  const shell = edges(shellGeo, 0xffffff, 0.06);
+  const shellGeo = new THREE.IcosahedronGeometry(1.85, 1);
+  const shell = edges(shellGeo, 0xffffff, 0.2);
   const verts = new THREE.Points(shellGeo, new THREE.PointsMaterial({ size: 0.09, map: tex, color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending }));
   shell.add(verts);
   group.add(shell);
 
-  const ringMat = new THREE.MeshStandardMaterial({ color: 0x8fa0ff, metalness: 0.9, roughness: 0.3 });
+  const ringMat = new THREE.MeshStandardMaterial({ color: 0xa1a1aa, metalness: 0.9, roughness: 0.3 });
   const nodeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1.6, roughness: 0.4 });
   const linkMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.14 });
   const rings = [
@@ -255,11 +121,12 @@ function buildCore(root, tex) {
   const tmp = new THREE.Vector3();
   return {
     group,
-    update(t, dt, pointer) {
-      roxy.update(t, dt, pointer);
+    update(t, dt) {
+      gem.rotation.y += dt * 0.32;
+      gem.rotation.x = Math.sin(t * 0.35) * 0.22;
       shell.rotation.y -= dt * 0.09;
       shell.rotation.z += dt * 0.035;
-      heart.material.opacity = 0.1 + Math.sin(t * 1.4) * 0.04;
+      heart.material.opacity = 0.18 + Math.sin(t * 1.4) * 0.05;
       let k = 0;
       for (const ring of rings) {
         for (const node of ring.nodes) {
@@ -281,24 +148,21 @@ function buildCore(root, tex) {
 
 // ---------------------------------------------------------------- dashboard: API stack
 function buildStack(root, tex) {
-  const roxy = addRoxy(root, tex, { height: 3.1, feetY: -2.25, x: -1.75, z: 0.6, yaw: 0.35 });
   const group = new THREE.Group();
   group.rotation.set(0.5, -0.62, 0);
-  group.position.set(1.15, 0.15, -0.4);
-  group.scale.setScalar(0.72);
   root.add(group);
   const W = 3.3, H = 0.38, D = 2.25;
   const slabGeo = new RoundedBoxGeometry(W, H, D, 4, 0.1);
   const boxEdges = new THREE.BoxGeometry(W, H, D);
   const layers = [
-    { color: 0x141831, line: 0xb9c3ff },
-    { color: 0x1b2040, line: 0xb9c3ff },
-    { color: 0xe6eaff, line: 0x0c0e1c }
+    { color: 0x141416, line: 0xd4d4d8 },
+    { color: 0x1d1d21, line: 0xd4d4d8 },
+    { color: 0xf4f4f5, line: 0x0b0b0c }
   ].map((cfg, i) => {
     const slab = new THREE.Mesh(slabGeo, new THREE.MeshPhysicalMaterial({ color: cfg.color, metalness: i === 2 ? 0.1 : 0.45, roughness: i === 2 ? 0.35 : 0.28, clearcoat: 1, clearcoatRoughness: 0.12, envMapIntensity: 0.9 }));
     slab.add(edges(boxEdges, cfg.line, i === 2 ? 0.9 : 0.6));
     // Port "chips" on each layer: a hint of the gateway's modules.
-    const chipMat = new THREE.MeshStandardMaterial({ color: i === 2 ? 0x151935 : 0xc4cdff, emissive: i === 2 ? 0x000000 : 0xffffff, emissiveIntensity: i === 2 ? 0 : 0.35, roughness: 0.4 });
+    const chipMat = new THREE.MeshStandardMaterial({ color: i === 2 ? 0x18181b : 0xe4e4e7, emissive: i === 2 ? 0x000000 : 0xffffff, emissiveIntensity: i === 2 ? 0 : 0.35, roughness: 0.4 });
     for (let c = 0; c < 4; c++) {
       const chip = new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.06, 0.26, 2, 0.02), chipMat);
       chip.position.set(-1.05 + c * 0.7, H / 2 + 0.03, D / 2 - 0.35);
@@ -328,8 +192,7 @@ function buildStack(root, tex) {
 
   return {
     group,
-    update(t, dt, pointer) {
-      roxy.update(t, dt, pointer);
+    update(t) {
       const gap = 0.92 + Math.sin(t * 0.7) * 0.05;
       layers.forEach((slab, i) => { slab.position.y = (i - 1) * gap; });
       group.rotation.y = -0.62 + Math.sin(t * 0.18) * 0.32;
@@ -353,7 +216,7 @@ function mount(el) {
   }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, COARSE ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.setClearColor(0x000000, 0);
   renderer.domElement.setAttribute('aria-hidden', 'true');
@@ -371,7 +234,7 @@ function mount(el) {
   const rim = new THREE.DirectionalLight(0xffffff, 1.6);
   rim.position.set(-5, 2, -6);
   const follow = new THREE.PointLight(0xffffff, 18, 14, 2);
-  scene.add(key, rim, follow, new THREE.HemisphereLight(0xffffff, 0x0c0e1c, 0.35));
+  scene.add(key, rim, follow, new THREE.HemisphereLight(0xffffff, 0x0b0b0c, 0.35));
 
   const tex = glowTexture();
   const root = new THREE.Group();
@@ -408,7 +271,7 @@ function mount(el) {
       camera.position.set(0, 1.2, distance);
       camera.lookAt(LOOK);
       camera.updateMatrixWorld();
-      const [sx, sy, scale] = w < 560 ? [0.7, 0.25, 0.88] : camera.aspect > 1.25 ? [0.62, 0.34, 0.9] : [0.6, 0.29, 0.8];
+      const [sx, sy, scale] = w < 560 ? [0.66, 0.25, 0.6] : camera.aspect > 1.25 ? [0.66, 0.4, 0.95] : [0.6, 0.29, 0.8];
       root.position.copy(screenToWorld(sx, sy));
       root.scale.setScalar(scale);
     }
@@ -428,7 +291,7 @@ function mount(el) {
     camera.position.set(pointer.x * 1.3, 1.2 - pointer.y * 0.7, distance);
     camera.lookAt(LOOK);
     follow.position.set(pointer.x * 5, -pointer.y * 3 + 2, 4);
-    world.update(t, dt, pointer);
+    world.update(t, dt);
     dust.rotation.y += dt * 0.012;
     renderer.render(scene, camera);
   }
@@ -469,4 +332,3 @@ function mount(el) {
 }
 
 if (hasWebGL()) document.querySelectorAll('[data-scene3d]').forEach(el => { try { mount(el); } catch (e) { console.warn('3D scene unavailable:', e && e.message); } });
-export { loadRoxy, animeMaterials };

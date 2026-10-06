@@ -162,18 +162,6 @@ app.get('/assets/scene3d.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'scene3d.js'));
 });
-// Roxy assets: the Blender-built GLB and the sticker/avatar images (fixed whitelist).
-const ROXY_IMAGES = new Set(['sleepy', 'stare', 'pixel', 'field', 'wave', 'smile', 'sweat']);
-app.get('/assets/roxy.glb', (req, res) => {
-  res.set('Cache-Control', 'public, max-age=86400');
-  res.type('model/gltf-binary');
-  res.sendFile(path.join(__dirname, 'views', 'assets', 'roxy.glb'));
-});
-app.get('/assets/roxy/:name.webp', (req, res, next) => {
-  if (!ROXY_IMAGES.has(req.params.name)) return next();
-  res.set('Cache-Control', 'public, max-age=86400');
-  res.sendFile(path.join(__dirname, 'views', 'assets', 'roxy', req.params.name + '.webp'));
-});
 app.get('/assets/qris-manual.jpg', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.sendFile(path.join(__dirname, 'views', 'assets', 'qris-manual.jpg'));
@@ -669,6 +657,12 @@ app.get('/home', authRequired, (req, res) => {
   } catch (err) {
     res.status(500).send('Gagal memuat dashboard.');
   }
+});
+
+// Interactive 3D scene (standalone page, three.js from the CDN).
+app.get(['/3d', '/scythe'], (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.sendFile(path.join(__dirname, 'views', 'scythe.html'));
 });
 
 app.get('/api/playground', (req, res) => {

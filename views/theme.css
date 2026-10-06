@@ -1,20 +1,20 @@
-/* Yannz API — shared neo-brutalist theme in Roxy Migurdia colours (navy, periwinkle, gold). */
+/* Yannz API — shared monochrome neo-brutalist theme (keys, billing, pricing, owner). */
 :root {
-  --bg: #0c0e1c;
-  --surface: #141831;
-  --surface-2: #1b2040;
-  --surface-3: #242a52;
-  --ink: #eef0ff;
-  --muted: #aab2e0;
-  --faint: #7c84b8;
-  --edge: #b9c3ff;
-  --edge-soft: #2f3668;
-  --drop: #2f3668;
-  --accent: #8fa0ff;
-  --accent-ink: #0c0e1c;
+  --bg: #0b0b0c;
+  --surface: #141416;
+  --surface-2: #1b1b1e;
+  --surface-3: #232327;
+  --ink: #f4f4f5;
+  --muted: #a1a1aa;
+  --faint: #71717a;
+  --edge: #d4d4d8;
+  --edge-soft: #3f3f46;
+  --drop: #3f3f46;
+  --accent: #fafafa;
+  --accent-ink: #0b0b0c;
   --ok: #86efac;
   --bad: #fca5a5;
-  --warn: #c4cdff;
+  --warn: #e4e4e7;
   --radius: 12px;
   --line: 2px solid var(--edge);
   --shadow: 6px 6px 0 var(--drop);
@@ -27,7 +27,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background: var(--bg);
-  background-image: radial-gradient(#222852 1.1px, transparent 1.1px);
+  background-image: radial-gradient(#1f1f23 1.1px, transparent 1.1px);
   background-size: 22px 22px;
   color: var(--ink);
   font: 15px/1.55 Outfit, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -42,7 +42,7 @@ a:hover { color: #fff; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 
 /* ---------- layout */
-.topbar { position: sticky; top: 0; z-index: 20; background: rgba(12, 14, 28, .82); backdrop-filter: blur(14px); border-bottom: 2px solid var(--edge-soft); }
+.topbar { position: sticky; top: 0; z-index: 20; background: rgba(11, 11, 12, .82); backdrop-filter: blur(14px); border-bottom: 2px solid var(--edge-soft); }
 .topbar-inner { max-width: 1180px; margin: auto; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; font: 700 16px "Space Grotesk", sans-serif; letter-spacing: -.03em; text-decoration: none; }
 .brand-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 800 15px "Space Grotesk", sans-serif; box-shadow: 3px 3px 0 var(--drop); }
@@ -69,7 +69,7 @@ input, select, textarea {
   transition: border-color .16s var(--ease), box-shadow .16s var(--ease), background .16s var(--ease);
 }
 input::placeholder { color: var(--faint); }
-input:hover, select:hover, textarea:hover { border-color: #4a5290; }
+input:hover, select:hover, textarea:hover { border-color: #52525b; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--edge); box-shadow: 3px 3px 0 var(--drop); background: var(--surface-3); }
 input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); padding: 0; }
 button, .btn {
@@ -83,7 +83,7 @@ button, .btn {
 button:hover, .btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--drop); background: var(--surface-3); color: #fff; }
 button:active, .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--drop); }
 button.primary, .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-button.primary:hover, .btn.primary:hover { background: #c4cdff; color: var(--accent-ink); }
+button.primary:hover, .btn.primary:hover { background: #e4e4e7; color: var(--accent-ink); }
 button.danger { border-color: var(--bad); color: var(--bad); background: transparent; }
 button.danger:hover { background: rgba(252, 165, 165, .1); color: #fecaca; }
 button.ghost { background: transparent; }
@@ -107,7 +107,7 @@ button:disabled, button[disabled], .btn[disabled] { opacity: .45; cursor: not-al
 .choice small { font: 500 11px "Outfit", sans-serif; text-transform: none; letter-spacing: 0; }
 .summary-box { display: grid; gap: 6px; padding: 14px; border: 2px dashed var(--edge-soft); border-radius: 12px; margin: 0 0 14px; }
 .summary-box .total { font: 700 24px "Space Grotesk", sans-serif; letter-spacing: -.03em; }
-.qr-box { display: grid; justify-items: center; gap: 10px; padding: 16px; border-radius: 14px; background: #fff; color: #0c0e1c; max-width: 320px; margin: 10px auto; }
+.qr-box { display: grid; justify-items: center; gap: 10px; padding: 16px; border-radius: 14px; background: #fff; color: #0b0b0c; max-width: 320px; margin: 10px auto; }
 .qr-box img, .qr-box svg { width: 100%; max-width: 280px; height: auto; display: block; }
 .qr-box b { font: 700 18px "Space Grotesk", sans-serif; }
 .dropzone { display: grid; place-items: center; gap: 6px; min-height: 120px; padding: 16px; border: 2px dashed var(--edge-soft); border-radius: 12px; text-align: center; cursor: pointer; color: var(--muted); }
@@ -128,15 +128,15 @@ button:disabled, button[disabled], .btn[disabled] { opacity: .45; cursor: not-al
 .notice, .box { border: 2px dashed var(--edge-soft); border-radius: 10px; background: var(--surface-2); padding: 12px 14px; margin: 12px 0; color: var(--ink); }
 .error { color: var(--bad); font-weight: 600; }
 code { font: 12.5px "DM Mono", ui-monospace, Menlo, monospace; background: var(--surface-3); border: 1px solid var(--edge-soft); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
-pre { margin: 0; background: #080a16; color: #c4cdff; border: 2px solid var(--edge-soft); border-radius: 10px; padding: 14px; overflow: auto; font: 12.5px/1.6 "DM Mono", ui-monospace, monospace; }
+pre { margin: 0; background: #070708; color: #e4e4e7; border: 2px solid var(--edge-soft); border-radius: 10px; padding: 14px; overflow: auto; font: 12.5px/1.6 "DM Mono", ui-monospace, monospace; }
 .secret { overflow-wrap: anywhere; font: 600 14px "DM Mono", ui-monospace, monospace; background: var(--accent); color: var(--accent-ink); padding: 14px; border-radius: 10px; margin: 10px 0; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th { font: 600 10px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); text-align: left; padding: 8px; border-bottom: 2px solid var(--edge-soft); }
-td { padding: 10px 8px; border-bottom: 1px solid #1d2245; vertical-align: top; text-align: left; }
+td { padding: 10px 8px; border-bottom: 1px solid #26262b; vertical-align: top; text-align: left; }
 tr { transition: background .14s var(--ease); }
 tbody tr:hover, table tr:hover td { background: rgba(255, 255, 255, .025); }
 .list { list-style: none; padding: 0; margin: 0; }
-.list > li { border-top: 1px solid #1d2245; padding: 14px 0; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; animation: enter .3s var(--ease) both; }
+.list > li { border-top: 1px solid #26262b; padding: 14px 0; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; animation: enter .3s var(--ease) both; }
 .list > li:first-child { border-top: 0; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
 .stat { border: 2px solid var(--edge-soft); border-radius: 10px; padding: 12px; background: var(--surface-2); transition: border-color .16s var(--ease), transform .16s var(--ease); }
@@ -156,7 +156,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .65); backdrop-filter: blur(3px); }
 .card { border: var(--line); border-radius: var(--radius); padding: 22px; background: var(--surface); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px; transition: transform .2s var(--ease), box-shadow .2s var(--ease); animation: enter .4s var(--ease) both; }
 .card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 var(--drop); }
 .card.current { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.card.current small, .card.current li { color: #2f3668; }
+.card.current small, .card.current li { color: #3f3f46; }
 .card h2 { margin: 0; }
 .price { font: 700 34px "Space Grotesk", sans-serif; letter-spacing: -.05em; }
 .card ul { padding-left: 18px; margin: 6px 0 0; flex: 1; color: var(--muted); }
@@ -169,7 +169,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .65); backdrop-filter: blur(3px); }
 .card:nth-child(2) { animation-delay: .05s; } .card:nth-child(3) { animation-delay: .1s; } .card:nth-child(4) { animation-delay: .15s; }
 
 /* ---------- billing */
-.order { border-top: 1px solid #1d2245; padding: 16px 0; overflow-wrap: anywhere; animation: enter .3s var(--ease) both; }
+.order { border-top: 1px solid #26262b; padding: 16px 0; overflow-wrap: anywhere; animation: enter .3s var(--ease) both; }
 .order:first-child { border-top: 0; padding-top: 4px; }
 
 @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -184,37 +184,3 @@ dialog::backdrop { background: rgba(0, 0, 0, .65); backdrop-filter: blur(3px); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
-
-/* ---------- Roxy mascots (Mushoku Tensei art supplied by the owner; decorative only) */
-.wrap { position: relative; }
-.title-mascot { position: absolute; top: 6px; right: 16px; width: clamp(78px, 17vw, 132px); height: auto; pointer-events: none; user-select: none; filter: drop-shadow(5px 5px 0 var(--drop)); animation: mascot-float 4.8s ease-in-out infinite; z-index: 1; }
-.wrap > h1, .wrap > .lead { padding-right: clamp(86px, 19vw, 150px); }
-@keyframes mascot-float { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-6px) rotate(1.5deg); } }
-.loading::before, .error::before, .notice::before {
-  content: ""; display: inline-block; width: 1.9em; height: 1.9em; margin-right: .5em; vertical-align: middle;
-  background: center / contain no-repeat; flex: 0 0 auto;
-}
-.loading::before { background-image: url(/assets/roxy/sleepy.webp); }
-.error::before { background-image: url(/assets/roxy/sweat.webp); border-radius: 50%; }
-.notice::before { background-image: url(/assets/roxy/stare.webp); }
-.no-mascot::before { display: none !important; }
-.state { display: flex; align-items: center; gap: 16px; padding: 14px 4px; color: var(--muted); }
-.state img { width: 84px; height: auto; flex: 0 0 auto; filter: drop-shadow(4px 4px 0 var(--drop)); }
-.state b { color: var(--ink); display: block; font: 700 16px "Space Grotesk", sans-serif; margin-bottom: 2px; }
-.banner-art { display: block; width: 100%; max-height: 260px; object-fit: cover; object-position: 50% 30%; border: var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin: 18px 0 6px; }
-@media (max-width: 640px) {
-  .title-mascot { top: 2px; right: 10px; }
-  .state img { width: 64px; }
-}
-@media (prefers-reduced-motion: reduce) { .title-mascot { animation: none; } }
-.notice.ok::before { background-image: url(/assets/roxy/smile.webp); }
-.title-mascot.tall { width: clamp(50px, 10vw, 82px); }
-
-/* ---------- Roxy palette accents: gold from the hat band */
-:root { --gold: #d6aa5c; }
-.kicker { color: var(--gold); border-color: rgba(214, 170, 92, .45); }
-.price { color: var(--gold); }
-.chip.warn, .chip.pending { color: var(--gold); border-color: rgba(214, 170, 92, .5); }
-.nav a[aria-current="page"] { box-shadow: 2px 2px 0 var(--drop); }
-h1 { text-shadow: 3px 3px 0 rgba(47, 54, 104, .65); }
-body { background-image: radial-gradient(#222852 1.1px, transparent 1.1px), radial-gradient(1200px 600px at 85% -10%, rgba(143, 160, 255, .12), transparent 60%); background-size: 22px 22px, 100% 100%; background-attachment: fixed; }

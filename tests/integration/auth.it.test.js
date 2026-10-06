@@ -101,7 +101,7 @@ it('the shared theme stylesheet is served for the account pages', async () => {
   const r = await app.request('GET', '/assets/theme.css');
   assert.equal(r.status, 200);
   assert.match(r.headers['content-type'], /text\/css/);
-  assert.match(r.text, /--bg:\s*#0c0e1c/);
+  assert.match(r.text, /--bg:\s*#0b0b0c/);
 });
 
 it('the WebGL scene module is served as JavaScript', async () => {
@@ -111,19 +111,12 @@ it('the WebGL scene module is served as JavaScript', async () => {
   assert.match(r.text, /from 'three'/);
 });
 
-it('Roxy assets: the Blender GLB and whitelisted sticker images are served; others are not', async () => {
-  const glb = await new Promise((resolve, reject) => {
-    require('node:http').get(app.origin + '/assets/roxy.glb', res => {
-      const chunks = []; res.on('data', c => chunks.push(c)); res.on('end', () => resolve({ status: res.statusCode, type: res.headers['content-type'], body: Buffer.concat(chunks) }));
-    }).on('error', reject);
-  });
-  assert.equal(glb.status, 200);
-  assert.match(glb.type, /model\/gltf-binary/);
-  assert.equal(glb.body.toString('ascii', 0, 4), 'glTF');
-  for (const name of ['sleepy', 'stare', 'pixel', 'field', 'wave', 'smile', 'sweat']) {
-    const r = await app.request('GET', `/assets/roxy/${name}.webp`);
-    assert.equal(r.status, 200, name);
-    assert.match(r.headers['content-type'], /image\/webp/);
+it('the 3D scene page is public and loads three.js from the CDN', async () => {
+  for (const url of ['/3d', '/scythe']) {
+    const r = await app.request('GET', url);
+    assert.equal(r.status, 200, url);
+    assert.match(r.headers['content-type'], /text\/html/);
+    assert.match(r.text, /three@0\.147\.0\/build\/three\.min\.js/);
+    assert.match(r.text, /href="\/home"/);
   }
-  assert.equal((await app.request('GET', '/assets/roxy/secret.webp')).status, 404);
 });

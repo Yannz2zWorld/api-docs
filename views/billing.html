@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Billing — Yannz API</title>
 <link rel="icon" href="/api/logo-proxy">
-<meta name="theme-color" content="#0c0e1c">
+<meta name="theme-color" content="#0b0b0c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -25,7 +25,6 @@
 <body>
 <header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing" aria-current="page">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
 <main class="wrap">
-  <img class="title-mascot" src="/assets/roxy/wave.webp" alt="" aria-hidden="true" width="380" height="400">
   <h1>Billing &amp; Orders</h1>
   <p class="lead loading" id="current">Memuat akun…</p>
 
@@ -214,7 +213,7 @@ function renderMethod(order, method) {
     try {
       const d = await post(`/api/orders/${encodeURIComponent(order.id)}/manual`, { method, proof_image: dataUrl });
       const told = d.notification === 'sent' ? 'Owner sudah menerima bukti kamu lewat Telegram.' : 'Bukti tersimpan dan tampil di panel owner.';
-      $('#co-body').innerHTML = `<div class="notice ok">Bukti terkirim! ${told} Tier aktif setelah owner menyetujui.</div>
+      $('#co-body').innerHTML = `<div class="notice">✅ Bukti terkirim. ${told} Tier aktif setelah owner menyetujui.</div>
         <p>Mau konfirmasi langsung? Kirim pesan ke owner (lampirkan screenshot yang sama):</p>
         <div class="links">${d.links?.whatsapp ? `<a class="btn primary" href="${esc(d.links.whatsapp)}" target="_blank" rel="noopener noreferrer">Kirim via WhatsApp</a>` : ''}${d.links?.telegram ? `<a class="btn" href="${esc(d.links.telegram)}" target="_blank" rel="noopener noreferrer">Kirim via Telegram</a>` : ''}</div>`;
       loadOrders();
@@ -243,7 +242,7 @@ async function compress(file) {
 
 // ---------------------------------------------------------------- history
 function orderState(o) {
-  if (o.status === 'paid') return '<p class="notice ok">Lunas. Tier sudah aktif.</p>';
+  if (o.status === 'paid') return '<p class="notice">✅ Lunas. Tier sudah aktif.</p>';
   if (o.status !== 'pending') return `<p><small>Order ${esc(o.status)}.</small></p>`;
   if (o.provider === 'manual' && o.payment_status === 'pending') return '<p><small>⏳ Bukti terkirim — menunggu approval owner.</small></p>';
   return `<div class="row"><button type="button" class="primary sm" data-pay="${esc(o.id)}">${o.provider === 'pakasir' ? 'Lihat QR / ganti metode' : 'Bayar sekarang'}</button></div>`;
@@ -257,7 +256,7 @@ async function loadOrders() {
         <code>${esc(o.order_code)}</code><br>
         <span class="chip ${esc(o.status)}">order: ${esc(o.status)}</span>${o.payment_status ? `<span class="chip ${esc(o.payment_status)}">bayar: ${esc(o.payment_status)}${o.payment_method ? ' · ' + esc(o.payment_method) : ''}</span>` : ''}<br>
         <small>Dibuat ${when(o.created_at)}${o.status === 'pending' ? ' · berlaku sampai ' + when(o.expires_at) : ''}${o.paid_at ? ' · lunas ' + when(o.paid_at) : ''}</small>
-        ${orderState(o)}</div>`).join('') : '<div class="state"><img src="/assets/roxy/stare.webp" alt="" width="300" height="300"><div><b>Belum ada order.</b>Pilih tier di atas untuk mulai.</div></div>';
+        ${orderState(o)}</div>`).join('') : '<p>Belum ada order.</p>';
   } catch (e) { $('#orders').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
 }
 $('#orders').addEventListener('click', e => {

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>API Keys — Yannz API</title>
 <link rel="icon" href="/api/logo-proxy">
-<meta name="theme-color" content="#0c0e1c">
+<meta name="theme-color" content="#0b0b0c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -14,7 +14,6 @@
 <body>
 <header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys" aria-current="page">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
 <main class="wrap">
-  <img class="title-mascot tall" src="/assets/roxy/pixel.webp" alt="" aria-hidden="true" width="250" height="420">
   <h1>API Keys</h1>
   <p class="lead loading" id="summary">Memuat…</p>
 
@@ -75,7 +74,7 @@ async function load() {
     } else if (full) {
       $('#create-msg').innerHTML = `<p class="notice">Batas key tier ${esc(d.tier)} tercapai. Cabut key lama atau <a href="/pricing">upgrade</a>.</p>`;
     }
-    $('#list').innerHTML = d.keys.length ? '<ul class="list">' + d.keys.map(k => `<li><div><b>${esc(k.name)}</b> <span class="chip ${esc(k.status)}">${esc(k.status)}</span><br><code>${esc(k.key_prefix)}••••••</code>${k.custom ? ' <span class="chip">custom</span>' : ''}<br><small>Dibuat ${when(k.created_at)} · Terakhir dipakai ${when(k.last_used_at)}${k.revoked_at ? ' · Dicabut ' + when(k.revoked_at) : ''}</small></div>${k.status === 'active' ? `<div><button class="danger" type="button" data-revoke="${esc(k.id)}" data-name="${esc(k.name)}">Cabut</button></div>` : ''}</li>`).join('') + '</ul>' : '<div class="state"><img src="/assets/roxy/stare.webp" alt="" width="300" height="300"><div><b>Belum ada key.</b>Buat key pertamamu di atas.</div></div>';
+    $('#list').innerHTML = d.keys.length ? '<ul class="list">' + d.keys.map(k => `<li><div><b>${esc(k.name)}</b> <span class="chip ${esc(k.status)}">${esc(k.status)}</span><br><code>${esc(k.key_prefix)}••••••</code>${k.custom ? ' <span class="chip">custom</span>' : ''}<br><small>Dibuat ${when(k.created_at)} · Terakhir dipakai ${when(k.last_used_at)}${k.revoked_at ? ' · Dicabut ' + when(k.revoked_at) : ''}</small></div>${k.status === 'active' ? `<div><button class="danger" type="button" data-revoke="${esc(k.id)}" data-name="${esc(k.name)}">Cabut</button></div>` : ''}</li>`).join('') + '</ul>' : '<p>Belum ada key.</p>';
   } catch (e) { $('#list').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
 }
 $('#create-panel').addEventListener('click', async e => {
@@ -86,7 +85,7 @@ $('#create-panel').addEventListener('click', async e => {
   const btn = e.target; btn.disabled = true; $('#create-msg').textContent = 'Membuat key…';
   try {
     const d = await call('/api/keys', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ name: $('#name').value || (custom ? value.slice(0, 3) + '…' : ''), ...(custom ? { custom_key: value } : {}) }) });
-    $('#create-msg').innerHTML = '<p class="notice ok"><b>Key jadi! Salin sekarang — ini satu-satunya kali key ditampilkan.</b></p><div class="secret" id="once"></div><button type="button" class="ghost" id="copy">Salin key</button>';
+    $('#create-msg').innerHTML = '<p><b>Salin sekarang — ini satu-satunya kali key ditampilkan.</b></p><div class="secret" id="once"></div><button type="button" class="ghost" id="copy">Salin key</button>';
     $('#once').textContent = d.key;
     $('#copy').onclick = () => navigator.clipboard.writeText(d.key).then(() => { $('#copy').textContent = 'Tersalin ✓'; });
     $('#name').value = ''; $('#custom-key').value = '';
