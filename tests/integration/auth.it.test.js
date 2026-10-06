@@ -111,6 +111,15 @@ it('the WebGL scene module is served as JavaScript', async () => {
   assert.match(r.text, /from 'three'/);
 });
 
+it('the hero scythe model is served as a small Draco GLB', async () => {
+  const r = await app.request('GET', '/assets/scythe.glb');
+  assert.equal(r.status, 200);
+  assert.match(r.headers['content-type'], /model\/gltf-binary/);
+  assert.ok(r.text.startsWith('glTF'));
+  assert.ok(Number(r.headers['content-length']) < 1.5 * 1024 * 1024, 'stays well under the 4.5 MB function response limit');
+  assert.match(r.text, /KHR_draco_mesh_compression/);
+});
+
 it('the 3D scene page is public and loads three.js from the CDN', async () => {
   for (const url of ['/3d', '/scythe']) {
     const r = await app.request('GET', url);

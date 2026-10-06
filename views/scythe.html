@@ -2,148 +2,120 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
+<meta name="theme-color" content="#0b0b0c">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Crimson Requiem 3D — Yannz API</title>
 <link rel="icon" href="/api/logo-proxy">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
+/* Same visual language as the rest of Yannz API: dark neutral surfaces, 2px borders, hard offset shadows,
+   Space Grotesk / Outfit / DM Mono, one crimson accent. */
 :root{
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-  --bg:#141316;
-  --stage-core:#3a393e;
-  --stage-edge:#0f0e11;
-  --panel:rgba(246,241,233,.86);
-  --panel-line:rgba(40,30,30,.14);
-  --ink:#1f1a1b;
-  --ink-soft:#6c6264;
-  --chip:rgba(30,20,20,.06);
-  --chip-hover:rgba(30,20,20,.12);
-  --blood:#a3172a;
-  --blood-ink:#fff3ef;
-  --focus:#d2303f;
+  --bg:#0b0b0c; --surface:#141416; --surface-2:#1b1b1e; --surface-3:#232327;
+  --ink:#f4f4f5; --muted:#a1a1aa; --faint:#71717a; --edge:#d4d4d8; --edge-soft:#3f3f46; --drop:#3f3f46;
+  --red:#c8202f; --red-deep:#a3172a; --red-ink:#fff;
+  --stage-core:#2a2a2e; --stage-edge:#0b0b0c;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --panel:rgba(22,19,22,.74);
-    --panel-line:rgba(216,204,180,.12);
-    --ink:#e2d8c6;
-    --ink-soft:#958b84;
-    --chip:rgba(216,204,180,.07);
-    --chip-hover:rgba(216,204,180,.14);
-  }
-}
-:root[data-theme="dark"]{
-  --panel:rgba(22,19,22,.74);
-  --panel-line:rgba(216,204,180,.12);
-  --ink:#e2d8c6;
-  --ink-soft:#958b84;
-  --chip:rgba(216,204,180,.07);
-  --chip-hover:rgba(216,204,180,.14);
-}
-*,*::before,*::after{box-sizing:inherit}
-html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%}
 body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--ink);
-  font-family:"Alegreya Sans","Gill Sans","Trebuchet MS",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
-#stage{position:fixed;inset:0;background:radial-gradient(120% 80% at 50% 42%,var(--stage-core) 0%,#232226 38%,var(--stage-edge) 78%)}
+  font:15px/1.5 Outfit,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+::selection{background:var(--red);color:#fff}
+#stage{position:fixed;inset:0;background:radial-gradient(120% 80% at 50% 42%,var(--stage-core) 0%,#18181b 40%,var(--stage-edge) 78%)}
 #stage canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
 
 .hud{position:fixed;left:0;right:0;z-index:5;pointer-events:none;display:flex;justify-content:center}
 .hud>*{pointer-events:auto}
-.top{top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px))}
-.bottom{bottom:0;padding:0 max(10px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(10px,env(safe-area-inset-left,0px))}
+.top{top:0;padding:calc(env(safe-area-inset-top,0px) + 12px) max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px))}
+.bottom{bottom:0;padding:0 max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 12px) max(12px,env(safe-area-inset-left,0px))}
 
-.plate{background:var(--panel);border:1px solid var(--panel-line);border-radius:18px;
-  -webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);
-  box-shadow:0 10px 30px rgba(0,0,0,.35)}
-.title{width:min(100%,640px);display:flex;align-items:center;gap:12px;padding:9px 14px 9px 16px}
-.title h1{margin:0;font-family:"UnifrakturMaguntia","Old English Text MT",serif;font-weight:400;
-  font-size:clamp(22px,6vw,30px);line-height:1;letter-spacing:.01em;color:var(--ink)}
-.title p{margin:3px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.25}
+.plate{background:var(--surface);border:2px solid var(--edge);border-radius:12px;box-shadow:5px 5px 0 var(--drop)}
+.title{width:min(100%,720px);display:flex;align-items:center;gap:14px;padding:10px 14px}
+.back{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:2px solid var(--edge);border-radius:9px;background:var(--surface-2);color:var(--ink);
+  font:500 10px "DM Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;box-shadow:3px 3px 0 var(--drop);transition:transform .15s,box-shadow .15s,background .15s}
+.back:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--red-deep);background:var(--surface-3)}
+.back:focus-visible,.btn:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.back b{width:22px;height:22px;border-radius:6px;background:var(--red);color:#fff;display:grid;place-items:center;font:800 11px "Space Grotesk",sans-serif}
 .title .grow{flex:1;min-width:0}
-.back{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border-radius:999px;border:1px solid var(--panel-line);background:var(--chip);color:var(--ink);font:700 12px/1 "Alegreya Sans",system-ui,sans-serif;text-decoration:none;white-space:nowrap}
-.back:hover{background:var(--chip-hover)}
-.back:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.stat{font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--ink-soft);text-align:right;line-height:1.3;white-space:nowrap}
-.stat b{color:var(--ink);font-weight:700}
+.title h1{margin:0;font:700 clamp(20px,4.6vw,26px)/1.05 "Space Grotesk",sans-serif;letter-spacing:-.04em;color:var(--ink)}
+.title p{margin:3px 0 0;font:500 10px "DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat{font:500 10px/1.5 "DM Mono",monospace;letter-spacing:.04em;color:var(--muted);text-align:right;white-space:nowrap;padding-left:12px;border-left:2px solid var(--edge-soft)}
+.stat b{color:var(--ink);font:700 15px "Space Grotesk",sans-serif;letter-spacing:-.02em}
 
-.dock{width:min(100%,720px);padding:10px;display:flex;flex-direction:column;gap:8px}
-.row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:1px}
+.dock{width:min(100%,760px);padding:10px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px 4px 5px 2px}
 .row::-webkit-scrollbar{display:none}
-.btn{flex:0 0 auto;appearance:none;border:1px solid transparent;background:var(--chip);color:var(--ink);
-  font:500 14px/1 "Alegreya Sans",system-ui,sans-serif;padding:10px 13px;border-radius:999px;cursor:pointer;
-  transition:background .15s ease,color .15s ease,border-color .15s ease}
-.btn:hover{background:var(--chip-hover)}
-.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.btn[aria-pressed="true"]{background:var(--blood);color:var(--blood-ink)}
-.toggles .btn{font-size:13px;padding:8px 12px;border-color:var(--panel-line);background:transparent}
-.toggles .btn[aria-pressed="true"]{background:var(--chip-hover);color:var(--ink);border-color:var(--blood)}
-.toggles .btn::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;
-  background:var(--ink-soft);vertical-align:1px;opacity:.5}
-.toggles .btn[aria-pressed="true"]::before{background:var(--blood);opacity:1;box-shadow:0 0 8px var(--blood)}
+.btn{flex:0 0 auto;appearance:none;border:2px solid var(--edge-soft);background:var(--surface-2);color:var(--ink);cursor:pointer;
+  font:500 10px/1 "DM Mono",ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;border-radius:9px;
+  transition:transform .15s,box-shadow .15s,background .15s,border-color .15s}
+.btn:hover{border-color:var(--edge);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--drop)}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);box-shadow:3px 3px 0 var(--red-deep)}
+.toggles .btn{padding:8px 11px}
+.toggles .btn::before{content:"";display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:7px;vertical-align:0;background:var(--faint)}
+.toggles .btn[aria-pressed="true"]::before{background:var(--red)}
 .attacks{gap:8px}
-.atk{flex:1 0 auto;font-size:15px;font-weight:700;padding:12px 16px;border-color:rgba(163,23,42,.55);
-  background:linear-gradient(180deg,rgba(163,23,42,.22),rgba(163,23,42,.08));transition:transform .08s ease,background .15s ease}
-.atk:active{transform:scale(.96)}
-.atk.firing{background:var(--blood);color:var(--blood-ink);box-shadow:0 0 18px rgba(210,30,50,.55)}
+.atk{flex:1 0 auto;padding:12px 14px;font-weight:500;border-color:var(--edge);background:var(--surface-3)}
+.atk:active{transform:translate(1px,1px);box-shadow:none}
+.atk.firing{background:var(--red);border-color:var(--red);color:#fff;box-shadow:3px 3px 0 var(--red-deep)}
 .atk.combo{border-style:dashed}
-.ctl{flex:1 0 auto;font-size:15px;font-weight:700;padding:12px 16px;border:1px solid var(--blood);background:transparent}
-.ctl[aria-pressed="true"]{background:var(--blood);color:var(--blood-ink);box-shadow:0 0 18px rgba(210,30,50,.55)}
-.ctrlhint{display:none;font-size:13px;line-height:1.35;color:var(--ink-soft);padding:0 4px}
+.ctl{flex:1 0 auto;padding:12px 14px;background:var(--red);border-color:var(--red);color:#fff;box-shadow:3px 3px 0 var(--red-deep)}
+.ctl:hover{border-color:var(--red);box-shadow:4px 4px 0 var(--red-deep)}
+.ctl[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.fs{flex:0 0 auto}
+.ctrlhint{display:none;font-size:13px;line-height:1.4;color:var(--muted);padding:0 4px}
 body.ctrl .ctrlhint{display:block}
 body.ctrl #views, body.ctrl .toggles{display:none}
 .world-ui{display:none}
 body.world .world-ui{display:flex}
 body.world .ctrlhint{display:none}
-#joy{position:fixed;left:calc(env(safe-area-inset-left,0px) + 14px);bottom:var(--joyB,110px);width:104px;height:104px;border-radius:50%;z-index:6;align-items:center;justify-content:center;background:rgba(18,14,16,.28);border:1px solid rgba(216,204,180,.14);touch-action:none}
-#joy .knob{width:44px;height:44px;opacity:.85;border-radius:50%;background:radial-gradient(circle at 40% 35%,#c4243a,#5e0b16);box-shadow:0 0 16px rgba(200,30,50,.5);pointer-events:none}
+#joy{position:fixed;left:calc(env(safe-area-inset-left,0px) + 14px);bottom:var(--joyB,110px);width:104px;height:104px;border-radius:50%;z-index:6;align-items:center;justify-content:center;background:rgba(20,20,22,.7);border:2px solid var(--edge-soft);touch-action:none}
+#joy .knob{width:44px;height:44px;border-radius:50%;background:var(--red);border:2px solid var(--edge);pointer-events:none}
 #vbtns{position:fixed;right:calc(env(safe-area-inset-right,0px) + 12px);bottom:var(--joyB,110px);z-index:6;flex-direction:column;gap:8px}
-#vbtns button{width:40px;height:40px;border-radius:50%;border:1px solid rgba(216,204,180,.18);background:rgba(18,14,16,.32);color:rgba(226,216,198,.85);font:700 13px/1 system-ui,sans-serif;touch-action:none;padding:0}
-#vbtns button.on{background:#a3172a}
+#vbtns button{width:42px;height:42px;border-radius:9px;border:2px solid var(--edge-soft);background:var(--surface-2);color:var(--ink);font:500 12px/1 "DM Mono",monospace;touch-action:none;padding:0;box-shadow:3px 3px 0 var(--drop)}
+#vbtns button.on{background:var(--red);border-color:var(--red);color:#fff}
 #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 96px);transform:translateX(-50%);z-index:7;width:max-content;max-width:min(92vw,520px);
-  padding:10px 14px;border-radius:14px;background:rgba(18,14,16,.8);color:#e2d8c6;font-size:14px;line-height:1.4;text-align:center;opacity:0;transition:opacity .4s;pointer-events:none}
+  padding:10px 14px;border:2px solid var(--edge);border-radius:10px;background:var(--surface);color:var(--ink);box-shadow:4px 4px 0 var(--drop);
+  font:500 13px/1.45 Outfit,sans-serif;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none}
 #toast.show{opacity:1}
-.fs{flex:0 0 auto;font-size:13px;padding:10px 12px;border:1px solid var(--panel-line);background:transparent}
+.hint{font:500 10px "DM Mono",monospace;letter-spacing:.04em;color:var(--faint);padding:0 4px;white-space:nowrap;align-self:center}
 body.world .title p{display:none}
 body.world .title{padding:6px 12px}
-body.world .title h1{font-size:20px}
-/* landscape phones: everything gets more compact so the 3D view keeps the room */
+body.world .title h1{font-size:19px}
+body.world .atk{display:none}
+body.world .dock{width:auto;padding:6px}
+body.world .attacks .ctl{padding:8px 14px}
 @media (orientation: landscape) and (max-height: 560px){
   .top{padding-top:calc(env(safe-area-inset-top,0px) + 6px)}
-  .title{padding:5px 12px;width:min(100%,520px)}
-  .title p{display:none}
-  .title h1{font-size:19px}
+  .title{padding:5px 10px;width:min(100%,560px)}
+  .title p,.hint{display:none}
+  .title h1{font-size:18px}
+  .back{height:32px}
   .dock{padding:6px;gap:5px;width:min(100%,900px)}
-  .btn{padding:7px 11px;font-size:13px}
-  .atk,.ctl{padding:8px 12px;font-size:13px}
-  .toggles .btn{padding:6px 10px;font-size:12px}
-  .hint{display:none}
+  .btn{padding:7px 10px}
+  .atk,.ctl{padding:8px 11px}
   #joy{width:88px;height:88px}
   #joy .knob{width:38px;height:38px}
   #vbtns{flex-direction:row}
-  #toast{top:calc(env(safe-area-inset-top,0px) + 50px);font-size:13px}
+  #toast{top:calc(env(safe-area-inset-top,0px) + 50px)}
   .floattxt{font-size:18px}
 }
-body.world .atk{display:none}
-body.world .dock{width:auto;padding:6px}
-body.world .attacks .ctl{padding:8px 16px;font-size:13px}
-#flash{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(170,10,30,.55) 100%)}
+@media (max-width:560px){ .title p{display:none} .stat{display:none} }
+#flash{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(170,10,30,.5) 100%)}
 #flash.go{animation:flash .38s ease-out}
 @keyframes flash{0%{opacity:1}100%{opacity:0}}
-.floattxt{position:fixed;z-index:5;pointer-events:none;transform:translate(-50%,-50%);font:700 22px/1 "UnifrakturMaguntia",serif;color:#ff4a5a;
-  text-shadow:0 0 12px rgba(255,30,50,.8),0 2px 0 #000;animation:floatup .9s ease-out forwards}
-@keyframes floatup{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}15%{opacity:1;transform:translate(-50%,-60%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-180%) scale(1)}}
-.hint{font-size:12px;color:var(--ink-soft);padding:0 4px;white-space:nowrap}
+.floattxt{position:fixed;z-index:5;pointer-events:none;transform:translate(-50%,-50%);font:700 22px/1 "Space Grotesk",sans-serif;letter-spacing:-.03em;color:#fff;
+  text-shadow:3px 3px 0 var(--red-deep);animation:floatup .9s ease-out forwards}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}15%{opacity:1;transform:translate(-50%,-60%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-180%) scale(1)}}
 
-#loader{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-  color:#e2d8c6;background:var(--stage-edge);transition:opacity .5s ease}
+#loader{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--ink);background:var(--bg);transition:opacity .4s ease}
 #loader.done{opacity:0;pointer-events:none}
-#loader .sigil{width:46px;height:46px;border-radius:50%;border:2px solid rgba(226,216,198,.15);border-top-color:#c21f33;animation:spin 1s linear infinite}
-#loader .msg{font-size:15px;max-width:28ch;text-align:center;line-height:1.4}
+#loader .sigil{width:44px;height:44px;border:2px solid var(--edge-soft);border-top-color:var(--red);border-radius:50%;animation:spin .9s linear infinite}
+#loader .msg{font:500 11px "DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);max-width:32ch;text-align:center;line-height:1.5}
 #loader.err .sigil{display:none}
+#loader.err .msg{color:#fca5a5}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){#loader .sigil{animation-duration:3s}}
 </style>
@@ -153,7 +125,7 @@ body.world .attacks .ctl{padding:8px 16px;font-size:13px}
 
 <header class="hud top">
   <div class="title plate">
-    <a class="back" href="/home" aria-label="Kembali ke dashboard Yannz API">← Yannz API</a>
+    <a class="back" href="/home" aria-label="Kembali ke dashboard Yannz API"><b>Y</b>Dashboard</a>
     <div class="grow">
       <h1>Crimson Requiem</h1>
       <p>Sabit tulang, baja hitam, dan cahaya merah darah</p>
@@ -401,14 +373,19 @@ function makeTextures(){
    ============================================================ */
 const stage=$('#stage');
 let renderer;
-try { renderer=new THREE.WebGLRenderer({antialias:true, alpha:true, powerPreference:'high-performance'}); }
+// Lighter rendering on phones / small or low-memory devices (antialias off, 1x resolution, fewer lights and
+// particles); every device gets dynamic resolution that steps down when the frame rate drops.
+const LITE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600 || (navigator.deviceMemory || 8) <= 4 || (navigator.hardwareConcurrency || 8) <= 4;
+const PR_MAX = Math.min(window.devicePixelRatio || 1, LITE ? 1 : 1.35), PR_MIN = 0.6;
+let pixelRatio = PR_MAX;
+try { renderer=new THREE.WebGLRenderer({antialias:!LITE, alpha:true, powerPreference:'high-performance'}); }
 catch(e){ fail('WebGL tidak aktif di perangkat atau browser ini, jadi model 3D tidak bisa ditampilkan.'); return; }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 1.75));
+renderer.setPixelRatio(pixelRatio);
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.18;
 renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.shadowMap.type=THREE.PCFShadowMap;
 renderer.setClearColor(0x000000,0);
 stage.appendChild(renderer.domElement);
 
@@ -679,8 +656,9 @@ function buildBlade(){
   for(const g of [eg1,eg2]){ const m=new THREE.Mesh(g,glowMat); m.renderOrder=2; grp.add(m); glowObjects.push(m); }
 
   // crimson light cast onto nearby bone and metal
-  for(const [t,z] of [[.24,.6],[.24,-.6],[.68,.6],[.68,-.6]]){
-    const f=bladeFrame(t); const L=new THREE.PointLight(0xff1a2c,1.0,3.2,2);
+  // two lights (one on light devices) carry the glow that four used to: each point light costs every pixel
+  for(const [t,z] of (LITE ? [[.46,.6]] : [[.3,.6],[.62,-.6]])){
+    const f=bladeFrame(t); const L=new THREE.PointLight(0xff1a2c,LITE?2.2:1.7,4.2,2);
     L.position.copy(f.e.clone().lerp(f.s,.3)).add(V3(0,0,z)); grp.add(L); redLights.push(L);
   }
   return grp;
@@ -1057,7 +1035,7 @@ let modelBox, headBox, battleBox, ctrlBox, groundY=0;
 function setupLights(){
   scene.add(new THREE.HemisphereLight(0xc3c6d6,0x1c1214,.38));
   const key=keyLight=new THREE.DirectionalLight(0xfff0e4,2.3); scene.add(key.target); key.position.set(-6,9,10); key.castShadow=true;
-  key.shadow.mapSize.set(1024,1024); const sc=key.shadow.camera; sc.left=-14; sc.right=14; sc.top=14; sc.bottom=-14; sc.near=1; sc.far=45;
+  key.shadow.mapSize.set(1024,1024); points.customDepthMaterial.uniforms.uMap.value=smoke.customDepthMaterial.uniforms.uMap.value=1024; const sc=key.shadow.camera; sc.left=-14; sc.right=14; sc.top=14; sc.bottom=-14; sc.near=1; sc.far=45;
   key.shadow.bias=-.0006; key.shadow.normalBias=.03; scene.add(key);
   const rim=new THREE.DirectionalLight(0xa9bcff,1.7); rim.position.set(7,5,-9); scene.add(rim);
   const rim2=new THREE.DirectionalLight(0xffd6c8,.9); rim2.position.set(9,2,6); scene.add(rim2);
@@ -1220,7 +1198,7 @@ const AudioFX={
 /* ============================================================
    PARTICLES: embers, sparks, blood mist (additive point sprites)
    ============================================================ */
-const PMAX=2200;
+const PMAX=LITE?1100:2200;
 const pPos=new Float32Array(PMAX*3), pVel=new Float32Array(PMAX*3), pCol=new Float32Array(PMAX*3);
 const pAlpha=new Float32Array(PMAX), pSize=new Float32Array(PMAX), pBase=new Float32Array(PMAX);
 const pLife=new Float32Array(PMAX), pMaxL=new Float32Array(PMAX), pGrav=new Float32Array(PMAX), pDrag=new Float32Array(PMAX);
@@ -1238,7 +1216,23 @@ const pMat=new THREE.ShaderMaterial({
     'void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d); float a=smoothstep(0.5,0.0,r); a*=a; if(vA*a<0.003) discard; gl_FragColor=vec4(vC*(1.0+a*0.8), a*vA); }',
   transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
 });
+/* Shadow-map depth for point sprites and additive effects: they write packed depth into the key light's
+   shadow map, dithered by their alpha so faint embers / thin smoke give partial, soft (PCF) shadows. */
+function pointShadowMaterial(strength, opts){
+  const o=opts||{};
+  return new THREE.ShaderMaterial({
+    uniforms:{ uMap:{value:1024}, uTime:{value:0} },
+    vertexShader:'uniform float uMap; attribute float alpha; attribute float size; '+(o.vDecl||'')+' varying float vA;\n'+
+      'void main(){ vA=alpha; '+(o.vBody||'')+' gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);\n'+
+      ' gl_PointSize=max(0.0,size*abs(projectionMatrix[0][0])*0.5*uMap); }',
+    fragmentShader:'#include <packing>\nuniform float uTime; varying float vA; '+(o.fDecl||'')+'\n'+
+      'void main(){ vec2 d=gl_PointCoord-0.5; '+(o.shape||'float r=length(d);')+' float a=smoothstep(0.5,0.05,r);\n'+
+      ' float h=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453);\n'+
+      ' if(a*vA*'+strength.toFixed(2)+'<h) discard; gl_FragColor=packDepthToRGBA(gl_FragCoord.z); }'
+  });
+}
 const points=new THREE.Points(pGeo,pMat); points.frustumCulled=false; points.renderOrder=3; scene.add(points);
+points.castShadow=true; points.customDepthMaterial=pointShadowMaterial(0.9);
 function spawn(x,y,z,vx,vy,vz,life,size,r,g,b,grav,drag){
   const i=pNext; pNext=(pNext+1)%PMAX;
   pPos[i*3]=x; pPos[i*3+1]=y; pPos[i*3+2]=z; pVel[i*3]=vx; pVel[i*3+1]=vy; pVel[i*3+2]=vz;
@@ -1275,7 +1269,7 @@ function updateParticles(dt,time){
    DARK AURA: fast black / dark-crimson smoke wisps clinging to the scythe
    (normal-blended so it can actually darken, unlike additive glow)
    ============================================================ */
-const SMAX=4200;
+const SMAX=LITE?1800:4200;
 const sPos=new Float32Array(SMAX*3), sVel=new Float32Array(SMAX*3), sCol=new Float32Array(SMAX*3);
 const sAlpha=new Float32Array(SMAX), sSize=new Float32Array(SMAX), sBase=new Float32Array(SMAX), sSeed=new Float32Array(SMAX);
 const sLife=new Float32Array(SMAX), sMaxL=new Float32Array(SMAX), sGrav=new Float32Array(SMAX), sDrag=new Float32Array(SMAX), sOp=new Float32Array(SMAX);
@@ -1298,6 +1292,8 @@ const sMat=new THREE.ShaderMaterial({
   transparent:true, depthWrite:false, blending:THREE.NormalBlending
 });
 const smoke=new THREE.Points(sGeo,sMat); smoke.frustumCulled=false; smoke.renderOrder=2; scene.add(smoke);
+smoke.castShadow=true; smoke.customDepthMaterial=pointShadowMaterial(0.75, { vDecl:'attribute float seed; varying float vS;', vBody:'vS=seed;', fDecl:'varying float vS;',
+  shape:'float ang=atan(d.y,d.x); float t=uTime*3.0+vS*40.0; float r=length(d)*(1.0+0.32*sin(ang*3.0+vS*6.283+t)+0.18*sin(ang*5.0-vS*12.0-t*1.3));' });
 function spawnSmoke(x,y,z,vx,vy,vz,life,size,r,g,b,op,grav,drag){
   const i=sNext, j=i*3; sNext=(sNext+1)%SMAX;
   sPos[j]=x; sPos[j+1]=y; sPos[j+2]=z; sVel[j]=vx; sVel[j+1]=vy; sVel[j+2]=vz; sCol[j]=r; sCol[j+1]=g; sCol[j+2]=b;
@@ -1305,7 +1301,7 @@ function spawnSmoke(x,y,z,vx,vy,vz,life,size,r,g,b,op,grav,drag){
   sActive=1;
 }
 function updateSmoke(dt,time){
-  sMat.uniforms.uTime.value=time;
+  sMat.uniforms.uTime.value=time; smoke.customDepthMaterial.uniforms.uTime.value=time;
   if(!sActive) return; let any=0;
   for(let i=0;i<SMAX;i++){
     if(sLife[i]<=0){ if(sAlpha[i]!==0){ sAlpha[i]=0; sSize[i]=0; } continue; }
@@ -1414,6 +1410,11 @@ trGeo.setAttribute('color',new THREE.BufferAttribute(trCol,3).setUsage(THREE.Dyn
 trGeo.setDrawRange(0,0);
 const trailMesh=new THREE.Mesh(trGeo,new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false}));
 trailMesh.frustumCulled=false; trailMesh.renderOrder=3; scene.add(trailMesh);
+// the slash arc shades the floor too: its brightness (vertex colour) decides how solid its shadow is
+trailMesh.castShadow=true;
+trailMesh.customDepthMaterial=new THREE.ShaderMaterial({ vertexColors:true, side:THREE.DoubleSide,
+  vertexShader:'varying vec3 vC; void main(){ vC=color; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+  fragmentShader:'#include <packing>\nvarying vec3 vC; void main(){ float a=clamp(max(vC.r,vC.g)*0.85,0.0,1.0); float h=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453); if(a<h) discard; gl_FragColor=packDepthToRGBA(gl_FragCoord.z); }' });
 const trS=[]; let trailOn=false;
 function updateTrail(now,wIn,wOut){
   if(trailOn) trS.unshift({a:wIn.clone(),b:wOut.clone(),t:now});
@@ -2172,9 +2173,23 @@ function countStats(){
    ============================================================ */
 const clock=new THREE.Clock(); let time=0;
 const _shk=new THREE.Vector3();
+// dynamic resolution: average the frame time over ~1.5 s, step the pixel ratio down when slow, up when smooth
+const perf={t:0,n:0,good:0};
+function adaptResolution(raw){
+  perf.t+=raw; perf.n++;
+  if(perf.t<1.5) return;
+  const fps=perf.n/perf.t; perf.t=0; perf.n=0;
+  let next=pixelRatio;
+  if(fps<40 && pixelRatio>PR_MIN){ next=Math.max(PR_MIN,pixelRatio-(fps<25?0.25:0.15)); perf.good=0; }
+  else if(fps>57 && pixelRatio<PR_MAX){ if(++perf.good>=2){ next=Math.min(PR_MAX,pixelRatio+0.1); perf.good=0; } }
+  else perf.good=0;
+  if(Math.abs(next-pixelRatio)>0.01){ pixelRatio=next; renderer.setPixelRatio(pixelRatio); resize(); }
+}
 function animate(){
   requestAnimationFrame(animate);
-  let dt=Math.min(.05,clock.getDelta()); if(hitStop>0){ hitStop-=dt; dt*=.15; } time+=dt;
+  const rawDt=clock.getDelta();
+  if(rawDt<0.5) adaptResolution(rawDt);
+  let dt=Math.min(.05,rawDt); if(hitStop>0){ hitStop-=dt; dt*=.15; } time+=dt;
   if(tween&&controls){
     const k=clamp((performance.now()-tween.start)/tween.dur,0,1), e=easeIO(k);
     controls.target.lerpVectors(tween.t0,tween.t1,e);

@@ -162,6 +162,11 @@ app.get('/assets/scene3d.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'scene3d.js'));
 });
+// Hero model: the Crimson Requiem scythe baked from /3d (Draco + WebP, see tools/scythe/bake_web.py).
+app.get('/assets/scythe.glb', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.type('model/gltf-binary').sendFile(path.join(__dirname, 'views', 'assets', 'scythe.glb'));
+});
 app.get('/assets/qris-manual.jpg', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.sendFile(path.join(__dirname, 'views', 'assets', 'qris-manual.jpg'));
