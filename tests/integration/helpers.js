@@ -101,8 +101,8 @@ async function startApp(env = {}) {
     if (request === '@neondatabase/serverless') return { neon: () => neonShim() };
     return originalLoad.call(this, request, ...rest);
   };
-  const { google } = require(path.join(ROOT, 'node_modules', 'googleapis'));
-  google.auth.OAuth2.prototype.getFederatedSignonCertsAsync = async () => ({ certs: { [KID]: publicKey.export({ type: 'spki', format: 'pem' }) }, format: 'PEM' });
+  const { OAuth2Client } = require(path.join(ROOT, 'node_modules', 'google-auth-library'));
+  OAuth2Client.prototype.getFederatedSignonCertsAsync = async () => ({ certs: { [KID]: publicKey.export({ type: 'spki', format: 'pem' }) }, format: 'PEM' });
   for (const level of ['log', 'warn', 'error']) console[level] = (...a) => logs.push(a.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' '));
 
   const app = require(path.join(ROOT, 'index.js'));

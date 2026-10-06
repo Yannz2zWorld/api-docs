@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const express = require('express');
 const chalk = require('chalk');
 const fs = require('fs');
@@ -7,7 +7,7 @@ const cors = require('cors');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
-const { google } = require('googleapis');
+const { OAuth2Client } = require('google-auth-library');
 const { healthCheck, checkSchema } = require('./lib/db');
 const { classifyGoogleVerifyError, classifyDatabaseError, missingAuthConfig } = require('./lib/authErrors');
 const userService = require('./services/userService');
@@ -110,15 +110,25 @@ async function authRequired(req, res, next) {
 }
 function createOAuthClient() {
   requireAuthConfig();
-  return new google.auth.OAuth2(GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET || undefined, GOOGLE_CALLBACK_URL);
+  return new OAuth2Client(GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET || undefined, GOOGLE_CALLBACK_URL);
 }
 function randomState() { return crypto.randomBytes(32).toString('base64url'); }
 function safeEqual(a,b){const x=Buffer.from(String(a||''));const y=Buffer.from(String(b||''));return x.length===y.length&&x.length>0&&crypto.timingSafeEqual(x,y);}
 
 
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
 app.set("json spaces", 2);
-app.use((req,res,next)=>{res.set('X-Content-Type-Options','nosniff');res.set('Referrer-Policy','strict-origin-when-cross-origin');res.set('X-Frame-Options','DENY');next();});
+app.use((req, res, next) => {
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.set('X-Frame-Options', 'DENY');
+  res.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+  // Script sources stay unrestricted (CDN scripts, Google Identity Services); these
+  // directives only block framing, <base> hijacking and plugin content.
+  res.set('Content-Security-Policy', "frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
+  next();
+});
 app.use(express.json({limit:'100kb'}));
 app.use(express.urlencoded({ extended: false, limit:'100kb' }));
 const allowedOrigins = new Set([`https://${process.env.VERCEL_URL || 'apiz2z.vercel.app'}`, 'https://apiz2z.vercel.app', ...(process.env.CORS_ORIGINS || '').split(',').map(v => v.trim()).filter(Boolean)]);
@@ -192,7 +202,6 @@ global.fetchJson = async (url, options = {}) => {
   }
 };
 
-global.apikey = []; // New API access is user-owned Bearer/x-api-key only.
 
 app.use((req, res, next) => {
   // Process-local counters are telemetry only; persisted usage lives in Neon.
@@ -302,15 +311,15 @@ function apiGateway(cleanPath, run) {
       identity = resolved.identity;
       const owner = identity.tier === 'OWNER';
 
-      endpoint = (await query('SELECT id,status,locked,minimum_tier FROM endpoints WHERE path=$1 LIMIT 1', [cleanPath]))[0];
+      // One round trip: endpoint access rules plus the global maintenance flag.
+      endpoint = (await query('SELECT e.id,e.status,e.locked,e.minimum_tier,s.maintenance_enabled,s.maintenance_message FROM endpoints e LEFT JOIN server_settings s ON s.id=1 WHERE e.path=$1 LIMIT 1', [cleanPath]))[0];
       if (!endpoint) return gatewayFail(res, 503, 'ENDPOINT_REGISTRY_NOT_READY', 'Registry endpoint belum tersedia.');
       if (endpoint.status !== 'active') return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', 'Endpoint sedang dinonaktifkan.');
       if (endpoint.locked && !owner) return gatewayFail(res, 403, 'ENDPOINT_LOCKED', 'Endpoint ini sedang dikunci oleh owner.');
       if (!owner && !canAccess(identity.tier, endpoint.minimum_tier, false)) {
         return gatewayFail(res, 403, 'TIER_RESTRICTED', `Endpoint ini membutuhkan tier ${endpoint.minimum_tier} atau lebih tinggi.`, { requiredTier: endpoint.minimum_tier, currentTier: identity.tier });
       }
-      const maintenance = (await query('SELECT maintenance_enabled,maintenance_message FROM server_settings WHERE id=1'))[0];
-      if (maintenance?.maintenance_enabled && !owner) return gatewayFail(res, 503, 'MAINTENANCE', maintenance.maintenance_message);
+      if (endpoint.maintenance_enabled && !owner) return gatewayFail(res, 503, 'MAINTENANCE', endpoint.maintenance_message);
 
       quota = await usageService.consume({ userId: identity.userId, keyId: identity.keyId, endpointId: endpoint.id, tier: identity.tier });
       res.set('X-RateLimit-Limit', quota.limit == null ? 'unlimited' : String(quota.limit));
@@ -468,7 +477,7 @@ app.post('/auth/google/credential', async (req, res) => {
 
   let profile;
   try {
-    const verifier = new google.auth.OAuth2();
+    const verifier = new OAuth2Client();
     const ticket = await verifier.verifyIdToken({ idToken: credential, audience: GOOGLE_CLIENT_ID });
     profile = ticket.getPayload();
   } catch (err) {
@@ -548,20 +557,20 @@ app.get('/auth/google/callback', async (req, res) => {
     const client = createOAuthClient();
 
     const { tokens } = await client.getToken(String(code));
-    if (!tokens?.access_token) {
-      throw new Error('Google tidak mengembalikan access_token.');
+    if (!tokens?.id_token) {
+      throw new Error('Google tidak mengembalikan id_token.');
     }
-    client.setCredentials(tokens);
+    // The ID token came straight from Google's token endpoint; verifying it still checks
+    // signature, audience, issuer and expiry, and yields the same profile as the GIS flow.
+    const ticket = await client.verifyIdToken({ idToken: tokens.id_token, audience: GOOGLE_CLIENT_ID });
+    const profile = ticket.getPayload();
 
-    const oauth2 = google.oauth2({ auth: client, version: 'v2' });
-    const { data: profile } = await oauth2.userinfo.get();
-
-    if (!profile.email || profile.verified_email !== true) {
+    if (!profile?.sub || !profile.email || profile.email_verified !== true) {
       return res.status(403).send('Akun Google harus memiliki email yang terverifikasi.');
     }
 
     const account = await userService.upsertGoogleUser({
-      googleId: profile.id,
+      googleId: profile.sub,
       email: profile.email,
       name: profile.name,
       picture: profile.picture
@@ -571,7 +580,7 @@ app.get('/auth/google/callback', async (req, res) => {
     }
     const sv = await userService.secureGoogleLink(account.id);
     if (sv !== null) account.sessionVersion = sv;
-    issueSession(res, profile.id, account);
+    issueSession(res, profile.sub, account);
     await auditService.writeAudit({actorUserId:account.id,action:'login',targetType:'session'}).catch(()=>{});
     res.redirect('/home');
   } catch (err) {

@@ -7,42 +7,22 @@
     "dev": "node index.js",
     "start": "node index.js",
     "build": "echo 'Build Complete'",
-    "lint": "node --check index.js && node --check lib/db.js && node --check lib/keyCrypto.js && node --check lib/authErrors.js && node --check services/userService.js && node --check services/tierService.js && node --check services/apiKeyService.js && node --check services/usageService.js && node --check services/auditService.js && node --check services/pakasirService.js && node --check services/orderService.js && node --check services/ownerNotificationService.js && node --check routes/platform.js && node --check plugin/tiktok.js && node --check plugin/ping.js && node --check tests/userService.test.js && node --check tests/platform.test.js && node --check tests/migration.test.js && node --check tests/auth.test.js && node --check tests/integration/helpers.js && node --check tests/integration/auth.it.test.js && node --check tests/integration/keys.it.test.js && node --check tests/integration/quota.it.test.js && node --check tests/integration/endpoints.it.test.js && node --check tests/integration/payments.it.test.js && node --check tests/integration/owner.it.test.js && node --check routes/auth.js && node --check services/passwordService.js && node --check services/emailService.js && node --check services/authCodeService.js && node --check tests/integration/password.it.test.js",
+    "lint": "node --check index.js && node --check lib/db.js && node --check lib/keyCrypto.js && node --check lib/authErrors.js && node --check services/userService.js && node --check services/tierService.js && node --check services/apiKeyService.js && node --check services/usageService.js && node --check services/auditService.js && node --check services/pakasirService.js && node --check services/orderService.js && node --check services/ownerNotificationService.js && node --check routes/platform.js && node --check plugin/tiktok.js && node --check plugin/ping.js && node --check tests/userService.test.js && node --check tests/platform.test.js && node --check tests/migration.test.js && node --check tests/auth.test.js && node --check tests/integration/helpers.js && node --check tests/integration/auth.it.test.js && node --check tests/integration/keys.it.test.js && node --check tests/integration/quota.it.test.js && node --check tests/integration/endpoints.it.test.js && node --check tests/integration/payments.it.test.js && node --check tests/integration/owner.it.test.js && node --check routes/auth.js && node --check services/passwordService.js && node --check services/emailService.js && node --check services/authCodeService.js && node --check tests/integration/password.it.test.js && node --check tests/integration/hardening.it.test.js && node --check tests/integration/cors.it.test.js",
     "test": "node --test tests/*.test.js tests/integration/*.test.js",
     "test:integration": "node --test --test-concurrency=1 tests/integration/*.test.js"
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
-    "@napi-rs/canvas": "^1.0.2",
     "@neondatabase/serverless": "^1.0.2",
-    "@tailwindcss/vite": "^4.1.14",
-    "@vitejs/plugin-react": "^5.0.4",
     "axios": "^1.18.1",
     "chalk": "^4.1.2",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "express-rate-limit": "^8.5.2",
-    "form-data": "^4.0.0",
-    "googleapis": "^144.0.0",
-    "lucide-react": "^0.546.0",
-    "motion": "^12.23.24",
-    "node-fetch": "^2.7.0",
-    "nodemailer": "^6.10.1",
-    "react": "^19.0.1",
-    "react-dom": "^19.0.1",
-    "sharp": "^0.33.2",
-    "vite": "^6.2.3"
+    "google-auth-library": "^10.9.1",
+    "nodemailer": "^10.0.15"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^22.14.0",
-    "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
-    "pg": "^8.23.1",
-    "tailwindcss": "^4.1.14",
-    "tsx": "^4.21.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "pg": "^8.23.1"
   }
 }

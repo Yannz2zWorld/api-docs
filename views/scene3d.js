@@ -276,11 +276,13 @@ function mount(el) {
       root.scale.setScalar(scale);
     }
   }
-  new ResizeObserver(resize).observe(el);
+  // setSize clears the canvas: repaint at once when the loop is idle (reduced motion,
+  // off-screen) so the scene never stays blank after a resize or rotation.
+  new ResizeObserver(() => { resize(); if (!raf && !lost) frame(); }).observe(el);
   resize();
 
   const clock = new THREE.Clock();
-  let t = 0, visible = true, raf = 0;
+  let t = 0, visible = true, raf = 0, lost = false;
   function frame() {
     const dt = Math.min(clock.getDelta(), 0.05);
     t += dt;
@@ -295,11 +297,26 @@ function mount(el) {
   }
   function loop() {
     raf = 0;
-    if (!visible || document.hidden) return;
+    if (!visible || document.hidden || lost) return;
     frame();
     raf = requestAnimationFrame(loop);
   }
-  function start() { if (!raf && !REDUCED) { clock.getDelta(); raf = requestAnimationFrame(loop); } }
+  function start() { if (!raf && !REDUCED && !lost) { clock.getDelta(); raf = requestAnimationFrame(loop); } }
+
+  // GPU reset / too many contexts: fall back to the CSS backdrop until the browser restores it.
+  renderer.domElement.addEventListener('webglcontextlost', e => {
+    e.preventDefault();
+    lost = true;
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    el.classList.remove('is-ready');
+  });
+  renderer.domElement.addEventListener('webglcontextrestored', () => {
+    lost = false;
+    resize();
+    frame();
+    el.classList.add('is-ready');
+    start();
+  });
 
   new IntersectionObserver(entries => {
     visible = entries.some(e => e.isIntersecting);
