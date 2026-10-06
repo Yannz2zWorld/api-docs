@@ -169,6 +169,14 @@ app.get('/assets/scythe.glb', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400');
   res.type('model/gltf-binary').sendFile(path.join(__dirname, 'views', 'assets', 'scythe.glb'));
 });
+app.get('/assets/aura-intro.js', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'aura-intro.js'));
+});
+app.get('/assets/scythe-mark.webp', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.type('image/webp').sendFile(path.join(__dirname, 'views', 'assets', 'scythe-mark.webp'));
+});
 app.get('/assets/slash-intro.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'slash-intro.js'));
