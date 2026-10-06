@@ -125,6 +125,63 @@ function dressModel(model) {
   return pulse;
 }
 
+// Login only: a display case around the scythe, drawn in the site's border style — light square
+// edges, crimson corner blocks, faint glass, a plinth with a name plate. Sized from the model.
+function buildCase(size) {
+  const group = new THREE.Group();
+  const W = size.x + 1.6, H = size.y + 1.4, D = Math.max(size.z + 2.6, 3.6), T = 0.16, PH = 1.2;
+  const edgeMat = new THREE.MeshStandardMaterial({ color: 0xe4e4e7, roughness: 0.45, metalness: 0.25 });
+  const cornerMat = new THREE.MeshStandardMaterial({ color: 0xc8202f, roughness: 0.4, metalness: 0.3, emissive: 0x2a0006 });
+  const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); group.add(m); return m; };
+  for (const y of [-H / 2, H / 2]) for (const z of [-D / 2, D / 2]) add(new THREE.BoxGeometry(W, T, T), edgeMat, 0, y, z);
+  for (const x of [-W / 2, W / 2]) for (const z of [-D / 2, D / 2]) add(new THREE.BoxGeometry(T, H, T), edgeMat, x, 0, z);
+  for (const x of [-W / 2, W / 2]) for (const y of [-H / 2, H / 2]) add(new THREE.BoxGeometry(T, T, D), edgeMat, x, y, 0);
+  const corner = new THREE.BoxGeometry(T * 2, T * 2, T * 2);
+  for (const x of [-W / 2, W / 2]) for (const y of [-H / 2, H / 2]) for (const z of [-D / 2, D / 2]) add(corner, cornerMat, x, y, z);
+
+  // Glass: barely there, plus one diagonal glint on the front pane.
+  const glass = add(new THREE.BoxGeometry(W, H, D), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.DoubleSide }), 0, 0, 0);
+  glass.renderOrder = 2;
+  const glint = add(new THREE.PlaneGeometry(0.55, H * 0.62), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.06, depthWrite: false, blending: THREE.AdditiveBlending }), -W * 0.22, H * 0.08, D / 2 + 0.01);
+  glint.rotation.z = 0.35;
+
+  // Back pane: a faint 1-unit grid, like the dotted grid on the pages.
+  const grid = [];
+  for (let x = -Math.floor(W / 2); x <= W / 2; x++) grid.push(x, -H / 2, -D / 2 + 0.02, x, H / 2, -D / 2 + 0.02);
+  for (let y = -Math.floor(H / 2); y <= H / 2; y++) grid.push(-W / 2, y, -D / 2 + 0.02, W / 2, y, -D / 2 + 0.02);
+  const gridGeo = new THREE.BufferGeometry();
+  gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(grid, 3));
+  group.add(new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: 0x52525b, transparent: true, opacity: 0.35 })));
+
+  // Plinth and name plate.
+  const plinthY = -H / 2 - T / 2 - PH / 2;
+  const plinthGeo = new THREE.BoxGeometry(W + 1, PH, D + 1);
+  add(plinthGeo, new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.6, metalness: 0.2 }), 0, plinthY, 0)
+    .add(new THREE.LineSegments(new THREE.EdgesGeometry(plinthGeo), new THREE.LineBasicMaterial({ color: 0xd4d4d8 })));
+  const c = document.createElement('canvas');
+  c.width = 1024; c.height = 128;
+  const plate = new THREE.CanvasTexture(c);
+  plate.encoding = THREE.sRGBEncoding;
+  plate.anisotropy = 4;
+  const drawPlate = () => {
+    const g = c.getContext('2d');
+    g.fillStyle = '#0b0b0c'; g.fillRect(0, 0, 1024, 128);
+    g.strokeStyle = '#d4d4d8'; g.lineWidth = 6; g.strokeRect(3, 3, 1018, 122);
+    g.fillStyle = '#c8202f'; g.beginPath(); g.arc(56, 64, 11, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#f4f4f5'; g.font = '700 46px "Space Grotesk", "Outfit", sans-serif'; g.textBaseline = 'middle';
+    g.fillText('CRIMSON REQUIEM', 88, 66);
+    g.fillStyle = '#a1a1aa'; g.font = '500 26px "DM Mono", monospace'; g.textAlign = 'right';
+    g.fillText('YANNZ API / 3D', 990, 68);
+    plate.needsUpdate = true;
+  };
+  drawPlate();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawPlate);
+  add(new THREE.PlaneGeometry((W + 1) * 0.8, (W + 1) * 0.8 / 8), new THREE.MeshBasicMaterial({ map: plate, toneMapped: false }), 0, plinthY, (D + 1) / 2 + 0.01);
+
+  // Whole display (case + plinth) for framing; offsetY recentres it on the root.
+  return { group, size: new THREE.Vector3(W + 1, H + T + PH, D + 1), offsetY: (T + PH) / 2 };
+}
+
 function mount(el) {
   const variant = el.dataset.scene3d;
   let renderer;
@@ -166,20 +223,20 @@ function mount(el) {
   const root = new THREE.Group();          // placed on screen by resize()
   const spin = new THREE.Group();          // slow turn + pointer response
   const tilt = new THREE.Group();          // the scythe leans across the frame
-  tilt.rotation.z = variant === 'stack' ? -0.42 : -0.32;
+  tilt.rotation.z = variant === 'stack' ? -0.42 : 0;    // upright on its stand inside the login case
   root.add(spin);
   spin.add(tilt);
   scene.add(root);
 
   const halo = glow(tex, 1, 0.16, RED);    // a cheap red bloom behind the head instead of real post-processing
   const floorGlow = glow(tex, 1, 0.22, RED);
-  root.add(floorGlow);
+  if (variant === 'stack') root.add(floorGlow);
   const fx = embers(LITE ? 90 : 220, glowTexture(64, 0.3));
-  root.add(fx.points);
+  spin.add(fx.points);                     // embers turn with the display
   const motes = dust(LITE ? 160 : 420, 10, glowTexture(64, 0.3));
   scene.add(motes);
 
-  let model = null, pulse = [], size = new THREE.Vector3(1, 1, 1);
+  let model = null, pulse = [], size = new THREE.Vector3(1, 1, 1), frameSize = size, baseY = 0;
 
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
   window.addEventListener('pointermove', e => {
@@ -208,13 +265,44 @@ function mount(el) {
     // [screen x, screen y, share of the height, share of the width]
     let sx, sy, frac, wide;
     if (variant === 'stack') [sx, sy, frac, wide] = [0.5, 0.48, 0.9, 1.05];
-    else if (camera.aspect < 0.7) [sx, sy, frac, wide] = [0.54, 0.34, 0.6, 0.86];   // tall, narrow panel
-    else if (w < 560) [sx, sy, frac, wide] = [0.7, 0.4, 0.66, 0.6];
-    else [sx, sy, frac, wide] = camera.aspect > 1.25 ? [0.68, 0.45, 0.76, 0.6] : [0.66, 0.4, 0.68, 0.6];
-    const fit = Math.min(visH * frac / size.y, visW * wide / size.x);
+    else if (camera.aspect < 0.7) [sx, sy, frac, wide] = [0.54, 0.33, 0.56, 0.86];   // tall, narrow panel
+    else if (w < 560) [sx, sy, frac, wide] = [0.74, 0.37, 0.6, 0.55];
+    else [sx, sy, frac, wide] = camera.aspect > 1.25 ? [0.7, 0.42, 0.62, 0.5] : [0.68, 0.38, 0.62, 0.55];
+    const fit = Math.min(visH * frac / frameSize.y, visW * wide / frameSize.x);
     root.position.copy(screenToWorld(sx, sy));
     root.scale.setScalar(fit);
   }
+
+  // Drag to rotate (both pages). Touch: horizontal swipes turn it and vertical swipes still scroll
+  // the page (touch-action: pan-y). Mouse can also tip it a little.
+  const drag = { active: false, id: 0, x: 0, y: 0, yaw: 0, pitch: 0, v: 0, sway: 1, last: -1e4, mouse: false, at: 0 };
+  const canvas = renderer.domElement;
+  canvas.style.touchAction = 'pan-y';
+  canvas.style.cursor = 'grab';
+  canvas.addEventListener('pointerdown', e => {
+    if (!model) return;
+    Object.assign(drag, { active: true, id: e.pointerId, x: e.clientX, y: e.clientY, mouse: e.pointerType === 'mouse', at: performance.now(), v: 0 });
+    canvas.setPointerCapture(e.pointerId);
+    canvas.style.cursor = 'grabbing';
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!drag.active || e.pointerId !== drag.id) return;
+    const now = performance.now(), dx = (e.clientX - drag.x) * 0.009, dt = Math.max(0.008, (now - drag.at) / 1000);
+    drag.yaw += dx;
+    drag.v = drag.v * 0.6 + (dx / dt) * 0.4;
+    if (drag.mouse) drag.pitch = Math.max(-0.35, Math.min(0.35, drag.pitch + (e.clientY - drag.y) * 0.005));
+    Object.assign(drag, { x: e.clientX, y: e.clientY, at: now, last: now });
+    if (!raf) frame();   // reduced motion / idle loop: still follow the drag
+  });
+  const release = e => {
+    if (!drag.active || e.pointerId !== drag.id) return;
+    drag.active = false;
+    drag.last = performance.now();
+    if (drag.last - drag.at > 80) drag.v = 0;   // held still before letting go: no fling
+    canvas.style.cursor = 'grab';
+  };
+  canvas.addEventListener('pointerup', release);
+  canvas.addEventListener('pointercancel', release);
 
   const clock = new THREE.Clock();
   let t = 0, visible = true, raf = 0, lost = false;
@@ -240,9 +328,14 @@ function mount(el) {
     camera.lookAt(LOOK);
     if (model) {
       // Display-stand turn: a slow sway that keeps the blade facing the viewer, plus a gentle hover.
-      spin.rotation.y = Math.sin(t * 0.32) * 0.75 + pointer.x * 0.35;
-      spin.rotation.x = pointer.y * 0.12;
-      spin.position.y = Math.sin(t * 0.9) * 0.025;
+      // Drag to turn it; the idle sway fades out while dragging and back in a moment after.
+      if (!drag.active) { drag.yaw += drag.v * dt; drag.v *= Math.exp(-dt * 3); }
+      const idle = drag.active ? 0 : Math.min(1, Math.max(0, (performance.now() - drag.last) / 1000 - 1.5));
+      drag.sway += (idle - drag.sway) * Math.min(1, dt * 1.5);
+      spin.rotation.y = drag.yaw + (Math.sin(t * 0.32) * (variant === 'stack' ? 0.75 : 0.55) + pointer.x * 0.35) * drag.sway;
+      spin.rotation.x = drag.pitch + pointer.y * 0.12 * drag.sway;
+      spin.position.y = baseY;
+      tilt.position.y = Math.sin(t * 0.9) * 0.06;
       const beat = 0.82 + Math.sin(t * 2.1) * 0.12 + Math.sin(t * 5.3) * 0.06;
       for (const p of pulse) p.m[p.key] = p.base * beat;
       blade.intensity = 9 * beat;
@@ -305,6 +398,13 @@ function mount(el) {
     halo.scale.setScalar(size.y * 0.75);
     floorGlow.position.set(0, -size.y * 0.52, -0.5);
     floorGlow.scale.set(size.x * 1.4, size.y * 0.18, 1);
+    if (variant !== 'stack') {
+      const display = buildCase(size);
+      spin.add(display.group);
+      frameSize = display.size;
+      baseY = display.offsetY;
+    }
+    el.style.pointerEvents = 'auto';
     resize();
     t = 2.4;
     frame();
