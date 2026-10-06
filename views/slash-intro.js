@@ -1,9 +1,13 @@
-// Yannz API — page-load intro for the scythe pages (login, dashboard), about 5 s: red builds up in
-// the dark, a scythe slash cuts the cover, blood sprays and keeps dripping from the cut while the
-// slit widens, the halves fall apart, and then the 3D scythe makes its entrance (scene3d.js waits
-// for the "slash:done" event).
+// Yannz API — page-load intro for the scythe pages (login, dashboard), about 5 s:
+//   0.0–1.0 s  dark cover, "YANNZ API" with a crimson line filling under it
+//   1.0–1.4 s  a crescent scythe slash sweeps across the screen
+//   1.4 s      impact: a white cut line, a short crimson flash, a small shake, blood sprays
+//   1.4–2.7 s  the cut opens into a glowing slit and blood runs down from its upper lip
+//   2.7–4.0 s  the two halves slide apart off screen
+//   → 4.9 s    the last drops fall away; then the 3D scythe makes its entrance
+//              (scene3d.js waits for the "slash:done" event)
 // The cover (#slash-intro) is in the HTML so it is there from the first paint; if this script
-// never runs, a CSS fallback fades it out. prefers-reduced-motion hides it entirely.
+// never runs, a CSS fallback fades it out. prefers-reduced-motion skips the intro entirely.
 (function () {
   'use strict';
   const cover = document.getElementById('slash-intro');
@@ -18,234 +22,230 @@
   if (!ctx) { cover.remove(); done(); return; }
   cover.style.animation = 'none';          // this script takes over from the CSS fallback
   cover.style.background = 'transparent';
+  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
   cover.appendChild(canvas);
 
   const LITE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
   const dpr = Math.min(window.devicePixelRatio || 1, LITE ? 1.5 : 2);
-  let W = 0, H = 0;
+
+  const BG = '#0b0b0c', RED = '#c8202f';
+  const BLOOD = ['#5c0712', '#7a0a18', '#8f0d1e', '#a3172a'];
+  const T = { swing: 1000, cut: 1400, fall: 2700, fallDur: 1300, end: 4900 };
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const clamp01 = v => Math.max(0, Math.min(1, v));
+  const ease = { out: t => 1 - Math.pow(1 - t, 3), outQuart: t => 1 - Math.pow(1 - t, 4), in: t => t * t, inOut: t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2) };
+
+  // ---------------------------------------------------------------- geometry
+  // The cut: a gentle scythe arc from the upper right to the lower left, sampled once per size.
+  let W = 0, H = 0, k = 1, diag = 1, cut = [], mid = { nx: 0, ny: 0 };
   function size() {
     W = innerWidth; H = innerHeight;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
+    k = Math.min(W, H) / 800 + 0.45;
+    diag = Math.hypot(W, H);
+    const x0 = W * 1.06, y0 = H * 0.16, cx = W * 0.52, cy = H * 0.66, x1 = -W * 0.06, y1 = H * 0.86;
+    cut = [];
+    for (let i = 0; i <= 80; i++) {
+      const u = i / 80, a = (1 - u) * (1 - u), b = 2 * (1 - u) * u, d = u * u;
+      const tx = 2 * (1 - u) * (cx - x0) + 2 * u * (x1 - cx), ty = 2 * (1 - u) * (cy - y0) + 2 * u * (y1 - cy), l = Math.hypot(tx, ty) || 1;
+      // unit normal pointing to the side above the cut (up-left), so side 1 moves away from side -1
+      cut.push({ x: a * x0 + b * cx + d * x1, y: a * y0 + b * cy + d * y1, tx: tx / l, ty: ty / l, nx: -ty / l, ny: tx / l });
+    }
+    mid = cut[40];
   }
+  const at = u => cut[Math.max(0, Math.min(80, Math.round(u * 80)))];
   size();
 
-  const BG = '#0b0b0c';
-  const BLOOD = ['#4a000c', '#6e0014', '#8f0a1d', '#a3172a', '#c8202f'];
-  const rand = (a, b) => a + Math.random() * (b - a);
-  const clamp01 = v => Math.max(0, Math.min(1, v));
-  const easeOut = t => 1 - Math.pow(1 - t, 3);
-  const easeIn = t => t * t * t;
-
-  // The cut: a scythe arc from upper right to lower left (quadratic curve).
-  const curve = () => ({ x0: W * 1.08, y0: H * 0.02, cx: W * 0.56, cy: H * 0.66, x1: -W * 0.08, y1: H * 0.98 });
-  function point(c, u) {
-    const a = (1 - u) * (1 - u), b = 2 * (1 - u) * u, d = u * u;
-    return { x: a * c.x0 + b * c.cx + d * c.x1, y: a * c.y0 + b * c.cy + d * c.y1 };
-  }
-  function normal(c, u) {   // unit normal pointing to the upper-right side of the cut
-    const tx = 2 * (1 - u) * (c.cx - c.x0) + 2 * u * (c.x1 - c.cx), ty = 2 * (1 - u) * (c.cy - c.y0) + 2 * u * (c.y1 - c.cy);
-    const l = Math.hypot(tx, ty) || 1;
-    return { x: ty / l, y: -tx / l };
-  }
-
-  // Timeline (ms)
-  // build-up → swing → impact → bleeding slit → halves fall → blood settles
-  const T_SWING = 950, T_CUT = 1400, T_SPLIT = 2900, T_FALL = 1300, T_END = 5000;
-  const N = LITE ? 70 : 150;
-  let drops = [], blots = [], drips = [], spawned = false;
-
-  function spawn(c) {
-    spawned = true;
-    for (let i = 0; i < N; i++) {
-      const u = rand(0.05, 0.95), p = point(c, u), n = normal(c, u), side = Math.random() < 0.5 ? 1 : -1;
-      const sp = rand(200, 760) * (LITE ? 0.85 : 1);
+  // ---------------------------------------------------------------- blood
+  let drops = [], drips = [];
+  function bleed() {
+    for (let i = 0; i < (LITE ? 34 : 64); i++) {
+      const p = at(rand(0.06, 0.94)), side = Math.random() < 0.7 ? -1 : 1, along = rand(140, 520), out = rand(30, 200);
       drops.push({
         x: p.x, y: p.y,
-        vx: n.x * side * sp + rand(-160, 60), vy: n.y * side * sp + rand(-120, 120),
-        r: rand(1.2, 4.6), c: BLOOD[(Math.random() * BLOOD.length) | 0], born: T_CUT, life: rand(1.4, 2.6)
+        vx: p.tx * along + p.nx * side * out, vy: p.ty * along + p.ny * side * out - rand(0, 120),
+        r: rand(1.6, 4.2), c: BLOOD[(Math.random() * BLOOD.length) | 0]
       });
     }
-    for (let i = 0; i < (LITE ? 12 : 22); i++) {
-      const u = rand(0.08, 0.92), p = point(c, u), n = normal(c, u), side = Math.random() < 0.5 ? 1 : -1, off = rand(6, 70);
-      blots.push({ side, x: p.x + n.x * side * off, y: p.y + n.y * side * off, r: rand(5, 22), c: BLOOD[1 + ((Math.random() * 3) | 0)], rot: rand(0, 6.3), spikes: Array.from({ length: 5 + ((Math.random() * 6) | 0) }, () => rand(1.3, 2.2)) });
-    }
-    for (let i = 0; i < (LITE ? 8 : 14); i++) {
-      const u = rand(0.12, 0.9);
-      drips.push({ u, w: rand(2, 5), len: rand(40, 180), speed: rand(0.6, 1.4), c: BLOOD[2 + ((Math.random() * 2) | 0)] });
+    for (let i = 0; i < (LITE ? 7 : 11); i++) {
+      drips.push({ u: 0.1 + (i + rand(0.15, 0.85)) * (0.8 / (LITE ? 7 : 11)), w: rand(3.4, 6), len: rand(26, 80), delay: rand(0, 600), dur: rand(1000, 1600) });
     }
   }
 
-  // One half of the cover: everything above (side 1) or below (side -1) the cut.
-  function halfPath(c, side) {
+  // ---------------------------------------------------------------- drawing
+  function cutPath(side) {        // one half of the cover: everything above (1) or below (-1) the cut
     ctx.beginPath();
-    ctx.moveTo(c.x0, c.y0);
-    ctx.quadraticCurveTo(c.cx, c.cy, c.x1, c.y1);
-    if (side > 0) { ctx.lineTo(-W * 0.1, -H * 0.1); ctx.lineTo(W * 1.1, -H * 0.1); }
-    else { ctx.lineTo(-W * 0.1, H * 1.1); ctx.lineTo(W * 1.1, H * 1.1); }
+    ctx.moveTo(cut[0].x, cut[0].y);
+    for (const p of cut) ctx.lineTo(p.x, p.y);
+    if (side > 0) { ctx.lineTo(-W * 0.2, -H * 0.2); ctx.lineTo(W * 1.2, -H * 0.2); }
+    else { ctx.lineTo(-W * 0.2, H * 1.2); ctx.lineTo(W * 1.2, H * 1.2); }
     ctx.closePath();
   }
+  function strokeCut(width, color) {
+    ctx.beginPath();
+    ctx.moveTo(cut[0].x, cut[0].y);
+    for (const p of cut) ctx.lineTo(p.x, p.y);
+    ctx.lineWidth = width; ctx.strokeStyle = color; ctx.stroke();
+  }
 
-  function drawHalf(c, side, shift, alpha, k, grow) {
-    const mid = normal(c, 0.5);
+  function half(side, shift, glow) {
     ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.translate(mid.x * side * shift, mid.y * side * shift + (side < 0 ? shift * 0.35 : -shift * 0.1));
-    halfPath(c, side);
+    ctx.translate(mid.nx * side * shift, mid.ny * side * shift);
+    cutPath(side);
     ctx.fillStyle = BG;
     ctx.fill();
     ctx.clip();
-    // Bleeding cut edge
-    ctx.beginPath();
-    ctx.moveTo(c.x0, c.y0);
-    ctx.quadraticCurveTo(c.cx, c.cy, c.x1, c.y1);
-    ctx.strokeStyle = '#8f0a1d';
-    ctx.lineWidth = 10 * k;
-    ctx.shadowColor = '#c8202f';
-    ctx.shadowBlur = 18 * k;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    // Splatter that landed on this half
-    for (const b of blots) {
-      if (b.side !== side) continue;
-      ctx.fillStyle = b.c;
+    // the wound's lip: a crimson rim with a soft inner glow, clipped to this half
+    strokeCut(22 * k, `rgba(200,32,47,${0.16 * glow})`);
+    strokeCut(8 * k, `rgba(163,23,42,${0.75 * glow})`);
+    strokeCut(2.5 * k, `rgba(255,90,100,${0.9 * glow})`);
+    ctx.restore();
+  }
+
+  function drawDrips(t, shift) {
+    ctx.save();
+    ctx.translate(mid.nx * shift, mid.ny * shift);
+    for (const d of drips) {
+      const g = ease.out(clamp01((t - T.cut - d.delay) / d.dur));
+      if (g <= 0) continue;
+      const p = at(d.u), len = d.len * k * g, w = d.w * k, r = w * 0.95;
+      ctx.fillStyle = '#7a0a18';
       ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r * k, 0, Math.PI * 2);
+      ctx.moveTo(p.x - w / 2, p.y - 2);
+      ctx.quadraticCurveTo(p.x - w * 0.22, p.y + len * 0.5, p.x - w * 0.3, p.y + len);
+      ctx.arc(p.x, p.y + len, r, Math.PI, 0, true);
+      ctx.quadraticCurveTo(p.x + w * 0.22, p.y + len * 0.5, p.x + w / 2, p.y - 2);
+      ctx.closePath();
       ctx.fill();
-      for (let s = 0; s < b.spikes.length; s++) {
-        const a = b.rot + (s / b.spikes.length) * Math.PI * 2, l = b.r * k * b.spikes[s];
-        ctx.beginPath();
-        ctx.arc(b.x + Math.cos(a) * l, b.y + Math.sin(a) * l, b.r * 0.22 * k, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.fillStyle = 'rgba(255,120,130,.4)';       // a small highlight on the bead so it reads as liquid
+      ctx.beginPath(); ctx.arc(p.x - r * 0.35, p.y + len - r * 0.25, r * 0.28, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
-    // Drips run down from the upper half's cut edge
-    if (side > 0) {
+  }
+
+  function drawDrops(dt) {
+    for (const d of drops) {
+      d.vy += 900 * dt;
+      d.vx *= 1 - 0.6 * dt;
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      if (d.y > H + 40) continue;
+      const v = Math.hypot(d.vx, d.vy), a = Math.atan2(d.vy, d.vx), r = d.r * k, len = r * Math.min(3.2, 1.3 + v / 320);
       ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(mid.x * shift, mid.y * shift - shift * 0.1);
-      for (const d of drips) {
-        const p = point(c, d.u), l = d.len * d.speed * k * grow;
-        const g = ctx.createLinearGradient(p.x, p.y, p.x, p.y + l);
-        g.addColorStop(0, d.c); g.addColorStop(1, 'rgba(143,10,29,0)');
-        ctx.fillStyle = g;
-        ctx.fillRect(p.x - d.w / 2, p.y - 2, d.w, l);
-        ctx.fillStyle = d.c;
-        ctx.beginPath(); ctx.arc(p.x, p.y + l * 0.92, d.w * 0.75, 0, Math.PI * 2); ctx.fill();
-      }
+      ctx.translate(d.x, d.y);
+      ctx.rotate(a);
+      ctx.fillStyle = d.c;
+      ctx.beginPath();                                  // teardrop: round head, tapered tail
+      ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2);
+      ctx.quadraticCurveTo(-len * 0.4, r * 0.6, -len, 0);
+      ctx.quadraticCurveTo(-len * 0.4, -r * 0.6, 0, -r);
+      ctx.fill();
       ctx.restore();
     }
   }
 
-  // The swing itself: a crescent that grows along the curve, white-hot core in a crimson glow.
-  function drawSwing(c, head, tail, fade) {
-    const steps = 46;
-    if (head - tail < 0.004) return;
-    ctx.save();
-    ctx.globalAlpha = fade;
-    ctx.lineCap = 'round';
-    for (const [color, width, blur] of [['rgba(200,32,47,.55)', 34, 30], ['#ff2a3a', 13, 16], ['#fff1f2', 4.5, 0]]) {
-      ctx.strokeStyle = color;
-      ctx.shadowColor = '#ff1a2c';
-      ctx.shadowBlur = blur;
-      for (let i = 0; i < steps; i++) {
-        const u0 = tail + (head - tail) * (i / steps), u1 = tail + (head - tail) * ((i + 1) / steps);
-        const w = Math.sin(((i + 0.5) / steps) * Math.PI) * width;
-        if (w < 0.3) continue;
-        const a = point(c, u0), b = point(c, u1);
-        ctx.lineWidth = w;
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-      }
+  // The swing: a tapered crescent (thicker toward its head) along the cut, white-hot at the head.
+  function crescent(head, tail, alpha) {
+    if (head - tail < 0.01 || alpha <= 0) return;
+    const n = 40, maxW = 24 * k, top = [], bottom = [];
+    for (let i = 0; i <= n; i++) {
+      const s = i / n, p = at(tail + (head - tail) * s);
+      const w = maxW * Math.pow(Math.sin(Math.PI * s), 0.7) * (0.3 + 0.7 * s) * 0.5;
+      top.push([p.x + p.nx * w, p.y + p.ny * w]);
+      bottom.push([p.x - p.nx * w, p.y - p.ny * w]);
     }
+    const a = at(tail), b = at(head);
+    const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+    grad.addColorStop(0, 'rgba(200,32,47,0)');
+    grad.addColorStop(0.55, 'rgba(200,32,47,.95)');
+    grad.addColorStop(0.9, '#ff6b77');
+    grad.addColorStop(1, '#fff1f2');
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.moveTo(top[0][0], top[0][1]);
+    for (const q of top) ctx.lineTo(q[0], q[1]);
+    for (let i = bottom.length - 1; i >= 0; i--) ctx.lineTo(bottom[i][0], bottom[i][1]);
+    ctx.closePath();
+    if (!LITE) { ctx.shadowColor = RED; ctx.shadowBlur = 28 * k; }
+    ctx.fillStyle = grad;
+    ctx.fill();
     ctx.restore();
   }
 
-  let t0 = 0, last = 0;
+  function label(t) {
+    const a = clamp01(t / 300) * (1 - clamp01((t - 780) / 220));
+    if (a <= 0) return;
+    const cx = W / 2, cy = H / 2;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#d4d4d8';
+    ctx.font = `600 ${Math.round(13 * k + 4)}px "DM Mono", "Space Grotesk", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    try { ctx.letterSpacing = '0.32em'; } catch { /* older canvas */ }
+    ctx.fillText('YANNZ API', cx, cy - 10 * k);
+    const lw = 150 * k;
+    ctx.fillStyle = '#26262b';
+    ctx.fillRect(cx - lw / 2, cy + 12 * k, lw, 2);
+    ctx.fillStyle = RED;
+    ctx.fillRect(cx - lw / 2, cy + 12 * k, lw * ease.out(clamp01(t / 900)), 2);
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------- timeline
+  let t0 = 0, last = 0, bled = false;
   function frame(now) {
     if (!t0) t0 = last = now;
     const t = now - t0, dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    const c = curve(), k = Math.min(W, H) / 800 + 0.5;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
 
-    // Screen shake on impact
-    const shake = t > T_CUT - 40 && t < T_CUT + 360 ? (1 - (t - T_CUT + 40) / 400) * 10 * k : 0;
-    if (shake > 0) ctx.translate(rand(-shake, shake), rand(-shake, shake));
+    const shake = t > T.cut && t < T.cut + 180 ? (1 - (t - T.cut) / 180) * 3.5 * k : 0;
+    if (shake) ctx.translate(rand(-shake, shake), rand(-shake, shake));
 
-    // Cover halves: whole until the cut, then they fall apart
-    const sp = clamp01((t - T_SPLIT) / T_FALL);
-    // the slit opens at once (page shows through the cut), then the halves fall away
-    const shift = sp * sp * Math.hypot(W, H) * 0.9 + easeOut(clamp01((t - T_CUT) / (T_SPLIT - T_CUT))) * 46 * k;
-    const grow = easeOut(clamp01((t - T_CUT) / 1800));   // drips run longer while the slit holds
-    const coverAlpha = 1 - clamp01((t - T_SPLIT - T_FALL * 0.6) / (T_FALL * 0.4));
-    if (t < T_CUT) {
+    if (t < T.cut) {
       ctx.fillStyle = BG;
-      ctx.fillRect(-20, -20, W + 40, H + 40);
-      // a breath of red before the swing
-      const g = ctx.createRadialGradient(W * 0.62, H * 0.42, 0, W * 0.62, H * 0.42, Math.max(W, H) * 0.7);
-      const breath = clamp01(t / T_SWING) * (0.12 + 0.05 * Math.sin(t / 140));
-      g.addColorStop(0, `rgba(200,32,47,${breath})`);
+      ctx.fillRect(-10, -10, W + 20, H + 20);
+      const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, diag * 0.6);
+      g.addColorStop(0, `rgba(200,32,47,${0.07 * clamp01(t / T.swing)})`);
       g.addColorStop(1, 'rgba(200,32,47,0)');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
-      // a faint glint runs along where the blade will cut, twice, before the swing
-      if (t > 250 && t < T_SWING) {
-        const u = ((t - 250) / ((T_SWING - 250) / 2)) % 1;
-        drawSwing(c, clamp01(u + 0.08), clamp01(u - 0.08), 0.22);
-      }
-    } else if (t < T_SPLIT + T_FALL) {
-      if (!spawned) spawn(c);
-      drawHalf(c, 1, shift, coverAlpha, k, grow);
-      drawHalf(c, -1, shift, coverAlpha, k, grow);
-      // blood keeps falling from the upper lip of the cut while the slit holds open
-      if (t > T_CUT + 120 && t < T_SPLIT + 300 && Math.random() < (LITE ? 0.35 : 0.6)) {
-        const u = rand(0.08, 0.92), p = point(c, u), n = normal(c, 0.5);
-        drops.push({ x: p.x + n.x * shift, y: p.y + n.y * shift - shift * 0.1, vx: rand(-30, 30), vy: rand(20, 120), r: rand(1.4, 3.2), c: BLOOD[2 + ((Math.random() * 3) | 0)], born: t, life: rand(1.1, 1.8) });
-      }
-    }
-
-    // Red flash on impact
-    if (t > T_CUT && t < T_CUT + 450) {
-      ctx.fillStyle = `rgba(200,32,47,${0.36 * (1 - (t - T_CUT) / 450)})`;
-      ctx.fillRect(-20, -20, W + 40, H + 40);
-    }
-
-    // The swing
-    if (t > T_SWING && t < T_CUT + 420) {
-      const head = easeOut(clamp01((t - T_SWING) / (T_CUT - T_SWING)));
-      const tail = easeIn(clamp01((t - T_SWING - 80) / (T_CUT - T_SWING + 260)));
-      drawSwing(c, head, tail, 1 - clamp01((t - T_CUT - 60) / 360));
-    }
-
-    // Blood spray
-    if (spawned) {
-      for (const d of drops) {
-        d.vy += 1100 * dt;
-        d.vx *= 1 - 0.8 * dt;
-        d.x += d.vx * dt;
-        d.y += d.vy * dt;
-        const age = (t - d.born) / 1000, a = clamp01(1 - age / d.life);
-        if (a <= 0) continue;
-        const v = Math.hypot(d.vx, d.vy), stretch = 1 + Math.min(3, v / 420);
+      label(t);
+    } else {
+      if (!bled) { bled = true; bleed(); }
+      const open = 16 * k * ease.out(clamp01((t - T.cut) / 600));
+      const shift = open + ease.inOut(clamp01((t - T.fall) / T.fallDur)) * diag * 1.15;
+      const glow = 1 - 0.5 * clamp01((t - T.fall) / T.fallDur);
+      half(1, shift, glow);
+      half(-1, shift, glow);
+      drawDrips(t, shift);
+      // impact: a bright cut line and a short crimson flash
+      const hit = 1 - clamp01((t - T.cut) / 260);
+      if (hit > 0) {
         ctx.save();
-        ctx.globalAlpha = a;
-        ctx.translate(d.x, d.y);
-        ctx.rotate(Math.atan2(d.vy, d.vx));
-        ctx.fillStyle = d.c;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, d.r * k * stretch, d.r * k, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.globalAlpha = hit;
+        strokeCut(3 * k, '#fff1f2');
         ctx.restore();
+        ctx.fillStyle = `rgba(200,32,47,${0.2 * hit})`;
+        ctx.fillRect(-10, -10, W + 20, H + 20);
       }
     }
 
-    if (t < T_END) requestAnimationFrame(frame);
+    if (t > T.swing && t < T.cut + 380) {
+      const s = clamp01((t - T.swing) / (T.cut - T.swing));
+      crescent(ease.outQuart(s), ease.in(clamp01((t - T.swing - 120) / (T.cut - T.swing + 240))), 1 - clamp01((t - T.cut) / 380));
+    }
+
+    if (bled) drawDrops(dt);
+
+    if (t < T.end) requestAnimationFrame(frame);
     else { cover.remove(); done(); }
   }
 
   addEventListener('resize', size);
-  // Wait a frame so the page underneath has painted, then cut.
+  // Wait a frame so the page underneath has painted, then start.
   requestAnimationFrame(() => requestAnimationFrame(frame));
 })();
