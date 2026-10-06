@@ -1,19 +1,31 @@
 // Yannz API — WebGL hero: the Crimson Requiem scythe (the /3d model, baked to a light GLB).
-// three r147 on purpose: later releases need WebGL2, and many phones only expose WebGL1.
 // Mounted on elements with [data-scene3d] ("core" on the login page, "stack" on the dashboard).
-// Until the model has loaded — or if WebGL, the CDN module or the model is unavailable — the
-// page keeps its CSS fallback. Rendering pauses when the scene is off-screen or the tab is
-// hidden, resolution adapts to the measured frame rate, and prefers-reduced-motion renders
-// a single still frame.
-import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+// Loaded exactly like /3d — classic scripts of three r147 (WebGL1 and WebGL2, no import maps or
+// ES modules) — so it runs on older and lighter phone browsers too. Until the model has loaded,
+// or if WebGL, the CDN or the model is unavailable, the page keeps its CSS fallback. Rendering
+// pauses when the scene is off-screen or the tab is hidden, resolution adapts to the measured
+// frame rate, and prefers-reduced-motion renders a single still frame.
+// Add ?debug3d to the page URL to see what the scene is doing (handy on phones without devtools).
+(function () {
+'use strict';
+const CDN = 'https://cdn.jsdelivr.net/npm/three@0.147.0/';
+const SCRIPTS = ['build/three.min.js', 'examples/js/loaders/GLTFLoader.js', 'examples/js/loaders/DRACOLoader.js', 'examples/js/environments/RoomEnvironment.js'];
+const DEBUG = /[?&]debug3d\b/.test(location.search);
+let THREE;
 
-THREE.ColorManagement.legacyMode = false;   // colours as authored (sRGB), like the r15x defaults
+let debugBox = null;
+function note(msg) {
+  if (!DEBUG) return;
+  if (!debugBox) {
+    debugBox = document.createElement('pre');
+    debugBox.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:9999;margin:0;padding:10px;max-height:40vh;overflow:auto;background:#0b0b0c;color:#f4f4f5;border:2px solid #c8202f;font:11px/1.45 monospace;white-space:pre-wrap';
+    document.body.appendChild(debugBox);
+  }
+  debugBox.textContent += '[' + (performance.now() / 1000).toFixed(1) + 's] ' + msg + '\n';
+}
 
 const MODEL_URL = '/assets/scythe.glb';
-const DRACO_PATH = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/libs/draco/gltf/';
+const DRACO_PATH = CDN + 'examples/js/libs/draco/gltf/';
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const COARSE = matchMedia('(pointer: coarse)').matches;
 // Phones, small screens and low-memory/low-core machines get the light path.
@@ -118,9 +130,11 @@ function mount(el) {
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ antialias: !LITE, alpha: true, powerPreference: 'high-performance' });
-  } catch {
+  } catch (e) {
+    note('renderer failed: ' + (e && e.message));
     return;
   }
+  note(variant + ': renderer ' + (renderer.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1') + ', lite=' + LITE + ', loading model');
   const PR_MAX = Math.min(window.devicePixelRatio || 1, LITE ? 1 : 1.5), PR_MIN = 0.7;
   let pixelRatio = PR_MAX;
   renderer.setPixelRatio(pixelRatio);
@@ -135,7 +149,7 @@ function mount(el) {
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(BG, 12, 26);
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
   pmrem.dispose();
 
   const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 80);
@@ -273,8 +287,8 @@ function mount(el) {
   }, { rootMargin: '80px' }).observe(el);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) start(); });
 
-  const draco = new DRACOLoader().setDecoderPath(DRACO_PATH);
-  new GLTFLoader().setDRACOLoader(draco).load(MODEL_URL, gltf => {
+  const draco = new THREE.DRACOLoader().setDecoderPath(DRACO_PATH);
+  new THREE.GLTFLoader().setDRACOLoader(draco).load(MODEL_URL, gltf => {
     draco.dispose();
     model = gltf.scene;
     pulse = dressModel(model);
@@ -296,14 +310,41 @@ function mount(el) {
     frame();
     el.classList.add('is-ready');
     document.documentElement.classList.add('webgl-' + variant);
+    note(variant + ': model ready, showing the scythe');
     start();
   }, undefined, err => {
     // Keep the CSS fallback; free the GPU context.
     console.warn('3D model unavailable:', err && err.message);
+    note('model failed: ' + (err && err.message || err));
     draco.dispose();
     renderer.dispose();
     renderer.domElement.remove();
   });
 }
 
-if (hasWebGL()) document.querySelectorAll('[data-scene3d]').forEach(el => { try { mount(el); } catch (e) { console.warn('3D scene unavailable:', e && e.message); } });
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = false;          // download in parallel, run in order
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('could not load ' + src));
+    document.head.appendChild(s);
+  });
+}
+
+function boot() {
+  const els = document.querySelectorAll('[data-scene3d]');
+  if (!els.length) return;
+  if (!hasWebGL()) { note('WebGL is not available in this browser: keeping the CSS scene'); return; }
+  note('WebGL ok, loading three.js');
+  Promise.all(SCRIPTS.map(f => loadScript(CDN + f))).then(() => {
+    THREE = window.THREE;
+    THREE.ColorManagement.legacyMode = false;   // colours as authored (sRGB), like the r15x defaults
+    els.forEach(el => { try { mount(el); } catch (e) { console.warn('3D scene unavailable:', e && e.message); note('mount failed: ' + (e && e.message)); } });
+  }, e => { console.warn('3D scene unavailable:', e.message); note(e.message); });
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+})();

@@ -104,11 +104,11 @@ it('the shared theme stylesheet is served for the account pages', async () => {
   assert.match(r.text, /--bg:\s*#0b0b0c/);
 });
 
-it('the WebGL scene module is served as JavaScript', async () => {
+it('the WebGL scene script is served as JavaScript', async () => {
   const r = await app.request('GET', '/assets/scene3d.js');
   assert.equal(r.status, 200);
   assert.match(r.headers['content-type'], /javascript/);
-  assert.match(r.text, /from 'three'/);
+  assert.match(r.text, /window\.THREE/);
 });
 
 it('the hero scythe model is served as a small Draco GLB', async () => {
@@ -120,13 +120,19 @@ it('the hero scythe model is served as a small Draco GLB', async () => {
   assert.match(r.text, /KHR_draco_mesh_compression/);
 });
 
-it('the login hero loads a WebGL1-capable three.js build and preloads the scythe', async () => {
+it('the hero loads three.js like /3d (classic WebGL1-capable build) and preloads the scythe', async () => {
   const r = await app.request('GET', '/');
   assert.equal(r.status, 200);
-  // r163+ needs WebGL2; phones that only expose WebGL1 would fall back to the CSS scene.
-  assert.match(r.text, /three@0\.147\.0\/build\/three\.module\.js/);
-  assert.doesNotMatch(r.text, /three@0\.1[6-9]\d/);
+  // No import map / ES modules: older phone browsers don't support them and would keep the CSS scene.
+  assert.doesNotMatch(r.text, /importmap|type="module"/);
+  assert.match(r.text, /<script defer src="\/assets\/scene3d\.js\?v=\d+"><\/script>/);
   assert.match(r.text, /rel="preload" href="\/assets\/scythe\.glb"/);
+  const js = await app.request('GET', '/assets/scene3d.js');
+  assert.equal(js.status, 200);
+  // r163+ needs WebGL2; r147 runs on WebGL1 too.
+  assert.match(js.text, /three@0\.147\.0\//);
+  assert.match(js.text, /build\/three\.min\.js/);
+  assert.doesNotMatch(js.text, /^\s*import /m);
 });
 
 it('the 3D scene page is public and loads three.js from the CDN', async () => {
