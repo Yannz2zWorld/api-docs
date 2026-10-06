@@ -12,7 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
-    :root{--blood:#c8202f;--blood-deep:#a3172a;--paper:#141416;--cream:#0b0b0c;--ink:#f4f4f5;--yellow:#fafafa;--blue:#a1a1aa;--green:#d4d4d8;--muted:#a1a1aa;--line:3px solid #d4d4d8;--shadow:8px 9px 0 #3f3f46;--edge:#d4d4d8;--drop:#3f3f46;--accent-ink:#0b0b0c;--surface-2:#1b1b1e}
+    :root{--blood:#c8202f;--blood-deep:#a3172a;--paper:#141416;--cream:#0b0b0c;--ink:#f4f4f5;--yellow:#c8202f;--blue:#a1a1aa;--green:#d4d4d8;--muted:#a1a1aa;--line:3px solid #d4d4d8;--shadow:8px 9px 0 #3f3f46;--edge:#d4d4d8;--drop:#3f3f46;--accent-ink:#ffffff;--surface-2:#1b1b1e}
     *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Outfit,sans-serif;color:var(--ink);background:var(--cream)}
     body{background-image:radial-gradient(#1f1f23 1.15px,transparent 1.15px);background-size:22px 22px;overflow-x:hidden}
     button,input{font:inherit}button{cursor:pointer}
@@ -108,7 +108,10 @@
     #google-fallback{color:var(--accent-ink)}
 
     /* crimson accent, used sparingly */
-    ::selection{background:var(--blood);color:#fff}:focus-visible{outline-color:var(--blood)}.brand-mark{box-shadow:4px 4px 0 var(--blood-deep)}.submit:hover{background:var(--blood);color:#fff;border-color:var(--blood)}.tabs button[aria-selected=true]{box-shadow:3px 3px 0 var(--blood)}.eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--blood)}
+    ::selection{background:var(--blood);color:#fff}:focus-visible{outline-color:var(--blood)}.brand-mark{box-shadow:4px 4px 0 var(--drop)}.submit:hover{background:var(--blood-deep);color:#fff;border-color:var(--edge)}.tabs button[aria-selected=true]{box-shadow:3px 3px 0 var(--drop)}.eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--blood)}
+  
+    /* Google's button stays neutral (brand guideline); everything primary is crimson */
+    .brand-mark,.submit{border-color:var(--edge)}.google{background:#f4f4f5;border-color:#f4f4f5;color:#0b0b0c}.google:hover{background:#e4e4e7;color:#0b0b0c}.google-icon{background:#f4f4f5;border-color:#0b0b0c;color:#0b0b0c}#google-fallback{color:#0b0b0c}
   </style>
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
   <script type="module" src="/assets/scene3d.js"></script>

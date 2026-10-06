@@ -1,4 +1,4 @@
-/* Yannz API — shared monochrome neo-brutalist theme (keys, billing, pricing, owner), with a sparing crimson accent. */
+/* Yannz API — shared neo-brutalist theme: dark neutral surfaces with a crimson primary accent. */
 :root {
   --bg: #0b0b0c;
   --surface: #141416;
@@ -10,8 +10,8 @@
   --edge: #d4d4d8;
   --edge-soft: #3f3f46;
   --drop: #3f3f46;
-  --accent: #fafafa;
-  --accent-ink: #0b0b0c;
+  --accent: #c8202f;
+  --accent-ink: #ffffff;
   --red: #c8202f;
   --red-deep: #a3172a;
   --ok: #86efac;
@@ -158,7 +158,8 @@ dialog::backdrop { background: rgba(0, 0, 0, .65); backdrop-filter: blur(3px); }
 .card { border: var(--line); border-radius: var(--radius); padding: 22px; background: var(--surface); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px; transition: transform .2s var(--ease), box-shadow .2s var(--ease); animation: enter .4s var(--ease) both; }
 .card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 var(--drop); }
 .card.current { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.card.current small, .card.current li { color: #3f3f46; }
+.card.current small, .card.current li { color: rgba(255, 255, 255, .86); }
+.card.current { border-color: var(--edge); }
 .card h2 { margin: 0; }
 .price { font: 700 34px "Space Grotesk", sans-serif; letter-spacing: -.05em; }
 .card ul { padding-left: 18px; margin: 6px 0 0; flex: 1; color: var(--muted); }
@@ -187,10 +188,10 @@ dialog::backdrop { background: rgba(0, 0, 0, .65); backdrop-filter: blur(3px); }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
-/* ---------- crimson accent: used sparingly (focus, selection, active marks, primary hover) */
+/* ---------- crimson accent states */
 ::selection { background: var(--red); color: #fff; }
 :focus-visible { outline-color: var(--red); }
-.brand-mark { box-shadow: 3px 3px 0 var(--red-deep); }
-.nav a[aria-current="page"] { box-shadow: 2px 2px 0 var(--red); }
+.brand-mark { box-shadow: 3px 3px 0 var(--drop); }
+.nav a[aria-current="page"] { box-shadow: 2px 2px 0 var(--drop); }
 .kicker::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--red); flex: 0 0 auto; }
-button.primary:hover, .btn.primary:hover { background: var(--red); color: #fff; border-color: var(--red); }
+button.primary:hover, .btn.primary:hover { background: var(--red-deep); color: #fff; border-color: var(--red-deep); }
