@@ -110,3 +110,13 @@ it('the WebGL scene module is served as JavaScript', async () => {
   assert.match(r.headers['content-type'], /javascript/);
   assert.match(r.text, /from 'three'/);
 });
+
+it('the 3D scene page is public and loads three.js from the CDN', async () => {
+  for (const url of ['/3d', '/scythe']) {
+    const r = await app.request('GET', url);
+    assert.equal(r.status, 200, url);
+    assert.match(r.headers['content-type'], /text\/html/);
+    assert.match(r.text, /three@0\.147\.0\/build\/three\.min\.js/);
+    assert.match(r.text, /href="\/home"/);
+  }
+});

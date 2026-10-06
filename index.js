@@ -659,6 +659,12 @@ app.get('/home', authRequired, (req, res) => {
   }
 });
 
+// Interactive 3D scene (standalone page, three.js from the CDN).
+app.get(['/3d', '/scythe'], (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.sendFile(path.join(__dirname, 'views', 'scythe.html'));
+});
+
 app.get('/api/playground', (req, res) => {
   try {
     res.sendFile(path.join(__dirname, 'views', 'playground.html'));

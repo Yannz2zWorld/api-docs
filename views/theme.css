@@ -1,4 +1,4 @@
-/* Yannz API — shared monochrome neo-brutalist theme (keys, billing, pricing, owner). */
+/* Yannz API — shared monochrome neo-brutalist theme (keys, billing, pricing, owner), with a sparing crimson accent. */
 :root {
   --bg: #0b0b0c;
   --surface: #141416;
@@ -12,6 +12,8 @@
   --drop: #3f3f46;
   --accent: #fafafa;
   --accent-ink: #0b0b0c;
+  --red: #c8202f;
+  --red-deep: #a3172a;
   --ok: #86efac;
   --bad: #fca5a5;
   --warn: #e4e4e7;
@@ -184,3 +186,11 @@ dialog::backdrop { background: rgba(0, 0, 0, .65); backdrop-filter: blur(3px); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- crimson accent: used sparingly (focus, selection, active marks, primary hover) */
+::selection { background: var(--red); color: #fff; }
+:focus-visible { outline-color: var(--red); }
+.brand-mark { box-shadow: 3px 3px 0 var(--red-deep); }
+.nav a[aria-current="page"] { box-shadow: 2px 2px 0 var(--red); }
+.kicker::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--red); flex: 0 0 auto; }
+button.primary:hover, .btn.primary:hover { background: var(--red); color: #fff; border-color: var(--red); }

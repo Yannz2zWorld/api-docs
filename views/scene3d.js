@@ -114,7 +114,7 @@ function buildCore(root, tex) {
   linkGeo.setAttribute('position', new THREE.BufferAttribute(linkPos, 3));
   group.add(new THREE.LineSegments(linkGeo, linkMat));
 
-  const pulse = new THREE.Mesh(new THREE.TorusGeometry(1, 0.01, 8, 160), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+  const pulse = new THREE.Mesh(new THREE.TorusGeometry(1, 0.01, 8, 160), new THREE.MeshBasicMaterial({ color: 0xd2303f, transparent: true, opacity: 0, depthWrite: false }));
   pulse.rotation.x = Math.PI / 2;
   group.add(pulse);
 
@@ -231,7 +231,7 @@ function mount(el) {
   const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 80);
   const key = new THREE.DirectionalLight(0xffffff, 2.2);
   key.position.set(4, 6, 5);
-  const rim = new THREE.DirectionalLight(0xffffff, 1.6);
+  const rim = new THREE.DirectionalLight(0xff2a3a, 1.4);            // crimson rim, the site's one accent colour
   rim.position.set(-5, 2, -6);
   const follow = new THREE.PointLight(0xffffff, 18, 14, 2);
   scene.add(key, rim, follow, new THREE.HemisphereLight(0xffffff, 0x0b0b0c, 0.35));
