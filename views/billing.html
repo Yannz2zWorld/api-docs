@@ -85,7 +85,7 @@ async function api(url, opts = {}) {
   const r = await fetch(url, { credentials: 'same-origin', ...opts });
   if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw Object.assign(Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status})`), { code: d.error });
+  if (!r.ok) throw Object.assign(Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status}${d.dbCode ? ' · ' + d.dbCode : ''})`), { code: d.error });
   return d;
 }
 const post = (url, body, headers = {}) => api(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
@@ -269,6 +269,7 @@ $('#orders').addEventListener('click', e => {
   try {
     const [dash, t] = await Promise.all([api('/api/dashboard'), api('/api/tiers'), loadOrders()]);
     account = dash.user; tiers = t.tiers;
+    if (!ctx) { $('#current').textContent = 'Data billing belum bisa dimuat. Coba muat ulang halaman.'; $('#order-btn').disabled = true; return; }
     renderPlans();
   } catch (e) { $('#current').textContent = e.message; }
 })();

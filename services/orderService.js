@@ -22,4 +22,10 @@ function applyPaidOrderSql(paidCte){
    updated_at=now()
   FROM ${paidCte} WHERE u.id=${paidCte}.user_id RETURNING u.id,u.tier,u.tier_expires_at`;
 }
-module.exports={expirePendingOrders,applyPaidOrderSql};
+// Expiry is housekeeping: a failure (e.g. a legacy CHECK constraint on a pre-existing table)
+// must not take down order listing, checkout or the owner panel. Logged with its SQLSTATE only.
+async function expirePendingOrdersSafe(){
+ try{return await expirePendingOrders();}
+ catch(e){console.error('Order expiry skipped:',{code:e?.code||null,constraint:e?.cause?.constraint||null});return null;}
+}
+module.exports={expirePendingOrders,expirePendingOrdersSafe,applyPaidOrderSql};

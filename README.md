@@ -170,7 +170,7 @@ Google Cloud Console checklist (OAuth 2.0 Client ID, type "Web application"):
 2. Take a Neon backup/branch and inspect the existing `users` table (`users.id` must be uuid).
 3. Apply, in order, in the Neon SQL Editor: `migrations/001_users.sql`, `002_platform.sql`,
    `003_backfill_columns.sql`, `004_payments_amount.sql`, `005_integrity.sql`, `006_password_auth.sql`,
-   `007_billing_custom_keys.sql`.
+   `007_billing_custom_keys.sql`, `008_legacy_constraints.sql`.
    All are idempotent and additive (no DROP, no data rewrite). 005 prints a WARNING
    (not an error) for any constraint it skips because existing rows do not comply.
 4. **Run 005 BEFORE deploying this version.** The code reads `users.session_version`
@@ -179,6 +179,9 @@ Google Cloud Console checklist (OAuth 2.0 Client ID, type "Web application"):
    **Run 007 before (or right after) deploying the billing/custom-key version.** Login,
    sessions, existing keys and the gateway keep working without 007 (tested), but tier
    durations, proof uploads, custom keys and payment settings need it.
+   **008** matters when `orders`/`payments` existed before 002 (production): it drops only
+   legacy CHECK constraints that reject values the app writes (symptom: billing shows
+   `DATABASE_UNAVAILABLE · 23514`, e.g. when an expired order is marked `expired`).
 5. `GET /health/database` must return `{"database":"connected","schema":"ok"}`; it also
    checks the unique indexes `ON CONFLICT` relies on (reported as `unique:table(cols)`).
 6. Configure secrets only in Vercel environment settings, deploy a preview, verify, promote.
