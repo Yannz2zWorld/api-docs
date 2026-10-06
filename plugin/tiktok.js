@@ -1,14 +1,32 @@
 const axios = require("axios");
 
 const TIKWM = "https://www.tikwm.com";
-// Only TikTok links are forwarded upstream (www/m/vm/vt.tiktok.com and similar).
-function isTiktokUrl(value) {
-  try {
-    const u = new URL(value);
-    return (u.protocol === "https:" || u.protocol === "http:") && (u.hostname === "tiktok.com" || u.hostname.endsWith(".tiktok.com"));
-  } catch {
-    return false;
+// Only TikTok links are forwarded upstream (www/m/vm/vt.tiktok.com and similar). Accepts what people
+// actually paste: long share links full of tracking parameters, the app's share text with the link
+// inside it, a missing "https://", or trailing punctuation. Returns a clean https link without the
+// query string or fragment (TikTok identifies the video by its path), or null if there is no TikTok
+// link in the input.
+const MAX_INPUT = 4096;
+function isTiktokHost(hostname) {
+  return hostname === "tiktok.com" || hostname.endsWith(".tiktok.com");
+}
+function normalizeTiktokUrl(raw) {
+  if (typeof raw !== "string" || !raw.trim() || raw.length > MAX_INPUT) return null;
+  const candidates = raw.match(/https?:\/\/[^\s"'<>]+/gi) || [];
+  if (!candidates.length && /^(?:[\w-]+\.)*tiktok\.com\//i.test(raw.trim())) candidates.push("https://" + raw.trim());
+  for (const candidate of candidates) {
+    try {
+      const u = new URL(candidate.replace(/[),.;!?\]]+$/, ""));
+      if ((u.protocol !== "https:" && u.protocol !== "http:") || !isTiktokHost(u.hostname.toLowerCase())) continue;
+      u.protocol = "https:";
+      u.search = "";
+      u.hash = "";
+      return u.toString();
+    } catch {
+      // not a URL; try the next candidate
+    }
   }
+  return null;
 }
 
 function formatNumber(integer) {
@@ -99,6 +117,7 @@ async function tiktokDl(url) {
 }
 
 module.exports = {
+  normalizeTiktokUrl,
   name: "Tiktok Downloader",
   desc: "Download video atau slideshow Tiktok tanpa watermark.",
   category: "Downloader",
@@ -113,12 +132,13 @@ module.exports = {
     if (!url) {
       return res.status(400).json({ status: false, error: "INVALID_PARAMETER", message: "Parameter 'url' wajib diisi" });
     }
-    if (url.length > 500 || !isTiktokUrl(url)) {
-      return res.status(400).json({ status: false, error: "INVALID_PARAMETER", message: "Parameter 'url' harus link TikTok (contoh: https://vt.tiktok.com/...)." });
+    const link = normalizeTiktokUrl(url);
+    if (!link) {
+      return res.status(400).json({ status: false, error: "INVALID_PARAMETER", message: "Parameter 'url' harus link TikTok (contoh: https://vt.tiktok.com/... atau https://www.tiktok.com/@user/video/...)." });
     }
 
     try {
-      const result = await tiktokDl(url);
+      const result = await tiktokDl(link);
       return res.status(200).json({
         status: true,
         result

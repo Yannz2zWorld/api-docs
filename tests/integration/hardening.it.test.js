@@ -174,10 +174,23 @@ it('TikTok: only TikTok links are accepted and a successful upstream answer is r
     assert.equal(r.json.result.data.find(m => m.type === 'nowatermark').url, 'https://www.tikwm.com/play.mp4');
     assert.equal(r.json.result.stats.views, '1.200');
     assert.equal(r.json.result.author.nickname, 'User');
+
+    // Long share links (tracking parameters, > 900 chars), share text around the link and trailing
+    // punctuation are accepted; tikwm gets the clean video link.
+    const share = 'https://www.tiktok.com/@jorgenpx3/video/7693576770557054226?_r=1&u_code=edk4id9d3i6a7k&region=ID&preview_pb=0&sharer_language=id&share_item_id=7693576770557054226&source=h5_t&timestamp=1791329316&utm_source=copy&utm_campaign=client_share&utm_medium=android&link_reflow_popup_iteration_sharer=%7B%22click_empty_to_play%22%3A1%7D&panel_source_v2=share_panel&enable_checksum=1&sp_level=1&' + 'x=1&'.repeat(150) + 'end=1,';
+    for (const [input, clean] of [
+      [share, 'https://www.tiktok.com/@jorgenpx3/video/7693576770557054226'],
+      ['Lihat video ini https://www.tiktok.com/@ibnu_project_31/video/7688688947630804242?_r=1 keren!', 'https://www.tiktok.com/@ibnu_project_31/video/7688688947630804242'],
+      ['vt.tiktok.com/ZSabc/', 'https://vt.tiktok.com/ZSabc/']
+    ]) {
+      const ok = await app.request('GET', '/api/download/tiktok?url=' + encodeURIComponent(input), app.asBrowser(cookie));
+      assert.equal(ok.status, 200, input.slice(0, 60));
+      assert.equal(forwarded, clean);
+    }
   } finally {
     axios.post = original;
   }
-  assert.equal(await h.usedToday(user.id), 1);
+  assert.equal(await h.usedToday(user.id), 4);
 });
 
 it('manual payment on an expired order is refused and changes nothing', async () => {
