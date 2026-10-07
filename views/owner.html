@@ -224,8 +224,8 @@ loaders.status = async () => {
       <small>Settlement otomatis tetap mati (fail-closed) sampai endpoint verifikasi resmi Pakasir dikonfigurasi di PAKASIR_V2_VERIFY_URL dan diuji.</small>
       <h3>Email (verifikasi &amp; reset sandi)</h3><p>${chip(s.email.configured ? 'provider: ' + s.email.provider : 'belum dikonfigurasi', s.email.configured ? 'ok' : 'warn')} Pengirim: ${chip(s.email.senderName)}</p>
       <small>${s.email.configured ? 'Kode dikirim atas nama YannApi.' : 'Tanpa provider email, pendaftaran email &amp; lupa sandi menjawab EMAIL_NOT_CONFIGURED. Isi EMAIL_FROM + SMTP_* atau RESEND_API_KEY.'}</small>
-      <h3>Notifikasi WhatsApp</h3><p>${chip(s.notifications.configured ? 'provider aktif' : 'provider belum ada', s.notifications.configured ? 'ok' : 'warn')} OWNER_WA: ${chip(s.notifications.ownerWaConfigured ? 'set' : 'kosong', s.notifications.ownerWaConfigured ? 'ok' : 'warn')}</p>
-      <small>Tidak ada pesan WhatsApp yang dikirim sampai provider resmi diintegrasikan.</small>
+      <h3>Notifikasi bukti pembayaran</h3><p>Telegram: ${chip(s.notifications.telegram ? 'aktif' : 'belum diatur', s.notifications.telegram ? 'ok' : 'warn')} Tombol WhatsApp ke developer: ${chip(s.notifications.whatsapp?.link ? 'aktif' : 'nomor kosong', s.notifications.whatsapp?.link ? 'ok' : 'warn')}</p>
+      <small>${s.notifications.telegram ? 'Bukti pembayaran manual dikirim otomatis ke chat Telegram developer.' : 'Opsional: isi TELEGRAM_BOT_TOKEN dan TELEGRAM_OWNER_CHAT_ID supaya bukti pembayaran langsung dikirim ke Telegram. Tanpa itu bukti tetap tampil di tab Payments.'} Tombol WhatsApp memakai OWNER_WA (atau link WhatsApp di settings.js); pesan WhatsApp tidak dikirim otomatis.</small>
       <h3>Plugin</h3><p>${s.plugins.loaded.map(p => chip(p, 'ok')).join(' ') || '—'}</p>
       ${s.plugins.registryWithoutHandler.length ? `<p>Metadata tanpa handler: ${s.plugins.registryWithoutHandler.map(p => chip(p, 'warn')).join(' ')}</p>` : ''}
       <h3>Runtime</h3><p>${chip(s.runtime.node)} ${chip(s.runtime.vercel ? 'vercel' : 'local')} ${s.runtime.region ? chip(s.runtime.region) : ''}</p>`;
