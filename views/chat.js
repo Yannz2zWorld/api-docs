@@ -88,7 +88,7 @@
     if (m.avatar) { av = el('img', 'yc-av'); av.src = m.avatar; av.alt = ''; av.loading = 'lazy'; av.onerror = () => av.replaceWith(el('span', 'yc-av', (m.name || '?').charAt(0).toUpperCase())); }
     else av = el('span', 'yc-av', (m.name || '?').charAt(0).toUpperCase());
     who.append(av, el('span', '', m.name));
-    if (m.owner) who.append(el('span', 'yc-owner', 'OWNER'));
+    if (m.owner) who.append(el('span', 'yc-owner', 'DEVELOPER'));
     box.append(who, el('div', 'yc-body', m.body), el('div', 'yc-time', timeOf(m.at)));
     if (m.mine || (me && me.owner)) {
       const del = el('button', 'yc-del', '✕');

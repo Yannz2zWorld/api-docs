@@ -79,7 +79,7 @@ function render() {
     for (const api of items) {
       const path = api.cleanPath || api.path.split('?')[0];
       if (q && ![api.name, api.desc, path, cat].some(v => String(v || '').toLowerCase().includes(q))) continue;
-      const tier = api.access?.minimum_tier || 'FREE';
+      const tier = (t => (t === 'OWNER' ? 'DEVELOPER' : t))(api.access?.minimum_tier || 'FREE');
       const state = api.access?.status && api.access.status !== 'active' ? ['nonaktif', 'bad'] : api.access?.locked ? ['terkunci', 'warn'] : ['aktif', 'ok'];
       cards.push(`<article class="ep">
         <div class="ep-top"><span class="chip">${esc(cat)}</span><span class="chip ${state[1]}">${state[0]}</span></div>

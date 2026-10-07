@@ -70,7 +70,7 @@ function pageAuth(req, res, next) {
 
 // Owner is decided only by OWNER_EMAIL (mapUser), never by users.tier.
 function owner(req, res, next) {
-  if (!req.account?.isOwner) return fail(res, 403, 'OWNER_REQUIRED', 'Akses owner diperlukan.');
+  if (!req.account?.isOwner) return fail(res, 403, 'OWNER_REQUIRED', 'Akses developer diperlukan.');
   next();
 }
 
@@ -215,7 +215,7 @@ router.post('/api/profile/password', sameOrigin, auth, async (req, res) => {
 });
 router.get('/billing', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'billing.html')));
 router.get('/owner', pageAuth, (req, res) => {
-  if (!req.account.isOwner) return res.status(403).send('Akses owner diperlukan.');
+  if (!req.account.isOwner) return res.status(403).send('Akses developer diperlukan.');
   res.sendFile(path.join(VIEWS, 'owner.html'));
 });
 
@@ -400,7 +400,7 @@ router.get('/api/orders/:id/qr.svg', auth, validId('id'), async (req, res) => {
 router.post('/api/orders/:id/manual', sameOrigin, auth, validId('id'), async (req, res) => {
   const method = String(req.body?.method || '').toUpperCase();
   if (!MANUAL_METHODS.includes(method)) return fail(res, 400, 'INVALID_PAYMENT_METHOD', 'Metode manual tidak valid. Pilih QRIS, DANA atau GOPAY.');
-  if (method !== 'QRIS' && !(await paymentSettings())[method]) return fail(res, 400, 'PAYMENT_METHOD_UNAVAILABLE', `Nomor ${method} belum diatur owner. Pilih metode lain.`);
+  if (method !== 'QRIS' && !(await paymentSettings())[method]) return fail(res, 400, 'PAYMENT_METHOD_UNAVAILABLE', `Nomor ${method} belum diatur developer. Pilih metode lain.`);
   // Proof: an uploaded image (billing page) or, for API clients, an HTTPS link.
   let image = null;
   let proofUrl = null;
@@ -436,7 +436,7 @@ router.post('/api/orders/:id/manual', sameOrigin, auth, validId('id'), async (re
   } catch (e) {
     if (e.code !== '23505') throw e;
   }
-  if (!payment) return fail(res, 409, 'PAYMENT_ALREADY_SUBMITTED', 'Bukti pembayaran untuk order ini sudah dikirim dan sedang menunggu approval owner.');
+  if (!payment) return fail(res, 409, 'PAYMENT_ALREADY_SUBMITTED', 'Bukti pembayaran untuk order ini sudah dikirim dan sedang menunggu approval developer.');
   const days = Number(order.duration_days || 30);
   await audit.writeAudit({ actorUserId: req.account.id, action: 'manual_payment_create', targetType: 'payment', targetId: payment.id, metadata: { method, amount: order.amount, days, upload: Boolean(image) }, ipAddress: ip(req) });
   const notice = await notifier.notifyManualPayment({
@@ -448,7 +448,7 @@ router.post('/api/orders/:id/manual', sameOrigin, auth, validId('id'), async (re
     success: true,
     payment,
     status: 'PAYMENT_PENDING',
-    instructions: process.env.MANUAL_PAYMENT_INSTRUCTIONS || 'Bukti diterima. Status menunggu approval owner.',
+    instructions: process.env.MANUAL_PAYMENT_INSTRUCTIONS || 'Bukti diterima. Status menunggu approval developer.',
     contact: settings.whatsappLink,
     notification: notice.sent ? 'sent' : notice.reason === 'TELEGRAM_NOT_CONFIGURED' ? 'not_configured' : 'failed',
     notificationChannel: notice.sent ? notice.channel : null,
@@ -532,14 +532,14 @@ router.get('/owner/users/:id', auth, owner, validId('id'), async (req, res) => {
 async function protectedTarget(req) {
   const target = (await query('SELECT id,email FROM users WHERE id=$1', [req.params.id]))[0];
   if (!target) return { error: [404, 'NOT_FOUND', 'User tidak ditemukan.'] };
-  if (target.id === req.account.id || users.isOwnerEmail(target.email)) return { error: [400, 'SELF_ACTION_BLOCKED', 'Tindakan ini tidak dapat dilakukan pada akun owner.'] };
+  if (target.id === req.account.id || users.isOwnerEmail(target.email)) return { error: [400, 'SELF_ACTION_BLOCKED', 'Tindakan ini tidak dapat dilakukan pada akun developer.'] };
   return { target };
 }
 
 router.post('/owner/users/:id/ban', sameOrigin, auth, owner, validId('id'), async (req, res) => {
   const t = await protectedTarget(req);
   if (t.error) return fail(res, ...t.error);
-  const reason = String(req.body?.reason || 'Dibatasi owner').slice(0, 500);
+  const reason = String(req.body?.reason || 'Dibatasi developer').slice(0, 500);
   const r = await query("UPDATE users SET status='banned',banned_at=now(),ban_reason=$2,session_version=session_version+1,updated_at=now() WHERE id=$1 RETURNING id,status", [req.params.id, reason]);
   await audit.writeAudit({ actorUserId: req.account.id, action: 'user_ban', targetType: 'user', targetId: req.params.id, metadata: { reason }, ipAddress: ip(req) });
   res.json({ success: true, user: r[0] });
@@ -562,7 +562,7 @@ router.post('/owner/users/:id/unban', sameOrigin, auth, owner, validId('id'), as
 
 router.patch('/owner/users/:id/tier', sameOrigin, auth, owner, validId('id'), async (req, res) => {
   const tier = String(req.body?.tier || '').toUpperCase();
-  if (!['FREE', 'SULTAN', 'SEPUH', 'DEWA'].includes(tier)) return fail(res, 400, 'INVALID_TIER', 'Tier tidak valid. OWNER hanya ditentukan oleh OWNER_EMAIL.');
+  if (!['FREE', 'SULTAN', 'SEPUH', 'DEWA'].includes(tier)) return fail(res, 400, 'INVALID_TIER', 'Tier tidak valid. DEVELOPER (OWNER) hanya ditentukan oleh OWNER_EMAIL.');
   // Optional duration: empty = no expiry. FREE never expires.
   const days = req.body?.days === undefined || req.body?.days === null || req.body?.days === '' ? null : Number(req.body.days);
   if (days !== null && (!Number.isInteger(days) || days < 1 || days > 3650)) return fail(res, 400, 'INVALID_DURATION', 'Durasi harus 1–3650 hari atau kosong (permanen).');
@@ -600,7 +600,7 @@ router.post('/owner/users/reset-password', sameOrigin, auth, owner, async (req, 
   if (!who) return fail(res, 400, 'USER_REQUIRED', 'Isi ID atau email user.');
   const target = await users.findByAnyId(who);
   if (!target) return fail(res, 404, 'USER_NOT_FOUND', 'User dengan ID/email itu tidak ditemukan.');
-  if (target.id === req.account.id || users.isOwnerEmail(target.email)) return fail(res, 400, 'SELF_ACTION_BLOCKED', 'Sandi owner diganti lewat halaman Profile.');
+  if (target.id === req.account.id || users.isOwnerEmail(target.email)) return fail(res, 400, 'SELF_ACTION_BLOCKED', 'Sandi developer diganti lewat halaman Profile.');
   const typed = typeof req.body?.password === 'string' ? req.body.password : '';
   const password = typed || generatedPassword();
   const weak = passwords.passwordProblem(password);
@@ -749,7 +749,7 @@ function keyError(res, e) {
 async function issueManagedKey(req, res) {
   const b = req.body || {};
   const kind = String(b.kind).toLowerCase();
-  if (!keys.KEY_VISIBILITY.includes(kind)) return fail(res, 400, 'INVALID_VISIBILITY', 'Jenis key harus Public, Private atau Owner.');
+  if (!keys.KEY_VISIBILITY.includes(kind)) return fail(res, 400, 'INVALID_VISIBILITY', 'Jenis key harus Public, Private atau Developer.');
   let accessUsers = [];
   if (kind === 'private') {
     const { found, missing } = await resolveUsers(b.access);
@@ -786,7 +786,7 @@ router.patch('/owner/keys/:keyId', sameOrigin, auth, owner, validId('keyId'), as
   if (!current) return;
   try {
     if (typeof b.name === 'string' && b.name.trim()) change.name = b.name.trim().slice(0, 80);
-    if (b.tier !== undefined && b.tier !== '' && current.visibility === 'owner') return fail(res, 400, 'INVALID_TIER', 'Owner key selalu memakai akses OWNER; tier-nya tidak bisa diubah.');
+    if (b.tier !== undefined && b.tier !== '' && current.visibility === 'owner') return fail(res, 400, 'INVALID_TIER', 'Developer key selalu memakai akses DEVELOPER; tier-nya tidak bisa diubah.');
     if (String(b.tier || '').toUpperCase() === 'ACCOUNT' && current.visibility) return fail(res, 400, 'INVALID_TIER', 'Key public/private harus punya tier sendiri.');
     if (b.extend !== undefined) {
       const hours = keys.durationHours(b.extend, b.days);
@@ -879,7 +879,7 @@ router.delete('/owner/keys/:keyId/access/:userId', sameOrigin, auth, owner, vali
 router.post('/owner/keys/:keyId/revoke', sameOrigin, auth, owner, validId('keyId'), async (req, res) => {
   const key = await ownerKeyRow(req.params.keyId);
   if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan.');
-  if (key.visibility === 'owner') return fail(res, 400, 'OWNER_KEY_KEEP', 'Owner key tidak dicabut: pakai Nonaktifkan atau Reset.');
+  if (key.visibility === 'owner') return fail(res, 400, 'OWNER_KEY_KEEP', 'Developer key tidak dicabut: pakai Nonaktifkan atau Reset.');
   const r = await query("UPDATE api_keys SET status='revoked',revoked_at=now() WHERE id=$1 AND status='active' RETURNING id", [key.id]);
   if (!r.length) return fail(res, 409, 'KEY_ALREADY_REVOKED', 'API key ini sudah dicabut.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_revoke', targetType: 'api_key', targetId: key.id, metadata: { userId: key.user_id, email: key.email, prefix: key.key_prefix, name: key.name }, ipAddress: ip(req) });

@@ -107,7 +107,7 @@ function newKeyValue(customValue) {
 // visibility: undefined = a personal key of userId (the pre-011 behaviour); 'public' | 'private' |
 // 'owner' = an owner-managed key (stored under the owner's account). accessUserIds: private only.
 async function issueKey({ issuerId, userId, name, customValue = null, tier, hours, visibility, accessUserIds = [] }) {
-  if (visibility !== undefined && !KEY_VISIBILITY.includes(visibility)) throw Object.assign(new Error('Jenis key harus public, private atau owner.'), { code: 'INVALID_VISIBILITY' });
+  if (visibility !== undefined && !KEY_VISIBILITY.includes(visibility)) throw Object.assign(new Error('Jenis key harus public, private atau developer.'), { code: 'INVALID_VISIBILITY' });
   if (visibility === 'owner' && !tier) tier = null;          // the owner key always runs as OWNER
   else if (!KEY_TIERS.includes(tier)) throw Object.assign(new Error('Tier key harus FREE, SULTAN, SEPUH atau DEWA.'), { code: 'INVALID_TIER' });
   if (hours !== null && !(Number.isInteger(hours) && hours >= 1 && hours <= MAX_KEY_HOURS)) throw Object.assign(new Error('Masa aktif maksimal 1000 hari.'), { code: 'INVALID_DURATION' });
@@ -131,7 +131,7 @@ async function issueKey({ issuerId, userId, name, customValue = null, tier, hour
     );
   } catch (e) {
     if (e.code === '42703' || e.code === '42P01') throw kind ? migration011() : migrationRequired();
-    if (e.code === '23505' && (e.cause?.constraint === 'api_keys_one_owner_key_uidx' || (visibility === 'owner' && (await query("SELECT 1 FROM api_keys WHERE visibility='owner'")).length))) throw Object.assign(new Error('Owner key sudah ada. Pakai Reset/Regenerate untuk mengganti nilainya.'), { code: 'OWNER_KEY_EXISTS' });
+    if (e.code === '23505' && (e.cause?.constraint === 'api_keys_one_owner_key_uidx' || (visibility === 'owner' && (await query("SELECT 1 FROM api_keys WHERE visibility='owner'")).length))) throw Object.assign(new Error('Developer key sudah ada. Pakai Reset/Regenerate untuk mengganti nilainya.'), { code: 'OWNER_KEY_EXISTS' });
     if (e.code === '23505') throw taken();
     throw e;
   }
@@ -233,7 +233,7 @@ async function ensureOwnerKey(ownerUser) {
       await query("UPDATE api_keys SET visibility='owner',status='active',revoked_at=NULL WHERE id=$1", [same.id]);
       return 'converted';
     }
-    await issueKey({ issuerId: ownerUser.id, userId: ownerUser.id, name: 'Owner key', customValue: OWNER_KEY_DEFAULT, tier: null, hours: null, visibility: 'owner' });
+    await issueKey({ issuerId: ownerUser.id, userId: ownerUser.id, name: 'Developer key', customValue: OWNER_KEY_DEFAULT, tier: null, hours: null, visibility: 'owner' });
     return 'created';
   } catch (e) {
     if (e.code === '42703' || e.code === '42P01' || e.code === 'MIGRATION_REQUIRED') return 'unavailable';

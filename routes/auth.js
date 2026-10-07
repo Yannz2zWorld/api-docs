@@ -117,7 +117,7 @@ module.exports = function authRouter({ issueSession }) {
     }
     await users.clearFailedLogins(account.id);
     if (!account.email_verified) return fail(res, 403, 'EMAIL_NOT_VERIFIED', 'Email belum diverifikasi. Masukkan kode yang dikirim ke email kamu.', { verificationRequired: true });
-    if (account.status !== 'active') return fail(res, 403, 'ACCOUNT_RESTRICTED', 'Akun ini tidak aktif. Hubungi owner jika merasa ini keliru.');
+    if (account.status !== 'active') return fail(res, 403, 'ACCOUNT_RESTRICTED', 'Akun ini tidak aktif. Hubungi developer jika merasa ini keliru.');
     await audit.writeAudit({ actorUserId: account.id, action: 'login', targetType: 'session', metadata: { provider: 'password' }, ipAddress: ip(req) }).catch(() => {});
     login(res, account, 'password');
     res.json({ success: true, redirect: '/home' });
@@ -126,7 +126,7 @@ module.exports = function authRouter({ issueSession }) {
   router.post('/auth/password/forgot', async (req, res) => {
     const address = normalEmail(req);
     if (!EMAIL_RE.test(address)) return fail(res, 400, 'INVALID_EMAIL', 'Format email tidak valid.');
-    if (!email.isConfigured()) return fail(res, 503, 'EMAIL_NOT_CONFIGURED', 'Reset sandi lewat email belum dikonfigurasi. Hubungi owner.');
+    if (!email.isConfigured()) return fail(res, 503, 'EMAIL_NOT_CONFIGURED', 'Reset sandi lewat email belum dikonfigurasi. Hubungi developer.');
     const account = await users.findAuthByEmail(address);
     // Google-only accounts may also set a password this way: the code proves inbox ownership.
     if (account && account.status === 'active') {
