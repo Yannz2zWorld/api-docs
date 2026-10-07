@@ -503,7 +503,7 @@ router.get('/owner/users', auth, owner, async (req, res) => {
             (SELECT count(*)::int FROM api_keys k WHERE k.user_id=u.id AND k.status='active') AS active_keys
        FROM users u
        LEFT JOIN daily_quota_counters d ON d.user_id=u.id AND d.usage_date=(now() AT TIME ZONE 'UTC')::date
-      WHERE (u.email ILIKE $1 OR u.name ILIKE $1 OR u.id::text=$6 OR (to_jsonb(u.*) ->> 'public_id')=$6 OR ($6='100000000' AND lower(u.email)=lower($7)))
+      WHERE (u.email ILIKE $1 OR u.name ILIKE $1 OR u.id::text=$6 OR (to_jsonb(u.*) ->> 'public_id')=$6 OR ($6='10000000' AND lower(u.email)=lower($7)))
         AND ($2='' OR u.tier=$2) AND ($3='' OR u.status=$3)
       ORDER BY u.created_at DESC LIMIT $4 OFFSET $5`,
     [`%${q.replace(/[\\%_]/g, m => '\\' + m)}%`, tier, status, limit, offset, q.trim(), process.env.OWNER_EMAIL || '']

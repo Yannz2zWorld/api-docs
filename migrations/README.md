@@ -14,7 +14,7 @@ Apply in order to the configured Neon database (Neon SQL editor or `psql "$DATAB
 
 10. `010_user_avatars.sql` — `user_avatars` (profile pictures: JPEG/PNG/WebP up to 512 KB, one per user, deleted with the user). Before it runs, profiles and the live chat keep working; uploading a picture answers `MIGRATION_REQUIRED`.
 
-11. `011_public_ids_key_access.sql` — `users.public_id` (numeric user ID: a random unique number in 10100000–12345678 for every account, existing ones are filled in; the owner is shown as 100000000), `api_keys.visibility` (`public` / `private` / `owner` for keys the owner makes; existing keys stay NULL = unchanged), the `disabled` key status, and `api_key_access` (who may use a private key). Before it runs, profiles show the internal ID and the new key features answer `MIGRATION_REQUIRED`.
+11. `011_public_ids_key_access.sql` — `users.public_id` (numeric user ID: a random unique number in 10100000–12345678 for every account, existing ones are filled in; the owner is shown as 10000000), `api_keys.visibility` (`public` / `private` / `owner` for keys the owner makes; existing keys stay NULL = unchanged), the `disabled` key status, and `api_key_access` (who may use a private key). Before it runs, profiles show the internal ID and the new key features answer `MIGRATION_REQUIRED`.
 
 All files are additive/idempotent (`CREATE ... IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`) and never drop data. The application does not run DDL at request time.
 
