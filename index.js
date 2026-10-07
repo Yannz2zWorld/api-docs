@@ -503,7 +503,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
       const handlers = Array.isArray(routes) ? routes : [routes];
 
       handlers.forEach(route => {
-        const { name, desc, category, path: routePath, run } = route;
+        const { name, desc, category, path: routePath, run, params } = route;
 
         if (name && desc && category && routePath && typeof run === 'function') {
           const cleanPath = routePath.split('?')[0];
@@ -512,11 +512,13 @@ fs.readdirSync(pluginFolder).forEach(file => {
           registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
           if (!rawEndpoints[category]) rawEndpoints[category] = [];
-          rawEndpoints[category].push({ 
-            name, 
-            desc, 
+          rawEndpoints[category].push({
+            name,
+            desc,
             path: routePath,
-            cleanPath: cleanPath
+            cleanPath: cleanPath,
+            // Optional per-parameter info (required, placeholder) for the sandbox form.
+            ...(Array.isArray(params) ? { params } : {})
           });
 
           totalRoutes++;
