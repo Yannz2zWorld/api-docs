@@ -16,18 +16,29 @@
   .counter b { color: var(--ink); font-size: 22px; font-family: "Space Grotesk", sans-serif; }
   .toolbar { display: grid; gap: 12px; margin: 22px 0 6px; }
   .toolbar input[type=search] { width: 100%; font-size: 15px; padding: 13px 14px; }
-  .cats { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: thin; }
-  .cats button { flex: 0 0 auto; box-shadow: 2px 2px 0 var(--drop); padding: 8px 12px; font-size: 11px; }
-  .cats button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-  .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-top: 14px; }
-  .ep { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); transition: transform .2s var(--ease), box-shadow .2s var(--ease); min-width: 0; }
-  .ep:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 var(--drop); }
-  .ep-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-  .ep h2 { font-size: 18px; margin: 4px 0 0; }
-  .ep p { margin: 0; color: var(--muted); font-size: 14px; flex: 1; }
-  .ep-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1.5px solid var(--edge-soft); min-width: 0; }
-  .ep-foot code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-  .ep-foot .btn { flex: 0 0 auto; padding: 8px 12px; font-size: 11px; box-shadow: 3px 3px 0 var(--drop); }
+  .folders { display: grid; gap: 14px; margin-top: 14px; }
+  .folder { border: var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+  .folder > summary { list-style: none; display: flex; align-items: center; gap: 14px; padding: 18px 20px; cursor: pointer; user-select: none; }
+  .folder > summary::-webkit-details-marker { display: none; }
+  .folder > summary:hover { background: var(--surface-2); }
+  .folder[open] > summary { background: var(--accent); color: var(--accent-ink); }
+  .folder-icon { width: 26px; height: 22px; flex: none; }
+  .folder-name { font: 700 19px "Space Grotesk", sans-serif; letter-spacing: .04em; text-transform: uppercase; }
+  .folder-count { font: 600 13px "DM Mono", monospace; opacity: .75; }
+  .folder-chev { margin-left: auto; width: 22px; height: 22px; flex: none; transition: transform .2s var(--ease); }
+  .folder[open] .folder-chev { transform: rotate(180deg); }
+  .folder-body { border-top: var(--line); }
+  .ep { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; padding: 14px 20px; border-bottom: 1.5px solid var(--edge-soft); }
+  .ep:last-child { border-bottom: 0; }
+  .ep:hover { background: var(--surface-2); }
+  .ep h2 { font-size: 16px; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+  .ep p { margin: 0; color: var(--muted); font-size: 13.5px; grid-column: 1; }
+  .ep code { grid-column: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .ep .btn { grid-column: 2; grid-row: 1 / span 3; padding: 8px 12px; font-size: 11px; box-shadow: 3px 3px 0 var(--drop); }
+  .ep .chip { font-size: 10px; }
+  .folder-tools { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+  .folder-tools button { padding: 7px 11px; font-size: 11px; box-shadow: 2px 2px 0 var(--drop); }
+  @media (max-width: 560px) { .ep { grid-template-columns: 1fr; } .ep .btn { grid-column: 1; grid-row: auto; justify-self: start; } .folder > summary { padding: 16px; } .ep { padding: 14px 16px; } }
   .empty { text-align: center; padding: 40px 10px; color: var(--muted); }
   .site-foot { border-top: 2px solid var(--edge-soft); margin-top: 40px; padding: 26px 16px 40px; }
   .site-foot .inner { max-width: 1180px; margin: auto; display: flex; flex-wrap: wrap; gap: 14px 22px; justify-content: space-between; align-items: center; color: var(--muted); font-size: 14px; }
@@ -48,10 +59,10 @@
 
   <div class="toolbar">
     <input type="search" id="search" placeholder="Cari nama, deskripsi, atau path…" aria-label="Cari endpoint" autocomplete="off">
-    <div class="cats" id="cats" role="toolbar" aria-label="Kategori"><button type="button" data-cat="ALL" aria-pressed="true">Semua</button></div>
+    <div class="folder-tools"><button type="button" id="open-all">Buka semua</button><button type="button" id="close-all">Tutup semua</button></div>
   </div>
 
-  <div class="ep-grid" id="grid" aria-live="polite"><p class="loading">Memuat katalog…</p></div>
+  <div class="folders" id="grid" aria-live="polite"><p class="loading">Memuat katalog…</p></div>
 </main>
 <footer class="site-foot"><div class="inner">
   <span>© <span id="year"></span> <span id="creator">Yannz2z</span> · Yannz API</span>
@@ -61,7 +72,7 @@
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let catalog = {};
-let active = 'ALL';
+const openState = new Set();   // folders the visitor opened (kept while searching)
 $('#year').textContent = new Date().getFullYear();
 
 fetch('/api/set').then(r => r.json()).then(s => {
@@ -71,41 +82,54 @@ fetch('/api/set').then(r => r.json()).then(s => {
   for (const [id, href] of Object.entries(links)) { if (href) $('#' + id).href = href; else $('#' + id).hidden = true; }
 }).catch(() => {});
 
+const FOLDER = '<svg class="folder-icon" viewBox="0 0 26 22" aria-hidden="true"><path fill="currentColor" d="M2 3.5A2.5 2.5 0 0 1 4.5 1h6.2l2.6 3h8.2A2.5 2.5 0 0 1 24 6.5v12a2.5 2.5 0 0 1-2.5 2.5h-17A2.5 2.5 0 0 1 2 18.5z"/></svg>';
+const CHEV = '<svg class="folder-chev" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>';
+
+// Each category is a folder (closed by default) holding its endpoints. While searching, folders
+// with a match open by themselves and show only the matching endpoints.
 function render() {
   const q = $('#search').value.trim().toLowerCase();
-  const cards = [];
+  const folders = [];
   for (const [cat, items] of Object.entries(catalog)) {
-    if (active !== 'ALL' && active !== cat) continue;
+    const rows = [];
     for (const api of items) {
       const path = api.cleanPath || api.path.split('?')[0];
       if (q && ![api.name, api.desc, path, cat].some(v => String(v || '').toLowerCase().includes(q))) continue;
       const tier = (t => (t === 'OWNER' ? 'DEVELOPER' : t))(api.access?.minimum_tier || 'FREE');
-      const state = api.access?.status && api.access.status !== 'active' ? ['nonaktif', 'bad'] : api.access?.locked ? ['terkunci', 'warn'] : ['aktif', 'ok'];
-      cards.push(`<article class="ep">
-        <div class="ep-top"><span class="chip">${esc(cat)}</span><span class="chip ${state[1]}">${state[0]}</span></div>
-        <h2>${esc(api.name)}</h2>
+      const state = api.access?.status && api.access.status !== 'active' ? ['nonaktif', 'bad'] : api.access?.locked ? ['terkunci', 'warn'] : null;
+      rows.push(`<div class="ep">
+        <h2>${esc(api.name)} <span class="chip">GET</span><span class="chip">${esc(tier)}</span>${state ? `<span class="chip ${state[1]}">${state[0]}</span>` : ''}</h2>
         <p>${esc(api.desc)}</p>
-        <div><span class="chip">GET</span><span class="chip">tier ${esc(tier)}</span></div>
-        <div class="ep-foot"><code title="${esc(path)}">${esc(path)}</code><a class="btn primary" href="/api?endpoint=${encodeURIComponent(path)}">Coba →</a></div>
-      </article>`);
+        <code title="${esc(path)}">${esc(path)}</code>
+        <a class="btn primary" href="/api?endpoint=${encodeURIComponent(path)}">Coba →</a>
+      </div>`);
     }
+    if (!rows.length) continue;
+    const open = q ? true : openState.has(cat);
+    folders.push(`<details class="folder" data-cat="${esc(cat)}"${open ? ' open' : ''}>
+      <summary>${FOLDER}<span class="folder-name">${esc(cat)}</span><span class="folder-count">(${q ? rows.length + '/' : ''}${items.length})</span>${CHEV}</summary>
+      <div class="folder-body">${rows.join('')}</div>
+    </details>`);
   }
-  $('#grid').innerHTML = cards.length ? cards.join('') : '<div class="empty" style="grid-column:1/-1"><b>Tidak ada yang cocok.</b><br>Coba kata kunci atau kategori lain.</div>';
+  $('#grid').innerHTML = folders.length ? folders.join('') : '<div class="empty"><b>Tidak ada yang cocok.</b><br>Coba kata kunci lain.</div>';
 }
 
 fetch('/api/endpoints').then(r => r.json()).then(d => {
   catalog = d.endpoints || {};
   $('#api-counter').textContent = d.total ?? Object.values(catalog).flat().length;
-  $('#cats').insertAdjacentHTML('beforeend', Object.keys(catalog).map(c => `<button type="button" data-cat="${esc(c)}" aria-pressed="false">${esc(c)}</button>`).join(''));
+  // ?cat=AI opens that folder (links from elsewhere).
+  const want = new URLSearchParams(location.search).get('cat');
+  if (want) Object.keys(catalog).filter(c => c.toLowerCase() === want.toLowerCase()).forEach(c => openState.add(c));
   render();
 }).catch(() => { $('#grid').innerHTML = '<p class="error">Katalog sementara tidak tersedia. Coba muat ulang.</p>'; });
 
-$('#cats').addEventListener('click', e => {
-  const b = e.target.closest('button[data-cat]'); if (!b) return;
-  active = b.dataset.cat;
-  document.querySelectorAll('#cats button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-  render();
-});
+$('#grid').addEventListener('toggle', e => {
+  const d = e.target.closest('details.folder');
+  if (!d || $('#search').value.trim()) return;
+  if (d.open) openState.add(d.dataset.cat); else openState.delete(d.dataset.cat);
+}, true);
+$('#open-all').addEventListener('click', () => { Object.keys(catalog).forEach(c => openState.add(c)); render(); });
+$('#close-all').addEventListener('click', () => { openState.clear(); render(); });
 $('#search').addEventListener('input', render);
 </script>
 </body>
