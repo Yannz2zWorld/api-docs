@@ -228,3 +228,24 @@ it('file endpoints take a real upload (POST raw body), forwarded as multipart; U
   const gpt = (await app.request('GET', '/api/endpoints')).json.endpoints.AI.find(e => e.cleanPath === '/api/ai/gpt');
   assert.equal(gpt.params.find(p => p.name === 'imageUrl').type, 'file');
 });
+
+it('Search + Sketch: q is forwarded, sketch takes an upload; catalog has the new categories', async () => {
+  reply = () => ({ status: 200, json: { status: true, creator: 'X', result: [] } });
+  const s = await call('/api/search/stickerly?q=kucing');
+  assert.equal(s.status, 200, s.text);
+  assert.equal(calls[0].url.pathname, '/api/search/stickerly');
+  assert.equal(calls[0].url.searchParams.get('q'), 'kucing');
+  assert.equal((await call('/api/search/telestick?query=anime')).status, 200, 'alias query works');
+  assert.equal(calls.at(-1).url.searchParams.get('q'), 'anime');
+  assert.equal((await call('/api/search/stickerly')).json.error, 'PARAM_REQUIRED');
+  // sketch: upload a photo
+  reply = () => ({ status: 200, bytes: Buffer.from('SKETCH'), type: 'image/jpeg' });
+  const up = await app.request('POST', '/api/image/sketch', { cookie: user, rawBody: Buffer.from('89504e470d0a1a0a', 'hex'), headers: { 'content-type': 'image/png', origin: app.origin, 'x-yannz-client': 'web' } });
+  assert.equal(up.status, 200, up.text);
+  assert.match(up.headers['content-type'], /^image\/jpeg/);
+  assert.equal(calls.at(-1).url.pathname, '/api/image/sketch');
+  assert.ok(calls.at(-1).form.get('image'));
+  const cats = (await app.request('GET', '/api/endpoints')).json.endpoints;
+  assert.equal(cats.Search.length, 2);
+  assert.deepEqual(cats.Image.map(e => e.cleanPath).sort(), ['/api/image/lumiart', '/api/image/sketch']);
+});
