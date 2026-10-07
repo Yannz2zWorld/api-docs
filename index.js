@@ -16,6 +16,7 @@ const platformRouter = require('./routes/platform');
 const apiKeyService = require('./services/apiKeyService');
 const usageService = require('./services/usageService');
 const turnstile = require('./services/turnstileService');
+const activity = require('./services/activityService');
 const { canAccess, getTier } = require('./services/tierService');
 const auditService = require('./services/auditService');
 
@@ -169,6 +170,10 @@ app.get('/assets/scythe.glb', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400');
   res.type('model/gltf-binary').sendFile(path.join(__dirname, 'views', 'assets', 'scythe.glb'));
 });
+app.get('/assets/chat.js', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'chat.js'));
+});
 app.get('/assets/aura-intro.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'aura-intro.js'));
@@ -191,6 +196,16 @@ app.get('/assets/theme.css', (req, res) => {
 });
 app.use('/views', express.static(path.join(__dirname, 'views')));
 app.locals.getSession = currentUser;
+// Page visits of signed-in users for the owner's activity log (best effort, throttled).
+const TRACKED_PAGES = new Set(['/home', '/keys', '/billing', '/pricing', '/profile', '/owner', '/api', '/api/playground', '/3d', '/scythe']);
+app.use((req, res, next) => {
+  if (req.method === 'GET' && TRACKED_PAGES.has(req.path)) {
+    const s = currentUser(req);
+    if (s?.userId) activity.logPage({ userId: s.userId, path: req.path, ip: (req.ip || '').replace(/^::ffff:/, '') }).catch(() => {});
+  }
+  next();
+});
+app.locals.issueSession = (...args) => issueSession(...args);
 app.use(platformRouter);
 app.use(require('./routes/auth')({ issueSession }));
 
@@ -316,7 +331,10 @@ async function resolveIdentity(req) {
       return { error: [401, 'INVALID_API_KEY', 'API key tidak valid.'] };
     }
     if (key.key_status !== 'active') return { error: [401, 'API_KEY_REVOKED', 'API key ini sudah dicabut.'] };
+    if (key.key_expires_at && new Date(key.key_expires_at) <= new Date()) return { error: [401, 'API_KEY_EXPIRED', 'Masa aktif API key ini sudah habis. Minta owner memperpanjangnya.', { expiredAt: new Date(key.key_expires_at).toISOString() }] };
     if (key.user_status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun tidak aktif.'] };
+    // A key issued with its own tier is limited to that tier and has its own daily quota.
+    if (key.key_tier) return { identity: { userId: key.uid, keyId: key.key_id, tier: key.key_tier, keyScoped: true } };
     return { identity: { userId: key.uid, keyId: key.key_id, tier: key.tier } };
   }
   const session = currentUser(req);
@@ -353,7 +371,7 @@ function apiGateway(cleanPath, run) {
       }
       if (endpoint.maintenance_enabled && !owner) return gatewayFail(res, 503, 'MAINTENANCE', endpoint.maintenance_message);
 
-      quota = await usageService.consume({ userId: identity.userId, keyId: identity.keyId, endpointId: endpoint.id, tier: identity.tier });
+      quota = await (identity.keyScoped ? usageService.consumeKey : usageService.consume)({ userId: identity.userId, keyId: identity.keyId, endpointId: endpoint.id, tier: identity.tier });
       res.set('X-RateLimit-Limit', quota.limit == null ? 'unlimited' : String(quota.limit));
       res.set('X-RateLimit-Remaining', quota.remaining == null ? 'unlimited' : String(quota.remaining));
       res.set('X-RateLimit-Reset', quota.resetAt);
@@ -368,15 +386,20 @@ function apiGateway(cleanPath, run) {
       return gatewayFail(res, 503, 'GATEWAY_UNAVAILABLE', 'API gateway sementara tidak tersedia.');
     }
 
-    // Refund before the response is flushed: serverless runtimes may freeze after it ends.
+    // Refund (failed calls) and the activity record are written before the response is
+    // flushed: serverless runtimes may freeze after it ends.
     let settled = false;
+    const started = Date.now();
     const end = res.end;
     res.end = function (...args) {
-      if (settled || res.statusCode < 400) { settled = true; return end.apply(this, args); }
+      if (settled) return end.apply(this, args);
       settled = true;
-      usageService.refund({ userId: identity.userId, endpointId: endpoint.id, usageDate: quota.usageDate })
-        .catch(e => console.error('Quota refund failed:', { code: e?.code || null }))
-        .finally(() => end.apply(this, args));
+      const tasks = [activity.logApi({ userId: identity.userId, keyId: identity.keyId, path: cleanPath, status: res.statusCode, ms: Date.now() - started, ip: (req.ip || '').replace(/^::ffff:/, '') })];
+      if (res.statusCode >= 400) {
+        tasks.push((identity.keyScoped ? usageService.refundKey : usageService.refund)({ userId: identity.userId, keyId: identity.keyId, endpointId: endpoint.id, usageDate: quota.usageDate })
+          .catch(e => console.error('Quota refund failed:', { code: e?.code || null })));
+      }
+      Promise.allSettled(tasks).finally(() => end.apply(this, args));
       return this;
     };
     req.apiAuth = { userId: identity.userId, keyId: identity.keyId, tier: identity.tier, quota };

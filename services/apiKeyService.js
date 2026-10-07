@@ -70,10 +70,81 @@ async function createKey(user, name, idempotencyKey = null, customValue = null) 
   return { key: plain, record: { custom, ...saved[0] } };
 }
 
+// ---------------------------------------------------------------- owner-issued keys
+// The owner can issue a key (to themselves or to any user) with its own tier and lifetime.
+// Such keys do not count against the account's key cap. Needs migration 009.
+const KEY_TIERS = ['FREE', 'SULTAN', 'SEPUH', 'DEWA'];
+const MAX_KEY_HOURS = 1000 * 24;
+const migrationRequired = () => Object.assign(new Error('Fitur ini butuh migration 009_key_tiers_profile_chat.sql. Jalankan dulu di database.'), { code: 'MIGRATION_REQUIRED' });
+
+// "12h" | "1d" | "3d" | "7d" | "14d" | "30d" | "custom" (+ days) | "permanent" → hours, or null for no expiry.
+function durationHours(duration, days) {
+  const fixed = { '12h': 12, '1d': 24, '3d': 72, '7d': 168, '14d': 336, '30d': 720 };
+  if (duration === 'permanent') return null;
+  if (fixed[duration]) return fixed[duration];
+  if (duration === 'custom') {
+    const d = Number(days);
+    if (Number.isInteger(d) && d >= 1 && d <= 1000) return d * 24;
+  }
+  throw Object.assign(new Error('Masa aktif tidak valid: pilih 12 jam, 1/3/7/14/30 hari, custom 1–1000 hari, atau tanpa batas.'), { code: 'INVALID_DURATION' });
+}
+
+async function issueKey({ issuerId, userId, name, customValue = null, tier, hours }) {
+  if (!KEY_TIERS.includes(tier)) throw Object.assign(new Error('Tier key harus FREE, SULTAN, SEPUH atau DEWA.'), { code: 'INVALID_TIER' });
+  if (hours !== null && !(Number.isInteger(hours) && hours >= 1 && hours <= MAX_KEY_HOURS)) throw Object.assign(new Error('Masa aktif maksimal 1000 hari.'), { code: 'INVALID_DURATION' });
+  const custom = customValue !== null && customValue !== undefined && customValue !== '';
+  const plain = custom ? String(customValue) : GENERATED_PREFIX + crypto.randomBytes(32).toString('base64url');
+  if (custom) {
+    const problem = customKeyProblem(plain);
+    if (problem) throw Object.assign(new Error(problem), { code: 'INVALID_CUSTOM_KEY' });
+  }
+  let rows;
+  try {
+    rows = await query(
+      `INSERT INTO api_keys(user_id,name,key_hash,key_prefix,custom,tier,expires_at,issued_by)
+       SELECT $1::uuid,$2::text,$3::text,$4::text,$5::boolean,$6::text,
+              CASE WHEN $7::int IS NULL THEN NULL ELSE now()+make_interval(hours=>$7::int) END,$8::uuid
+        WHERE NOT EXISTS (SELECT 1 FROM api_keys WHERE key_hash=$3::text)
+       RETURNING id,name,key_prefix,status,created_at,custom,tier,expires_at`,
+      [userId, String(name || 'Owner key').trim().slice(0, 80) || 'Owner key', digest(plain), displayPrefix(plain, custom), custom, tier, hours, issuerId]
+    );
+  } catch (e) {
+    if (e.code === '42703' || e.code === '42P01') throw migrationRequired();
+    if (e.code === '23505') throw Object.assign(new Error('Custom key ini sudah dipakai. Pilih value lain.'), { code: 'CUSTOM_KEY_TAKEN' });
+    throw e;
+  }
+  if (!rows.length) throw Object.assign(new Error('Custom key ini sudah dipakai. Pilih value lain.'), { code: 'CUSTOM_KEY_TAKEN' });
+  return { key: plain, record: rows[0] };
+}
+
+// Renew: extend from the later of now and the current expiry; or make the key permanent;
+// or change its tier ("ACCOUNT" = follow the account tier again).
+async function updateIssuedKey(id, { hours, permanent, tier }) {
+  if (tier !== undefined && tier !== 'ACCOUNT' && !KEY_TIERS.includes(tier)) throw Object.assign(new Error('Tier key tidak valid.'), { code: 'INVALID_TIER' });
+  if (hours !== undefined && !(Number.isInteger(hours) && hours >= 1 && hours <= MAX_KEY_HOURS)) throw Object.assign(new Error('Perpanjangan maksimal 1000 hari.'), { code: 'INVALID_DURATION' });
+  try {
+    const rows = await query(
+      `UPDATE api_keys SET
+          expires_at = CASE WHEN $3::boolean THEN NULL
+                            WHEN $2::int IS NOT NULL THEN GREATEST(COALESCE(expires_at, now()), now()) + make_interval(hours=>$2::int)
+                            ELSE expires_at END,
+          tier = CASE WHEN $4::text IS NULL THEN tier WHEN $4::text='ACCOUNT' THEN NULL ELSE $4::text END
+        WHERE id=$1 AND status='active'
+        RETURNING id,name,key_prefix,status,tier,expires_at`,
+      [id, hours ?? null, permanent === true, tier ?? null]
+    );
+    return rows[0] || null;
+  } catch (e) {
+    if (e.code === '42703') throw migrationRequired();
+    throw e;
+  }
+}
+
 async function listKeys(userId) {
   return query(
     `SELECT id,name,key_prefix,status,created_at,last_used_at,revoked_at,
-            COALESCE((to_jsonb(api_keys.*) ->> 'custom')::boolean,false) AS custom
+            COALESCE((to_jsonb(api_keys.*) ->> 'custom')::boolean,false) AS custom,
+            (to_jsonb(api_keys.*) ->> 'tier') AS tier,(to_jsonb(api_keys.*) ->> 'expires_at')::timestamptz AS expires_at
        FROM api_keys WHERE user_id=$1 ORDER BY created_at DESC`,
     [userId]
   );
@@ -92,7 +163,9 @@ let failureTable = true; // false until migration 007 creates api_key_failures
 // OWNER_EMAIL is FREE.
 async function findKey(plain, ip = null) {
   if (!plain) return null;
+  // key_tier / key_expires_at come from migration 009 (read through to_jsonb so this works before it).
   const sql = withFailures => `SELECT k.id AS key_id,k.user_id,k.status AS key_status,u.email,
+      (to_jsonb(k.*) ->> 'tier') AS key_tier,(to_jsonb(k.*) ->> 'expires_at')::timestamptz AS key_expires_at,
       CASE WHEN lower(u.email)=lower($2) THEN 'OWNER'
            WHEN u.tier='OWNER' THEN 'FREE'
            WHEN (to_jsonb(u.*) ->> 'tier_expires_at')::timestamptz <= now() THEN 'FREE'
@@ -125,4 +198,5 @@ async function recordInvalidKey(ip) {
   if (Math.random() < 0.02) await query("DELETE FROM api_key_failures WHERE bucket < now() - interval '1 day'").catch(() => {});
 }
 
-module.exports = { createKey, listKeys, revokeKey, findKey, recordInvalidKey, customKeyProblem, digest, CUSTOM_KEY_RE };
+module.exports = {
+  KEY_TIERS, durationHours, issueKey, updateIssuedKey, createKey, listKeys, revokeKey, findKey, recordInvalidKey, customKeyProblem, digest, CUSTOM_KEY_RE };

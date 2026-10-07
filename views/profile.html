@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profile — Yannz API</title>
+<link rel="icon" href="/api/logo-proxy">
+<meta name="theme-color" content="#0b0b0c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/theme.css">
+<style>
+  .who { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .avatar { width: 64px; height: 64px; border-radius: 16px; border: var(--line); box-shadow: 4px 4px 0 var(--drop); background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 700 28px "Space Grotesk", sans-serif; flex: none; }
+  .who h2 { margin: 0; font-size: 26px; }
+  .facts { display: grid; grid-template-columns: max-content 1fr; gap: 10px 18px; margin: 0; }
+  .facts dt { font: 600 11px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+  .facts dd { margin: 0; overflow-wrap: anywhere; }
+  .idline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
+  @media (max-width: 640px) { .facts { grid-template-columns: 1fr; gap: 2px 0; } .facts dd { margin-bottom: 10px; } .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/profile" aria-current="page">Profile</a></nav></div></header>
+<main class="wrap">
+  <span class="kicker">Akun</span>
+  <h1>Profile</h1>
+
+  <section class="panel">
+    <div class="who"><div class="avatar" id="avatar" aria-hidden="true">?</div><div><h2 id="account-name">Memuat…</h2><small class="muted" id="account-sub"></small></div></div>
+    <dl class="facts" style="margin-top:20px">
+      <dt>User ID</dt><dd class="idline"><code id="user-id">—</code><button type="button" class="sm ghost" id="copy-id">Salin</button></dd>
+      <dt>Email</dt><dd id="email">—</dd>
+      <dt>Nama</dt><dd id="full-name">—</dd>
+      <dt>Tier</dt><dd id="tier">—</dd>
+      <dt>Login</dt><dd id="methods">—</dd>
+      <dt>Bergabung</dt><dd id="joined">—</dd>
+    </dl>
+  </section>
+
+  <section class="panel">
+    <h2>Nama akun</h2>
+    <p class="muted">Nama ini yang tampil di Live Chat — email kamu tidak pernah ditampilkan. Kosongkan untuk kembali ke nama otomatis dari email (<b id="default-name">—</b>).</p>
+    <form id="name-form" class="row" autocomplete="off">
+      <input id="display-name" maxlength="24" placeholder="Nama akun" aria-label="Nama akun" style="flex:1;min-width:200px">
+      <button class="primary" type="submit">Simpan nama</button>
+    </form>
+    <p id="name-msg" aria-live="polite"></p>
+  </section>
+
+  <section class="panel" id="password-panel">
+    <h2>Ganti sandi</h2>
+    <form id="pass-form" autocomplete="on">
+      <input type="email" autocomplete="username" id="pass-user" hidden>
+      <div class="field"><label for="current">Sandi saat ini</label><input id="current" type="password" autocomplete="current-password" required maxlength="128"></div>
+      <div class="grid2">
+        <div class="field"><label for="new-pass">Sandi baru</label><input id="new-pass" type="password" autocomplete="new-password" required minlength="8" maxlength="128" placeholder="Minimal 8 karakter, huruf &amp; angka"></div>
+        <div class="field"><label for="confirm">Ulangi sandi baru</label><input id="confirm" type="password" autocomplete="new-password" required maxlength="128"></div>
+      </div>
+      <button class="primary" type="submit" id="pass-btn">Ganti sandi</button>
+    </form>
+    <p id="pass-msg" aria-live="polite"></p>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const when = v => v ? new Date(v).toLocaleString('id-ID', { dateStyle: 'medium' }) : '—';
+async function call(url, opts = {}) {
+  const r = await fetch(url, { credentials: 'same-origin', ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status})`);
+  return d;
+}
+function say(el, text, ok) { el.className = ok ? 'ok' : 'error'; el.textContent = text; }
+
+let profile;
+async function load() {
+  try {
+    profile = (await call('/api/profile')).profile;
+    $('#account-name').textContent = profile.accountName;
+    $('#avatar').textContent = profile.accountName.charAt(0).toUpperCase();
+    $('#account-sub').textContent = profile.isOwner ? 'Owner' : `Tier ${profile.tier}`;
+    $('#user-id').textContent = profile.id;
+    $('#email').textContent = profile.email;
+    if ($('#pass-user')) $('#pass-user').value = profile.email;
+    $('#full-name').textContent = profile.name || '—';
+    $('#tier').textContent = profile.tier + (profile.tierExpiresAt ? ` · aktif sampai ${when(profile.tierExpiresAt)}` : '');
+    $('#methods').textContent = profile.loginMethods.map(m => m === 'google' ? 'Google' : 'Email & sandi').join(' + ') || '—';
+    $('#joined').textContent = when(profile.createdAt);
+    $('#default-name').textContent = profile.defaultName;
+    $('#display-name').value = profile.displayName || '';
+    $('#display-name').placeholder = profile.defaultName;
+    if (!profile.hasPassword && $('#pass-form')) {
+      $('#password-panel').innerHTML = '<h2>Sandi</h2><p class="muted">Akun ini login lewat Google dan belum punya sandi. Kalau mau bisa login pakai email &amp; sandi juga, keluar lalu pakai <b>Lupa sandi?</b> di halaman login — kode dikirim ke email kamu.</p>';
+    }
+  } catch (e) { $('#account-name').textContent = e.message; }
+}
+$('#copy-id').addEventListener('click', e => navigator.clipboard.writeText(profile?.id || '').then(() => { e.target.textContent = 'Tersalin ✓'; setTimeout(() => { e.target.textContent = 'Salin'; }, 1400); }));
+$('#name-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const d = await call('/api/profile', { method: 'PATCH', body: JSON.stringify({ displayName: $('#display-name').value }) });
+    say($('#name-msg'), `Nama akun sekarang: ${d.accountName}`, true);
+    load();
+  } catch (err) { say($('#name-msg'), err.message); }
+});
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'pass-form') return;
+  e.preventDefault();
+  const msg = $('#pass-msg'), next = $('#new-pass').value;
+  if (next.length < 8 || !/[A-Za-z]/.test(next) || !/[0-9]/.test(next)) return say(msg, 'Sandi baru minimal 8 karakter dan berisi huruf serta angka.');
+  if (next !== $('#confirm').value) return say(msg, 'Konfirmasi sandi tidak sama.');
+  $('#pass-btn').disabled = true;
+  try {
+    const d = await call('/api/profile/password', { method: 'POST', body: JSON.stringify({ current: $('#current').value, password: next }) });
+    say(msg, d.message, true);
+    e.target.reset();
+  } catch (err) { say(msg, err.message); }
+  finally { $('#pass-btn').disabled = false; }
+});
+load();
+</script>
+</body>
+</html>

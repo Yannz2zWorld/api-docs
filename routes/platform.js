@@ -14,6 +14,8 @@ const pakasir = require('../services/pakasirService');
 const notifier = require('../services/ownerNotificationService');
 const orderService = require('../services/orderService');
 const emailService = require('../services/emailService');
+const passwords = require('../services/passwordService');
+const activity = require('../services/activityService');
 const pluginService = require('../services/githubPluginService');
 
 const router = express.Router();
@@ -87,6 +89,59 @@ function usagePayload(tier, used) {
 // ---------------------------------------------------------------- pages
 router.get('/pricing', (req, res) => res.sendFile(path.join(VIEWS, 'pricing.html')));
 router.get('/keys', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'keys.html')));
+router.get('/profile', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'profile.html')));
+
+// ---------------------------------------------------------------- profile
+const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,23}$/u;
+const RESERVED_NAMES = /^(owner|admin|administrator|system|yannz ?api|moderator)$/i;
+const migrationMissing = e => e && (e.code === '42703' || e.code === '42P01');
+
+router.get('/api/profile', auth, async (req, res) => {
+  const a = req.account;
+  const row = (await query("SELECT (password_hash IS NOT NULL) AS has_password,(google_id IS NOT NULL) AS has_google,email_verified FROM users WHERE id=$1", [a.id]))[0] || {};
+  res.json({ success: true, profile: {
+    id: a.id, accountName: a.accountName, displayName: a.displayName, defaultName: users.defaultAccountName(a.email),
+    name: a.name, email: a.email, tier: a.tier, tierExpiresAt: a.tierExpiresAt, isOwner: a.isOwner, createdAt: a.createdAt,
+    hasPassword: !!row.has_password, loginMethods: [row.has_google ? 'google' : null, row.has_password ? 'password' : null].filter(Boolean)
+  } });
+});
+
+// Account name for the live chat / profile. Empty = back to the name derived from the email.
+router.patch('/api/profile', sameOrigin, auth, async (req, res) => {
+  const raw = typeof req.body?.displayName === 'string' ? req.body.displayName.trim().replace(/\s+/g, ' ') : null;
+  if (raw === null) return fail(res, 400, 'INVALID_NAME', 'Isi nama akun.');
+  if (raw && (!NAME_RE.test(raw) || RESERVED_NAMES.test(raw))) return fail(res, 400, 'INVALID_NAME', 'Nama akun 2–24 karakter: huruf, angka, spasi, titik, _ atau -. Nama seperti "Owner"/"Admin" tidak boleh dipakai.');
+  try {
+    await query('UPDATE users SET display_name=$2,updated_at=now() WHERE id=$1', [req.account.id, raw || null]);
+  } catch (e) {
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Fitur ini butuh migration 009_key_tiers_profile_chat.sql.');
+    throw e;
+  }
+  res.json({ success: true, accountName: raw || users.defaultAccountName(req.account.email) });
+});
+
+// Change password: needs the current one. Signs out every other session and keeps this one.
+router.post('/api/profile/password', sameOrigin, auth, async (req, res) => {
+  const current = typeof req.body?.current === 'string' ? req.body.current : '';
+  const next = typeof req.body?.password === 'string' ? req.body.password : '';
+  const acc = await users.findAuthByEmail(req.account.email);
+  if (!acc?.password_hash) return fail(res, 400, 'NO_PASSWORD', 'Akun ini belum punya sandi (login lewat Google). Buat sandi lewat "Lupa sandi?" di halaman login.');
+  if (acc.locked_until && new Date(acc.locked_until) > new Date()) return fail(res, 429, 'TOO_MANY_ATTEMPTS', 'Terlalu banyak percobaan sandi salah. Coba lagi dalam 15 menit.');
+  if (!current || current.length > 128 || !(await passwords.verifyPassword(current, acc.password_hash))) {
+    await users.recordFailedLogin(acc.id);
+    await audit.writeAudit({ actorUserId: acc.id, action: 'password_change_failed', targetType: 'user', targetId: acc.id, ipAddress: ip(req) }).catch(() => {});
+    return fail(res, 400, 'WRONG_PASSWORD', 'Sandi saat ini salah.');
+  }
+  const weak = passwords.passwordProblem(next);
+  if (weak) return fail(res, 400, 'WEAK_PASSWORD', weak);
+  if (current === next) return fail(res, 400, 'SAME_PASSWORD', 'Sandi baru harus berbeda dari sandi lama.');
+  const updated = await users.setPassword(acc.id, await passwords.hashPassword(next));
+  await audit.writeAudit({ actorUserId: acc.id, action: 'password_change', targetType: 'user', targetId: acc.id, ipAddress: ip(req) }).catch(() => {});
+  // setPassword bumped the session version: re-issue this browser's cookie so it stays signed in.
+  const session = req.app.locals.getSession(req) || {};
+  req.app.locals.issueSession(res, session.sub || acc.id, { id: acc.id, email: acc.email, name: acc.name, picture: acc.picture || '', sessionVersion: Number(updated?.session_version || 0) }, session.provider || 'password');
+  res.json({ success: true, message: 'Sandi berhasil diganti. Sesi di perangkat lain sudah dikeluarkan.' });
+});
 router.get('/billing', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'billing.html')));
 router.get('/owner', pageAuth, (req, res) => {
   if (!req.account.isOwner) return res.status(403).send('Akses owner diperlukan.');
@@ -459,12 +514,88 @@ router.delete('/owner/users/:id', sameOrigin, auth, owner, validId('id'), async 
   res.json({ success: true });
 });
 
+// Reset a user's password by user ID or email. Empty password = generate one (shown once).
+// Signs the user out everywhere. The owner account itself is changed from its own Profile page.
+function generatedPassword() {
+  const letters = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ', digits = '23456789', all = letters + digits;
+  const pick = set => set[crypto.randomInt(set.length)];
+  const chars = [pick(letters), pick(digits), ...Array.from({ length: 10 }, () => pick(all))];
+  for (let i = chars.length - 1; i > 0; i--) { const j = crypto.randomInt(i + 1); [chars[i], chars[j]] = [chars[j], chars[i]]; }
+  return chars.join('');
+}
+router.post('/owner/users/reset-password', sameOrigin, auth, owner, async (req, res) => {
+  const who = typeof req.body?.user === 'string' ? req.body.user.trim().slice(0, 200) : '';
+  if (!who) return fail(res, 400, 'USER_REQUIRED', 'Isi ID atau email user.');
+  const target = (await query(UUID_RE.test(who) ? 'SELECT id,email FROM users WHERE id=$1' : 'SELECT id,email FROM users WHERE lower(email)=lower($1)', [who]))[0];
+  if (!target) return fail(res, 404, 'USER_NOT_FOUND', 'User dengan ID/email itu tidak ditemukan.');
+  if (target.id === req.account.id || users.isOwnerEmail(target.email)) return fail(res, 400, 'SELF_ACTION_BLOCKED', 'Sandi owner diganti lewat halaman Profile.');
+  const typed = typeof req.body?.password === 'string' ? req.body.password : '';
+  const password = typed || generatedPassword();
+  const weak = passwords.passwordProblem(password);
+  if (weak) return fail(res, 400, 'WEAK_PASSWORD', weak);
+  await users.setPassword(target.id, await passwords.hashPassword(password));
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_password_reset', targetType: 'user', targetId: target.id, metadata: { email: target.email, generated: !typed }, ipAddress: ip(req) });
+  res.json({ success: true, user: { id: target.id, email: target.email }, password: typed ? null : password, message: 'Sandi direset. User sudah dikeluarkan dari semua perangkat.' });
+});
+
 router.post('/owner/users/:id/keys/:keyId/revoke', sameOrigin, auth, owner, validId('id', 'keyId'), async (req, res) => {
   const ok = await keys.revokeKey(req.params.id, req.params.keyId);
   if (!ok) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan atau sudah dicabut.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_revoke', targetType: 'api_key', targetId: req.params.keyId, metadata: { userId: req.params.id }, ipAddress: ip(req) });
   res.json({ success: true });
 });
+
+// ---------------------------------------------------------------- live chat
+// One public room for signed-in users. Messages show the account name (never the email).
+// Clients poll GET /api/chat?after=<last id> every few seconds (no websockets on serverless).
+const CHAT_PAGE = 60;
+const chatName = row => (row.display_name && String(row.display_name).trim()) || users.defaultAccountName(row.email);
+function chatRow(row, me) {
+  return { id: Number(row.id), name: chatName(row), owner: users.isOwnerEmail(row.email), mine: row.user_id === me.id, body: row.body, at: row.created_at };
+}
+async function chatGuard(res, fn) {
+  try { return await fn(); } catch (e) {
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Live chat butuh migration 009_key_tiers_profile_chat.sql.');
+    throw e;
+  }
+}
+
+router.get('/api/chat', auth, (req, res) => chatGuard(res, async () => {
+  const after = Number.parseInt(req.query.after, 10);
+  const me = req.account;
+  // "online" = polled in the last 2 minutes; last_seen_at is written at most once a minute.
+  await query("UPDATE users SET last_seen_at=now() WHERE id=$1 AND (last_seen_at IS NULL OR last_seen_at < now()-interval '60 seconds')", [me.id]);
+  const select = `SELECT m.id,m.user_id,m.body,m.created_at,u.email,(to_jsonb(u.*) ->> 'display_name') AS display_name
+                    FROM chat_messages m JOIN users u ON u.id=m.user_id WHERE m.deleted_at IS NULL`;
+  const rows = Number.isFinite(after) && after > 0
+    ? await query(`${select} AND m.id > $1 ORDER BY m.id ASC LIMIT 100`, [after])
+    : (await query(`${select} ORDER BY m.id DESC LIMIT ${CHAT_PAGE}`)).reverse();
+  const [extra] = await query(`SELECT (SELECT count(*)::int FROM users WHERE last_seen_at > now()-interval '2 minutes') AS online,
+      COALESCE((SELECT json_agg(id) FROM chat_messages WHERE deleted_at > now()-interval '5 minutes'), '[]'::json) AS deleted`);
+  res.json({ success: true, messages: rows.map(r => chatRow(r, me)), deleted: (extra.deleted || []).map(Number), online: extra.online, me: { name: me.accountName, owner: me.isOwner } });
+}));
+
+router.post('/api/chat', sameOrigin, auth, (req, res) => chatGuard(res, async () => {
+  // Plain text only: control characters dropped (newlines kept), 1–500 characters.
+  const body = typeof req.body?.body === 'string' ? req.body.body.replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, '').replace(/\n{3,}/g, '\n\n').trim() : '';
+  if (!body || body.length > 500) return fail(res, 400, 'INVALID_MESSAGE', 'Pesan harus 1–500 karakter.');
+  const [rate] = await query(`SELECT count(*) FILTER (WHERE created_at > now()-interval '1.5 seconds')::int AS burst,
+      count(*) FILTER (WHERE created_at > now()-interval '1 minute')::int AS minute
+    FROM chat_messages WHERE user_id=$1 AND created_at > now()-interval '1 minute'`, [req.account.id]);
+  if (rate.burst > 0 || rate.minute >= 15) return fail(res, 429, 'CHAT_RATE_LIMIT', 'Pelan-pelan — maksimal 15 pesan per menit.');
+  const [row] = await query('INSERT INTO chat_messages(user_id,body) VALUES($1,$2) RETURNING id,user_id,body,created_at', [req.account.id, body]);
+  res.status(201).json({ success: true, message: chatRow({ ...row, email: req.account.email, display_name: req.account.displayName }, req.account) });
+}));
+
+// The owner can remove any message; everyone can remove their own.
+router.delete('/api/chat/:id', sameOrigin, auth, (req, res) => chatGuard(res, async () => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isFinite(id) || id < 1) return fail(res, 404, 'NOT_FOUND', 'Pesan tidak ditemukan.');
+  const r = await query('UPDATE chat_messages SET deleted_at=now(),deleted_by=$2 WHERE id=$1 AND deleted_at IS NULL AND ($3::boolean OR user_id=$2) RETURNING id,user_id', [id, req.account.id, req.account.isOwner]);
+  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'Pesan tidak ditemukan.');
+  if (req.account.isOwner && r[0].user_id !== req.account.id) await audit.writeAudit({ actorUserId: req.account.id, action: 'chat_message_delete', targetType: 'user', targetId: r[0].user_id, metadata: { messageId: id }, ipAddress: ip(req) });
+  res.json({ success: true });
+}));
 
 // ---------------------------------------------------------------- owner: all API keys
 // Keys are stored only as a SHA-256 digest, so nobody (owner included) can read a key back.
@@ -481,6 +612,8 @@ router.post('/owner/keys/search', sameOrigin, auth, owner, async (req, res) => {
   const rows = await query(
     `SELECT k.id,k.name,k.key_prefix,k.status,k.created_at,k.last_used_at,k.revoked_at,
             COALESCE((to_jsonb(k.*) ->> 'custom')::boolean,false) AS custom,
+            (to_jsonb(k.*) ->> 'tier') AS tier,(to_jsonb(k.*) ->> 'expires_at')::timestamptz AS expires_at,
+            ((to_jsonb(k.*) ->> 'issued_by') IS NOT NULL) AS issued,
             (q.digest IS NOT NULL AND k.key_hash=q.digest) AS exact_match,
             u.id AS user_id,u.email AS user_email,u.name AS user_name,u.tier AS user_tier,u.status AS user_status
        FROM api_keys k
@@ -494,6 +627,51 @@ router.post('/owner/keys/search', sameOrigin, auth, owner, async (req, res) => {
   );
   const [totals] = await query("SELECT count(*)::int AS total,count(*) FILTER (WHERE status='active')::int AS active FROM api_keys");
   res.json({ success: true, keys: rows, totals, limit, offset });
+});
+
+// Issue a key with its own tier and lifetime, to the owner (assignee empty) or to a user (email or ID).
+router.post('/owner/keys', sameOrigin, auth, owner, async (req, res) => {
+  const b = req.body || {};
+  const who = typeof b.assignee === 'string' ? b.assignee.trim() : '';
+  let target = req.account;
+  if (who) {
+    const found = (await query(UUID_RE.test(who) ? 'SELECT id,email FROM users WHERE id=$1' : 'SELECT id,email FROM users WHERE lower(email)=lower($1)', [who.slice(0, 200)]))[0];
+    if (!found) return fail(res, 404, 'USER_NOT_FOUND', 'User dengan email/ID itu tidak ditemukan.');
+    target = found;
+  }
+  try {
+    const hours = keys.durationHours(b.duration, b.days);
+    const tier = String(b.tier || '').toUpperCase();
+    const made = await keys.issueKey({ issuerId: req.account.id, userId: target.id, name: b.name, customValue: typeof b.custom_key === 'string' ? b.custom_key.trim() : null, tier, hours });
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_issue', targetType: 'api_key', targetId: made.record.id, metadata: { userId: target.id, email: target.email, tier, expiresAt: made.record.expires_at, prefix: made.record.key_prefix }, ipAddress: ip(req) });
+    res.status(201).json({ success: true, key: made.key, record: { ...made.record, user_email: target.email } });
+  } catch (e) {
+    if (e.code === 'MIGRATION_REQUIRED') return fail(res, 503, e.code, e.message);
+    if (['INVALID_TIER', 'INVALID_DURATION', 'INVALID_CUSTOM_KEY', 'CUSTOM_KEY_TAKEN'].includes(e.code)) return fail(res, e.code === 'CUSTOM_KEY_TAKEN' ? 409 : 400, e.code, e.message);
+    throw e;
+  }
+});
+
+// Renew (extend), make permanent, or change the tier of an active key.
+router.patch('/owner/keys/:keyId', sameOrigin, auth, owner, validId('keyId'), async (req, res) => {
+  const b = req.body || {};
+  const change = {};
+  try {
+    if (b.extend !== undefined) {
+      const hours = keys.durationHours(b.extend, b.days);
+      if (hours === null) change.permanent = true; else change.hours = hours;
+    }
+    if (b.tier !== undefined) change.tier = String(b.tier).toUpperCase();
+    if (!Object.keys(change).length) return fail(res, 400, 'NOTHING_TO_CHANGE', 'Pilih perpanjangan atau tier baru.');
+    const key = await keys.updateIssuedKey(req.params.keyId, change);
+    if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key aktif tidak ditemukan (key yang sudah dicabut tidak bisa diperpanjang).');
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_update', targetType: 'api_key', targetId: key.id, metadata: { ...change, expiresAt: key.expires_at, tier: key.tier }, ipAddress: ip(req) });
+    res.json({ success: true, key });
+  } catch (e) {
+    if (e.code === 'MIGRATION_REQUIRED') return fail(res, 503, e.code, e.message);
+    if (['INVALID_TIER', 'INVALID_DURATION'].includes(e.code)) return fail(res, 400, e.code, e.message);
+    throw e;
+  }
 });
 
 async function ownerKeyRow(id) {
@@ -718,6 +896,16 @@ router.patch('/owner/server/payments', sameOrigin, auth, owner, async (req, res)
   );
   await audit.writeAudit({ actorUserId: req.account.id, action: 'payment_settings_change', targetType: 'server_settings', ipAddress: ip(req) });
   res.json({ success: true, settings: r[0] });
+});
+
+// Everything happening on the site: account events (audit log), API calls and page visits.
+router.get('/owner/activity', auth, owner, async (req, res) => {
+  const kind = ['account', 'api', 'page'].includes(req.query.kind) ? req.query.kind : '';
+  const q = String(req.query.q || '').slice(0, 100);
+  const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 200));
+  const rows = await activity.recent({ kind, q, limit });
+  const [online] = await query("SELECT count(*)::int AS n FROM users WHERE (to_jsonb(users.*) ->> 'last_seen_at')::timestamptz > now()-interval '5 minutes'").catch(() => [{ n: null }]);
+  res.json({ success: true, activity: rows, onlineUsers: online?.n ?? null });
 });
 
 router.get('/owner/audit', auth, owner, async (req, res) => {

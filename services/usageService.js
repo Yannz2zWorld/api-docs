@@ -28,4 +28,29 @@ async function refund({userId,endpointId,usageDate}){
 }
 function nextUtcMidnight(){const d=new Date();return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+1)).toISOString();}
 async function usageToday(userId){const r=await query("SELECT COALESCE(request_count,0)::int AS used FROM daily_quota_counters WHERE user_id=$1 AND usage_date=(now() AT TIME ZONE 'UTC')::date",[userId]);return r[0]?.used||0;}
-module.exports={consume,refund,usageToday,nextUtcMidnight};
+// Keys issued by the owner with their own tier have their own daily counter (key_quota_counters),
+// so the key's tier limit applies to the key, not to the account it belongs to.
+async function consumeKey({userId,keyId,endpointId,tier}){
+ const limit=getTier(tier).limit;
+ const cap=Number.isFinite(limit)?limit:2147483647;
+ const rows=await query(`WITH reserve AS (
+   INSERT INTO key_quota_counters(api_key_id,usage_date,request_count)
+   VALUES($2,(now() AT TIME ZONE 'UTC')::date,1)
+   ON CONFLICT(api_key_id,usage_date) DO UPDATE SET request_count=key_quota_counters.request_count+1,updated_at=now()
+   WHERE key_quota_counters.request_count < $4 RETURNING request_count
+ ), logged AS (
+   INSERT INTO api_usage(user_id,api_key_id,endpoint_id,usage_date,request_count)
+   SELECT $1,$2,$3,(now() AT TIME ZONE 'UTC')::date,1 FROM reserve
+   ON CONFLICT(user_id,endpoint_id,usage_date) DO UPDATE SET request_count=api_usage.request_count+1,updated_at=now()
+   RETURNING request_count
+ ) SELECT reserve.request_count AS used,(now() AT TIME ZONE 'UTC')::date::text AS usage_date FROM reserve JOIN logged ON true`,[userId,keyId,endpointId,cap]);
+ if(!rows.length){const cur=await query("SELECT COALESCE(request_count,0)::int AS used FROM key_quota_counters WHERE api_key_id=$1 AND usage_date=(now() AT TIME ZONE 'UTC')::date",[keyId]);return {allowed:false,used:cur[0]?.used||0,limit,remaining:0,resetAt:nextUtcMidnight()};}
+ const used=Number(rows[0].used);
+ return {allowed:true,used,limit:Number.isFinite(limit)?limit:null,remaining:Number.isFinite(limit)?Math.max(0,limit-used):null,resetAt:nextUtcMidnight(),usageDate:rows[0].usage_date};
+}
+async function refundKey({userId,keyId,endpointId,usageDate}){
+ if(!usageDate)return;
+ await query(`WITH q AS (UPDATE key_quota_counters SET request_count=request_count-1,updated_at=now() WHERE api_key_id=$2 AND usage_date=$4::date AND request_count>0 RETURNING 1)
+  UPDATE api_usage SET request_count=request_count-1,updated_at=now() WHERE user_id=$1 AND endpoint_id=$3 AND usage_date=$4::date AND request_count>0 AND EXISTS(SELECT 1 FROM q)`,[userId,keyId,endpointId,usageDate]);
+}
+module.exports={consume,refund,consumeKey,refundKey,usageToday,nextUtcMidnight};
