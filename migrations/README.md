@@ -12,6 +12,8 @@ Apply in order to the configured Neon database (Neon SQL editor or `psql "$DATAB
 
 9. `009_key_tiers_profile_chat.sql` — owner-issued API keys with their own tier and lifetime (`api_keys.tier`, `expires_at`, `issued_by`, per-key daily counters `key_quota_counters`), `users.display_name` / `last_seen_at` (profile name, live chat), the `chat_messages` table (live chat room) and `activity_log` (API calls and page visits for the owner panel). Existing keys are unchanged (no tier = follows the account, no expiry). The code runs before this migration too: the new features answer `MIGRATION_REQUIRED` (503) until it is applied, everything else keeps working.
 
+10. `010_user_avatars.sql` — `user_avatars` (profile pictures: JPEG/PNG/WebP up to 512 KB, one per user, deleted with the user). Before it runs, profiles and the live chat keep working; uploading a picture answers `MIGRATION_REQUIRED`.
+
 All files are additive/idempotent (`CREATE ... IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`) and never drop data. The application does not run DDL at request time.
 
 If an existing `users` table predates these files, inspect it first: `users.id` must be `uuid` because `002_platform.sql` references it from foreign keys. Every row's `google_id` and `lower(email)` must be unique, or the unique indexes in 002 will fail to build.

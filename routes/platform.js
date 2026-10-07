@@ -20,7 +20,7 @@ const pluginService = require('../services/githubPluginService');
 
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
-const { parseProofImage } = require('../lib/proofImage');
+const { parseProofImage, parseAvatarImage } = require('../lib/proofImage');
 const { digest } = require('../lib/keyCrypto');
 const QRCode = require('qrcode');
 
@@ -96,12 +96,72 @@ const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,23}$/u;
 const RESERVED_NAMES = /^(owner|admin|administrator|system|yannz ?api|moderator)$/i;
 const migrationMissing = e => e && (e.code === '42703' || e.code === '42P01');
 
+// ---------------------------------------------------------------- profile pictures
+// Stored in user_avatars (migration 010) and served to signed-in users at /api/avatar/<id>?v=<version>.
+// Missing table = no pictures yet (everything else keeps working).
+async function avatarVersions(userIds) {
+  if (!userIds.length) return new Map();
+  try {
+    const rows = await query('SELECT user_id,(extract(epoch FROM updated_at)*1000)::bigint AS v FROM user_avatars WHERE user_id = ANY($1::uuid[])', [userIds]);
+    return new Map(rows.map(r => [r.user_id, String(r.v)]));
+  } catch (e) {
+    if (migrationMissing(e)) return new Map();
+    throw e;
+  }
+}
+const avatarUrl = (userId, version) => (version ? `/api/avatar/${userId}?v=${version}` : null);
+
+router.put('/api/profile/avatar', sameOrigin, auth, async (req, res) => {
+  const img = parseAvatarImage(req.body?.image);
+  if (img.error) return fail(res, 400, img.error, img.error === 'IMAGE_TOO_LARGE' ? 'Foto maksimal 512 KB.' : 'Foto harus berupa gambar JPG, PNG atau WebP.');
+  try {
+    const [row] = await query(
+      `INSERT INTO user_avatars(user_id,mime,size_bytes,data,updated_at) VALUES($1,$2,$3,decode($4,'base64'),now())
+       ON CONFLICT(user_id) DO UPDATE SET mime=EXCLUDED.mime,size_bytes=EXCLUDED.size_bytes,data=EXCLUDED.data,updated_at=now()
+       RETURNING (extract(epoch FROM updated_at)*1000)::bigint AS v`,
+      [req.account.id, img.mime, img.size, img.buffer.toString('base64')]
+    );
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'avatar_update', targetType: 'user', targetId: req.account.id, metadata: { mime: img.mime, size: img.size }, ipAddress: ip(req) }).catch(() => {});
+    res.json({ success: true, avatarUrl: avatarUrl(req.account.id, String(row.v)) });
+  } catch (e) {
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Foto profil butuh migration 010_user_avatars.sql.');
+    throw e;
+  }
+});
+
+router.delete('/api/profile/avatar', sameOrigin, auth, async (req, res) => {
+  try {
+    const r = await query('DELETE FROM user_avatars WHERE user_id=$1 RETURNING user_id', [req.account.id]);
+    if (r.length) await audit.writeAudit({ actorUserId: req.account.id, action: 'avatar_delete', targetType: 'user', targetId: req.account.id, ipAddress: ip(req) }).catch(() => {});
+    res.json({ success: true, deleted: r.length > 0 });
+  } catch (e) {
+    if (migrationMissing(e)) return res.json({ success: true, deleted: false });
+    throw e;
+  }
+});
+
+// Signed-in users only (the live chat shows other members' pictures). Served as an image with
+// nosniff and a no-script CSP; ?v= changes on every upload, so it can be cached.
+router.get('/api/avatar/:id', auth, validId('id'), async (req, res) => {
+  let row;
+  try {
+    row = (await query("SELECT mime,encode(data,'base64') AS b64 FROM user_avatars WHERE user_id=$1", [req.params.id]))[0];
+  } catch (e) {
+    if (!migrationMissing(e)) throw e;
+  }
+  if (!row) return fail(res, 404, 'NOT_FOUND', 'Foto profil tidak ada.');
+  res.set({ 'Content-Type': row.mime, 'Cache-Control': 'private, max-age=86400', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox" });
+  res.send(Buffer.from(row.b64, 'base64'));
+});
+
 router.get('/api/profile', auth, async (req, res) => {
   const a = req.account;
   const row = (await query("SELECT (password_hash IS NOT NULL) AS has_password,(google_id IS NOT NULL) AS has_google,email_verified FROM users WHERE id=$1", [a.id]))[0] || {};
+  const avatar = (await avatarVersions([a.id])).get(a.id);
   res.json({ success: true, profile: {
     id: a.id, accountName: a.accountName, displayName: a.displayName, defaultName: users.defaultAccountName(a.email),
     name: a.name, email: a.email, tier: a.tier, tierExpiresAt: a.tierExpiresAt, isOwner: a.isOwner, createdAt: a.createdAt,
+    avatarUrl: avatarUrl(a.id, avatar),
     hasPassword: !!row.has_password, loginMethods: [row.has_google ? 'google' : null, row.has_password ? 'password' : null].filter(Boolean)
   } });
 });
@@ -550,8 +610,8 @@ router.post('/owner/users/:id/keys/:keyId/revoke', sameOrigin, auth, owner, vali
 // Clients poll GET /api/chat?after=<last id> every few seconds (no websockets on serverless).
 const CHAT_PAGE = 60;
 const chatName = row => (row.display_name && String(row.display_name).trim()) || users.defaultAccountName(row.email);
-function chatRow(row, me) {
-  return { id: Number(row.id), name: chatName(row), owner: users.isOwnerEmail(row.email), mine: row.user_id === me.id, body: row.body, at: row.created_at };
+function chatRow(row, me, avatars = new Map()) {
+  return { id: Number(row.id), name: chatName(row), owner: users.isOwnerEmail(row.email), mine: row.user_id === me.id, body: row.body, at: row.created_at, avatar: avatarUrl(row.user_id, avatars.get(row.user_id)) };
 }
 async function chatGuard(res, fn) {
   try { return await fn(); } catch (e) {
@@ -572,7 +632,8 @@ router.get('/api/chat', auth, (req, res) => chatGuard(res, async () => {
     : (await query(`${select} ORDER BY m.id DESC LIMIT ${CHAT_PAGE}`)).reverse();
   const [extra] = await query(`SELECT (SELECT count(*)::int FROM users WHERE last_seen_at > now()-interval '2 minutes') AS online,
       COALESCE((SELECT json_agg(id) FROM chat_messages WHERE deleted_at > now()-interval '5 minutes'), '[]'::json) AS deleted`);
-  res.json({ success: true, messages: rows.map(r => chatRow(r, me)), deleted: (extra.deleted || []).map(Number), online: extra.online, me: { name: me.accountName, owner: me.isOwner } });
+  const avatars = await avatarVersions([...new Set(rows.map(r => r.user_id))]);
+  res.json({ success: true, messages: rows.map(r => chatRow(r, me, avatars)), deleted: (extra.deleted || []).map(Number), online: extra.online, me: { name: me.accountName, owner: me.isOwner } });
 }));
 
 router.post('/api/chat', sameOrigin, auth, (req, res) => chatGuard(res, async () => {
@@ -584,7 +645,7 @@ router.post('/api/chat', sameOrigin, auth, (req, res) => chatGuard(res, async ()
     FROM chat_messages WHERE user_id=$1 AND created_at > now()-interval '1 minute'`, [req.account.id]);
   if (rate.burst > 0 || rate.minute >= 15) return fail(res, 429, 'CHAT_RATE_LIMIT', 'Pelan-pelan — maksimal 15 pesan per menit.');
   const [row] = await query('INSERT INTO chat_messages(user_id,body) VALUES($1,$2) RETURNING id,user_id,body,created_at', [req.account.id, body]);
-  res.status(201).json({ success: true, message: chatRow({ ...row, email: req.account.email, display_name: req.account.displayName }, req.account) });
+  res.status(201).json({ success: true, message: chatRow({ ...row, email: req.account.email, display_name: req.account.displayName }, req.account, await avatarVersions([req.account.id])) });
 }));
 
 // The owner can remove any message; everyone can remove their own.

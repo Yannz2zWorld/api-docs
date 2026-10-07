@@ -22,6 +22,7 @@
   .yc-msg{max-width:85%;align-self:flex-start;background:#1c1c20;border:1.5px solid #2e2e34;border-radius:12px 12px 12px 4px;padding:7px 10px;position:relative}
   .yc-msg.mine{align-self:flex-end;background:rgba(200,32,47,.16);border-color:rgba(200,32,47,.45);border-radius:12px 12px 4px 12px}
   .yc-who{display:flex;gap:6px;align-items:center;font:600 11px 'DM Mono',monospace;color:#d4d4d8;margin-bottom:2px}
+  .yc-av{width:22px;height:22px;border-radius:7px;border:1.5px solid #3f3f46;object-fit:cover;flex:none;background:#c8202f;color:#fff;display:inline-grid;place-items:center;font:700 11px 'Space Grotesk',sans-serif}
   .yc-owner{font-size:9px;padding:1px 5px;border-radius:999px;background:#c8202f;color:#fff;letter-spacing:.06em}
   .yc-body{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.4 Outfit,sans-serif}
   .yc-time{font:10px 'DM Mono',monospace;color:#71717a;margin-top:2px}
@@ -82,7 +83,11 @@
   function render(m) {
     if (seen.has(m.id)) return;
     const box = el('div', 'yc-msg' + (m.mine ? ' mine' : ''));
-    const who = el('div', 'yc-who', m.name);
+    const who = el('div', 'yc-who');
+    let av;
+    if (m.avatar) { av = el('img', 'yc-av'); av.src = m.avatar; av.alt = ''; av.loading = 'lazy'; av.onerror = () => av.replaceWith(el('span', 'yc-av', (m.name || '?').charAt(0).toUpperCase())); }
+    else av = el('span', 'yc-av', (m.name || '?').charAt(0).toUpperCase());
+    who.append(av, el('span', '', m.name));
     if (m.owner) who.append(el('span', 'yc-owner', 'OWNER'));
     box.append(who, el('div', 'yc-body', m.body), el('div', 'yc-time', timeOf(m.at)));
     if (m.mine || (me && me.owner)) {

@@ -12,7 +12,10 @@
 <link rel="stylesheet" href="/assets/theme.css">
 <style>
   .who { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-  .avatar { width: 64px; height: 64px; border-radius: 16px; border: var(--line); box-shadow: 4px 4px 0 var(--drop); background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 700 28px "Space Grotesk", sans-serif; flex: none; }
+  .avatar { width: 88px; height: 88px; border-radius: 20px; border: var(--line); box-shadow: 4px 4px 0 var(--drop); background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 700 36px "Space Grotesk", sans-serif; flex: none; overflow: hidden; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .photo-actions input[type=file] { display: none; }
   .who h2 { margin: 0; font-size: 26px; }
   .facts { display: grid; grid-template-columns: max-content 1fr; gap: 10px 18px; margin: 0; }
   .facts dt { font: 600 11px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
@@ -30,7 +33,9 @@
   <h1>Profile</h1>
 
   <section class="panel">
-    <div class="who"><div class="avatar" id="avatar" aria-hidden="true">?</div><div><h2 id="account-name">Memuat…</h2><small class="muted" id="account-sub"></small></div></div>
+    <div class="who"><div class="avatar" id="avatar" aria-hidden="true">?</div><div><h2 id="account-name">Memuat…</h2><small class="muted" id="account-sub"></small>
+      <div class="photo-actions"><label class="btn sm" for="photo-file" tabindex="0" role="button" id="photo-pick">Ganti foto</label><input type="file" id="photo-file" accept="image/jpeg,image/png,image/webp,image/*"><button type="button" class="sm danger" id="photo-delete" hidden>Hapus foto</button></div>
+      <small id="photo-msg" aria-live="polite"></small></div></div>
     <dl class="facts" style="margin-top:20px">
       <dt>User ID</dt><dd class="idline"><code id="user-id">—</code><button type="button" class="sm ghost" id="copy-id">Salin</button></dd>
       <dt>Email</dt><dd id="email">—</dd>
@@ -82,7 +87,7 @@ async function load() {
   try {
     profile = (await call('/api/profile')).profile;
     $('#account-name').textContent = profile.accountName;
-    $('#avatar').textContent = profile.accountName.charAt(0).toUpperCase();
+    showAvatar(profile.avatarUrl);
     $('#account-sub').textContent = profile.isOwner ? 'Owner' : `Tier ${profile.tier}`;
     $('#user-id').textContent = profile.id;
     $('#email').textContent = profile.email;
@@ -99,6 +104,51 @@ async function load() {
     }
   } catch (e) { $('#account-name').textContent = e.message; }
 }
+// ---------- profile picture: cropped to a centred square and scaled to 256 px in the browser,
+// so uploads stay small (the server takes JPEG/PNG/WebP up to 512 KB).
+function showAvatar(url) {
+  const box = $('#avatar');
+  box.replaceChildren();
+  if (url) { const img = new Image(); img.alt = ''; img.src = url; img.onerror = () => { box.textContent = (profile?.accountName || '?').charAt(0).toUpperCase(); }; box.append(img); }
+  else box.textContent = (profile?.accountName || '?').charAt(0).toUpperCase();
+  $('#photo-delete').hidden = !url;
+  $('#photo-pick').textContent = url ? 'Ganti foto' : 'Tambah foto';
+}
+async function squareImage(file, size = 256) {
+  const bitmap = await createImageBitmap(file);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d');
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
+  bitmap.close?.();
+  let url = c.toDataURL('image/webp', 0.86);
+  if (!url.startsWith('data:image/webp')) url = c.toDataURL('image/jpeg', 0.88);   // Safari: no WebP encoder
+  return url;
+}
+$('#photo-pick').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#photo-file').click(); } });
+$('#photo-file').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  const msg = $('#photo-msg');
+  if (!/^image\//.test(file.type)) return say(msg, 'Pilih file gambar (JPG, PNG atau WebP).');
+  if (file.size > 15 * 1024 * 1024) return say(msg, 'Gambar terlalu besar (maks 15 MB sebelum dikecilkan).');
+  msg.className = ''; msg.textContent = 'Mengunggah…';
+  try {
+    const image = await squareImage(file);
+    const d = await call('/api/profile/avatar', { method: 'PUT', body: JSON.stringify({ image }) });
+    showAvatar(d.avatarUrl);
+    say(msg, 'Foto profil diperbarui.', true);
+  } catch (err) { say(msg, err.message.includes('createImageBitmap') || err.name === 'InvalidStateError' ? 'Gambar tidak bisa dibaca. Coba file lain.' : err.message); }
+});
+$('#photo-delete').addEventListener('click', async () => {
+  if (!confirm('Hapus foto profil?')) return;
+  try {
+    await call('/api/profile/avatar', { method: 'DELETE' });
+    showAvatar(null);
+    say($('#photo-msg'), 'Foto profil dihapus.', true);
+  } catch (err) { say($('#photo-msg'), err.message); }
+});
 $('#copy-id').addEventListener('click', e => navigator.clipboard.writeText(profile?.id || '').then(() => { e.target.textContent = 'Tersalin ✓'; setTimeout(() => { e.target.textContent = 'Salin'; }, 1400); }));
 $('#name-form').addEventListener('submit', async e => {
   e.preventDefault();
