@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Billing — Yannz API</title>
-<link rel="icon" href="/api/logo-proxy">
+<link rel="icon" type="image/png" href="/assets/favicon.png?v=2"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
 <meta name="theme-color" content="#0b0b0c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -120,7 +120,7 @@ function renderPlans() {
 
   $('#methods').innerHTML = Object.entries(METHOD).map(([key, m]) => {
     const info = ctx.methods[key];
-    const why = info.available ? m.hint : key === 'QRIS_GATEWAY' ? 'Belum dikonfigurasi' : 'Nomor belum diatur owner';
+    const why = info.available ? m.hint : key === 'QRIS_GATEWAY' ? 'Sedang maintenance' : 'Nomor belum diatur developer';
     return `<label class="choice"${info.available ? '' : ' style="opacity:.45;cursor:not-allowed"'}><input type="radio" name="method" value="${key}"${info.available ? '' : ' disabled'}><b>${m.name}</b><small>${esc(why)}</small></label>`;
   }).join('');
   const firstMethod = document.querySelector('input[name=method]:not([disabled])');
@@ -212,7 +212,7 @@ function renderMethod(order, method) {
     e.target.disabled = true; $('#proof-msg').innerHTML = '<p class="loading">Mengirim bukti…</p>';
     try {
       const d = await post(`/api/orders/${encodeURIComponent(order.id)}/manual`, { method, proof_image: dataUrl });
-      const told = d.notification === 'sent' ? 'Owner sudah menerima bukti kamu lewat Telegram.' : 'Bukti tersimpan dan tampil di panel developer.';
+      const told = 'Bukti tersimpan dan sudah masuk ke panel developer.';
       $('#co-body').innerHTML = `<div class="notice">✅ Bukti terkirim. ${told} Tier aktif setelah developer menyetujui.</div>
         <p>Mau konfirmasi langsung? Kirim pesan ke developer (lampirkan screenshot yang sama):</p>
         <div class="links">${d.links?.whatsapp ? `<a class="btn primary" href="${esc(d.links.whatsapp)}" target="_blank" rel="noopener noreferrer">Kirim via WhatsApp</a>` : ''}${d.links?.telegram ? `<a class="btn" href="${esc(d.links.telegram)}" target="_blank" rel="noopener noreferrer">Kirim via Telegram</a>` : ''}</div>`;

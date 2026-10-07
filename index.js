@@ -337,25 +337,18 @@ app.get('/api/set', (req, res) => {
   res.json(publicSettings);
 });
 
-app.get('/api/logo-proxy', async (req, res) => {
-  try {
-    const logoUrl = settings.logoIconUrl || settings.favicon || "https://img2.pixhost.to/images/9050/745481347_yannganteng-1783009788991.jpg";
-    const response = await axios({
-      method: 'get',
-      url: logoUrl,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://clutch-api.run.app/'
-      },
-      responseType: 'arraybuffer'
-    });
-    
-    res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=86400');
-    return res.send(response.data);
-  } catch (err) {
-    return res.redirect("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=128&h=128&fit=crop");
-  }
+// Site icon (views/assets/favicon.png). /api/logo-proxy is kept for old links and serves the same file.
+app.get(['/api/logo-proxy', '/assets/favicon.png'], (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.type('image/png').sendFile(path.join(__dirname, 'views', 'assets', 'favicon.png'));
+});
+app.get('/assets/apple-touch-icon.png', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.type('image/png').sendFile(path.join(__dirname, 'views', 'assets', 'apple-touch-icon.png'));
+});
+app.get('/favicon.ico', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.type('image/x-icon').sendFile(path.join(__dirname, 'views', 'assets', 'favicon.ico'));
 });
 
 const loadedPluginPaths = new Set();

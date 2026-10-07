@@ -87,7 +87,7 @@ it('system status reports configuration presence only, never values', async () =
   assert.equal(r.json.config.AUTH_SECRET, true);
   assert.equal(r.json.config.PAKASIR_API_KEY, false);
   assert.equal(r.json.payments.automaticSettlement, 'disabled_fail_closed');
-  assert.equal(r.json.notifications.configured, false);
+  assert.equal(r.json.payments.gateway, 'maintenance');
   assert.ok(r.json.plugins.loaded.includes('/api/tools/ping'));
   const text = r.text;
   for (const secret of [process.env.AUTH_SECRET, process.env.DATABASE_URL, process.env.GOOGLE_CLIENT_ID]) assert.ok(!text.includes(secret));
