@@ -53,7 +53,7 @@ module.exports = [
   { name: 'Public AI', desc: 'Chat with Public AI with Dragonfly session support.', path: '/api/ai/publicai', upstream: '/api/ai/publicai',
     params: [{ name: 'text', required: true, aliases: ['prompt'], placeholder: 'Halo' }, chatId] },
   { name: 'Qwen AI', desc: 'AI Assistant by Alibaba Cloud (Qwen) with universal support for Text and any File format (Image, Audio, Video, PDF, Documents) with Dragonfly session cache.', path: '/api/ai/qwen', upstream: '/api/ai/qwen', multipart: true,
-    file: { param: 'fileUrl', field: 'file' },
+    file: { param: 'fileUrl', field: 'file', accept: '*' },
     params: [{ name: 'text', required: true, aliases: ['prompt'], placeholder: 'Ringkas dokumen ini' }, { name: 'fileUrl', type: 'url', placeholder: 'Opsional — URL file https' }, chatId,
       { name: 'search', type: 'bool', placeholder: 'true / false' }, { name: 'think', type: 'bool', placeholder: 'true / false' }] },
   { name: 'Talefy AI Story', desc: 'Generate AI stories based on prompt and genre using Talefy AI.', path: '/api/ai/talefy', upstream: '/api/ai/talefy',

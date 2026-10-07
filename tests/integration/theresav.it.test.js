@@ -201,3 +201,30 @@ it('developer self-test: probes sampled endpoints, marks the rest manual, and di
   assert.deepEqual([blocked.status, blocked.json.error], [404, 'ENDPOINT_UNAVAILABLE']);
   await o('POST', '/owner/api/endpoints/bulk-status', { ids: [claude.id], status: 'active' });
 });
+
+it('file endpoints take a real upload (POST raw body), forwarded as multipart; URL still works for API users', async () => {
+  const PNG = Buffer.from('89504e470d0a1a0a', 'hex');
+  const up = (path, headers) => app.request('POST', path, { cookie: user, rawBody: PNG, headers: { 'content-type': 'image/png', origin: app.origin, 'x-yannz-client': 'web', ...headers } });
+  reply = () => ({ status: 200, json: { status: true, creator: 'X', result: 'ok' } });
+  // GPT-4o: the uploaded bytes become the multipart "image" field; text stays a query param
+  const r = await up('/api/ai/gpt?text=apa+ini&chatId=c1');
+  assert.equal(r.status, 200, r.text);
+  assert.equal(calls[0].method, 'POST');
+  assert.equal(calls[0].form.get('text'), 'apa ini');
+  const sent = calls[0].form.get('image');
+  assert.equal(sent.type, 'image/png');
+  assert.ok(Buffer.from(await sent.arrayBuffer()).equals(PNG));
+  // Lumi Art: upload required — without a file and without a URL it says so
+  reply = () => ({ status: 200, bytes: PNG, type: 'image/png' });
+  const lumi = await up('/api/image/lumiart');
+  assert.equal(lumi.status, 200, lumi.text);
+  assert.match(lumi.headers['content-type'], /^image\/png/);
+  const none = await app.request('GET', '/api/image/lumiart', app.asBrowser(user));
+  assert.deepEqual([none.status, none.json.error], [400, 'PARAM_REQUIRED']);
+  // a too-big upload is refused
+  const big = await app.request('POST', '/api/image/lumiart', { cookie: user, rawBody: Buffer.alloc(9 * 1024 * 1024), headers: { 'content-type': 'image/png', origin: app.origin, 'x-yannz-client': 'web' } });
+  assert.equal(big.status, 413);
+  // the catalog marks the file parameter as type 'file' so the sandbox shows an upload button
+  const gpt = (await app.request('GET', '/api/endpoints')).json.endpoints.AI.find(e => e.cleanPath === '/api/ai/gpt');
+  assert.equal(gpt.params.find(p => p.name === 'imageUrl').type, 'file');
+});
