@@ -221,10 +221,10 @@
   if(oauthParam==='denied'){message.className='message';message.textContent='Google login dibatalkan.'}
   if(oauthParam==='error'){message.className='message';message.textContent='Google login gagal. Periksa konfigurasi Google OAuth.'}
   const authParam=new URLSearchParams(location.search).get('auth');
-  if(authParam==='restricted'){message.className='message';message.textContent='Akun ini sedang dibatasi. Hubungi owner.'}
+  if(authParam==='restricted'){message.className='message';message.textContent='Akun ini sedang dibatasi. Hubungi developer.'}
   if(authParam==='account_missing'){message.className='message';message.textContent='Sesi tidak valid. Silakan login lagi.'}
-  if(authParam==='maintenance'){message.className='message';message.textContent='Website sedang maintenance. Selama maintenance hanya owner yang bisa masuk.'}
-  if(location.pathname==='/owner-login'&&!authParam){message.className='message';message.textContent='Login owner. Selama maintenance hanya akun owner yang bisa masuk.'}
+  if(authParam==='maintenance'){message.className='message';message.textContent='Website sedang maintenance. Selama maintenance hanya developer yang bisa masuk.'}
+  if(/^\/(owner|developer)-login$/.test(location.pathname)&&!authParam){message.className='message';message.textContent='Login developer. Selama maintenance hanya akun developer yang bisa masuk.'}
   if(authParam==='turnstile'){message.className='message';message.textContent='Selesaikan verifikasi keamanan Cloudflare dulu, lalu coba masuk lagi.'}
 
 

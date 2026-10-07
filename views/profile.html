@@ -91,12 +91,12 @@ async function load() {
     profile = (await call('/api/profile')).profile;
     $('#account-name').textContent = profile.accountName;
     showAvatar(profile.avatarUrl);
-    $('#account-sub').textContent = profile.isOwner ? 'Owner' : `Tier ${profile.tier}`;
+    $('#account-sub').textContent = profile.isOwner ? 'Developer' : `Tier ${profile.tier}`;
     $('#user-id').textContent = profile.publicId || profile.id;
     $('#email').textContent = profile.email;
     if ($('#pass-user')) $('#pass-user').value = profile.email;
     $('#full-name').textContent = profile.name || '—';
-    $('#tier').textContent = profile.tier + (profile.tierExpiresAt ? ` · aktif sampai ${when(profile.tierExpiresAt)}` : '');
+    $('#tier').textContent = (profile.isOwner ? 'DEVELOPER' : profile.tier) + (profile.tierExpiresAt ? ` · aktif sampai ${when(profile.tierExpiresAt)}` : '');
     $('#methods').textContent = profile.loginMethods.map(m => m === 'google' ? 'Google' : 'Email & sandi').join(' + ') || '—';
     $('#joined').textContent = when(profile.createdAt);
     $('#default-name').textContent = profile.defaultName;

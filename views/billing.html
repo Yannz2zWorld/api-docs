@@ -51,7 +51,7 @@
         <div class="summary-box" id="summary" aria-live="polite"></div>
         <button id="order-btn" class="primary" type="button">Buat order &amp; bayar</button>
         <p id="notice" aria-live="polite"></p>
-        <p><small>Harga dihitung server dari harga per 30 hari. Order berlaku 2 jam. Tier aktif setelah pembayaran terverifikasi atau disetujui owner. Upgrade ke tier lebih tinggi memulai masa aktif baru; membeli tier yang sama memperpanjang masa aktif.</small></p>
+        <p><small>Harga dihitung server dari harga per 30 hari. Order berlaku 2 jam. Tier aktif setelah pembayaran terverifikasi atau disetujui developer. Upgrade ke tier lebih tinggi memulai masa aktif baru; membeli tier yang sama memperpanjang masa aktif.</small></p>
       </div>
     </div>
   </section>
@@ -72,7 +72,7 @@ const RANK = ['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'];
 const PRESETS = [[7, '7 hari'], [14, '14 hari'], [30, '1 bulan'], [90, '3 bulan'], [180, '6 bulan'], [365, '1 tahun']];
 const METHOD = {
   QRIS_GATEWAY: { name: 'QRIS otomatis', hint: 'Scan QR, diverifikasi gateway' },
-  QRIS: { name: 'QRIS manual', hint: 'Scan QRIS owner + upload bukti' },
+  QRIS: { name: 'QRIS manual', hint: 'Scan QRIS developer + upload bukti' },
   DANA: { name: 'DANA', hint: 'Transfer manual + upload bukti' },
   GOPAY: { name: 'GoPay', hint: 'Transfer manual + upload bukti' }
 };
@@ -96,7 +96,7 @@ const days = () => picked('days') === 'custom' ? Number($('#custom-days').value)
 function renderPlans() {
   const mine = RANK.indexOf(account.tier);
   $('#current').classList.remove('loading');
-  $('#current').innerHTML = `Tier saat ini: <b>${esc(account.tier)}</b>${account.tier === 'FREE' || account.tier === 'OWNER' ? '' : account.tierExpiresAt ? ` · aktif sampai <b>${when(account.tierExpiresAt)}</b>` : ' · permanen'}.`;
+  $('#current').innerHTML = `Tier saat ini: <b>${esc(account.tier === 'OWNER' ? 'DEVELOPER' : account.tier)}</b>${account.tier === 'FREE' || account.tier === 'OWNER' ? '' : account.tierExpiresAt ? ` · aktif sampai <b>${when(account.tierExpiresAt)}</b>` : ' · permanen'}.`;
   const want = new URLSearchParams(location.search).get('tier');
   const cards = tiers.filter(t => t.purchasable).map(t => {
     const r = RANK.indexOf(t.name);
@@ -176,7 +176,7 @@ function renderMethod(order, method) {
       const total = d.gateway?.total_payment || order.amount;
       body.innerHTML = `<div class="qr-box"><img src="/api/orders/${encodeURIComponent(order.id)}/qr.svg?t=${Date.now()}" alt="QRIS pembayaran ${esc(order.order_code)}" width="280" height="280"><b>${rp(total)}</b><small>${d.gateway?.expired_at ? 'Berlaku sampai ' + when(d.gateway.expired_at) : ''}</small></div>
         <p>Scan dengan aplikasi e-wallet / m-banking yang mendukung QRIS. ${Number(total) !== Number(order.amount) ? 'Total sudah termasuk biaya gateway.' : ''}</p>
-        <p class="notice">${ctx.methods.QRIS_GATEWAY.autoVerified ? 'Tier aktif otomatis setelah pembayaran terverifikasi.' : 'Setelah bayar, owner memverifikasi pembayaran di dashboard gateway lalu mengaktifkan tier kamu.'}</p>
+        <p class="notice">${ctx.methods.QRIS_GATEWAY.autoVerified ? 'Tier aktif otomatis setelah pembayaran terverifikasi.' : 'Setelah bayar, developer memverifikasi pembayaran di dashboard gateway lalu mengaktifkan tier kamu.'}</p>
         <div class="links"><button type="button" class="ghost" id="co-refresh">Saya sudah bayar — cek status</button></div>`;
       $('#co-refresh').onclick = () => loadOrders();
     }).catch(e => { body.innerHTML = `<p class="error">${esc(e.message)}</p>`; });
@@ -194,7 +194,7 @@ function renderMethod(order, method) {
     <h3>Upload bukti pembayaran</h3>
     <input type="file" id="proof" accept="image/*" hidden>
     <label class="dropzone" id="drop" for="proof"><span id="drop-text">Tap untuk pilih screenshot bukti transfer (JPG/PNG, maks 2 MB setelah dikompres)</span></label>
-    <button type="button" class="primary" id="send-proof" disabled>Kirim bukti ke owner</button>
+    <button type="button" class="primary" id="send-proof" disabled>Kirim bukti ke developer</button>
     <div id="proof-msg" aria-live="polite"></div>`;
   $('#copy-number')?.addEventListener('click', e => navigator.clipboard.writeText($('#acct-number').textContent).then(() => { e.target.textContent = 'Tersalin ✓'; }));
   let dataUrl = null;
@@ -212,9 +212,9 @@ function renderMethod(order, method) {
     e.target.disabled = true; $('#proof-msg').innerHTML = '<p class="loading">Mengirim bukti…</p>';
     try {
       const d = await post(`/api/orders/${encodeURIComponent(order.id)}/manual`, { method, proof_image: dataUrl });
-      const told = d.notification === 'sent' ? 'Owner sudah menerima bukti kamu lewat Telegram.' : 'Bukti tersimpan dan tampil di panel owner.';
-      $('#co-body').innerHTML = `<div class="notice">✅ Bukti terkirim. ${told} Tier aktif setelah owner menyetujui.</div>
-        <p>Mau konfirmasi langsung? Kirim pesan ke owner (lampirkan screenshot yang sama):</p>
+      const told = d.notification === 'sent' ? 'Owner sudah menerima bukti kamu lewat Telegram.' : 'Bukti tersimpan dan tampil di panel developer.';
+      $('#co-body').innerHTML = `<div class="notice">✅ Bukti terkirim. ${told} Tier aktif setelah developer menyetujui.</div>
+        <p>Mau konfirmasi langsung? Kirim pesan ke developer (lampirkan screenshot yang sama):</p>
         <div class="links">${d.links?.whatsapp ? `<a class="btn primary" href="${esc(d.links.whatsapp)}" target="_blank" rel="noopener noreferrer">Kirim via WhatsApp</a>` : ''}${d.links?.telegram ? `<a class="btn" href="${esc(d.links.telegram)}" target="_blank" rel="noopener noreferrer">Kirim via Telegram</a>` : ''}</div>`;
       loadOrders();
     } catch (err) { $('#proof-msg').innerHTML = `<p class="error">${esc(err.message)}</p>`; e.target.disabled = false; }
@@ -244,7 +244,7 @@ async function compress(file) {
 function orderState(o) {
   if (o.status === 'paid') return '<p class="notice">✅ Lunas. Tier sudah aktif.</p>';
   if (o.status !== 'pending') return `<p><small>Order ${esc(o.status)}.</small></p>`;
-  if (o.provider === 'manual' && o.payment_status === 'pending') return '<p><small>⏳ Bukti terkirim — menunggu approval owner.</small></p>';
+  if (o.provider === 'manual' && o.payment_status === 'pending') return '<p><small>⏳ Bukti terkirim — menunggu approval developer.</small></p>';
   return `<div class="row"><button type="button" class="primary sm" data-pay="${esc(o.id)}">${o.provider === 'pakasir' ? 'Lihat QR / ganti metode' : 'Bayar sekarang'}</button></div>`;
 }
 

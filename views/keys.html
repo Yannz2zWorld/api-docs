@@ -67,7 +67,7 @@ async function load() {
     const active = d.keys.filter(k => k.status === 'active').length;
     const cap = d.limit === null ? 'tanpa batas' : d.limit;
     $('#summary').classList.remove('loading');
-    $('#summary').textContent = `Tier ${d.tier} · ${active} key aktif dari ${cap}.`;
+    $('#summary').textContent = `Tier ${d.tier === 'OWNER' ? 'DEVELOPER' : d.tier} · ${active} key aktif dari ${cap}.`;
     const full = d.limit !== null && active >= d.limit;
     if ($('#create-btn')) $('#create-btn').disabled = full;
     if (d.limit === 0) {
@@ -77,7 +77,7 @@ async function load() {
     }
     $('#list').innerHTML = d.keys.length ? '<ul class="list">' + d.keys.map(k => `<li><div><b>${esc(k.name)}</b> <span class="chip ${esc(k.status)}">${esc(k.status)}</span><br><code>${esc(k.key_prefix)}••••••</code>${k.custom ? ' <span class="chip">custom</span>' : ''}${k.tier ? ` <span class="chip pending">tier ${esc(k.tier)}</span>` : ''}${k.expires_at ? (Date.parse(k.expires_at) <= Date.now() ? ` <span class="chip expired">kedaluwarsa ${when(k.expires_at)}</span>` : ` <span class="chip">aktif s/d ${when(k.expires_at)}</span>`) : ''}<br><small>Dibuat ${when(k.created_at)} · Terakhir dipakai ${when(k.last_used_at)}${k.revoked_at ? ' · Dicabut ' + when(k.revoked_at) : ''}</small></div>${k.status === 'active' ? `<div><button class="danger" type="button" data-revoke="${esc(k.id)}" data-name="${esc(k.name)}">Cabut</button></div>` : ''}</li>`).join('') + '</ul>' : '<p>Belum ada key.</p>';
     // Private keys the owner gave this account: usable only while signed in to this account.
-    $('#shared').innerHTML = (d.shared || []).length ? '<h3 style="margin-top:22px">Key private dari owner</h3><p class="muted"><small>Key ini hanya berlaku untuk akun kamu (dicek saat kamu login). Nilai key-nya diberikan langsung oleh owner.</small></p><ul class="list">' + d.shared.map(k => `<li><div><b>${esc(k.name)}</b> <span class="chip ${esc(k.status)}">${esc(k.status === 'disabled' ? 'nonaktif' : k.status)}</span> <span class="chip">private</span><br><code>${esc(k.key_prefix)}••••••</code>${k.tier ? ` <span class="chip pending">tier ${esc(k.tier)}</span>` : ''}${k.expires_at ? ` <span class="chip">aktif s/d ${when(k.expires_at)}</span>` : ' <span class="chip">tanpa batas</span>'}</div></li>`).join('') + '</ul>' : '';
+    $('#shared').innerHTML = (d.shared || []).length ? '<h3 style="margin-top:22px">Key private dari developer</h3><p class="muted"><small>Key ini hanya berlaku untuk akun kamu (dicek saat kamu login). Nilai key-nya diberikan langsung oleh developer.</small></p><ul class="list">' + d.shared.map(k => `<li><div><b>${esc(k.name)}</b> <span class="chip ${esc(k.status)}">${esc(k.status === 'disabled' ? 'nonaktif' : k.status)}</span> <span class="chip">private</span><br><code>${esc(k.key_prefix)}••••••</code>${k.tier ? ` <span class="chip pending">tier ${esc(k.tier)}</span>` : ''}${k.expires_at ? ` <span class="chip">aktif s/d ${when(k.expires_at)}</span>` : ' <span class="chip">tanpa batas</span>'}</div></li>`).join('') + '</ul>' : '';
   } catch (e) { $('#list').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
 }
 $('#create-panel').addEventListener('click', async e => {

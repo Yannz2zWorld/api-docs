@@ -122,7 +122,7 @@ function renderSessionStatus() {
   const key = $('#sandbox-apikey-input').value.trim();
   const badge = $('#auth-badge');
   if (key) { badge.className = 'chip ok'; badge.textContent = 'API key'; }
-  else if (sessionInfo) { badge.className = 'chip ok'; badge.textContent = 'sesi ' + sessionInfo.user.tier; }
+  else if (sessionInfo) { badge.className = 'chip ok'; badge.textContent = 'sesi ' + (sessionInfo.user.isOwner ? 'DEVELOPER' : sessionInfo.user.tier); }
   else { badge.className = 'chip bad'; badge.textContent = 'perlu login / key'; }
   if (!sessionInfo) {
     $('#session-status').innerHTML = 'Belum login. Masukkan API key, atau <a href="/">login</a> untuk memakai kuota FREE 100 request/hari.';
@@ -130,7 +130,7 @@ function renderSessionStatus() {
   }
   const u = sessionInfo.usage || {};
   const quota = u.limit == null ? 'kuota tanpa batas' : `${num(u.used)} / ${num(u.limit)} terpakai hari ini (sisa ${num(u.remaining)})`;
-  $('#session-status').textContent = `Login sebagai ${sessionInfo.user.email} · tier ${sessionInfo.user.tier} · ${quota}.`;
+  $('#session-status').textContent = `Login sebagai ${sessionInfo.user.email} · tier ${sessionInfo.user.isOwner ? 'DEVELOPER' : sessionInfo.user.tier} · ${quota}.`;
 }
 fetch('/auth/me', { credentials: 'same-origin', cache: 'no-store' })
   .then(r => (r.ok ? r.json() : null))
@@ -157,7 +157,7 @@ function selectEndpoint(api, category) {
   selectedApi = api;
   $('#active-api-name').textContent = api.name;
   $('#active-api-desc').textContent = api.desc || '';
-  const tier = api.access?.minimum_tier || 'FREE';
+  const tier = (t => (t === 'OWNER' ? 'DEVELOPER' : t))(api.access?.minimum_tier || 'FREE');
   const state = api.access?.status && api.access.status !== 'active' ? ['nonaktif', 'bad'] : api.access?.locked ? ['terkunci', 'warn'] : ['aktif', 'ok'];
   $('#active-api-chips').innerHTML = `<span class="chip">${esc(category)}</span><span class="chip">tier ${esc(tier)}</span><span class="chip ${state[1]}">${state[0]}</span>`;
   const params = paramsOf(api);

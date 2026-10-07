@@ -204,7 +204,7 @@ app.locals.maintenance = maintenance;
 // owner (OWNER_EMAIL) and what the owner needs to sign in. Sign-in itself is checked again in
 // each handler (password routes by the email given, Google after the token is verified), so
 // calling an endpoint directly cannot get around it.
-const MAINTENANCE_OPEN = new Set(['/health', '/health/database', '/api/logo-proxy', '/api/set', '/auth/config', '/auth/me', '/auth/logout', '/owner-login', '/auth/google', '/auth/google/callback', '/auth/google/credential', '/favicon.ico']);
+const MAINTENANCE_OPEN = new Set(['/health', '/health/database', '/api/logo-proxy', '/api/set', '/auth/config', '/auth/me', '/auth/logout', '/owner-login', '/developer-login', '/auth/google', '/auth/google/callback', '/auth/google/credential', '/favicon.ico']);
 const MAINTENANCE_SIGN_IN = new Set(['/auth/login', '/auth/register', '/auth/email/verify', '/auth/email/resend', '/auth/password/forgot', '/auth/password/reset']);
 const SITE_PAGES = new Set(['/', '/home', '/keys', '/billing', '/pricing', '/profile', '/owner', '/api', '/api/playground', '/3d', '/scythe', '/usage']);
 let maintenancePage = null;
@@ -241,7 +241,9 @@ app.use(async (req, res, next) => {
   }
   return sendMaintenance(req, res, m.message);
 });
-app.get('/owner-login', (req, res) => res.sendFile(path.join(__dirname, 'views', 'login.html')));
+// The owner is shown as "Developer": /developer and /developer-login are aliases of /owner and /owner-login.
+app.get(['/owner-login', '/developer-login'], (req, res) => res.sendFile(path.join(__dirname, 'views', 'login.html')));
+app.get('/developer', (req, res) => res.redirect('/owner'));
 // Page visits of signed-in users for the owner's activity log (best effort, throttled).
 const TRACKED_PAGES = new Set(['/home', '/keys', '/billing', '/pricing', '/profile', '/owner', '/api', '/api/playground', '/3d', '/scythe']);
 app.use((req, res, next) => {
@@ -384,9 +386,9 @@ async function resolveIdentity(req) {
       await apiKeyService.recordInvalidKey(clientIp);
       return { error: [401, 'INVALID_API_KEY', 'API key tidak valid.'] };
     }
-    if (key.key_status === 'disabled') return { error: [403, 'API_KEY_DISABLED', 'API key ini sedang dinonaktifkan oleh owner.'] };
+    if (key.key_status === 'disabled') return { error: [403, 'API_KEY_DISABLED', 'API key ini sedang dinonaktifkan oleh developer.'] };
     if (key.key_status !== 'active') return { error: [401, 'API_KEY_REVOKED', 'API key ini sudah dicabut.'] };
-    if (key.key_expires_at && new Date(key.key_expires_at) <= new Date()) return { error: [401, 'API_KEY_EXPIRED', 'Masa aktif API key ini sudah habis. Minta owner memperpanjangnya.', { expiredAt: new Date(key.key_expires_at).toISOString() }] };
+    if (key.key_expires_at && new Date(key.key_expires_at) <= new Date()) return { error: [401, 'API_KEY_EXPIRED', 'Masa aktif API key ini sudah habis. Minta developer memperpanjangnya.', { expiredAt: new Date(key.key_expires_at).toISOString() }] };
     if (key.user_status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun tidak aktif.'] };
     const kind = key.key_visibility;
     if (kind) {
@@ -398,7 +400,7 @@ async function resolveIdentity(req) {
         return { identity: { userId: caller.id, keyId: key.key_id, tier: 'OWNER' } };
       }
       if (kind === 'private') {
-        if (!caller) return { error: [401, 'PRIVATE_KEY_LOGIN_REQUIRED', 'API key ini private: login dulu dengan akun yang diberi akses oleh owner.'] };
+        if (!caller) return { error: [401, 'PRIVATE_KEY_LOGIN_REQUIRED', 'API key ini private: login dulu dengan akun yang diberi akses oleh developer.'] };
         if (!caller.isOwner && !(await apiKeyService.hasAccess(key.key_id, caller.id))) return { error: [403, 'PRIVATE_KEY_DENIED', 'API key ini private dan tidak diberikan untuk akun kamu.'] };
       }
       // public / private: the key's own tier and daily quota (never the owner's account tier).
@@ -436,7 +438,7 @@ function apiGateway(cleanPath, run) {
       endpoint = (await query('SELECT e.id,e.status,e.locked,e.minimum_tier,s.maintenance_enabled,s.maintenance_message FROM endpoints e LEFT JOIN server_settings s ON s.id=1 WHERE e.path=$1 LIMIT 1', [cleanPath]))[0];
       if (!endpoint) return gatewayFail(res, 503, 'ENDPOINT_REGISTRY_NOT_READY', 'Registry endpoint belum tersedia.');
       if (endpoint.status !== 'active') return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', 'Endpoint sedang dinonaktifkan.');
-      if (endpoint.locked && !owner) return gatewayFail(res, 403, 'ENDPOINT_LOCKED', 'Endpoint ini sedang dikunci oleh owner.');
+      if (endpoint.locked && !owner) return gatewayFail(res, 403, 'ENDPOINT_LOCKED', 'Endpoint ini sedang dikunci oleh developer.');
       if (!owner && !canAccess(identity.tier, endpoint.minimum_tier, false)) {
         return gatewayFail(res, 403, 'TIER_RESTRICTED', `Endpoint ini membutuhkan tier ${endpoint.minimum_tier} atau lebih tinggi.`, { requiredTier: endpoint.minimum_tier, currentTier: identity.tier });
       }
@@ -636,7 +638,7 @@ app.post('/auth/google/credential', turnstile.guard(), async (req, res) => {
     return fail(c.status, c.error, 'Layanan akun sementara tidak tersedia. Silakan coba lagi.', { stage: 'database', error: c.error, code: c.code });
   }
   if (account.status !== 'active') {
-    return fail(403, 'ACCOUNT_RESTRICTED', 'Akun ini tidak aktif. Hubungi owner jika merasa ini keliru.');
+    return fail(403, 'ACCOUNT_RESTRICTED', 'Akun ini tidak aktif. Hubungi developer jika merasa ini keliru.');
   }
   try {
     const sv = await userService.secureGoogleLink(account.id);

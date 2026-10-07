@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Owner Console — Yannz API</title>
+<title>Developer Console — Yannz API</title>
 <link rel="icon" href="/api/logo-proxy">
 <meta name="theme-color" content="#0b0b0c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,10 +25,10 @@
 </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><a href="/owner" aria-current="page">Owner</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><a href="/owner" aria-current="page">Developer</a></nav></div></header>
 <main class="wrap wide">
-  <span class="kicker">Owner only</span>
-  <h1>Owner Console</h1>
+  <span class="kicker">Developer only</span>
+  <h1>Developer Console</h1>
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="status" aria-selected="true">Status</button>
     <button role="tab" data-tab="dash">Dashboard</button>
@@ -49,7 +49,7 @@
     <h2>Users</h2>
     <form class="row" id="user-filter">
       <input name="q" placeholder="Cari email / nama / ID (mis. 12345678)" aria-label="Cari user">
-      <select name="tier" aria-label="Filter tier"><option value="">Semua tier</option><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option>OWNER</option></select>
+      <select name="tier" aria-label="Filter tier"><option value="">Semua tier</option><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option value="OWNER">DEVELOPER</option></select>
       <select name="status" aria-label="Filter status"><option value="">Semua status</option><option>active</option><option>banned</option><option>pending</option></select>
       <button class="primary" type="submit">Cari</button>
     </form>
@@ -86,20 +86,20 @@
       <label class="full"><span><b>5</b> Pemilik key</span><select name="kind">
         <option value="public">Public — semua user boleh pakai (tidak terikat email)</option>
         <option value="private">Private — hanya user/email yang diberi akses</option>
-        <option value="owner">Owner — hanya owner (owner key)</option></select></label>
+        <option value="owner">Developer — hanya developer (developer key)</option></select></label>
       <label class="full" id="key-access-field" hidden><span>Akses private — satu email / ID per baris</span><textarea name="access" rows="3" placeholder="user1@gmail.com&#10;user2@gmail.com&#10;12345678" spellcheck="false" style="min-height:80px"></textarea></label>
       <div class="actions"><button class="primary" type="submit">Buat key</button>
-        <p class="muted"><b>Public</b>: siapa pun yang punya key bisa memakai. <b>Private</b>: server mengecek key <i>dan</i> akun yang sedang login — user lain ditolak walau tahu key-nya. <b>Owner</b>: hanya akun owner. Key hanya bisa mengakses endpoint sampai tier-nya dan punya kuota harian sendiri. Custom key berlaku untuk semua jenis dan tidak boleh sama dengan key lain.</p></div>
+        <p class="muted"><b>Public</b>: siapa pun yang punya key bisa memakai. <b>Private</b>: server mengecek key <i>dan</i> akun yang sedang login — user lain ditolak walau tahu key-nya. <b>Developer</b>: hanya akun developer. Key hanya bisa mengakses endpoint sampai tier-nya dan punya kuota harian sendiri. Custom key berlaku untuk semua jenis dan tidak boleh sama dengan key lain.</p></div>
       <div class="full" id="key-made" hidden></div>
     </form>
     <p class="muted" id="keys-totals"></p>
     <form class="row" id="key-filter" autocomplete="off">
       <input name="q" type="search" placeholder="Cari email, nama key, awalan — atau tempel API key lengkap" aria-label="Cari API key" style="flex:1;min-width:240px" spellcheck="false">
-      <select name="kind" aria-label="Filter jenis key"><option value="">Semua jenis</option><option value="owner">Owner</option><option value="public">Public</option><option value="private">Private</option><option value="personal">Key user</option></select>
+      <select name="kind" aria-label="Filter jenis key"><option value="">Semua jenis</option><option value="owner">Developer</option><option value="public">Public</option><option value="private">Private</option><option value="personal">Key user</option></select>
       <select name="status" aria-label="Filter status key"><option value="">Semua status</option><option value="active">active</option><option value="disabled">nonaktif</option><option value="revoked">revoked</option></select>
       <button class="primary" type="submit">Cari</button>
     </form>
-    <p class="muted"><small>Nilai key lengkap tidak pernah disimpan (hanya hash SHA-256), jadi tidak bisa ditampilkan lagi — termasuk untuk owner. Tempel key lengkap di pencarian untuk menemukan pemiliknya. <b>Nonaktifkan</b> mematikan sementara (bisa diaktifkan lagi); <b>Reset</b> membuat nilai key baru dan key lama langsung tidak berlaku; <b>Cabut</b> mematikan permanen tapi menyimpan catatannya; <b>Hapus</b> menghapus key (riwayat pemakaian tetap ada).</small></p>
+    <p class="muted"><small>Nilai key lengkap tidak pernah disimpan (hanya hash SHA-256), jadi tidak bisa ditampilkan lagi — termasuk untuk developer. Tempel key lengkap di pencarian untuk menemukan pemiliknya. <b>Nonaktifkan</b> mematikan sementara (bisa diaktifkan lagi); <b>Reset</b> membuat nilai key baru dan key lama langsung tidak berlaku; <b>Cabut</b> mematikan permanen tapi menyimpan catatannya; <b>Hapus</b> menghapus key (riwayat pemakaian tetap ada).</small></p>
     <div id="keys-data">Memuat…</div>
   </section>
 
@@ -118,7 +118,7 @@ module.exports = async (req, res) =&gt; {
   res.json({ status: true, result: text.toUpperCase() });
 };"></textarea></label>
       <label class="full"><span><b>4</b> Deskripsi</span><input name="description" placeholder="Apa yang dilakukan endpoint ini" maxlength="500"></label>
-      <label><span><b>5</b> Tier minimum</span><select name="minimum_tier"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option>OWNER</option></select></label>
+      <label><span><b>5</b> Tier minimum</span><select name="minimum_tier"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option value="OWNER">DEVELOPER</option></select></label>
       <div class="actions"><button class="primary" type="submit" id="ep-submit">Tambah &amp; deploy</button>
         <p class="muted">Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), lalu endpoint aktif. Script berjalan di server, jadi hanya upload kode yang kamu percaya.</p></div>
     </form>
@@ -133,7 +133,7 @@ module.exports = async (req, res) =&gt; {
 
   <section class="panel" id="tab-server" hidden>
     <h2>Maintenance Info Website</h2>
-    <p class="muted">Saat ON, <b>seluruh website</b> masuk mode maintenance: Home, Login, Register, Profile, Dashboard, API dan halaman user lain menampilkan info maintenance; login Google, login email + sandi dan daftar ditolak (dicek di server). Hanya kamu (owner) yang tetap bisa masuk — lewat <a href="/owner-login">/owner-login</a> — dan mengatur website.</p>
+    <p class="muted">Saat ON, <b>seluruh website</b> masuk mode maintenance: Home, Login, Register, Profile, Dashboard, API dan halaman user lain menampilkan info maintenance; login Google, login email + sandi dan daftar ditolak (dicek di server). Hanya kamu (developer) yang tetap bisa masuk — lewat <a href="/developer-login">/developer-login</a> — dan mengatur website.</p>
     <label class="row"><input type="checkbox" id="maint"> Maintenance Info Website = ON</label>
     <div class="row"><input id="maint-msg" placeholder="Pesan maintenance" style="flex:1;min-width:240px" maxlength="500"><button class="primary" id="save-server" type="button">Simpan</button></div>
     <p id="server-msg" aria-live="polite"></p>
@@ -188,6 +188,7 @@ const when = v => v ? new Date(v).toLocaleString('id-ID') : '—';
 const num = n => n === null || n === undefined ? '∞' : Number(n).toLocaleString('id-ID');
 const chip = (text, cls = '') => `<span class="chip ${cls}">${esc(text)}</span>`;
 const TIERS = ['FREE', 'SULTAN', 'SEPUH', 'DEWA'];
+const tierName = t => (t === 'OWNER' ? 'DEVELOPER' : t);   // the OWNER role is shown as DEVELOPER
 
 async function api(url, opts = {}) {
   const r = await fetch(url, { credentials: 'same-origin', ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
@@ -248,7 +249,7 @@ loaders.users = async () => {
     const d = await api('/owner/users?' + qs);
     $('#users-data').innerHTML = d.users.length ? `<table><tr><th>User</th><th>Tier / status</th><th>Hari ini</th><th>Aksi</th></tr>${d.users.map(u => `<tr>
       <td><b>${esc(u.name)}</b><br><small>${esc(u.email)}</small></td>
-      <td>${chip(u.tier, u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? `<br><small>${esc(u.ban_reason)}</small>` : ''}</td>
+      <td>${chip(tierName(u.tier), u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? `<br><small>${esc(u.ban_reason)}</small>` : ''}</td>
       <td>${num(u.used_today)} req · ${num(u.active_keys)} key</td>
       <td><button class="sm" data-act="detail" data-id="${esc(u.id)}">Detail</button>${u.isOwner ? '' : ` ${u.status === 'banned' ? `<button class="sm" data-act="unban" data-id="${esc(u.id)}">Unban</button>` : `<button class="sm danger" data-act="ban" data-id="${esc(u.id)}">Ban</button>`} <button class="sm danger" data-act="delete" data-id="${esc(u.id)}" data-email="${esc(u.email)}">Hapus</button>`}<br><small>ID <code>${esc(u.publicId || u.id)}</code></small></td></tr>`).join('')}</table>` : '<p>Tidak ada user yang cocok.</p>';
   } catch (e) { fail('#users-data', e); }
@@ -262,10 +263,10 @@ async function showUser(id) {
     const tierSel = `<select id="tier-sel">${TIERS.map(t => `<option ${t === u.storedTier ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
     $('#user-detail').innerHTML = `<h2>${esc(u.name)}</h2><p>${esc(u.email)}<br><small>ID <code>${esc(u.publicId || u.id)}</code> · dibuat ${when(u.created_at)}</small></p>
       <p>Login: ${(u.loginMethods || []).map(m => chip(m)).join(' ') || '—'} ${u.email_verified ? chip('email terverifikasi', 'ok') : chip('email belum diverifikasi', 'warn')}</p>
-      <p>${chip(u.tier, u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? ` <small>Alasan: ${esc(u.ban_reason)}</small>` : ''}
+      <p>${chip(tierName(u.tier), u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? ` <small>Alasan: ${esc(u.ban_reason)}</small>` : ''}
         <br><small>${u.isOwner || u.tier === 'FREE' ? (u.storedTier !== u.tier && !u.isOwner ? `Tier ${esc(u.storedTier)} sudah kedaluwarsa ${when(u.tier_expires_at)}` : '') : u.tierExpiresAt ? 'Aktif sampai ' + when(u.tierExpiresAt) : 'Tanpa masa berlaku'}</small></p>
       <p><b>Kuota hari ini:</b> ${num(d.usage.used)} / ${num(d.usage.limit)} · sisa ${num(d.usage.remaining)}</p>
-      ${u.isOwner ? '<p class="muted">Akun owner (OWNER_EMAIL) tidak bisa diban, diubah tier, atau dihapus dari panel.</p>' : `<div class="row">${tierSel}<input id="tier-days" type="number" min="1" max="3650" placeholder="hari (kosong = permanen)" style="width:190px"><button class="sm primary" data-act="tier" data-id="${esc(u.id)}">Set tier</button>
+      ${u.isOwner ? '<p class="muted">Akun developer (OWNER_EMAIL) tidak bisa diban, diubah tier, atau dihapus dari panel.</p>' : `<div class="row">${tierSel}<input id="tier-days" type="number" min="1" max="3650" placeholder="hari (kosong = permanen)" style="width:190px"><button class="sm primary" data-act="tier" data-id="${esc(u.id)}">Set tier</button>
         ${u.status === 'pending' ? `<button class="sm" data-act="approve" data-id="${esc(u.id)}">Approve</button>` : ''}
         ${u.status === 'banned' ? `<button class="sm" data-act="unban" data-id="${esc(u.id)}">Unban</button>` : `<button class="sm danger" data-act="ban" data-id="${esc(u.id)}">Ban</button>`}
         <button class="sm danger" data-act="delete" data-id="${esc(u.id)}" data-email="${esc(u.email)}">Hapus user</button></div>`}
@@ -307,7 +308,7 @@ const expiry = k => {
   return `aktif s/d ${when(k.expires_at)} <small>(${h < 48 ? h + ' jam' : Math.round(h / 24) + ' hari'} lagi)</small>`;
 };
 document.querySelectorAll('select[name=duration],select[name=extend]').forEach(sel => sel.addEventListener('change', () => { sel.parentElement.querySelector('[name=days]').hidden = sel.value !== 'custom'; }));
-const KEY_KIND = { public: 'Public', private: 'Private', owner: 'Owner' };
+const KEY_KIND = { public: 'Public', private: 'Private', owner: 'Developer' };
 const kindChip = k => k.visibility ? chip(KEY_KIND[k.visibility], k.visibility === 'owner' ? 'bad' : k.visibility === 'private' ? 'warn' : 'ok') : chip('key user');
 function keyKindChanged() {
   const kind = $('#key-new').kind.value;
@@ -358,10 +359,10 @@ loaders.keys = async () => {
   try {
     // POST, so a pasted full key never lands in a URL.
     const d = await send('/owner/keys/search', 'POST', { q: f.get('q') || '', status: f.get('status') || '', kind: f.get('kind') || '' });
-    $('#keys-totals').textContent = `${num(d.totals.active)} key aktif dari ${num(d.totals.total)} total.` + (d.ownerKey === 'created' ? ' Owner key "Yannz2z" dibuat.' : d.ownerKey === 'converted' ? ' Key "Yannz2z" kamu sekarang jadi owner key.' : d.ownerKey === 'taken' ? ' ⚠ "Yannz2z" sudah dipakai key user lain — buat owner key dengan custom key berbeda.' : d.ownerKey === 'unavailable' ? ' ⚠ Jalankan migration 011 untuk owner key / public / private.' : '');
+    $('#keys-totals').textContent = `${num(d.totals.active)} key aktif dari ${num(d.totals.total)} total.` + (d.ownerKey === 'created' ? ' Developer key "Yannz2z" dibuat.' : d.ownerKey === 'converted' ? ' Key "Yannz2z" kamu sekarang jadi developer key.' : d.ownerKey === 'taken' ? ' ⚠ "Yannz2z" sudah dipakai key user lain — buat developer key dengan custom key berbeda.' : d.ownerKey === 'unavailable' ? ' ⚠ Jalankan migration 011 untuk developer key / public / private.' : '');
     $('#keys-data').innerHTML = d.keys.length ? `<table><tr><th>Key</th><th>Pemilik</th><th>Status</th><th>Dibuat / terakhir dipakai</th><th>Aksi</th></tr>${d.keys.map(k => `<tr${k.exact_match ? ' style="outline:2px solid var(--accent)"' : ''}>
-      <td><b>${esc(k.name)}</b> ${kindChip(k)}${k.custom ? ' ' + chip('custom') : ''}${k.exact_match ? ' ' + chip('cocok persis', 'ok') : ''}<br><code>${esc(k.key_prefix)}…</code><br>${k.visibility === 'owner' ? '<small>akses OWNER</small>' : k.tier ? chip('tier ' + k.tier, 'warn') : '<small>tier ikut akun</small>'} <small>${expiry(k)}</small></td>
-      <td>${k.visibility === 'public' ? '<small>Semua user</small>' : k.visibility === 'owner' ? '<small>Hanya owner</small>' : k.visibility === 'private' ? (k.access.length ? k.access.map(u => `<small>${esc(u.email)}${u.publicId ? ' · ' + esc(u.publicId) : ''}</small>`).join('<br>') : '<small class="error">belum ada akses</small>') : `<button class="sm" type="button" data-act="detail" data-id="${esc(k.user_id)}">${esc(k.user_name || k.user_email)}</button><br><small>${esc(k.user_email)} · ${esc(k.user_tier)}${k.user_status !== 'active' ? ' · ' + esc(k.user_status) : ''}</small>`}</td>
+      <td><b>${esc(k.name)}</b> ${kindChip(k)}${k.custom ? ' ' + chip('custom') : ''}${k.exact_match ? ' ' + chip('cocok persis', 'ok') : ''}<br><code>${esc(k.key_prefix)}…</code><br>${k.visibility === 'owner' ? '<small>akses DEVELOPER</small>' : k.tier ? chip('tier ' + k.tier, 'warn') : '<small>tier ikut akun</small>'} <small>${expiry(k)}</small></td>
+      <td>${k.visibility === 'public' ? '<small>Semua user</small>' : k.visibility === 'owner' ? '<small>Hanya developer</small>' : k.visibility === 'private' ? (k.access.length ? k.access.map(u => `<small>${esc(u.email)}${u.publicId ? ' · ' + esc(u.publicId) : ''}</small>`).join('<br>') : '<small class="error">belum ada akses</small>') : `<button class="sm" type="button" data-act="detail" data-id="${esc(k.user_id)}">${esc(k.user_name || k.user_email)}</button><br><small>${esc(k.user_email)} · ${esc(k.user_tier)}${k.user_status !== 'active' ? ' · ' + esc(k.user_status) : ''}</small>`}</td>
       <td>${chip(k.status === 'disabled' ? 'nonaktif' : k.status, k.status === 'active' ? 'ok' : k.status === 'disabled' ? 'warn' : '')}${k.revoked_at ? `<br><small>dicabut ${when(k.revoked_at)}</small>` : ''}</td>
       <td><small>${when(k.created_at)}<br>${k.last_used_at ? 'dipakai ' + when(k.last_used_at) : 'belum pernah dipakai'}</small></td>
       <td>${keyButtons(k)}</td></tr>`).join('')}</table>` : '<p>Tidak ada API key yang cocok.</p>';
@@ -437,7 +438,7 @@ loaders.endpoints = async () => {
     $('#endpoints-data').innerHTML = `<table><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Status</th><th>Aksi</th></tr>${d.endpoints.map(e => `<tr>
       <td><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></td>
       <td>${e.handler_loaded ? chip('deployed', 'ok') : e.plugin ? chip('menunggu deploy', 'warn') : chip('metadata only', 'warn')}</td>
-      <td><select data-ep-tier="${esc(e.id)}">${['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'].map(t => `<option ${t === e.minimum_tier ? 'selected' : ''}>${t}</option>`).join('')}</select></td>
+      <td><select data-ep-tier="${esc(e.id)}">${['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'].map(t => `<option value="${t}" ${t === e.minimum_tier ? 'selected' : ''}>${tierName(t)}</option>`).join('')}</select></td>
       <td>${chip(e.status, e.status === 'active' ? 'ok' : 'bad')} ${e.locked ? chip('locked', 'bad') : chip('open', 'ok')}</td>
       <td><button class="sm" data-ep="${e.locked ? 'unlock' : 'lock'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.locked ? 'Unlock' : 'Lock'}</button>
           <button class="sm" data-ep="status" data-status="${e.status === 'active' ? 'disabled' : 'active'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.status === 'active' ? 'Disable' : 'Enable'}</button>
@@ -521,7 +522,7 @@ loaders.server = async () => {
     $('#dana-number').value = settings.payment_dana_number || ''; $('#dana-name').value = settings.payment_dana_name || '';
     $('#gopay-number').value = settings.payment_gopay_number || ''; $('#gopay-name').value = settings.payment_gopay_name || '';
     $('#notify-state').textContent = notifications?.telegram
-      ? 'Notifikasi Telegram aktif: bukti pembayaran manual dikirim ke chat owner.'
+      ? 'Notifikasi Telegram aktif: bukti pembayaran manual dikirim ke chat developer.'
       : 'Notifikasi Telegram belum aktif (set TELEGRAM_BOT_TOKEN dan TELEGRAM_OWNER_CHAT_ID di Vercel). Bukti tetap tampil di tab Payments; pembeli juga diberi tombol WhatsApp.';
   } catch (e) { $('#server-msg').textContent = e.message; }
 };
@@ -533,7 +534,7 @@ $('#save-pay').addEventListener('click', async () => {
 });
 $('#save-server').addEventListener('click', async () => {
   const enabled = $('#maint').checked;
-  if (!confirm(enabled ? 'Aktifkan Maintenance Info Website? Seluruh website ditutup untuk semua user kecuali owner, dan user tidak bisa login.' : 'Matikan maintenance? Website kembali normal.')) return;
+  if (!confirm(enabled ? 'Aktifkan Maintenance Info Website? Seluruh website ditutup untuk semua user kecuali developer, dan user tidak bisa login.' : 'Matikan maintenance? Website kembali normal.')) return;
   try { const d = await send('/owner/server', 'PATCH', { maintenance_enabled: enabled, maintenance_message: $('#maint-msg').value }); $('#server-msg').textContent = `Tersimpan: Maintenance Info Website ${d.settings.maintenance_enabled ? 'ON' : 'OFF'}.`; }
   catch (e) { $('#server-msg').textContent = e.message; }
 });
