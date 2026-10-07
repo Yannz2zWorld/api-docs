@@ -23,6 +23,7 @@
   .facts dd { margin: 0; overflow-wrap: anywhere; }
   .idline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .ok { color: var(--ok); font-weight: 600; }
+  .field[hidden] { display: none !important; }
   .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
   @media (max-width: 640px) { .facts { grid-template-columns: 1fr; gap: 2px 0; } .facts dd { margin-bottom: 10px; } .grid2 { grid-template-columns: 1fr; } }
 </style>
@@ -58,10 +59,11 @@
   </section>
 
   <section class="panel" id="password-panel">
-    <h2>Ganti sandi</h2>
+    <h2 id="pass-title">Ganti sandi</h2>
+    <p class="muted" id="pass-note">Ini sandi akun website Yannz API — bukan sandi Google/Gmail kamu. Masukkan sandi lama dulu, baru buat sandi baru.</p>
     <form id="pass-form" autocomplete="on">
       <input type="email" autocomplete="username" id="pass-user" hidden>
-      <div class="field"><label for="current">Sandi saat ini</label><input id="current" type="password" autocomplete="current-password" required maxlength="128"></div>
+      <div class="field" id="current-field"><label for="current">Sandi lama</label><input id="current" type="password" autocomplete="current-password" required maxlength="128"></div>
       <div class="grid2">
         <div class="field"><label for="new-pass">Sandi baru</label><input id="new-pass" type="password" autocomplete="new-password" required minlength="8" maxlength="128" placeholder="Minimal 8 karakter, huruf &amp; angka"></div>
         <div class="field"><label for="confirm">Ulangi sandi baru</label><input id="confirm" type="password" autocomplete="new-password" required maxlength="128"></div>
@@ -90,7 +92,7 @@ async function load() {
     $('#account-name').textContent = profile.accountName;
     showAvatar(profile.avatarUrl);
     $('#account-sub').textContent = profile.isOwner ? 'Owner' : `Tier ${profile.tier}`;
-    $('#user-id').textContent = profile.id;
+    $('#user-id').textContent = profile.publicId || profile.id;
     $('#email').textContent = profile.email;
     if ($('#pass-user')) $('#pass-user').value = profile.email;
     $('#full-name').textContent = profile.name || '—';
@@ -100,10 +102,19 @@ async function load() {
     $('#default-name').textContent = profile.defaultName;
     $('#display-name').value = profile.displayName || '';
     $('#display-name').placeholder = profile.defaultName;
-    if (!profile.hasPassword && $('#pass-form')) {
-      $('#password-panel').innerHTML = '<h2>Sandi</h2><p class="muted">Akun ini login lewat Google dan belum punya sandi. Kalau mau bisa login pakai email &amp; sandi juga, keluar lalu pakai <b>Lupa sandi?</b> di halaman login — kode dikirim ke email kamu.</p>';
-    }
+    passwordMode(profile.hasPassword);
   } catch (e) { $('#account-name').textContent = e.message; }
+}
+// Accounts made with Google have no website password yet: they create one (no old password).
+// Accounts with a password (register / email login, or created here before) must give the old one.
+function passwordMode(has) {
+  $('#pass-title').textContent = has ? 'Ganti sandi' : 'Buat sandi website';
+  $('#pass-note').textContent = has
+    ? 'Ini sandi akun website Yannz API — bukan sandi Google/Gmail kamu. Masukkan sandi lama dulu, baru buat sandi baru.'
+    : 'Kamu masuk lewat Google dan belum punya sandi website. Buat sandi di sini supaya bisa login juga pakai email + sandi. Sandi Google kamu tidak berubah.';
+  $('#current-field').hidden = !has;
+  $('#current').required = has;
+  $('#pass-btn').textContent = has ? 'Ganti sandi' : 'Buat sandi';
 }
 // ---------- profile picture: cropped to a centred square and scaled to 256 px in the browser,
 // so uploads stay small (the server takes JPEG/PNG/WebP up to 512 KB).
@@ -150,7 +161,7 @@ $('#photo-delete').addEventListener('click', async () => {
     say($('#photo-msg'), 'Foto profil dihapus.', true);
   } catch (err) { say($('#photo-msg'), err.message); }
 });
-$('#copy-id').addEventListener('click', e => navigator.clipboard.writeText(profile?.id || '').then(() => { e.target.textContent = 'Tersalin ✓'; setTimeout(() => { e.target.textContent = 'Salin'; }, 1400); }));
+$('#copy-id').addEventListener('click', e => navigator.clipboard.writeText(String(profile?.publicId || profile?.id || '')).then(() => { e.target.textContent = 'Tersalin ✓'; setTimeout(() => { e.target.textContent = 'Salin'; }, 1400); }));
 $('#name-form').addEventListener('submit', async e => {
   e.preventDefault();
   try {
@@ -167,9 +178,10 @@ document.addEventListener('submit', async e => {
   if (next !== $('#confirm').value) return say(msg, 'Konfirmasi sandi tidak sama.');
   $('#pass-btn').disabled = true;
   try {
-    const d = await call('/api/profile/password', { method: 'POST', body: JSON.stringify({ current: $('#current').value, password: next }) });
+    const d = await call('/api/profile/password', { method: 'POST', body: JSON.stringify({ ...(profile?.hasPassword ? { current: $('#current').value } : {}), password: next }) });
     say(msg, d.message, true);
     e.target.reset();
+    if (d.created) { profile.hasPassword = true; passwordMode(true); load(); }
   } catch (err) { say(msg, err.message); }
   finally { $('#pass-btn').disabled = false; }
 });

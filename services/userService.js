@@ -10,7 +10,10 @@ const OWNER_TIER = 'OWNER';
 const USER_COLUMNS = `id, google_id, email, name, picture, tier, status,
             daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version,
             (to_jsonb(users.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at,
-            (to_jsonb(users.*) ->> 'display_name') AS display_name`;
+            (to_jsonb(users.*) ->> 'display_name') AS display_name,
+            (to_jsonb(users.*) ->> 'public_id') AS public_id`;
+// Numeric user ID: random per account (migration 011); the owner is always this number.
+const OWNER_PUBLIC_ID = 100000000;
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -40,12 +43,37 @@ function accountName(row) {
   return (row?.display_name && String(row.display_name).trim()) || defaultAccountName(row?.email);
 }
 
+function publicId(row, owner = isOwnerEmail(row?.email)) {
+  if (owner) return OWNER_PUBLIC_ID;
+  return row?.public_id ? Number(row.public_id) : null;
+}
+
+// Finds an account by numeric ID, internal uuid or email (owner panel lookups).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function findByAnyId(value) {
+  const who = String(value || '').trim().slice(0, 200);
+  if (!who) return null;
+  let rows;
+  if (UUID_RE.test(who)) rows = await query('SELECT id,email,name FROM users WHERE id=$1', [who]);
+  else if (/^\d{8,9}$/.test(who)) {
+    if (Number(who) === OWNER_PUBLIC_ID) {
+      if (!process.env.OWNER_EMAIL) return null;
+      rows = await query('SELECT id,email,name FROM users WHERE lower(email)=lower($1)', [normalizeEmail(process.env.OWNER_EMAIL)]);
+    } else {
+      try { rows = await query('SELECT id,email,name FROM users WHERE public_id=$1', [Number(who)]); }
+      catch (e) { if (e.code === '42703') return null; throw e; }
+    }
+  } else rows = await query('SELECT id,email,name FROM users WHERE lower(email)=lower($1)', [normalizeEmail(who)]);
+  return rows[0] || null;
+}
+
 function mapUser(row) {
   if (!row) return null;
   const owner = isOwnerEmail(row.email);
   const tier = effectiveTier(row, owner);
   return {
     id: row.id,
+    publicId: publicId(row, owner),
     googleId: row.google_id,
     email: row.email,
     name: row.name,
@@ -228,7 +256,7 @@ async function secureGoogleLink(userId) {
 }
 
 module.exports = {
-  defaultAccountName, accountName,
+  defaultAccountName, accountName, publicId, findByAnyId, OWNER_PUBLIC_ID,
   findAuthByEmail,
   createPasswordUser,
   markEmailVerified,

@@ -48,7 +48,7 @@
   <section class="panel" id="tab-users" hidden>
     <h2>Users</h2>
     <form class="row" id="user-filter">
-      <input name="q" placeholder="Cari email / nama" aria-label="Cari user">
+      <input name="q" placeholder="Cari email / nama / ID (mis. 12345678)" aria-label="Cari user">
       <select name="tier" aria-label="Filter tier"><option value="">Semua tier</option><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option>OWNER</option></select>
       <select name="status" aria-label="Filter status"><option value="">Semua status</option><option>active</option><option>banned</option><option>pending</option></select>
       <button class="primary" type="submit">Cari</button>
@@ -56,7 +56,7 @@
     <div id="users-data">Memuat…</div>
     <h3 style="margin-top:26px">Reset sandi user</h3>
     <form class="row" id="reset-form" autocomplete="off">
-      <input name="user" placeholder="ID atau email user" aria-label="ID atau email user" required style="flex:1;min-width:220px" spellcheck="false">
+      <input name="user" placeholder="ID (mis. 12345678) atau email user" aria-label="ID atau email user" required style="flex:1;min-width:220px" spellcheck="false">
       <input name="password" type="text" placeholder="sandi baru (kosong = dibuat otomatis)" aria-label="Sandi baru" autocomplete="new-password" style="flex:1;min-width:220px" spellcheck="false">
       <button class="primary" type="submit">Reset sandi</button>
     </form>
@@ -81,20 +81,25 @@
       <h3>Buat API key</h3>
       <label><span><b>1</b> Nama key</span><input name="name" placeholder="Bot WhatsApp" maxlength="80" required></label>
       <label><span><b>2</b> Custom key (opsional)</span><input name="custom_key" placeholder="kosong = dibuat otomatis" maxlength="64" pattern="[A-Za-z0-9_\-]{6,64}" title="6–64 karakter: huruf, angka, _ atau -" spellcheck="false"></label>
-      <label><span><b>3</b> Tier key</span><select name="tier"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option></select></label>
+      <label id="key-tier-field"><span><b>3</b> Tier key</span><select name="tier"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option></select></label>
       <label><span><b>4</b> Masa aktif</span><span class="row" style="gap:8px"><select name="duration" style="flex:1"><option value="12h">12 jam</option><option value="1d" selected>24 jam / 1 hari</option><option value="3d">3 hari</option><option value="7d">7 hari</option><option value="14d">14 hari</option><option value="30d">30 hari</option><option value="custom">Custom (hari)</option><option value="permanent">Tanpa batas</option></select><input name="days" type="number" min="1" max="1000" placeholder="hari (maks 1000)" hidden style="width:150px"></span></label>
-      <label class="full"><span><b>5</b> Pemilik key</span><input name="assignee" placeholder="email atau ID user — kosong = key milik owner" spellcheck="false"></label>
+      <label class="full"><span><b>5</b> Pemilik key</span><select name="kind">
+        <option value="public">Public — semua user boleh pakai (tidak terikat email)</option>
+        <option value="private">Private — hanya user/email yang diberi akses</option>
+        <option value="owner">Owner — hanya owner (owner key)</option></select></label>
+      <label class="full" id="key-access-field" hidden><span>Akses private — satu email / ID per baris</span><textarea name="access" rows="3" placeholder="user1@gmail.com&#10;user2@gmail.com&#10;12345678" spellcheck="false" style="min-height:80px"></textarea></label>
       <div class="actions"><button class="primary" type="submit">Buat key</button>
-        <p class="muted">Key hanya bisa mengakses endpoint sampai tier-nya (FREE &lt; SULTAN &lt; SEPUH &lt; DEWA) dan punya kuota harian sendiri sesuai tier itu. Setelah masa aktif habis key ditolak (API_KEY_EXPIRED) sampai diperpanjang.</p></div>
+        <p class="muted"><b>Public</b>: siapa pun yang punya key bisa memakai. <b>Private</b>: server mengecek key <i>dan</i> akun yang sedang login — user lain ditolak walau tahu key-nya. <b>Owner</b>: hanya akun owner. Key hanya bisa mengakses endpoint sampai tier-nya dan punya kuota harian sendiri. Custom key berlaku untuk semua jenis dan tidak boleh sama dengan key lain.</p></div>
       <div class="full" id="key-made" hidden></div>
     </form>
     <p class="muted" id="keys-totals"></p>
     <form class="row" id="key-filter" autocomplete="off">
       <input name="q" type="search" placeholder="Cari email, nama key, awalan — atau tempel API key lengkap" aria-label="Cari API key" style="flex:1;min-width:240px" spellcheck="false">
-      <select name="status" aria-label="Filter status key"><option value="">Semua status</option><option value="active">active</option><option value="revoked">revoked</option></select>
+      <select name="kind" aria-label="Filter jenis key"><option value="">Semua jenis</option><option value="owner">Owner</option><option value="public">Public</option><option value="private">Private</option><option value="personal">Key user</option></select>
+      <select name="status" aria-label="Filter status key"><option value="">Semua status</option><option value="active">active</option><option value="disabled">nonaktif</option><option value="revoked">revoked</option></select>
       <button class="primary" type="submit">Cari</button>
     </form>
-    <p class="muted"><small>Nilai key lengkap tidak pernah disimpan (hanya hash SHA-256), jadi tidak bisa ditampilkan lagi — termasuk untuk owner. Tempel key lengkap di pencarian untuk menemukan pemiliknya. <b>Cabut</b> mematikan key tapi menyimpan catatannya; <b>Hapus</b> menghapus key permanen (riwayat pemakaian tetap ada).</small></p>
+    <p class="muted"><small>Nilai key lengkap tidak pernah disimpan (hanya hash SHA-256), jadi tidak bisa ditampilkan lagi — termasuk untuk owner. Tempel key lengkap di pencarian untuk menemukan pemiliknya. <b>Nonaktifkan</b> mematikan sementara (bisa diaktifkan lagi); <b>Reset</b> membuat nilai key baru dan key lama langsung tidak berlaku; <b>Cabut</b> mematikan permanen tapi menyimpan catatannya; <b>Hapus</b> menghapus key (riwayat pemakaian tetap ada).</small></p>
     <div id="keys-data">Memuat…</div>
   </section>
 
@@ -127,9 +132,9 @@ module.exports = async (req, res) =&gt; {
   </section>
 
   <section class="panel" id="tab-server" hidden>
-    <h2>Maintenance</h2>
-    <p class="muted">Saat aktif, semua panggilan API non-owner dijawab <code>503 MAINTENANCE</code>. Login &amp; dashboard tetap jalan.</p>
-    <label class="row"><input type="checkbox" id="maint"> Maintenance aktif</label>
+    <h2>Maintenance Info Website</h2>
+    <p class="muted">Saat ON, <b>seluruh website</b> masuk mode maintenance: Home, Login, Register, Profile, Dashboard, API dan halaman user lain menampilkan info maintenance; login Google, login email + sandi dan daftar ditolak (dicek di server). Hanya kamu (owner) yang tetap bisa masuk — lewat <a href="/owner-login">/owner-login</a> — dan mengatur website.</p>
+    <label class="row"><input type="checkbox" id="maint"> Maintenance Info Website = ON</label>
     <div class="row"><input id="maint-msg" placeholder="Pesan maintenance" style="flex:1;min-width:240px" maxlength="500"><button class="primary" id="save-server" type="button">Simpan</button></div>
     <p id="server-msg" aria-live="polite"></p>
 
@@ -150,13 +155,30 @@ module.exports = async (req, res) =&gt; {
 </main>
 
 <dialog id="key-dialog"><form method="dialog" id="key-renew">
-  <h2>Perpanjang / ubah key</h2>
+  <h2>Edit key</h2>
   <p id="key-renew-label" class="muted"></p>
+  <div class="row"><input name="name" placeholder="Nama key (kosong = tidak diubah)" maxlength="80" style="flex:1"></div>
   <div class="row"><select name="extend"><option value="">— jangan ubah masa aktif —</option><option value="12h">12 jam</option><option value="1d">24 jam / 1 hari</option><option value="3d">3 hari</option><option value="7d">7 hari</option><option value="14d">14 hari</option><option value="30d">30 hari</option><option value="custom">Custom (hari)</option><option value="permanent">Tanpa batas</option></select><input name="days" type="number" min="1" max="1000" placeholder="hari" hidden style="width:120px"></div>
   <div class="row" style="margin-top:10px"><select name="tier"><option value="">— jangan ubah tier —</option><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option value="ACCOUNT">Ikut tier akun pemilik</option></select></div>
   <p class="muted"><small>Perpanjangan dihitung dari masa aktif sekarang (atau dari sekarang kalau sudah habis).</small></p>
   <div class="row" style="margin-top:12px"><button class="primary" value="save" type="submit">Simpan</button><button value="cancel" type="button" onclick="document.getElementById('key-dialog').close()">Batal</button></div>
 </form></dialog>
+<dialog id="secret-dialog"><div>
+  <h2 id="secret-title">Key baru</h2>
+  <p class="muted" id="secret-label"></p>
+  <div class="row"><code id="secret-value" style="word-break:break-all"></code><button type="button" class="sm" id="secret-copy">Salin</button></div>
+  <p class="muted"><small>Key hanya ditampilkan sekali ini. Key lama sudah tidak berlaku.</small></p>
+  <div class="row" style="margin-top:12px"><button class="primary" type="button" onclick="document.getElementById('secret-dialog').close()">Tutup</button></div>
+</div></dialog>
+<dialog id="access-dialog"><div>
+  <h2>Akses key private</h2>
+  <p class="muted" id="access-label"></p>
+  <div id="access-list">Memuat…</div>
+  <h3>Tambah / reset akses</h3>
+  <textarea id="access-input" rows="3" placeholder="email atau ID user, satu per baris" spellcheck="false" style="width:100%"></textarea>
+  <div class="row" style="margin-top:10px"><button class="primary" type="button" id="access-add">Tambah</button><button class="danger" type="button" id="access-reset">Reset akses (ganti semua)</button><button type="button" onclick="document.getElementById('access-dialog').close()">Tutup</button></div>
+  <p id="access-msg" aria-live="polite"></p>
+</div></dialog>
 <dialog id="user-dialog"><div id="user-detail"></div><div class="row" style="margin-top:14px"><button class="primary" type="button" onclick="document.getElementById('user-dialog').close()">Tutup</button></div></dialog>
 
 <script>
@@ -228,7 +250,7 @@ loaders.users = async () => {
       <td><b>${esc(u.name)}</b><br><small>${esc(u.email)}</small></td>
       <td>${chip(u.tier, u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? `<br><small>${esc(u.ban_reason)}</small>` : ''}</td>
       <td>${num(u.used_today)} req · ${num(u.active_keys)} key</td>
-      <td><button class="sm" data-act="detail" data-id="${esc(u.id)}">Detail</button>${u.isOwner ? '' : ` ${u.status === 'banned' ? `<button class="sm" data-act="unban" data-id="${esc(u.id)}">Unban</button>` : `<button class="sm danger" data-act="ban" data-id="${esc(u.id)}">Ban</button>`} <button class="sm danger" data-act="delete" data-id="${esc(u.id)}" data-email="${esc(u.email)}">Hapus</button>`}<br><small><code>${esc(u.id)}</code></small></td></tr>`).join('')}</table>` : '<p>Tidak ada user yang cocok.</p>';
+      <td><button class="sm" data-act="detail" data-id="${esc(u.id)}">Detail</button>${u.isOwner ? '' : ` ${u.status === 'banned' ? `<button class="sm" data-act="unban" data-id="${esc(u.id)}">Unban</button>` : `<button class="sm danger" data-act="ban" data-id="${esc(u.id)}">Ban</button>`} <button class="sm danger" data-act="delete" data-id="${esc(u.id)}" data-email="${esc(u.email)}">Hapus</button>`}<br><small>ID <code>${esc(u.publicId || u.id)}</code></small></td></tr>`).join('')}</table>` : '<p>Tidak ada user yang cocok.</p>';
   } catch (e) { fail('#users-data', e); }
 };
 $('#user-filter').addEventListener('submit', e => { e.preventDefault(); loaders.users(); });
@@ -238,7 +260,7 @@ async function showUser(id) {
     const d = await api('/owner/users/' + encodeURIComponent(id));
     const u = d.user;
     const tierSel = `<select id="tier-sel">${TIERS.map(t => `<option ${t === u.storedTier ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
-    $('#user-detail').innerHTML = `<h2>${esc(u.name)}</h2><p>${esc(u.email)}<br><small>ID ${esc(u.id)} · dibuat ${when(u.created_at)}</small></p>
+    $('#user-detail').innerHTML = `<h2>${esc(u.name)}</h2><p>${esc(u.email)}<br><small>ID <code>${esc(u.publicId || u.id)}</code> · dibuat ${when(u.created_at)}</small></p>
       <p>Login: ${(u.loginMethods || []).map(m => chip(m)).join(' ') || '—'} ${u.email_verified ? chip('email terverifikasi', 'ok') : chip('email belum diverifikasi', 'warn')}</p>
       <p>${chip(u.tier, u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? ` <small>Alasan: ${esc(u.ban_reason)}</small>` : ''}
         <br><small>${u.isOwner || u.tier === 'FREE' ? (u.storedTier !== u.tier && !u.isOwner ? `Tier ${esc(u.storedTier)} sudah kedaluwarsa ${when(u.tier_expires_at)}` : '') : u.tierExpiresAt ? 'Aktif sampai ' + when(u.tierExpiresAt) : 'Tanpa masa berlaku'}</small></p>
@@ -285,20 +307,32 @@ const expiry = k => {
   return `aktif s/d ${when(k.expires_at)} <small>(${h < 48 ? h + ' jam' : Math.round(h / 24) + ' hari'} lagi)</small>`;
 };
 document.querySelectorAll('select[name=duration],select[name=extend]').forEach(sel => sel.addEventListener('change', () => { sel.parentElement.querySelector('[name=days]').hidden = sel.value !== 'custom'; }));
+const KEY_KIND = { public: 'Public', private: 'Private', owner: 'Owner' };
+const kindChip = k => k.visibility ? chip(KEY_KIND[k.visibility], k.visibility === 'owner' ? 'bad' : k.visibility === 'private' ? 'warn' : 'ok') : chip('key user');
+function keyKindChanged() {
+  const kind = $('#key-new').kind.value;
+  $('#key-access-field').hidden = kind !== 'private';
+  $('#key-tier-field').hidden = kind === 'owner';
+}
+$('#key-new').kind.addEventListener('change', keyKindChanged);
+keyKindChanged();
 $('#key-new').addEventListener('submit', async e => {
   e.preventDefault();
   const body = Object.fromEntries(new FormData(e.target));
-  const who = body.assignee.trim() || 'owner';
+  const access = body.access.split(/[\n,;]+/).map(v => v.trim()).filter(Boolean);
+  if (body.kind === 'private' && !access.length) return alert('Isi minimal 1 email / ID user untuk key private.');
+  body.access = access;
   const dur = e.target.duration.selectedOptions[0].textContent + (body.duration === 'custom' ? ` (${body.days} hari)` : '');
-  if (!confirm(`Buat key tier ${body.tier}, masa aktif ${dur}, untuk ${who}?`)) return;
+  const who = body.kind === 'private' ? 'akses: ' + access.join(', ') : body.kind === 'owner' ? 'hanya owner' : 'semua user';
+  if (!confirm(`Buat key ${KEY_KIND[body.kind]}${body.kind === 'owner' ? '' : ' tier ' + body.tier}, masa aktif ${dur} (${who})?`)) return;
   try {
     const d = await send('/owner/keys', 'POST', body);
     const box = $('#key-made'); box.hidden = false;
-    box.innerHTML = `<p class="ok"><b>Key dibuat untuk ${esc(d.record.user_email)}</b> · tier ${esc(d.record.tier)} · ${d.record.expires_at ? 'aktif s/d ' + when(d.record.expires_at) : 'tanpa batas'}</p>
+    box.innerHTML = `<p class="ok"><b>Key ${esc(KEY_KIND[d.record.visibility] || '')} dibuat</b>${d.record.tier ? ' · tier ' + esc(d.record.tier) : ''} · ${d.record.expires_at ? 'aktif s/d ' + when(d.record.expires_at) : 'tanpa batas'}${d.record.access?.length ? ' · akses: ' + d.record.access.map(u => esc(u.email)).join(', ') : ''}</p>
       <div class="row"><code id="key-made-value" style="word-break:break-all">${esc(d.key)}</code><button type="button" class="sm" id="key-made-copy">Salin</button></div>
       <p class="muted"><small>Key hanya ditampilkan sekali ini. Simpan sekarang.</small></p>`;
     $('#key-made-copy').onclick = ev => navigator.clipboard.writeText(d.key).then(() => { ev.target.textContent = 'Tersalin ✓'; });
-    e.target.elements.name.value = ''; e.target.elements.custom_key.value = '';
+    e.target.elements.name.value = ''; e.target.elements.custom_key.value = ''; e.target.elements.access.value = '';
     loaders.keys();
   } catch (err) { alert(err.message); }
 });
@@ -306,38 +340,94 @@ let renewing = null;
 $('#key-renew').addEventListener('submit', async e => {
   if (e.submitter?.value !== 'save' || !renewing) return;
   const body = {};
+  if (e.target.name.value.trim()) body.name = e.target.name.value.trim();
   if (e.target.extend.value) { body.extend = e.target.extend.value; if (body.extend === 'custom') body.days = e.target.days.value; }
   if (e.target.tier.value) body.tier = e.target.tier.value;
   try { await send(`/owner/keys/${encodeURIComponent(renewing)}`, 'PATCH', body); } catch (err) { alert(err.message); }
   loaders.keys();
 });
+function keyButtons(k) {
+  const label = esc(`${k.name} · ${k.key_prefix}… (${k.visibility ? KEY_KIND[k.visibility] : k.user_email})`);
+  const b = (act, text, cls = '') => `<button class="sm ${cls}" data-key-act="${act}" data-key="${esc(k.id)}" data-label="${label}" data-kind="${esc(k.visibility || '')}">${text}</button>`;
+  if (k.status === 'revoked') return b('delete', 'Hapus', 'danger');
+  return [b('renew', 'Edit', 'primary'), k.status === 'active' ? b('disable', 'Nonaktifkan') : b('enable', 'Aktifkan', 'primary'), b('regenerate', 'Reset key'),
+    k.visibility === 'private' ? b('access', 'Akses') : '', k.visibility === 'owner' ? '' : b('revoke', 'Cabut'), b('delete', 'Hapus', 'danger')].filter(Boolean).join(' ');
+}
 loaders.keys = async () => {
   const f = new FormData($('#key-filter'));
   try {
     // POST, so a pasted full key never lands in a URL.
-    const d = await send('/owner/keys/search', 'POST', { q: f.get('q') || '', status: f.get('status') || '' });
-    $('#keys-totals').textContent = `${num(d.totals.active)} key aktif dari ${num(d.totals.total)} total.`;
+    const d = await send('/owner/keys/search', 'POST', { q: f.get('q') || '', status: f.get('status') || '', kind: f.get('kind') || '' });
+    $('#keys-totals').textContent = `${num(d.totals.active)} key aktif dari ${num(d.totals.total)} total.` + (d.ownerKey === 'created' ? ' Owner key "Yannz2z" dibuat.' : d.ownerKey === 'converted' ? ' Key "Yannz2z" kamu sekarang jadi owner key.' : d.ownerKey === 'taken' ? ' ⚠ "Yannz2z" sudah dipakai key user lain — buat owner key dengan custom key berbeda.' : d.ownerKey === 'unavailable' ? ' ⚠ Jalankan migration 011 untuk owner key / public / private.' : '');
     $('#keys-data').innerHTML = d.keys.length ? `<table><tr><th>Key</th><th>Pemilik</th><th>Status</th><th>Dibuat / terakhir dipakai</th><th>Aksi</th></tr>${d.keys.map(k => `<tr${k.exact_match ? ' style="outline:2px solid var(--accent)"' : ''}>
-      <td><b>${esc(k.name)}</b>${k.custom ? ' ' + chip('custom') : ''}${k.exact_match ? ' ' + chip('cocok persis', 'ok') : ''}<br><code>${esc(k.key_prefix)}…</code><br>${k.tier ? chip('tier ' + k.tier, 'warn') : '<small>tier ikut akun</small>'} <small>${expiry(k)}</small></td>
-      <td><button class="sm" type="button" data-act="detail" data-id="${esc(k.user_id)}">${esc(k.user_name || k.user_email)}</button><br><small>${esc(k.user_email)} · ${esc(k.user_tier)}${k.user_status !== 'active' ? ' · ' + esc(k.user_status) : ''}</small></td>
-      <td>${chip(k.status, k.status === 'active' ? 'ok' : '')}${k.revoked_at ? `<br><small>dicabut ${when(k.revoked_at)}</small>` : ''}</td>
+      <td><b>${esc(k.name)}</b> ${kindChip(k)}${k.custom ? ' ' + chip('custom') : ''}${k.exact_match ? ' ' + chip('cocok persis', 'ok') : ''}<br><code>${esc(k.key_prefix)}…</code><br>${k.visibility === 'owner' ? '<small>akses OWNER</small>' : k.tier ? chip('tier ' + k.tier, 'warn') : '<small>tier ikut akun</small>'} <small>${expiry(k)}</small></td>
+      <td>${k.visibility === 'public' ? '<small>Semua user</small>' : k.visibility === 'owner' ? '<small>Hanya owner</small>' : k.visibility === 'private' ? (k.access.length ? k.access.map(u => `<small>${esc(u.email)}${u.publicId ? ' · ' + esc(u.publicId) : ''}</small>`).join('<br>') : '<small class="error">belum ada akses</small>') : `<button class="sm" type="button" data-act="detail" data-id="${esc(k.user_id)}">${esc(k.user_name || k.user_email)}</button><br><small>${esc(k.user_email)} · ${esc(k.user_tier)}${k.user_status !== 'active' ? ' · ' + esc(k.user_status) : ''}</small>`}</td>
+      <td>${chip(k.status === 'disabled' ? 'nonaktif' : k.status, k.status === 'active' ? 'ok' : k.status === 'disabled' ? 'warn' : '')}${k.revoked_at ? `<br><small>dicabut ${when(k.revoked_at)}</small>` : ''}</td>
       <td><small>${when(k.created_at)}<br>${k.last_used_at ? 'dipakai ' + when(k.last_used_at) : 'belum pernah dipakai'}</small></td>
-      <td>${k.status === 'active' ? `<button class="sm primary" data-key-act="renew" data-key="${esc(k.id)}" data-label="${esc(k.name)} · ${esc(k.key_prefix)}… (${esc(k.user_email)})">Perpanjang</button> <button class="sm" data-key-act="revoke" data-key="${esc(k.id)}" data-label="${esc(k.key_prefix)}… (${esc(k.user_email)})">Cabut</button> ` : ''}<button class="sm danger" data-key-act="delete" data-key="${esc(k.id)}" data-label="${esc(k.key_prefix)}… (${esc(k.user_email)})">Hapus</button></td></tr>`).join('')}</table>` : '<p>Tidak ada API key yang cocok.</p>';
+      <td>${keyButtons(k)}</td></tr>`).join('')}</table>` : '<p>Tidak ada API key yang cocok.</p>';
   } catch (e) { fail('#keys-data', e); }
 };
 $('#key-filter').addEventListener('submit', e => { e.preventDefault(); loaders.keys(); });
 $('#key-filter [name=status]').addEventListener('change', () => loaders.keys());
+$('#key-filter [name=kind]').addEventListener('change', () => loaders.keys());
 $('#keys-data').addEventListener('click', async e => {
   const b = e.target.closest('button[data-key-act]'); if (!b) return;
-  const { keyAct, key, label } = b.dataset;
+  const { keyAct, key, label, kind } = b.dataset;
   if (keyAct === 'renew') {
     renewing = key; const f = $('#key-renew'); f.reset(); f.days.hidden = true;
+    f.tier.disabled = kind === 'owner'; f.tier.querySelector('[value=ACCOUNT]').hidden = !!kind;
     $('#key-renew-label').textContent = label; $('#key-dialog').showModal(); return;
+  }
+  if (keyAct === 'access') return openAccess(key, label);
+  if (keyAct === 'enable' || keyAct === 'disable') {
+    if (keyAct === 'disable' && !confirm(`Nonaktifkan key ${label}? Key ditolak sampai diaktifkan lagi.`)) return;
+    try { await send(`/owner/keys/${encodeURIComponent(key)}/${keyAct}`); } catch (err) { alert(err.message); }
+    return loaders.keys();
+  }
+  if (keyAct === 'regenerate') {
+    const custom = prompt(`Reset key ${label}\n\nKey lama langsung tidak berlaku. Isi custom key baru, atau kosongkan untuk dibuat otomatis:`, '');
+    if (custom === null) return;
+    try {
+      const d = await send(`/owner/keys/${encodeURIComponent(key)}/regenerate`, 'POST', custom.trim() ? { custom_key: custom.trim() } : {});
+      showSecret('Key baru', label, d.key);
+    } catch (err) { alert(err.message); }
+    return loaders.keys();
   }
   const q = keyAct === 'revoke' ? `Cabut key ${label}? Key langsung berhenti berfungsi.` : `Hapus permanen key ${label}? Key langsung berhenti berfungsi dan tidak bisa dikembalikan.`;
   if (!confirm(q)) return;
   try { await send(`/owner/keys/${encodeURIComponent(key)}${keyAct === 'revoke' ? '/revoke' : ''}`, keyAct === 'revoke' ? 'POST' : 'DELETE'); } catch (err) { alert(err.message); }
   loaders.keys();
+});
+
+function showSecret(title, label, value) {
+  $('#secret-title').textContent = title; $('#secret-label').textContent = label; $('#secret-value').textContent = value;
+  $('#secret-copy').textContent = 'Salin';
+  $('#secret-copy').onclick = ev => navigator.clipboard.writeText(value).then(() => { ev.target.textContent = 'Tersalin ✓'; });
+  $('#secret-dialog').showModal();
+}
+let accessKey = null;
+function renderAccess(list) {
+  $('#access-list').innerHTML = list.length ? `<table><tr><th>User</th><th>ID</th><th></th></tr>${list.map(u => `<tr><td>${esc(u.name || '')}<br><small>${esc(u.email)}</small></td><td><code>${esc(u.publicId || '—')}</code></td><td><button class="sm danger" type="button" data-access-remove="${esc(u.id)}">Hapus</button></td></tr>`).join('')}</table>` : '<p class="error">Belum ada user yang diberi akses — key ini tidak bisa dipakai siapa pun.</p>';
+}
+async function openAccess(key, label) {
+  accessKey = key; $('#access-label').textContent = label; $('#access-input').value = ''; $('#access-msg').textContent = '';
+  $('#access-list').textContent = 'Memuat…'; $('#access-dialog').showModal();
+  try { renderAccess((await api(`/owner/keys/${encodeURIComponent(key)}/access`)).access); } catch (e) { $('#access-list').textContent = e.message; }
+}
+async function changeAccess(method) {
+  const users = $('#access-input').value.split(/[\n,;]+/).map(v => v.trim()).filter(Boolean);
+  if (!users.length) return ($('#access-msg').textContent = 'Isi email / ID user dulu.');
+  if (method === 'PUT' && !confirm('Reset akses? Semua akses lama dihapus dan diganti dengan daftar ini.')) return;
+  try { renderAccess((await send(`/owner/keys/${encodeURIComponent(accessKey)}/access`, method, { users })).access); $('#access-input').value = ''; $('#access-msg').textContent = method === 'PUT' ? 'Akses direset.' : 'Akses ditambahkan.'; loaders.keys(); }
+  catch (e) { $('#access-msg').textContent = e.message; }
+}
+$('#access-add').addEventListener('click', () => changeAccess('POST'));
+$('#access-reset').addEventListener('click', () => changeAccess('PUT'));
+$('#access-list').addEventListener('click', async e => {
+  const id = e.target.dataset.accessRemove; if (!id) return;
+  if (!confirm('Hapus akses user ini?')) return;
+  try { renderAccess((await send(`/owner/keys/${encodeURIComponent(accessKey)}/access/${encodeURIComponent(id)}`, 'DELETE')).access); loaders.keys(); }
+  catch (err) { $('#access-msg').textContent = err.message; }
 });
 
 // ---------- endpoints
@@ -443,8 +533,8 @@ $('#save-pay').addEventListener('click', async () => {
 });
 $('#save-server').addEventListener('click', async () => {
   const enabled = $('#maint').checked;
-  if (!confirm(enabled ? 'Aktifkan maintenance? Semua panggilan API non-owner akan ditolak.' : 'Matikan maintenance?')) return;
-  try { const d = await send('/owner/server', 'PATCH', { maintenance_enabled: enabled, maintenance_message: $('#maint-msg').value }); $('#server-msg').textContent = `Tersimpan: maintenance ${d.settings.maintenance_enabled ? 'AKTIF' : 'mati'}.`; }
+  if (!confirm(enabled ? 'Aktifkan Maintenance Info Website? Seluruh website ditutup untuk semua user kecuali owner, dan user tidak bisa login.' : 'Matikan maintenance? Website kembali normal.')) return;
+  try { const d = await send('/owner/server', 'PATCH', { maintenance_enabled: enabled, maintenance_message: $('#maint-msg').value }); $('#server-msg').textContent = `Tersimpan: Maintenance Info Website ${d.settings.maintenance_enabled ? 'ON' : 'OFF'}.`; }
   catch (e) { $('#server-msg').textContent = e.message; }
 });
 
