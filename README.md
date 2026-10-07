@@ -108,6 +108,7 @@ Required server environment variables (names only; see .env.example):
 - DATABASE_URL (Neon pooled connection string; private)
 - GOOGLE_CLIENT_ID (Web OAuth client ID; must be the same client the login page uses)
 - GOOGLE_CLIENT_SECRET and GOOGLE_CALLBACK_URL (only for the /auth/google redirect fallback)
+- THERESAV_API_KEY (Sensitive): key for api.theresav.eu, used by the AI endpoints in `plugin/theresav-ai.js` (sent only as the `x-apikey` header upstream; never stored in the repo). Without it those endpoints answer `503 UPSTREAM_NOT_CONFIGURED` and charge no quota. Optional THERESAV_BASE_URL overrides the upstream address.
 - AUTH_SECRET (long random value, >= 32 characters; encrypts the session cookie)
 - OWNER_EMAIL
 
