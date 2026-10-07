@@ -3,6 +3,13 @@
 // with image links.
 const { makeEndpoint } = require('../lib/theresav');
 
+const MAKER_SAMPLES = {
+  '/api/maker/brat': { text: 'hi' },
+  '/api/maker/bratvid': { text: 'hi', format: 'mp4' },
+  '/api/maker/emojimix': { emoji1: '😂', emoji2: '😭' },
+  '/api/maker/emojitogif': { emoji: '🗿' }
+};
+
 module.exports = [
   { name: 'Brat', desc: 'Generate viral Brat album aesthetic meme text images.', path: '/api/maker/brat', upstream: '/api/maker/brat',
     params: [{ name: 'text', required: true, max: 300, placeholder: 'hi' }] },
@@ -12,4 +19,4 @@ module.exports = [
     params: [{ name: 'emoji1', required: true, max: 16, placeholder: '😂' }, { name: 'emoji2', required: true, max: 16, placeholder: '😭' }] },
   { name: 'Emoji to GIF', desc: 'Convert a standard emoji into an animated Google Noto GIF / WebP sticker.', path: '/api/maker/emojitogif', upstream: '/api/maker/emojitogif',
     params: [{ name: 'emoji', required: true, max: 16, placeholder: '🗿' }] }
-].map(spec => makeEndpoint({ category: 'Maker', ...spec }));
+].map(spec => makeEndpoint({ category: 'Maker', sample: MAKER_SAMPLES[spec.path], ...spec }));

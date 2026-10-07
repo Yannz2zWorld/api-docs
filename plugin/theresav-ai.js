@@ -6,6 +6,27 @@ const chatId = { name: 'chatId', placeholder: 'Opsional — isi chatId dari jawa
 const VOICES = ['Morgan Freeman', 'Elon Musk', 'Donald Trump', 'Barack Obama', 'Joe Biden', 'Taylor Swift', 'Billie Eilish', 'Eminem', 'Snoop Dogg', 'Kanye West', 'Drake', 'Ariana Grande', 'Cristiano Ronaldo', 'Lionel Messi', 'MrBeast', 'IShowSpeed', 'PewDiePie', 'Rick Sanchez', 'SpongeBob SquarePants', 'Patrick Star', 'Squidward Tentacles', 'Peter Griffin', 'Homer Simpson', 'Bart Simpson', 'Darth Vader', 'Yoda', 'Goku', 'Vegeta', 'Naruto Uzumaki', 'Luffy (One Piece)', 'Walter White', 'Tommy Shelby', 'David Attenborough', 'Samuel L. Jackson', 'Ryan Reynolds', 'Keanu Reeves', 'Scarlett Johansson', 'Cillian Murphy', 'Robert Downey Jr.', 'Leonardo DiCaprio', 'Johnny Depp', 'Mark Zuckerberg', 'Sam Altman', 'Steve Jobs', 'Bill Gates', 'Gordon Ramsay', 'Optimus Prime', 'Batman (Animated)', 'The Joker (Animated)', 'Deadpool', 'Kendrick Lamar', 'Dua Lipa', 'Justin Bieber', 'Katy Perry', 'Kobe Bryant', 'Michael Jackson', 'Freddie Mercury'];
 const GENRES = ['fantasy', 'scifi', 'horror', 'romance', 'mystery', 'adventure', 'thriller'];
 
+// Sample inputs the developer-panel self-test sends to the upstream (text only, so a failure
+// means the endpoint is down, not a bad input).
+const AI_SAMPLES = {
+  '/api/ai/bible': { text: 'Siapa Musa?' },
+  '/api/ai/bypassai': { text: 'This is a sample sentence to rewrite.' },
+  '/api/ai/chatgpt': { prompt: 'hi' },
+  '/api/ai/claude': { text: 'hi' },
+  '/api/ai/copilot': { prompt: 'hi', mode: 'default' },
+  '/api/ai/gemini': { prompt: 'hi' },
+  '/api/ai/google': { query: 'ikan' },
+  '/api/ai/gpt': { text: 'hi' },
+  '/api/ai/voice': { prompt: 'halo', voice: 'Morgan Freeman' },
+  '/api/ai/muslimai': { query: 'apa itu puasa' },
+  '/api/ai/publicai': { text: 'hi' },
+  '/api/ai/qwen': { text: 'hi' },
+  '/api/ai/talefy': { text: 'kucing ajaib', genre: 'fantasy' },
+  '/api/ai/turboseek': { text: 'what is an ini file' },
+  '/api/ai/unlimited': { text: 'hi' },
+  '/api/ai/webpilot': { text: 'berita hari ini' }
+};
+
 module.exports = [
   { name: 'Bible AI', desc: 'Find Bible-based answers using Bible AI.', path: '/api/ai/bible', upstream: '/api/ai/bible',
     params: [{ name: 'text', required: true, aliases: ['question'], placeholder: 'Siapa itu Musa?' }] },
@@ -43,4 +64,4 @@ module.exports = [
     params: [{ name: 'text', required: true, aliases: ['prompt'], placeholder: 'Halo' }, chatId] },
   { name: 'WebPilot AI', desc: 'Web-searching AI assistant via Webpilot API with Dragonfly session support.', path: '/api/ai/webpilot', upstream: '/api/ai/webpilot',
     params: [{ name: 'text', required: true, aliases: ['query', 'q'], placeholder: 'Berita teknologi hari ini' }, { name: 'threadId', placeholder: 'Opsional — dari jawaban sebelumnya' }] }
-].map(makeEndpoint);
+].map(s => makeEndpoint({ ...s, sample: AI_SAMPLES[s.path] }));

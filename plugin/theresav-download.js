@@ -4,6 +4,19 @@ const { makeEndpoint } = require('../lib/theresav');
 
 const link = (example) => [{ name: 'url', required: true, max: 2048, aliases: ['link'], placeholder: example }];
 
+// Self-test samples: only endpoints with a known-good public link, so a failure means it is down.
+const DL_SAMPLES = {
+  '/api/download/instagram': { url: 'https://www.instagram.com/reel/C0000000000/' },
+  '/api/download/pinterest': { url: 'https://pin.it/51U4S7Rau' },
+  '/api/download/ytdl': { url: 'https://youtube.com/shorts/5fs0aY9jYes' },
+  '/api/download/ytmp3': { url: 'https://youtube.com/shorts/5fs0aY9jYes', format: 'mp3', bitrate: '128k' },
+  '/api/download/ytmp4': { url: 'https://youtube.com/shorts/5fs0aY9jYes', resolution: '360' },
+  '/api/download/capcut': { url: 'https://www.capcut.com/template-detail/7663607379359010068' },
+  '/api/download/stickerly': { url: 'https://sticker.ly/s/41M302' },
+  '/api/download/telestick': { url: 'https://t.me/addstickers/RandomStv1_by_fStikBot' },
+  '/api/download/play': { query: 'jj epep' }
+};
+
 const ENDPOINTS = [
   ['aio', 'AIO Downloader', 'Download videos and music from TikTok, YouTube, Facebook, Instagram and more in one endpoint.', 'https://youtube.com/shorts/…'],
   ['applemusic', 'Apple Music Downloader', 'Download Apple Music songs as MP3.', 'https://music.apple.com/…'],
@@ -42,5 +55,4 @@ ENDPOINTS.push(
   { name: 'YouTube Video Downloader', desc: 'Download a YouTube video in the resolution you choose.', category: 'Downloader', path: '/api/download/ytmp4', upstream: '/api/download/ytmp4',
     params: [...link('https://youtube.com/watch?v=…'), { name: 'resolution', options: ['360', '480', '720', '1080', '1440', '2160'], default: '720' }] }
 );
-
-module.exports = ENDPOINTS.map(makeEndpoint);
+module.exports = ENDPOINTS.map(e => makeEndpoint({ ...e, sample: DL_SAMPLES[e.path] }));
