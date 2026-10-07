@@ -13,7 +13,7 @@ const USER_COLUMNS = `id, google_id, email, name, picture, tier, status,
             (to_jsonb(users.*) ->> 'display_name') AS display_name,
             (to_jsonb(users.*) ->> 'public_id') AS public_id`;
 // Numeric user ID: random per account (migration 011); the owner is always this number.
-const OWNER_PUBLIC_ID = 100000000;
+const OWNER_PUBLIC_ID = 10000000;
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -55,7 +55,7 @@ async function findByAnyId(value) {
   if (!who) return null;
   let rows;
   if (UUID_RE.test(who)) rows = await query('SELECT id,email,name FROM users WHERE id=$1', [who]);
-  else if (/^\d{8,9}$/.test(who)) {
+  else if (/^\d{8}$/.test(who)) {
     if (Number(who) === OWNER_PUBLIC_ID) {
       if (!process.env.OWNER_EMAIL) return null;
       rows = await query('SELECT id,email,name FROM users WHERE lower(email)=lower($1)', [normalizeEmail(process.env.OWNER_EMAIL)]);

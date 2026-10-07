@@ -23,7 +23,7 @@ const ping = (key, cookie) => app.request('GET', '/api/tools/ping', { cookie, he
 const publicIdOf = async email => Number((await h.db().query('SELECT public_id FROM users WHERE lower(email)=lower($1)', [email])).rows[0].public_id);
 
 // ---------------------------------------------------------------- numeric IDs
-it('every account gets a random numeric ID in 10100000..12345678; the owner is 100000000', async () => {
+it('every account gets a random numeric ID in 10100000..12345678; the owner is 10000000', async () => {
   const a = await publicIdOf('alice@example.test'), b = await publicIdOf('bob@example.test');
   for (const v of [a, b]) assert.ok(v >= 10100000 && v <= 12345678, String(v));
   assert.notEqual(a, b);
@@ -31,7 +31,7 @@ it('every account gets a random numeric ID in 10100000..12345678; the owner is 1
   assert.equal(pa.json.profile.publicId, a);
   assert.equal(pa.json.profile.id, String(a));
   const po = await o('GET', '/api/profile');
-  assert.equal(po.json.profile.publicId, 100000000);
+  assert.equal(po.json.profile.publicId, 10000000);
 });
 
 it('the owner panel finds users by numeric ID (search, reset password, key access)', async () => {
@@ -39,7 +39,7 @@ it('the owner panel finds users by numeric ID (search, reset password, key acces
   const list = await o('GET', `/owner/users?q=${a}`);
   assert.deepEqual(list.json.users.map(u => u.email), ['alice@example.test']);
   assert.equal(list.json.users[0].publicId, a);
-  const own = await o('GET', '/owner/users?q=100000000');
+  const own = await o('GET', '/owner/users?q=10000000');
   assert.deepEqual(own.json.users.map(u => u.email), [h.OWNER_EMAIL]);
   const reset = await o('POST', '/owner/users/reset-password', { user: String(a), password: 'Reset1234' });
   assert.equal(reset.status, 200, reset.text);

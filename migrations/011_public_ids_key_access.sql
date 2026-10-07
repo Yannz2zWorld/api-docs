@@ -5,7 +5,7 @@
 
 -- 1. Numeric user ID shown on the profile and in the owner panel (the uuid stays the primary
 --    key). Each account gets a random unique number in 10100000..12345678 when it is created;
---    the owner (OWNER_EMAIL) is always shown as 100000000 by the application.
+--    the owner (OWNER_EMAIL) is always shown as 10000000 by the application.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS public_id bigint;
 CREATE UNIQUE INDEX IF NOT EXISTS users_public_id_uidx ON users(public_id);
 
