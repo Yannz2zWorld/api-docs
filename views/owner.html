@@ -33,6 +33,7 @@
     <button role="tab" data-tab="status" aria-selected="true">Status</button>
     <button role="tab" data-tab="dash">Dashboard</button>
     <button role="tab" data-tab="users">Users</button>
+    <button role="tab" data-tab="keys">API Keys</button>
     <button role="tab" data-tab="endpoints">Endpoints</button>
     <button role="tab" data-tab="payments">Payments</button>
     <button role="tab" data-tab="server">Server &amp; Pembayaran</button>
@@ -52,6 +53,18 @@
       <button class="primary" type="submit">Cari</button>
     </form>
     <div id="users-data">Memuat…</div>
+  </section>
+
+  <section class="panel" id="tab-keys" hidden>
+    <h2>API keys</h2>
+    <p class="muted" id="keys-totals"></p>
+    <form class="row" id="key-filter" autocomplete="off">
+      <input name="q" type="search" placeholder="Cari email, nama key, awalan — atau tempel API key lengkap" aria-label="Cari API key" style="flex:1;min-width:240px" spellcheck="false">
+      <select name="status" aria-label="Filter status key"><option value="">Semua status</option><option value="active">active</option><option value="revoked">revoked</option></select>
+      <button class="primary" type="submit">Cari</button>
+    </form>
+    <p class="muted"><small>Nilai key lengkap tidak pernah disimpan (hanya hash SHA-256), jadi tidak bisa ditampilkan lagi — termasuk untuk owner. Tempel key lengkap di pencarian untuk menemukan pemiliknya. <b>Cabut</b> mematikan key tapi menyimpan catatannya; <b>Hapus</b> menghapus key permanen (riwayat pemakaian tetap ada).</small></p>
+    <div id="keys-data">Memuat…</div>
   </section>
 
   <section class="panel" id="tab-endpoints" hidden>
@@ -223,6 +236,32 @@ async function userAction(btn) {
   } catch (e) { alert(e.message); }
 }
 document.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (b) userAction(b); });
+
+// ---------- API keys (all users)
+loaders.keys = async () => {
+  const f = new FormData($('#key-filter'));
+  try {
+    // POST, so a pasted full key never lands in a URL.
+    const d = await send('/owner/keys/search', 'POST', { q: f.get('q') || '', status: f.get('status') || '' });
+    $('#keys-totals').textContent = `${num(d.totals.active)} key aktif dari ${num(d.totals.total)} total.`;
+    $('#keys-data').innerHTML = d.keys.length ? `<table><tr><th>Key</th><th>Pemilik</th><th>Status</th><th>Dibuat / terakhir dipakai</th><th>Aksi</th></tr>${d.keys.map(k => `<tr${k.exact_match ? ' style="outline:2px solid var(--accent)"' : ''}>
+      <td><b>${esc(k.name)}</b>${k.custom ? ' ' + chip('custom') : ''}${k.exact_match ? ' ' + chip('cocok persis', 'ok') : ''}<br><code>${esc(k.key_prefix)}…</code></td>
+      <td><button class="sm" type="button" data-act="detail" data-id="${esc(k.user_id)}">${esc(k.user_name || k.user_email)}</button><br><small>${esc(k.user_email)} · ${esc(k.user_tier)}${k.user_status !== 'active' ? ' · ' + esc(k.user_status) : ''}</small></td>
+      <td>${chip(k.status, k.status === 'active' ? 'ok' : '')}${k.revoked_at ? `<br><small>dicabut ${when(k.revoked_at)}</small>` : ''}</td>
+      <td><small>${when(k.created_at)}<br>${k.last_used_at ? 'dipakai ' + when(k.last_used_at) : 'belum pernah dipakai'}</small></td>
+      <td>${k.status === 'active' ? `<button class="sm" data-key-act="revoke" data-key="${esc(k.id)}" data-label="${esc(k.key_prefix)}… (${esc(k.user_email)})">Cabut</button> ` : ''}<button class="sm danger" data-key-act="delete" data-key="${esc(k.id)}" data-label="${esc(k.key_prefix)}… (${esc(k.user_email)})">Hapus</button></td></tr>`).join('')}</table>` : '<p>Tidak ada API key yang cocok.</p>';
+  } catch (e) { fail('#keys-data', e); }
+};
+$('#key-filter').addEventListener('submit', e => { e.preventDefault(); loaders.keys(); });
+$('#key-filter [name=status]').addEventListener('change', () => loaders.keys());
+$('#keys-data').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-key-act]'); if (!b) return;
+  const { keyAct, key, label } = b.dataset;
+  const q = keyAct === 'revoke' ? `Cabut key ${label}? Key langsung berhenti berfungsi.` : `Hapus permanen key ${label}? Key langsung berhenti berfungsi dan tidak bisa dikembalikan.`;
+  if (!confirm(q)) return;
+  try { await send(`/owner/keys/${encodeURIComponent(key)}${keyAct === 'revoke' ? '/revoke' : ''}`, keyAct === 'revoke' ? 'POST' : 'DELETE'); } catch (err) { alert(err.message); }
+  loaders.keys();
+});
 
 // ---------- endpoints
 loaders.endpoints = async () => {

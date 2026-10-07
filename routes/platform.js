@@ -19,6 +19,7 @@ const pluginService = require('../services/githubPluginService');
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
 const { parseProofImage } = require('../lib/proofImage');
+const { digest } = require('../lib/keyCrypto');
 const QRCode = require('qrcode');
 
 // Manual methods: QRIS (the owner's static QRIS image), DANA and GoPay transfers.
@@ -462,6 +463,58 @@ router.post('/owner/users/:id/keys/:keyId/revoke', sameOrigin, auth, owner, vali
   const ok = await keys.revokeKey(req.params.id, req.params.keyId);
   if (!ok) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan atau sudah dicabut.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_revoke', targetType: 'api_key', targetId: req.params.keyId, metadata: { userId: req.params.id }, ipAddress: ip(req) });
+  res.json({ success: true });
+});
+
+// ---------------------------------------------------------------- owner: all API keys
+// Keys are stored only as a SHA-256 digest, so nobody (owner included) can read a key back.
+// The owner sees every key's owner, name, display prefix, status and dates, can search by
+// user, key name or prefix, or paste a full key to find whose it is (matched by digest; the
+// search is a POST so a pasted key never ends up in a URL or request log), and can revoke or
+// delete any key.
+router.post('/owner/keys/search', sameOrigin, auth, owner, async (req, res) => {
+  const q = typeof req.body?.q === 'string' ? req.body.q.trim().slice(0, 200) : '';
+  const status = ['active', 'revoked'].includes(req.body?.status) ? req.body.status : '';
+  const limit = Math.min(200, Math.max(1, Number(req.body?.limit) || 100));
+  const offset = Math.max(0, Number(req.body?.offset) || 0);
+  const like = `%${q.replace(/[\\%_]/g, m => '\\' + m)}%`;
+  const rows = await query(
+    `SELECT k.id,k.name,k.key_prefix,k.status,k.created_at,k.last_used_at,k.revoked_at,
+            COALESCE((to_jsonb(k.*) ->> 'custom')::boolean,false) AS custom,
+            (q.digest IS NOT NULL AND k.key_hash=q.digest) AS exact_match,
+            u.id AS user_id,u.email AS user_email,u.name AS user_name,u.tier AS user_tier,u.status AS user_status
+       FROM api_keys k
+       JOIN users u ON u.id=k.user_id
+       CROSS JOIN (SELECT NULLIF($1,'') AS digest) q
+      WHERE ($2='' OR k.key_hash=q.digest OR u.email ILIKE $3 OR u.name ILIKE $3 OR k.name ILIKE $3 OR k.key_prefix ILIKE $3)
+        AND ($4='' OR k.status=$4)
+      ORDER BY (k.key_hash=q.digest) DESC NULLS LAST, k.status='active' DESC, k.created_at DESC
+      LIMIT $5 OFFSET $6`,
+    [q ? digest(q) : '', q, like, status, limit, offset]
+  );
+  const [totals] = await query("SELECT count(*)::int AS total,count(*) FILTER (WHERE status='active')::int AS active FROM api_keys");
+  res.json({ success: true, keys: rows, totals, limit, offset });
+});
+
+async function ownerKeyRow(id) {
+  return (await query('SELECT k.id,k.user_id,k.name,k.key_prefix,k.status,u.email FROM api_keys k JOIN users u ON u.id=k.user_id WHERE k.id=$1', [id]))[0];
+}
+
+router.post('/owner/keys/:keyId/revoke', sameOrigin, auth, owner, validId('keyId'), async (req, res) => {
+  const key = await ownerKeyRow(req.params.keyId);
+  if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan.');
+  const r = await query("UPDATE api_keys SET status='revoked',revoked_at=now() WHERE id=$1 AND status='active' RETURNING id", [key.id]);
+  if (!r.length) return fail(res, 409, 'KEY_ALREADY_REVOKED', 'API key ini sudah dicabut.');
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_revoke', targetType: 'api_key', targetId: key.id, metadata: { userId: key.user_id, email: key.email, prefix: key.key_prefix, name: key.name }, ipAddress: ip(req) });
+  res.json({ success: true });
+});
+
+router.delete('/owner/keys/:keyId', sameOrigin, auth, owner, validId('keyId'), async (req, res) => {
+  const key = await ownerKeyRow(req.params.keyId);
+  if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan.');
+  // Usage history stays (api_usage.api_key_id is ON DELETE SET NULL); the key stops working at once.
+  await query('DELETE FROM api_keys WHERE id=$1', [key.id]);
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_delete', targetType: 'api_key', targetId: key.id, metadata: { userId: key.user_id, email: key.email, prefix: key.key_prefix, name: key.name, status: key.status }, ipAddress: ip(req) });
   res.json({ success: true });
 });
 
