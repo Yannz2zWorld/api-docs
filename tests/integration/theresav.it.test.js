@@ -22,6 +22,7 @@ before(async () => {
       const call = { url: new URL(u), method: opts.method || 'GET', headers: opts.headers || {}, form: opts.body instanceof FormData ? opts.body : null };
       calls.push(call);
       const r = reply(call);
+      if (r.bytes) return new Response(r.bytes, { status: r.status, headers: { 'content-type': r.type } });
       return new Response(JSON.stringify(r.json), { status: r.status, headers: { 'content-type': 'application/json' } });
     }
     if (u.startsWith('https://img.example.test/')) return new Response(Buffer.from('PNGDATA'), { status: 200, headers: { 'content-type': 'image/png' } });
@@ -136,4 +137,31 @@ it('Downloader: 30 theresav endpoints next to TikTok; url is forwarded; YouTube 
   assert.equal((await call('/api/download/play?q=jj+epep')).status, 200);
   assert.equal(calls.at(-1).url.searchParams.get('query'), 'jj epep');
   assert.equal((await call('/api/download/facebook')).json.error, 'PARAM_REQUIRED');
+});
+
+it('Maker: Brat answers with the image itself (passed through), Brat Video defaults to mp4, emoji endpoints answer JSON', async () => {
+  const PNG = Buffer.from('89504e470d0a1a0a', 'hex');
+  reply = () => ({ status: 200, bytes: PNG, type: 'image/png' });
+  const img = await app.request('GET', '/api/maker/brat?text=hi', app.asBrowser(user));
+  assert.equal(img.status, 200);
+  assert.match(img.headers['content-type'], /^image\/png/);
+  assert.equal(calls[0].url.pathname, '/api/maker/brat');
+  reply = () => ({ status: 200, bytes: Buffer.from('MP4DATA'), type: 'video/mp4' });
+  const vid = await call('/api/maker/bratvid?text=hi');
+  assert.match(vid.headers['content-type'], /^video\/mp4/);
+  assert.equal(calls[1].url.searchParams.get('format'), 'mp4');
+  assert.equal((await call('/api/maker/bratvid?text=hi&format=webm')).json.error, 'INVALID_PARAMETER');
+  reply = () => ({ status: 200, json: { status: true, creator: 'X', result: { emoji1: '😂', emoji2: '😭', url: 'https://www.gstatic.com/x.png' } } });
+  const mix = await call('/api/maker/emojimix?emoji1=' + encodeURIComponent('😂') + '&emoji2=' + encodeURIComponent('😭'));
+  assert.equal(mix.json.result.url, 'https://www.gstatic.com/x.png');
+  assert.equal(calls.at(-1).url.searchParams.get('emoji2'), '😭');
+  assert.equal((await call('/api/maker/emojimix?emoji1=x')).json.error, 'PARAM_REQUIRED');
+  const cat = (await app.request('GET', '/api/endpoints')).json.endpoints.Maker;
+  assert.deepEqual(cat.map(e => e.cleanPath).sort(), ['/api/maker/brat', '/api/maker/bratvid', '/api/maker/emojimix', '/api/maker/emojitogif']);
+});
+
+it('an empty media answer is refused and refunded', async () => {
+  reply = () => ({ status: 200, bytes: Buffer.alloc(0), type: 'image/png' });
+  const r = await call('/api/maker/brat?text=hi');
+  assert.deepEqual([r.status, r.json.error], [502, 'UPSTREAM_FAILED']);
 });
