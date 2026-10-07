@@ -159,7 +159,7 @@ router.get('/api/profile', auth, async (req, res) => {
   const row = (await query("SELECT (password_hash IS NOT NULL) AS has_password,(google_id IS NOT NULL) AS has_google,email_verified FROM users WHERE id=$1", [a.id]))[0] || {};
   const avatar = (await avatarVersions([a.id])).get(a.id);
   res.json({ success: true, profile: {
-    id: a.id, accountName: a.accountName, displayName: a.displayName, defaultName: users.defaultAccountName(a.email),
+    id: a.publicId ? String(a.publicId) : a.id, publicId: a.publicId, internalId: a.id, accountName: a.accountName, displayName: a.displayName, defaultName: users.defaultAccountName(a.email),
     name: a.name, email: a.email, tier: a.tier, tierExpiresAt: a.tierExpiresAt, isOwner: a.isOwner, createdAt: a.createdAt,
     avatarUrl: avatarUrl(a.id, avatar),
     hasPassword: !!row.has_password, loginMethods: [row.has_google ? 'google' : null, row.has_password ? 'password' : null].filter(Boolean)
@@ -180,12 +180,23 @@ router.patch('/api/profile', sameOrigin, auth, async (req, res) => {
   res.json({ success: true, accountName: raw || users.defaultAccountName(req.account.email) });
 });
 
-// Change password: needs the current one. Signs out every other session and keeps this one.
+// Website password (never the Google password). An account without one (signed up with Google)
+// creates it here; an account with one must give the current password to change it.
+// Either way every other session is signed out and this one stays signed in.
 router.post('/api/profile/password', sameOrigin, auth, async (req, res) => {
   const current = typeof req.body?.current === 'string' ? req.body.current : '';
   const next = typeof req.body?.password === 'string' ? req.body.password : '';
   const acc = await users.findAuthByEmail(req.account.email);
-  if (!acc?.password_hash) return fail(res, 400, 'NO_PASSWORD', 'Akun ini belum punya sandi (login lewat Google). Buat sandi lewat "Lupa sandi?" di halaman login.');
+  if (!acc) return fail(res, 404, 'USER_NOT_FOUND', 'Akun tidak ditemukan.');
+  if (!acc.password_hash) {
+    const weak = passwords.passwordProblem(next);
+    if (weak) return fail(res, 400, 'WEAK_PASSWORD', weak);
+    const created = await users.setPassword(acc.id, await passwords.hashPassword(next));
+    await audit.writeAudit({ actorUserId: acc.id, action: 'password_create', targetType: 'user', targetId: acc.id, ipAddress: ip(req) }).catch(() => {});
+    const session = req.app.locals.getSession(req) || {};
+    req.app.locals.issueSession(res, session.sub || acc.id, { id: acc.id, email: acc.email, name: acc.name, picture: acc.picture || '', sessionVersion: Number(created?.session_version || 0) }, session.provider || 'google');
+    return res.json({ success: true, created: true, message: 'Sandi website dibuat. Sekarang kamu juga bisa login pakai email + sandi ini (sandi Google tidak berubah).' });
+  }
   if (acc.locked_until && new Date(acc.locked_until) > new Date()) return fail(res, 429, 'TOO_MANY_ATTEMPTS', 'Terlalu banyak percobaan sandi salah. Coba lagi dalam 15 menit.');
   if (!current || current.length > 128 || !(await passwords.verifyPassword(current, acc.password_hash))) {
     await users.recordFailedLogin(acc.id);
@@ -227,7 +238,7 @@ router.get('/api/dashboard', auth, async (req, res) => {
 
 // ---------------------------------------------------------------- API keys
 router.get('/api/keys', auth, async (req, res) => {
-  res.json({ success: true, keys: await keys.listKeys(req.account.id), limit: finite(tiers.getTier(req.account.tier).keys), tier: req.account.tier });
+  res.json({ success: true, keys: await keys.listKeys(req.account.id), shared: await keys.sharedWith(req.account.id), limit: finite(tiers.getTier(req.account.tier).keys), tier: req.account.tier });
 });
 
 router.post('/api/keys', sameOrigin, auth, async (req, res) => {
@@ -487,20 +498,21 @@ router.get('/owner/users', auth, owner, async (req, res) => {
   const rows = await query(
     `SELECT u.id,u.email,u.name,u.picture,u.tier,u.status,u.created_at,u.banned_at,u.ban_reason,
             (to_jsonb(u.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at,
+            (to_jsonb(u.*) ->> 'public_id') AS public_id,
             COALESCE(d.request_count,0)::int AS used_today,
             (SELECT count(*)::int FROM api_keys k WHERE k.user_id=u.id AND k.status='active') AS active_keys
        FROM users u
        LEFT JOIN daily_quota_counters d ON d.user_id=u.id AND d.usage_date=(now() AT TIME ZONE 'UTC')::date
-      WHERE (u.email ILIKE $1 OR u.name ILIKE $1)
+      WHERE (u.email ILIKE $1 OR u.name ILIKE $1 OR u.id::text=$6 OR (to_jsonb(u.*) ->> 'public_id')=$6 OR ($6='100000000' AND lower(u.email)=lower($7)))
         AND ($2='' OR u.tier=$2) AND ($3='' OR u.status=$3)
       ORDER BY u.created_at DESC LIMIT $4 OFFSET $5`,
-    [`%${q.replace(/[\\%_]/g, m => '\\' + m)}%`, tier, status, limit, offset]
+    [`%${q.replace(/[\\%_]/g, m => '\\' + m)}%`, tier, status, limit, offset, q.trim(), process.env.OWNER_EMAIL || '']
   );
-  res.json({ success: true, users: rows.map(u => { const m = users.mapUser(u); return { ...u, storedTier: u.tier, tier: m.tier, tierExpiresAt: m.tierExpiresAt, isOwner: m.isOwner }; }), limit, offset });
+  res.json({ success: true, users: rows.map(u => { const m = users.mapUser(u); return { ...u, publicId: m.publicId, storedTier: u.tier, tier: m.tier, tierExpiresAt: m.tierExpiresAt, isOwner: m.isOwner }; }), limit, offset });
 });
 
 router.get('/owner/users/:id', auth, owner, validId('id'), async (req, res) => {
-  const u = (await query("SELECT id,google_id,email,name,picture,tier,status,created_at,updated_at,banned_at,ban_reason,email_verified,(password_hash IS NOT NULL) AS has_password,(to_jsonb(users.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at FROM users WHERE id=$1", [req.params.id]))[0];
+  const u = (await query("SELECT id,google_id,email,name,picture,tier,status,created_at,updated_at,banned_at,ban_reason,email_verified,(password_hash IS NOT NULL) AS has_password,(to_jsonb(users.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at,(to_jsonb(users.*) ->> 'public_id') AS public_id FROM users WHERE id=$1", [req.params.id]))[0];
   if (!u) return fail(res, 404, 'NOT_FOUND', 'User tidak ditemukan.');
   const mapped = users.mapUser(u);
   const [daily, apiKeys, orders] = await Promise.all([
@@ -514,7 +526,7 @@ router.get('/owner/users/:id', auth, owner, validId('id'), async (req, res) => {
   const usedToday = daily.find(d => d.date === todayKey)?.used || 0;
   const { google_id, ...profile } = u;
   profile.loginMethods = [google_id ? 'google' : null, u.has_password ? 'password' : null].filter(Boolean);
-  res.json({ success: true, user: { ...profile, storedTier: u.tier, tier: mapped.tier, tierExpiresAt: mapped.tierExpiresAt, isOwner: mapped.isOwner }, usage: { ...usagePayload(mapped.tier, usedToday), history: daily }, apiKeys, apiKeyLimit: finite(tiers.getTier(mapped.tier).keys), orders });
+  res.json({ success: true, user: { ...profile, publicId: mapped.publicId, storedTier: u.tier, tier: mapped.tier, tierExpiresAt: mapped.tierExpiresAt, isOwner: mapped.isOwner }, usage: { ...usagePayload(mapped.tier, usedToday), history: daily }, apiKeys, apiKeyLimit: finite(tiers.getTier(mapped.tier).keys), orders });
 });
 
 async function protectedTarget(req) {
@@ -586,7 +598,7 @@ function generatedPassword() {
 router.post('/owner/users/reset-password', sameOrigin, auth, owner, async (req, res) => {
   const who = typeof req.body?.user === 'string' ? req.body.user.trim().slice(0, 200) : '';
   if (!who) return fail(res, 400, 'USER_REQUIRED', 'Isi ID atau email user.');
-  const target = (await query(UUID_RE.test(who) ? 'SELECT id,email FROM users WHERE id=$1' : 'SELECT id,email FROM users WHERE lower(email)=lower($1)', [who]))[0];
+  const target = await users.findByAnyId(who);
   if (!target) return fail(res, 404, 'USER_NOT_FOUND', 'User dengan ID/email itu tidak ditemukan.');
   if (target.id === req.account.id || users.isOwnerEmail(target.email)) return fail(res, 400, 'SELF_ACTION_BLOCKED', 'Sandi owner diganti lewat halaman Profile.');
   const typed = typeof req.body?.password === 'string' ? req.body.password : '';
@@ -666,7 +678,9 @@ router.delete('/api/chat/:id', sameOrigin, auth, (req, res) => chatGuard(res, as
 // delete any key.
 router.post('/owner/keys/search', sameOrigin, auth, owner, async (req, res) => {
   const q = typeof req.body?.q === 'string' ? req.body.q.trim().slice(0, 200) : '';
-  const status = ['active', 'revoked'].includes(req.body?.status) ? req.body.status : '';
+  const status = ['active', 'revoked', 'disabled'].includes(req.body?.status) ? req.body.status : '';
+  const kind = ['public', 'private', 'owner', 'personal'].includes(req.body?.kind) ? req.body.kind : '';
+  const ownerKey = await keys.ensureOwnerKey(req.account);
   const limit = Math.min(200, Math.max(1, Number(req.body?.limit) || 100));
   const offset = Math.max(0, Number(req.body?.offset) || 0);
   const like = `%${q.replace(/[\\%_]/g, m => '\\' + m)}%`;
@@ -675,6 +689,7 @@ router.post('/owner/keys/search', sameOrigin, auth, owner, async (req, res) => {
             COALESCE((to_jsonb(k.*) ->> 'custom')::boolean,false) AS custom,
             (to_jsonb(k.*) ->> 'tier') AS tier,(to_jsonb(k.*) ->> 'expires_at')::timestamptz AS expires_at,
             ((to_jsonb(k.*) ->> 'issued_by') IS NOT NULL) AS issued,
+            (to_jsonb(k.*) ->> 'visibility') AS visibility,
             (q.digest IS NOT NULL AND k.key_hash=q.digest) AS exact_match,
             u.id AS user_id,u.email AS user_email,u.name AS user_name,u.tier AS user_tier,u.status AS user_status
        FROM api_keys k
@@ -682,21 +697,34 @@ router.post('/owner/keys/search', sameOrigin, auth, owner, async (req, res) => {
        CROSS JOIN (SELECT NULLIF($1,'') AS digest) q
       WHERE ($2='' OR k.key_hash=q.digest OR u.email ILIKE $3 OR u.name ILIKE $3 OR k.name ILIKE $3 OR k.key_prefix ILIKE $3)
         AND ($4='' OR k.status=$4)
-      ORDER BY (k.key_hash=q.digest) DESC NULLS LAST, k.status='active' DESC, k.created_at DESC
+        AND ($7='' OR COALESCE(to_jsonb(k.*) ->> 'visibility','personal')=$7)
+      ORDER BY (k.key_hash=q.digest) DESC NULLS LAST, (to_jsonb(k.*) ->> 'visibility')='owner' DESC NULLS LAST, k.status='active' DESC, k.created_at DESC
       LIMIT $5 OFFSET $6`,
-    [q ? digest(q) : '', q, like, status, limit, offset]
+    [q ? digest(q) : '', q, like, status, limit, offset, kind]
   );
+  const access = await keys.listAccess(rows.filter(r => r.visibility === 'private').map(r => r.id));
   const [totals] = await query("SELECT count(*)::int AS total,count(*) FILTER (WHERE status='active')::int AS active FROM api_keys");
-  res.json({ success: true, keys: rows, totals, limit, offset });
+  res.json({ success: true, keys: rows.map(r => ({ ...r, access: r.visibility === 'private' ? access.get(r.id) || [] : undefined })), totals, ownerKey, limit, offset });
 });
 
-// Issue a key with its own tier and lifetime, to the owner (assignee empty) or to a user (email or ID).
+// Accounts named by numeric ID, internal ID or email (array, or one per line / comma).
+async function resolveUsers(list) {
+  const items = (Array.isArray(list) ? list : String(list || '').split(/[\n,;]+/)).map(v => String(v).trim()).filter(Boolean).slice(0, 50);
+  const found = [], missing = [];
+  for (const who of items) { const u = await users.findByAnyId(who); if (u) found.push(u); else missing.push(who); }
+  return { found, missing };
+}
+
+// Issue a key with its own tier and lifetime.
+//   kind public  — anyone holding the key; private — only the listed accounts; owner — only the owner.
+//   No kind (older clients): a personal key of the owner (assignee empty) or of a user (email or ID).
 router.post('/owner/keys', sameOrigin, auth, owner, async (req, res) => {
   const b = req.body || {};
+  if (b.kind !== undefined && b.kind !== '') return issueManagedKey(req, res);
   const who = typeof b.assignee === 'string' ? b.assignee.trim() : '';
   let target = req.account;
   if (who) {
-    const found = (await query(UUID_RE.test(who) ? 'SELECT id,email FROM users WHERE id=$1' : 'SELECT id,email FROM users WHERE lower(email)=lower($1)', [who.slice(0, 200)]))[0];
+    const found = await users.findByAnyId(who);
     if (!found) return fail(res, 404, 'USER_NOT_FOUND', 'User dengan email/ID itu tidak ditemukan.');
     target = found;
   }
@@ -707,25 +735,67 @@ router.post('/owner/keys', sameOrigin, auth, owner, async (req, res) => {
     await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_issue', targetType: 'api_key', targetId: made.record.id, metadata: { userId: target.id, email: target.email, tier, expiresAt: made.record.expires_at, prefix: made.record.key_prefix }, ipAddress: ip(req) });
     res.status(201).json({ success: true, key: made.key, record: { ...made.record, user_email: target.email } });
   } catch (e) {
-    if (e.code === 'MIGRATION_REQUIRED') return fail(res, 503, e.code, e.message);
-    if (['INVALID_TIER', 'INVALID_DURATION', 'INVALID_CUSTOM_KEY', 'CUSTOM_KEY_TAKEN'].includes(e.code)) return fail(res, e.code === 'CUSTOM_KEY_TAKEN' ? 409 : 400, e.code, e.message);
+    if (keyError(res, e)) return;
     throw e;
   }
 });
 
-// Renew (extend), make permanent, or change the tier of an active key.
+const KEY_ERRORS = { INVALID_TIER: 400, INVALID_DURATION: 400, INVALID_CUSTOM_KEY: 400, INVALID_VISIBILITY: 400, CUSTOM_KEY_TAKEN: 409, OWNER_KEY_EXISTS: 409, MIGRATION_REQUIRED: 503 };
+function keyError(res, e) {
+  if (KEY_ERRORS[e.code]) { fail(res, KEY_ERRORS[e.code], e.code, e.message); return true; }
+  return false;
+}
+
+async function issueManagedKey(req, res) {
+  const b = req.body || {};
+  const kind = String(b.kind).toLowerCase();
+  if (!keys.KEY_VISIBILITY.includes(kind)) return fail(res, 400, 'INVALID_VISIBILITY', 'Jenis key harus Public, Private atau Owner.');
+  let accessUsers = [];
+  if (kind === 'private') {
+    const { found, missing } = await resolveUsers(b.access);
+    if (missing.length) return fail(res, 404, 'USER_NOT_FOUND', `User tidak ditemukan: ${missing.join(', ')}`, { missing });
+    if (!found.length) return fail(res, 400, 'ACCESS_REQUIRED', 'Key private butuh minimal 1 user/email yang diberi akses.');
+    accessUsers = found;
+  }
+  try {
+    const hours = keys.durationHours(b.duration, b.days);
+    const tier = kind === 'owner' ? null : String(b.tier || '').toUpperCase();
+    const made = await keys.issueKey({
+      issuerId: req.account.id, userId: req.account.id, name: b.name, tier, hours, visibility: kind,
+      customValue: typeof b.custom_key === 'string' ? b.custom_key.trim() : null, accessUserIds: accessUsers.map(u => u.id)
+    });
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_issue', targetType: 'api_key', targetId: made.record.id, metadata: { kind, tier, expiresAt: made.record.expires_at, prefix: made.record.key_prefix, access: accessUsers.map(u => u.email) }, ipAddress: ip(req) });
+    res.status(201).json({ success: true, key: made.key, record: { ...made.record, user_email: req.account.email, access: accessUsers.map(u => ({ id: u.id, email: u.email })) } });
+  } catch (e) {
+    if (keyError(res, e)) return;
+    throw e;
+  }
+}
+
+async function managedKey(req, res) {
+  const key = await ownerKeyRow(req.params.keyId);
+  if (!key) { fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan.'); return null; }
+  return key;
+}
+
+// Edit: rename, renew (extend), make permanent, or change the tier.
 router.patch('/owner/keys/:keyId', sameOrigin, auth, owner, validId('keyId'), async (req, res) => {
   const b = req.body || {};
   const change = {};
+  const current = await managedKey(req, res);
+  if (!current) return;
   try {
+    if (typeof b.name === 'string' && b.name.trim()) change.name = b.name.trim().slice(0, 80);
+    if (b.tier !== undefined && b.tier !== '' && current.visibility === 'owner') return fail(res, 400, 'INVALID_TIER', 'Owner key selalu memakai akses OWNER; tier-nya tidak bisa diubah.');
+    if (String(b.tier || '').toUpperCase() === 'ACCOUNT' && current.visibility) return fail(res, 400, 'INVALID_TIER', 'Key public/private harus punya tier sendiri.');
     if (b.extend !== undefined) {
       const hours = keys.durationHours(b.extend, b.days);
       if (hours === null) change.permanent = true; else change.hours = hours;
     }
-    if (b.tier !== undefined) change.tier = String(b.tier).toUpperCase();
-    if (!Object.keys(change).length) return fail(res, 400, 'NOTHING_TO_CHANGE', 'Pilih perpanjangan atau tier baru.');
+    if (b.tier !== undefined && b.tier !== '') change.tier = String(b.tier).toUpperCase();
+    if (!Object.keys(change).length) return fail(res, 400, 'NOTHING_TO_CHANGE', 'Ubah nama, masa aktif atau tier.');
     const key = await keys.updateIssuedKey(req.params.keyId, change);
-    if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key aktif tidak ditemukan (key yang sudah dicabut tidak bisa diperpanjang).');
+    if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan atau sudah dicabut (key yang dicabut tidak bisa diubah).');
     await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_update', targetType: 'api_key', targetId: key.id, metadata: { ...change, expiresAt: key.expires_at, tier: key.tier }, ipAddress: ip(req) });
     res.json({ success: true, key });
   } catch (e) {
@@ -736,12 +806,80 @@ router.patch('/owner/keys/:keyId', sameOrigin, auth, owner, validId('keyId'), as
 });
 
 async function ownerKeyRow(id) {
-  return (await query('SELECT k.id,k.user_id,k.name,k.key_prefix,k.status,u.email FROM api_keys k JOIN users u ON u.id=k.user_id WHERE k.id=$1', [id]))[0];
+  return (await query("SELECT k.id,k.user_id,k.name,k.key_prefix,k.status,(to_jsonb(k.*) ->> 'visibility') AS visibility,u.email FROM api_keys k JOIN users u ON u.id=k.user_id WHERE k.id=$1", [id]))[0];
 }
+
+// Enable / disable: a disabled key is refused (API_KEY_DISABLED) until it is enabled again.
+async function setKeyEnabled(req, res, enabled) {
+  const key = await managedKey(req, res);
+  if (!key) return;
+  try {
+    const r = await keys.setKeyStatus(key.id, enabled ? 'active' : 'disabled');
+    if (!r) return fail(res, 409, 'KEY_REVOKED', 'Key yang sudah dicabut tidak bisa diaktifkan lagi.');
+  } catch (e) { if (keyError(res, e)) return; throw e; }
+  await audit.writeAudit({ actorUserId: req.account.id, action: enabled ? 'owner_api_key_enable' : 'owner_api_key_disable', targetType: 'api_key', targetId: key.id, metadata: { prefix: key.key_prefix, name: key.name, kind: key.visibility }, ipAddress: ip(req) });
+  res.json({ success: true, status: enabled ? 'active' : 'disabled' });
+}
+router.post('/owner/keys/:keyId/enable', sameOrigin, auth, owner, validId('keyId'), (req, res) => setKeyEnabled(req, res, true));
+router.post('/owner/keys/:keyId/disable', sameOrigin, auth, owner, validId('keyId'), (req, res) => setKeyEnabled(req, res, false));
+
+// Reset / regenerate: a new value (generated or custom); the old value stops working at once.
+router.post('/owner/keys/:keyId/regenerate', sameOrigin, auth, owner, validId('keyId'), async (req, res) => {
+  const key = await managedKey(req, res);
+  if (!key) return;
+  try {
+    const made = await keys.regenerateKey(key.id, typeof req.body?.custom_key === 'string' ? req.body.custom_key.trim() : null);
+    if (!made) return fail(res, 409, 'KEY_REVOKED', 'Key yang sudah dicabut tidak bisa di-reset. Buat key baru.');
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_regenerate', targetType: 'api_key', targetId: key.id, metadata: { kind: key.visibility, oldPrefix: key.key_prefix, newPrefix: made.record.key_prefix }, ipAddress: ip(req) });
+    res.json({ success: true, key: made.key, record: made.record, message: 'Key lama sudah tidak berlaku. Simpan key baru ini — hanya ditampilkan sekali.' });
+  } catch (e) {
+    if (keyError(res, e)) return;
+    throw e;
+  }
+});
+
+// Private keys: who may use them. Add, remove one, or reset (replace the whole list).
+async function privateKey(req, res) {
+  const key = await managedKey(req, res);
+  if (!key) return null;
+  if (key.visibility !== 'private') { fail(res, 400, 'NOT_PRIVATE', 'Daftar akses hanya untuk key private.'); return null; }
+  return key;
+}
+async function accessReply(res, key) {
+  const list = (await keys.listAccess([key.id])).get(key.id) || [];
+  res.json({ success: true, access: list });
+}
+router.get('/owner/keys/:keyId/access', auth, owner, validId('keyId'), async (req, res) => {
+  const key = await privateKey(req, res);
+  if (key) await accessReply(res, key);
+});
+async function changeAccess(req, res, mode) {
+  const key = await privateKey(req, res);
+  if (!key) return;
+  const { found, missing } = await resolveUsers(req.body?.users ?? req.body?.user);
+  if (missing.length) return fail(res, 404, 'USER_NOT_FOUND', `User tidak ditemukan: ${missing.join(', ')}`, { missing });
+  if (!found.length) return fail(res, 400, 'ACCESS_REQUIRED', 'Isi minimal 1 user/email.');
+  try {
+    if (mode === 'reset') await keys.setAccess(key.id, found.map(u => u.id), req.account.id);
+    else await keys.addAccess(key.id, found.map(u => u.id), req.account.id);
+  } catch (e) { if (keyError(res, e)) return; throw e; }
+  await audit.writeAudit({ actorUserId: req.account.id, action: mode === 'reset' ? 'owner_api_key_access_reset' : 'owner_api_key_access_add', targetType: 'api_key', targetId: key.id, metadata: { users: found.map(u => u.email) }, ipAddress: ip(req) });
+  await accessReply(res, key);
+}
+router.post('/owner/keys/:keyId/access', sameOrigin, auth, owner, validId('keyId'), (req, res) => changeAccess(req, res, 'add'));
+router.put('/owner/keys/:keyId/access', sameOrigin, auth, owner, validId('keyId'), (req, res) => changeAccess(req, res, 'reset'));
+router.delete('/owner/keys/:keyId/access/:userId', sameOrigin, auth, owner, validId('keyId', 'userId'), async (req, res) => {
+  const key = await privateKey(req, res);
+  if (!key) return;
+  if (!(await keys.removeAccess(key.id, req.params.userId))) return fail(res, 404, 'NOT_FOUND', 'User itu tidak ada di daftar akses.');
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_access_remove', targetType: 'api_key', targetId: key.id, metadata: { userId: req.params.userId }, ipAddress: ip(req) });
+  await accessReply(res, key);
+});
 
 router.post('/owner/keys/:keyId/revoke', sameOrigin, auth, owner, validId('keyId'), async (req, res) => {
   const key = await ownerKeyRow(req.params.keyId);
   if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan.');
+  if (key.visibility === 'owner') return fail(res, 400, 'OWNER_KEY_KEEP', 'Owner key tidak dicabut: pakai Nonaktifkan atau Reset.');
   const r = await query("UPDATE api_keys SET status='revoked',revoked_at=now() WHERE id=$1 AND status='active' RETURNING id", [key.id]);
   if (!r.length) return fail(res, 409, 'KEY_ALREADY_REVOKED', 'API key ini sudah dicabut.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_revoke', targetType: 'api_key', targetId: key.id, metadata: { userId: key.user_id, email: key.email, prefix: key.key_prefix, name: key.name }, ipAddress: ip(req) });
@@ -931,12 +1069,13 @@ router.get('/owner/server', auth, owner, async (req, res) => {
 
 router.patch('/owner/server', sameOrigin, auth, owner, async (req, res) => {
   const enabled = req.body?.maintenance_enabled === true;
-  const message = String(req.body?.maintenance_message || 'Yannz API sedang dalam maintenance.').slice(0, 500);
+  const message = String(req.body?.maintenance_message || '').trim().slice(0, 500) || 'Website sedang dalam maintenance. Silakan tunggu sampai maintenance selesai.';
   const r = await query(
     `INSERT INTO server_settings(id,maintenance_enabled,maintenance_message,updated_at,updated_by) VALUES(1,$1,$2,now(),$3)
      ON CONFLICT(id) DO UPDATE SET maintenance_enabled=EXCLUDED.maintenance_enabled,maintenance_message=EXCLUDED.maintenance_message,updated_at=now(),updated_by=EXCLUDED.updated_by RETURNING *`,
     [enabled, message, req.account.id]
   );
+  req.app.locals.maintenance?.invalidate();
   await audit.writeAudit({ actorUserId: req.account.id, action: 'maintenance_change', targetType: 'server_settings', metadata: { enabled }, ipAddress: ip(req) });
   res.json({ success: true, settings: r[0] });
 });

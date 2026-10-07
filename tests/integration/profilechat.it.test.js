@@ -25,7 +25,9 @@ it('profile shows the user ID, email and an account name derived from the email'
   const r = await as(ana, 'GET', '/api/profile');
   assert.equal(r.status, 200);
   const p = r.json.profile;
-  assert.match(p.id, /^[0-9a-f-]{36}$/);
+  assert.match(p.id, /^\d{8}$/, 'numeric user ID (migration 011)');
+  assert.equal(Number(p.id), p.publicId);
+  assert.match(p.internalId, /^[0-9a-f-]{36}$/);
   assert.equal(p.email, 'aghaabryan1234@example.test');
   assert.equal(p.accountName, 'Aghaabryan');
   assert.equal(p.defaultName, 'Aghaabryan');
@@ -41,7 +43,9 @@ it('the account name can be changed, validated, and reset to the derived one', a
 });
 
 it('password change needs the current password, keeps this session and signs out the others', async () => {
-  assert.equal((await as(bob, 'POST', '/api/profile/password', { current: 'x', password: 'BaruSekali9' })).json.error, 'NO_PASSWORD', 'Google-only account');
+  // A Google-only account creates its website password without an old one (keykinds.it covers
+  // the creation); a weak one is still refused.
+  assert.equal((await as(bob, 'POST', '/api/profile/password', { password: 'pendek' })).json.error, 'WEAK_PASSWORD', 'Google-only account');
   await setPassword('aghaabryan1234@example.test', 'LamaSekali1');
   const other = (await passwordLogin('aghaabryan1234@example.test', 'LamaSekali1')).headers['set-cookie'][0].split(';')[0];
   assert.equal((await as(ana, 'POST', '/api/profile/password', { current: 'salah123', password: 'BaruSekali9' })).json.error, 'WRONG_PASSWORD');

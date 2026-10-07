@@ -17,6 +17,7 @@ const apiKeyService = require('./services/apiKeyService');
 const usageService = require('./services/usageService');
 const turnstile = require('./services/turnstileService');
 const activity = require('./services/activityService');
+const maintenance = require('./services/maintenanceService');
 const { canAccess, getTier } = require('./services/tierService');
 const auditService = require('./services/auditService');
 
@@ -196,6 +197,51 @@ app.get('/assets/theme.css', (req, res) => {
 });
 app.use('/views', express.static(path.join(__dirname, 'views')));
 app.locals.getSession = currentUser;
+app.locals.maintenance = maintenance;
+
+// ---------------------------------------------------------------- Maintenance Info Website
+// While on, every page and endpoint answers 503 with the maintenance notice, except for the
+// owner (OWNER_EMAIL) and what the owner needs to sign in. Sign-in itself is checked again in
+// each handler (password routes by the email given, Google after the token is verified), so
+// calling an endpoint directly cannot get around it.
+const MAINTENANCE_OPEN = new Set(['/health', '/health/database', '/api/logo-proxy', '/api/set', '/auth/config', '/auth/me', '/auth/logout', '/owner-login', '/auth/google', '/auth/google/callback', '/auth/google/credential', '/favicon.ico']);
+const MAINTENANCE_SIGN_IN = new Set(['/auth/login', '/auth/register', '/auth/email/verify', '/auth/email/resend', '/auth/password/forgot', '/auth/password/reset']);
+const SITE_PAGES = new Set(['/', '/home', '/keys', '/billing', '/pricing', '/profile', '/owner', '/api', '/api/playground', '/3d', '/scythe', '/usage']);
+let maintenancePage = null;
+function sendMaintenance(req, res, message) {
+  res.set('Retry-After', '300');
+  res.set('Cache-Control', 'no-store');
+  const page = req.method === 'GET' && (SITE_PAGES.has(req.path) || (!/^\/(api|owner|auth|webhooks)\//.test(req.path) && req.accepts(['json', 'html']) === 'html'));
+  if (!page) return res.status(503).json({ success: false, error: 'MAINTENANCE', message, maintenance: true });
+  if (!maintenancePage) maintenancePage = fs.readFileSync(path.join(__dirname, 'views', 'maintenance.html'), 'utf8');
+  const safe = String(message).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return res.status(503).type('html').send(maintenancePage.replace('{{MESSAGE}}', safe));
+}
+app.locals.sendMaintenance = sendMaintenance;
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/assets/') || req.path.startsWith('/views/') || req.path.startsWith('/webhooks/') || MAINTENANCE_OPEN.has(req.path)) return next();
+  let m;
+  try { m = await maintenance.state(); } catch { return next(); }
+  if (!m.enabled) return next();
+  // Email/password forms: only the owner's own address gets through.
+  if (MAINTENANCE_SIGN_IN.has(req.path)) {
+    const email = typeof req.body?.email === 'string' ? req.body.email : '';
+    if (req.method === 'POST' && userService.isOwnerEmail(email)) return next();
+    return sendMaintenance(req, res, m.message);
+  }
+  // Plugin endpoints called with an API key: the gateway answers MAINTENANCE for every key that
+  // is not the owner's.
+  if (loadedPluginPaths.has(req.path) && (req.get('authorization') || req.get('x-api-key'))) return next();
+  try {
+    const session = currentUser(req);
+    const user = session ? await userService.getUserForSession(session) : null;
+    if (user?.isOwner && user.status === 'active') return next();
+  } catch (e) {
+    console.error('Maintenance owner check failed:', { code: e?.code || null });
+  }
+  return sendMaintenance(req, res, m.message);
+});
+app.get('/owner-login', (req, res) => res.sendFile(path.join(__dirname, 'views', 'login.html')));
 // Page visits of signed-in users for the owner's activity log (best effort, throttled).
 const TRACKED_PAGES = new Set(['/home', '/keys', '/billing', '/pricing', '/profile', '/owner', '/api', '/api/playground', '/3d', '/scythe']);
 app.use((req, res, next) => {
@@ -319,6 +365,14 @@ function sessionRequestAllowed(req) {
   return !site || site === 'same-origin';
 }
 
+// The signed-in, active account behind this request's session cookie, if any.
+async function callerAccount(req) {
+  const session = currentUser(req);
+  if (!session) return null;
+  const user = await userService.getUserForSession(session);
+  return user && user.status === 'active' ? user : null;
+}
+
 async function resolveIdentity(req) {
   const header = String(req.get('authorization') || '');
   const presented = /^Bearer\s+(.+)$/i.exec(header)?.[1]?.trim() || String(req.get('x-api-key') || '').trim();
@@ -330,9 +384,26 @@ async function resolveIdentity(req) {
       await apiKeyService.recordInvalidKey(clientIp);
       return { error: [401, 'INVALID_API_KEY', 'API key tidak valid.'] };
     }
+    if (key.key_status === 'disabled') return { error: [403, 'API_KEY_DISABLED', 'API key ini sedang dinonaktifkan oleh owner.'] };
     if (key.key_status !== 'active') return { error: [401, 'API_KEY_REVOKED', 'API key ini sudah dicabut.'] };
     if (key.key_expires_at && new Date(key.key_expires_at) <= new Date()) return { error: [401, 'API_KEY_EXPIRED', 'Masa aktif API key ini sudah habis. Minta owner memperpanjangnya.', { expiredAt: new Date(key.key_expires_at).toISOString() }] };
     if (key.user_status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun tidak aktif.'] };
+    const kind = key.key_visibility;
+    if (kind) {
+      // Owner-managed keys. Private and owner keys check who is calling as well as the key: the
+      // caller's signed-in account (session cookie), so knowing the key alone is not enough.
+      const caller = await callerAccount(req);
+      if (kind === 'owner') {
+        if (!caller?.isOwner) return { error: [403, 'OWNER_KEY_ONLY', 'Yahaha mau ngambil key gwa ya 😹😝'] };
+        return { identity: { userId: caller.id, keyId: key.key_id, tier: 'OWNER' } };
+      }
+      if (kind === 'private') {
+        if (!caller) return { error: [401, 'PRIVATE_KEY_LOGIN_REQUIRED', 'API key ini private: login dulu dengan akun yang diberi akses oleh owner.'] };
+        if (!caller.isOwner && !(await apiKeyService.hasAccess(key.key_id, caller.id))) return { error: [403, 'PRIVATE_KEY_DENIED', 'API key ini private dan tidak diberikan untuk akun kamu.'] };
+      }
+      // public / private: the key's own tier and daily quota (never the owner's account tier).
+      return { identity: { userId: caller?.id || key.uid, keyId: key.key_id, tier: key.key_tier || 'FREE', keyScoped: true } };
+    }
     // A key issued with its own tier is limited to that tier and has its own daily quota.
     if (key.key_tier) return { identity: { userId: key.uid, keyId: key.key_id, tier: key.key_tier, keyScoped: true } };
     return { identity: { userId: key.uid, keyId: key.key_id, tier: key.tier } };
@@ -547,6 +618,10 @@ app.post('/auth/google/credential', turnstile.guard(), async (req, res) => {
   if (!profile?.sub || !profile.email || profile.email_verified !== true) {
     return fail(403, 'EMAIL_NOT_VERIFIED', 'Akun Google harus memiliki email yang terverifikasi.', { stage: 'profile', reason: 'EMAIL_NOT_VERIFIED' });
   }
+  {
+    const m = await maintenance.state();
+    if (m.enabled && !userService.isOwnerEmail(profile.email)) return fail(503, 'MAINTENANCE', m.message);
+  }
 
   let account;
   try {
@@ -624,6 +699,7 @@ app.get('/auth/google/callback', async (req, res) => {
     if (!profile?.sub || !profile.email || profile.email_verified !== true) {
       return res.status(403).send('Akun Google harus memiliki email yang terverifikasi.');
     }
+    if ((await maintenance.state()).enabled && !userService.isOwnerEmail(profile.email)) return res.redirect('/?auth=maintenance');
 
     const account = await userService.upsertGoogleUser({
       googleId: profile.sub,
