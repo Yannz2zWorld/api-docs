@@ -243,7 +243,7 @@ it('Search + Sketch: q is forwarded, sketch takes an upload; catalog has the new
   const up = await app.request('POST', '/api/image/sketch', { cookie: user, rawBody: Buffer.from('89504e470d0a1a0a', 'hex'), headers: { 'content-type': 'image/png', origin: app.origin, 'x-yannz-client': 'web' } });
   assert.equal(up.status, 200, up.text);
   assert.match(up.headers['content-type'], /^image\/jpeg/);
-  assert.equal(calls.at(-1).url.pathname, '/api/image/sketch');
+  assert.equal(calls.at(-1).url.pathname, '/image/sketch');
   assert.ok(calls.at(-1).form.get('image'));
   const cats = (await app.request('GET', '/api/endpoints')).json.endpoints;
   assert.equal(cats.Search.length, 2);

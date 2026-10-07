@@ -6,7 +6,7 @@ module.exports = [
   { name: 'Lumi Art', desc: 'Turn a photo into a Lumi Art style image.', category: 'Image', path: '/api/image/lumiart', upstream: '/api/image/lumiart',
     multipart: true, file: { param: 'imageUrl', field: 'image', accept: 'image/*' },
     params: [{ name: 'imageUrl', required: true, type: 'url', aliases: ['url'], placeholder: 'Unggah foto' }] },
-  { name: 'Sketch', desc: 'Turn a photo into a pencil sketch.', category: 'Image', path: '/api/image/sketch', upstream: '/api/image/sketch',
+  { name: 'Sketch', desc: 'Turn a photo into a pencil sketch.', category: 'Image', path: '/api/image/sketch', upstream: '/image/sketch',
     multipart: true, file: { param: 'imageUrl', field: 'image', accept: 'image/*' },
     params: [{ name: 'imageUrl', required: true, type: 'url', aliases: ['url'], placeholder: 'Unggah foto' }] }
 ].map(makeEndpoint);
