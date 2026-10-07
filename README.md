@@ -162,6 +162,15 @@ emails, and secrets are never logged.
 Google Cloud Console checklist (OAuth 2.0 Client ID, type "Web application"):
 - Authorized JavaScript origins: https://apiz2z.vercel.app (and http://localhost:3000 for local dev)
 - Authorized redirect URIs: https://apiz2z.vercel.app/auth/google/callback
+
+Several domains at once (each one stays on its own address, no redirect):
+- Vercel → Domains: add every domain.
+- `CORS_ORIGINS` = every domain, comma-separated (e.g. `https://domain1.com,https://domain2.com`).
+- Google OAuth: add each domain to Authorized JavaScript origins and `https://<domain>/auth/google/callback`
+  to Authorized redirect URIs. The redirect flow returns to the domain the visitor is on when it is
+  listed in `CORS_ORIGINS`; other hosts use `GOOGLE_CALLBACK_URL`.
+- Cloudflare Turnstile: add each domain to the widget's hostnames.
+- Sessions are per domain: signing in on one domain does not sign you in on another.
 - The Client ID shown there must equal GOOGLE_CLIENT_ID in Vercel Production.
 
 ## Install, migration and deploy order

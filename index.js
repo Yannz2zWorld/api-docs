@@ -111,9 +111,17 @@ async function authRequired(req, res, next) {
     return res.status(503).send('Layanan akun sementara tidak tersedia. Silakan coba lagi.');
   }
 }
-function createOAuthClient() {
+// Several domains can serve the site at once (CORS_ORIGINS lists them). The Google redirect flow
+// returns to the domain the visitor is on when that domain is allowed, so the session cookie is
+// set where they are; any other host falls back to GOOGLE_CALLBACK_URL. Each domain's callback
+// (https://<domain>/auth/google/callback) must be an Authorized redirect URI in Google Cloud.
+function googleCallbackUrl(req) {
+  const origin = req ? `${req.protocol}://${req.get('host')}` : '';
+  return origin && allowedOrigins.has(origin) ? `${origin}/auth/google/callback` : GOOGLE_CALLBACK_URL;
+}
+function createOAuthClient(req) {
   requireAuthConfig();
-  return new OAuth2Client(GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET || undefined, GOOGLE_CALLBACK_URL);
+  return new OAuth2Client(GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET || undefined, googleCallbackUrl(req));
 }
 function randomState() { return crypto.randomBytes(32).toString('base64url'); }
 function safeEqual(a,b){const x=Buffer.from(String(a||''));const y=Buffer.from(String(b||''));return x.length===y.length&&x.length>0&&crypto.timingSafeEqual(x,y);}
@@ -139,7 +147,7 @@ const proofJson = express.json({ limit: '3mb' });
 const pluginJson = express.json({ limit: '768kb' });   // owner panel .js upload (max 200 KB of code), profile picture (max 512 KB image)
 app.use((req, res, next) => (/^\/api\/orders\/[^/]+\/manual$/.test(req.path) ? proofJson : req.path === '/owner/api/endpoints' || req.path === '/api/profile/avatar' ? pluginJson : smallJson)(req, res, next));
 app.use(express.urlencoded({ extended: false, limit:'100kb' }));
-const allowedOrigins = new Set([`https://${process.env.VERCEL_URL || 'apiz2z.vercel.app'}`, 'https://apiz2z.vercel.app', ...(process.env.CORS_ORIGINS || '').split(',').map(v => v.trim()).filter(Boolean)]);
+const allowedOrigins = new Set([`https://${process.env.VERCEL_URL || 'apiz2z.vercel.app'}`, 'https://apiz2z.vercel.app', ...(process.env.CORS_ORIGINS || '').split(',').map(v => v.trim().replace(/\/+$/, '')).filter(Boolean)]);
 // Any origin is allowed only for local development; deployed instances (Vercel) only trust
 // their own origins. A disallowed origin simply gets no CORS headers (the browser blocks it).
 const allowAnyOrigin = !process.env.VERCEL && process.env.NODE_ENV !== 'production';
@@ -660,7 +668,7 @@ app.post('/auth/google/credential', turnstile.guard(), async (req, res) => {
 app.get('/auth/google', turnstile.redirectGuard(), (req, res) => {
   try {
     const state = randomState();
-    const client = createOAuthClient();
+    const client = createOAuthClient(req);
     setCookie(res, 'oauth_state', state, 600);
     const url = client.generateAuthUrl({
       access_type: 'online',
@@ -687,7 +695,7 @@ app.get('/auth/google/callback', async (req, res) => {
       return res.status(400).send('OAuth state tidak valid. Silakan coba login lagi.');
     }
 
-    const client = createOAuthClient();
+    const client = createOAuthClient(req);
 
     const { tokens } = await client.getToken(String(code));
     if (!tokens?.id_token) {

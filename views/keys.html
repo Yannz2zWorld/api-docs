@@ -45,7 +45,7 @@
 
   <section class="panel">
     <h2>Cara pakai</h2>
-    <pre>curl -H "Authorization: Bearer YOUR_API_KEY" \
+    <pre id="curl-example">curl -H "Authorization: Bearer YOUR_API_KEY" \
   "https://apiz2z.vercel.app/api/tools/ping"</pre>
     <p><small>Header <code>x-api-key</code> juga didukung. Key yang dicabut langsung ditolak dengan <code>API_KEY_REVOKED</code>.</small></p>
   </section>
@@ -103,6 +103,8 @@ $('#list').addEventListener('click', async e => {
   if (!confirm(`Cabut key "${e.target.dataset.name}"? Aplikasi yang memakai key ini akan langsung ditolak.`)) return;
   try { await call(`/api/keys/${encodeURIComponent(id)}/revoke`, { method: 'POST' }); load(); } catch (err) { alert(err.message); }
 });
+// The example uses the domain this page was opened on (the site can run on several domains).
+$('#curl-example').textContent = `curl -H "Authorization: Bearer YOUR_API_KEY" \\\n  "${location.origin}/api/tools/ping"`;
 load();
 </script>
 </body>
