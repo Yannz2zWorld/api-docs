@@ -119,3 +119,21 @@ it('without THERESAV_API_KEY the endpoints say so and charge nothing', async () 
     process.env.THERESAV_API_KEY = saved;
   }
 });
+
+it('Downloader: 30 theresav endpoints next to TikTok; url is forwarded; YouTube options have defaults and choices', async () => {
+  const dl = (await app.request('GET', '/api/endpoints')).json.endpoints.Downloader;
+  assert.equal(dl.length, 31);
+  assert.ok(dl.some(e => e.cleanPath === '/api/download/tiktok'), 'the existing TikTok downloader stays');
+  assert.ok(!dl.some(e => /erome/i.test(e.cleanPath)), 'adult-content sources are not offered');
+  reply = () => ({ status: 200, json: { status: true, creator: 'Upstream', result: { url: 'https://cdn.example/v.mp4' } } });
+  const r = await call('/api/download/instagram?url=' + encodeURIComponent('https://www.instagram.com/reel/abc/'));
+  assert.equal(r.status, 200, r.text);
+  assert.equal(calls[0].url.pathname, '/api/download/instagram');
+  assert.equal(calls[0].url.searchParams.get('url'), 'https://www.instagram.com/reel/abc/');
+  await call('/api/download/ytmp3?url=https://youtu.be/x');
+  assert.deepEqual([calls[1].url.searchParams.get('format'), calls[1].url.searchParams.get('bitrate')], ['mp3', '128k']);
+  assert.equal((await call('/api/download/ytmp4?url=https://youtu.be/x&resolution=999')).json.error, 'INVALID_PARAMETER');
+  assert.equal((await call('/api/download/play?q=jj+epep')).status, 200);
+  assert.equal(calls.at(-1).url.searchParams.get('query'), 'jj epep');
+  assert.equal((await call('/api/download/facebook')).json.error, 'PARAM_REQUIRED');
+});
