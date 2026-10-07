@@ -165,3 +165,15 @@ it('an empty media answer is refused and refunded', async () => {
   const r = await call('/api/maker/brat?text=hi');
   assert.deepEqual([r.status, r.json.error], [502, 'UPSTREAM_FAILED']);
 });
+
+it('Image/Lumi Art: downloads the imageUrl and forwards it as the upstream image field', async () => {
+  reply = () => ({ status: 200, bytes: Buffer.from('ARTPNG'), type: 'image/png' });
+  const r = await app.request('GET', '/api/image/lumiart?imageUrl=' + encodeURIComponent('https://img.example.test/me.png'), app.asBrowser(user));
+  assert.equal(r.status, 200, r.text);
+  assert.match(r.headers['content-type'], /^image\/png/);
+  assert.equal(calls[0].url.pathname, '/api/image/lumiart');
+  assert.equal(calls[0].method, 'POST');
+  assert.equal(calls[0].form.get('image').type, 'image/png');
+  assert.equal((await call('/api/image/lumiart')).json.error, 'PARAM_REQUIRED');
+  assert.equal((await call('/api/image/lumiart?imageUrl=https://127.0.0.1/x.png')).status, 400);
+});
