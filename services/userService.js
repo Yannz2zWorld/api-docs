@@ -9,7 +9,8 @@ const OWNER_TIER = 'OWNER';
 // that has not run migration 007 yet (the value is then simply NULL = no expiry).
 const USER_COLUMNS = `id, google_id, email, name, picture, tier, status,
             daily_usage, last_usage_reset, created_at, updated_at, banned_at, ban_reason, session_version,
-            (to_jsonb(users.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at`;
+            (to_jsonb(users.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at,
+            (to_jsonb(users.*) ->> 'display_name') AS display_name`;
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -26,6 +27,17 @@ function effectiveTier(row, owner = isOwnerEmail(row?.email)) {
   if (!row?.tier || row.tier === OWNER_TIER) return DEFAULT_TIER;
   if (row.tier_expires_at && new Date(row.tier_expires_at) <= new Date()) return DEFAULT_TIER;
   return row.tier;
+}
+
+// Account name shown in the live chat and profile: the user's own choice, or derived from the
+// email's local part (letters only, up to the first digit/symbol): aghaabryan1234@… → Aghaabryan.
+function defaultAccountName(email) {
+  const local = String(email || '').split('@')[0];
+  const word = local.replace(/[^A-Za-z]+/g, ' ').trim().split(' ')[0] || 'User';
+  return (word.charAt(0).toUpperCase() + word.slice(1)).slice(0, 24);
+}
+function accountName(row) {
+  return (row?.display_name && String(row.display_name).trim()) || defaultAccountName(row?.email);
 }
 
 function mapUser(row) {
@@ -46,7 +58,9 @@ function mapUser(row) {
     lastUsageReset: row.last_usage_reset || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    isOwner: owner
+    isOwner: owner,
+    accountName: accountName(row),
+    displayName: row.display_name || null
   };
 }
 
@@ -214,6 +228,7 @@ async function secureGoogleLink(userId) {
 }
 
 module.exports = {
+  defaultAccountName, accountName,
   findAuthByEmail,
   createPasswordUser,
   markEmailVerified,
