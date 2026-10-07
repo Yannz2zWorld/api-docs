@@ -142,10 +142,12 @@ app.use((req, res, next) => {
 });
 // Bodies are small everywhere except a manual payment, which carries the proof image
 // (<= 2 MB, base64 in JSON; Vercel's request limit is 4.5 MB).
+const uploadPaths = new Set();   // theresav file endpoints accept a raw uploaded file (POST body)
 const smallJson = express.json({ limit: '100kb' });
 const proofJson = express.json({ limit: '3mb' });
 const pluginJson = express.json({ limit: '768kb' });   // owner panel .js upload (max 200 KB of code), profile picture (max 512 KB image)
-app.use((req, res, next) => (/^\/api\/orders\/[^/]+\/manual$/.test(req.path) ? proofJson : req.path === '/owner/api/endpoints' || req.path === '/api/profile/avatar' ? pluginJson : smallJson)(req, res, next));
+const rawUpload = express.raw({ type: () => true, limit: '8mb' });
+app.use((req, res, next) => (req.method === 'POST' && uploadPaths.has(req.path) ? rawUpload : /^\/api\/orders\/[^/]+\/manual$/.test(req.path) ? proofJson : req.path === '/owner/api/endpoints' || req.path === '/api/profile/avatar' ? pluginJson : smallJson)(req, res, next));
 app.use(express.urlencoded({ extended: false, limit:'100kb' }));
 const allowedOrigins = new Set([`https://${process.env.VERCEL_URL || 'apiz2z.vercel.app'}`, 'https://apiz2z.vercel.app', ...(process.env.CORS_ORIGINS || '').split(',').map(v => v.trim().replace(/\/+$/, '')).filter(Boolean)]);
 // Any origin is allowed only for local development; deployed instances (Vercel) only trust
@@ -512,6 +514,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
         if (name && desc && category && routePath && typeof run === 'function') {
           const cleanPath = routePath.split('?')[0];
           app.get(cleanPath, apiGateway(cleanPath, run));
+          if (route.upload) { uploadPaths.add(cleanPath); app.post(cleanPath, apiGateway(cleanPath, run)); }
           loadedPluginPaths.add(cleanPath);
           registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
