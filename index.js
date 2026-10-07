@@ -179,6 +179,10 @@ app.get('/assets/scythe.glb', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400');
   res.type('model/gltf-binary').sendFile(path.join(__dirname, 'views', 'assets', 'scythe.glb'));
 });
+app.get('/assets/select.js', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'select.js'));
+});
 app.get('/assets/chat.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'chat.js'));
