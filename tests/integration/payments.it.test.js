@@ -67,7 +67,7 @@ it('manual payment: validation, pending state, one proof per order, no tier chan
   }
   const ok = await post(cookie, url, { method: 'DANA', proof_url: PROOF });
   assert.deepEqual([ok.status, ok.json.status, ok.json.payment.status], [201, 'PAYMENT_PENDING', 'pending']);
-  assert.equal(ok.json.notification, 'not_configured', 'never claims a WhatsApp message was sent');
+  assert.equal(ok.json.notification, 'panel', 'never claims a message was sent')
   assert.equal((await post(cookie, url, { method: 'DANA', proof_url: PROOF })).json.error, 'PAYMENT_ALREADY_SUBMITTED');
   assert.equal(await tierOf(email), 'FREE');
   const mine = await app.request('GET', '/api/orders', { cookie });
@@ -123,11 +123,18 @@ it('an order awaiting manual review is not expired before the owner decides', as
   assert.equal(await tierOf(email), 'SULTAN');
 });
 
-it('Pakasir is fail-closed when not configured', async () => {
+it('Pakasir is fail-closed: in maintenance unless switched on, and not configured without keys', async () => {
   const cookie = await app.login('pnocfg@example.test');
   const o = (await order(cookie, 'SULTAN')).json.order;
   const r = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
-  assert.deepEqual([r.status, r.json.error], [503, 'PAYMENT_NOT_CONFIGURED']);
+  assert.deepEqual([r.status, r.json.error], [503, 'PAYMENT_GATEWAY_MAINTENANCE']);
+  process.env.PAYMENT_GATEWAY = 'on';
+  try {
+    const noKeys = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
+    assert.deepEqual([noKeys.status, noKeys.json.error], [503, 'PAYMENT_GATEWAY_MAINTENANCE'], 'the switch alone does not enable a gateway without keys');
+  } finally {
+    delete process.env.PAYMENT_GATEWAY;
+  }
 });
 
 it('webhook: malformed, forged, wrong-order and wrong-amount payloads are rejected', async () => {
@@ -154,7 +161,7 @@ it('webhook: trusted verification settles once; replays and concurrent duplicate
   const email = 'pgateway@example.test';
   const cookie = await app.login(email);
   const o = (await order(cookie, 'SEPUH')).json.order;
-  Object.assign(process.env, { PAKASIR_API_KEY: 'test-only-key', PAKASIR_V2_VERIFY_URL: 'https://verify.example.test/{project}/{order_id}?amount={amount}' });
+  Object.assign(process.env, { PAYMENT_GATEWAY: 'on', PAKASIR_API_KEY: 'test-only-key', PAKASIR_V2_VERIFY_URL: 'https://verify.example.test/{project}/{order_id}?amount={amount}' });
   const { post: realPost, get: realGet } = axios;
   let verifyStatus = 'completed';
   axios.post = async () => ({ data: { transaction: { txn_id: 'TXN-' + o.order_code, payment_link: 'https://pay.example.test/x', qr_string: '000201...', expired_at: new Date(Date.now() + 3600e3).toISOString() } } });
@@ -186,6 +193,7 @@ it('webhook: trusted verification settles once; replays and concurrent duplicate
     axios.post = realPost;
     axios.get = realGet;
     delete process.env.PAKASIR_API_KEY;
+    delete process.env.PAYMENT_GATEWAY;
     delete process.env.PAKASIR_V2_VERIFY_URL;
   }
 });

@@ -1,32 +1,18 @@
 'use strict';
 // Tier durations (7..365 days), expiry/extension on approval, the four payment methods,
-// proof image upload, owner proof viewing, Telegram owner notification and WhatsApp links.
+// proof image upload, owner proof viewing, chat links for the buyer, and the gateway maintenance switch.
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const h = require('./helpers');
 
 const axios = require(path.join(__dirname, '..', '..', 'node_modules', 'axios'));
-const BOT_TOKEN = 'test-bot-token-123456:ABCDEF';
-const telegramCalls = [];
-let telegramMode = 'ok';
-const realFetch = globalThis.fetch;
-globalThis.fetch = async (url, opts) => {
-  if (String(url).startsWith('https://api.telegram.org/')) {
-    const form = opts.body;
-    telegramCalls.push({ url: String(url), caption: form.get('caption'), chat: form.get('chat_id'), photo: form.get('photo') });
-    if (telegramMode === 'down') throw new TypeError('fetch failed');
-    return new Response(JSON.stringify({ ok: telegramMode === 'ok' }), { status: telegramMode === 'ok' ? 200 : 400 });
-  }
-  return realFetch(url, opts);
-};
-
 let app;
 let owner;
 before(async () => {
   if (h.skip) return;
   await h.setupDatabase();
-  app = await h.startApp({ PAKASIR_PROJECT: 'yannz-test-project', PAKASIR_API_KEY: 'pakasir-test-key', TELEGRAM_BOT_TOKEN: BOT_TOKEN, TELEGRAM_OWNER_CHAT_ID: '777' });
+  app = await h.startApp({ PAKASIR_PROJECT: 'yannz-test-project', PAKASIR_API_KEY: 'pakasir-test-key', PAYMENT_GATEWAY: 'on' });
   owner = await app.login(h.OWNER_EMAIL);
 });
 after(async () => { if (h.skip) return; await app?.close(); await h.teardownDatabase(); });
@@ -135,37 +121,35 @@ it('proof upload: real images only, at most 2 MB, owner-only viewing as an inert
   assert.equal((await app.request('GET', `/owner/payments/${ok.json.payment.id}/proof`, { cookie })).status, 403);
 });
 
-it('Telegram: the owner gets the proof photo with order details; delivery failures never block the payment', async () => {
-  telegramCalls.length = 0;
-  telegramMode = 'ok';
-  const cookie = await app.login('tele@example.test');
+it('manual proof: stored for the developer panel, nothing sent automatically; the buyer gets WhatsApp and Telegram links', async () => {
+  const cookie = await app.login('links@example.test');
   const sent = await payManual(cookie, 'SEPUH', 90);
-  assert.equal(sent.response.notification, 'sent');
-  assert.equal(telegramCalls.length, 1);
-  const call = telegramCalls[0];
-  assert.match(call.url, /\/sendPhoto$/);
-  assert.equal(call.chat, '777');
-  assert.match(call.caption, new RegExp(sent.order.order_code));
-  assert.match(call.caption, /SEPUH · 90 hari/);
-  assert.match(call.caption, /Rp30\.000/);
-  assert.match(call.caption, /tele@example\.test/);
-  assert.equal(call.photo.type, 'image/png');
-  assert.ok(Buffer.from(await call.photo.arrayBuffer()).equals(PNG));
-  const row = (await h.db().query('SELECT owner_notified FROM payments WHERE id=$1', [sent.payment.id])).rows[0];
-  assert.equal(row.owner_notified, 'telegram');
-
-  // WhatsApp cannot be automated here: the buyer gets a prefilled wa.me link instead.
+  assert.equal(sent.response.notification, 'panel');
   assert.match(sent.response.links.whatsapp, /^https:\/\/wa\.me\/\d+\?text=/);
-  assert.match(decodeURIComponent(sent.response.links.whatsapp), new RegExp(sent.order.order_code));
+  const text = decodeURIComponent(sent.response.links.whatsapp);
+  assert.match(text, new RegExp(sent.order.order_code));
+  assert.match(text, /SEPUH · 90 hari/);
+  assert.match(text, /Rp30\.000/);
+  assert.match(sent.response.links.telegram, /^https:\/\/t\.me\//);
+  const listed = (await app.request('GET', '/owner/payments', { cookie: owner })).json.payments.find(p => p.id === sent.payment.id);
+  assert.ok(listed && listed.has_proof, 'the proof is in the developer panel');
+});
 
-  for (const mode of ['rejected', 'down']) {
-    telegramMode = mode;
-    const c = await app.login(`tele-${mode}@example.test`);
-    const r = await payManual(c, 'SULTAN', 30);
-    assert.equal(r.response.notification, 'failed');
+it('payment gateway maintenance: without PAYMENT_GATEWAY=on buyers cannot start a gateway payment; manual payment still works', async () => {
+  const saved = process.env.PAYMENT_GATEWAY;
+  delete process.env.PAYMENT_GATEWAY;
+  try {
+    const cookie = await app.login('gwoff@example.test');
+    const methods = (await app.request('GET', '/api/orders', { cookie })).json.methods;
+    assert.deepEqual([methods.QRIS_GATEWAY.available, methods.QRIS_GATEWAY.maintenance, methods.QRIS.available], [false, true, true]);
+    const o = (await order(cookie, 'SULTAN', 30)).json.order;
+    const r = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
+    assert.deepEqual([r.status, r.json.error], [503, 'PAYMENT_GATEWAY_MAINTENANCE']);
+    assert.equal((await post(cookie, `/api/orders/${o.id}/manual`, { method: 'QRIS', proof_image: pngUrl })).status, 201);
+    assert.equal((await app.request('GET', '/owner/status', { cookie: owner })).json.payments.gateway, 'maintenance');
+  } finally {
+    process.env.PAYMENT_GATEWAY = saved;
   }
-  telegramMode = 'ok';
-  assert.ok(!h.logs.join('\n').includes(BOT_TOKEN), 'bot token never logged');
 });
 
 it('QRIS gateway: the QR payload is rendered as an SVG for the buyer only; the owner can approve it by hand', async () => {
@@ -205,7 +189,7 @@ it('owner payment settings: DANA/GoPay appear for buyers once set; validation an
   assert.deepEqual(methods.GOPAY, { available: false, account: null });
   const server = (await app.request('GET', '/owner/server', { cookie: owner })).json;
   assert.equal(server.settings.payment_dana_number, '081234567890');
-  assert.equal(server.notifications.telegram, true);
+  assert.equal(server.notifications.telegram.link, true);
   const o = (await order(cookie, 'SULTAN')).json.order;
   assert.equal((await post(cookie, `/api/orders/${o.id}/manual`, { method: 'DANA', proof_image: pngUrl })).status, 201);
 });

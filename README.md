@@ -353,18 +353,15 @@ instead. The owner sees the image in the Payments tab (`/owner/payments/:id/proo
 owner-only, served with `Content-Security-Policy: sandbox`) and approves (tier change
 with expiry, once, audited) or rejects. Approval is idempotent (`409 PAYMENT_NOT_PENDING`).
 
-Owner notification:
-- Telegram (IMPLEMENTED, NOT VERIFIED against the live Telegram API): with
-  `TELEGRAM_BOT_TOKEN` and `TELEGRAM_OWNER_CHAT_ID` set, every manual payment sends the
-  proof photo with order, tier, duration, amount, method and buyer email to the owner's
-  chat. Failures never block the payment; the response says `sent`, `failed` or
-  `not_configured`. Setup: create a bot with @BotFather (token), send any message to the
-  bot, then open `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy
-  `message.chat.id`. Set both in Vercel (token as Sensitive), redeploy.
-- WhatsApp: no automated WhatsApp API is integrated (it needs a paid/approved provider).
-  After uploading, the buyer gets a "Kirim via WhatsApp" button: a `wa.me` link to
-  `OWNER_WA` (or the number in `settings.js`) with the order details prefilled; the buyer
-  attaches the screenshot themselves.
+Payment confirmation (current flow):
+- Buyer pays manually (QRIS image, DANA, GoPay), uploads the proof; it appears in the developer
+  panel's Payments tab, where the developer approves or rejects it. The buyer also gets chat
+  buttons: WhatsApp (OWNER_WA or the WhatsApp link in settings.js, order details prefilled) and
+  Telegram (the Telegram link in settings.js). Nothing is sent automatically (the Telegram bot
+  notification was removed).
+- Payment gateway (Pakasir) is in maintenance unless `PAYMENT_GATEWAY=on` is set together with
+  `PAKASIR_PROJECT` and `PAKASIR_API_KEY`; while off, buyers see "Sedang maintenance" and
+  `POST /api/orders/:id/pakasir` answers `503 PAYMENT_GATEWAY_MAINTENANCE`.
 
 Pakasir (IMPLEMENTED, NOT VERIFIED against the live provider): transaction creation
 uses `PAKASIR_PROJECT` + `PAKASIR_API_KEY`. Creating a payment never marks it paid. The
@@ -436,7 +433,7 @@ cookies or secrets).
 ## Security housekeeping (owner)
 
 - Delete the unused Vercel variables `OWNER_API_KEY` and `OWNER_PANEL_PASSWORD` (no code
-  reads them). Mark `AUTH_SECRET`, `SMTP_PASS`, `PAKASIR_API_KEY`, `TELEGRAM_BOT_TOKEN` and
+  reads them). Mark `AUTH_SECRET`, `SMTP_PASS`, `PAKASIR_API_KEY` and
   `DATABASE_URL` as Sensitive in Vercel.
 - An old commit of `settings.js` contained a hard-coded API key. It no longer grants
   access (keys are per-user and hashed now), but treat that value as public: never reuse

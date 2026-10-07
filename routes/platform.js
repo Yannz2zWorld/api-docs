@@ -333,7 +333,7 @@ router.get('/api/orders', auth, async (req, res) => {
     duration: tiers.DURATION,
     prices: Object.fromEntries(tiers.purchasable.map(t => [t, tiers.TIERS[t].price])),
     methods: {
-      QRIS_GATEWAY: { available: pakasir.isConfigured(), autoVerified: pakasir.isVerificationConfigured() },
+      QRIS_GATEWAY: { available: pakasir.isEnabled(), maintenance: !pakasir.isEnabled(), autoVerified: pakasir.isVerificationConfigured() },
       QRIS: { available: true, image: '/assets/qris-manual.jpg' },
       DANA: { available: Boolean(accounts.DANA), account: accounts.DANA },
       GOPAY: { available: Boolean(accounts.GOPAY), account: accounts.GOPAY }
@@ -341,8 +341,8 @@ router.get('/api/orders', auth, async (req, res) => {
     // Kept for older clients.
     manualMethods: MANUAL_METHODS,
     gatewayMethods: pakasir.METHODS,
-    gatewayConfigured: pakasir.isConfigured(),
-    ownerNotify: notifier.status(),
+    gatewayConfigured: pakasir.isEnabled(),
+    ownerContact: notifier.status(),
     contact: settings.whatsappLink,
     manualInstructions: process.env.MANUAL_PAYMENT_INSTRUCTIONS || null
   });
@@ -355,6 +355,7 @@ async function pendingOrderFor(req) {
 
 router.post('/api/orders/:id/pakasir', sameOrigin, auth, validId('id'), async (req, res) => {
   const method = String(req.body?.method || 'qris');
+  if (!pakasir.isEnabled()) return fail(res, 503, 'PAYMENT_GATEWAY_MAINTENANCE', 'Payment gateway sedang maintenance. Bayar manual lewat QRIS, DANA atau GoPay lalu upload bukti.');
   const order = await pendingOrderFor(req);
   if (!order) return fail(res, 404, 'ORDER_NOT_FOUND', 'Order tidak ditemukan atau kedaluwarsa.');
   let data;
@@ -439,20 +440,16 @@ router.post('/api/orders/:id/manual', sameOrigin, auth, validId('id'), async (re
   if (!payment) return fail(res, 409, 'PAYMENT_ALREADY_SUBMITTED', 'Bukti pembayaran untuk order ini sudah dikirim dan sedang menunggu approval developer.');
   const days = Number(order.duration_days || 30);
   await audit.writeAudit({ actorUserId: req.account.id, action: 'manual_payment_create', targetType: 'payment', targetId: payment.id, metadata: { method, amount: order.amount, days, upload: Boolean(image) }, ipAddress: ip(req) });
-  const notice = await notifier.notifyManualPayment({
-    orderCode: order.order_code, tier: order.tier, days, amount: order.amount, method, email: req.account.email,
-    panelUrl: `${req.protocol}://${req.get('host')}/owner#payments`, proof: image ? { buffer: image.buffer, mime: image.mime } : null
-  });
-  if (notice.sent) await query('UPDATE payments SET owner_notified=$2 WHERE id=$1', [payment.id, notice.channel]).catch(() => {});
+  // The proof is in the developer panel; the buyer can also confirm by chat (nothing is sent automatically).
+  const links = notifier.contactLinks({ orderCode: order.order_code, tier: order.tier, days, amount: order.amount, method, email: req.account.email });
   res.status(201).json({
     success: true,
     payment,
     status: 'PAYMENT_PENDING',
     instructions: process.env.MANUAL_PAYMENT_INSTRUCTIONS || 'Bukti diterima. Status menunggu approval developer.',
     contact: settings.whatsappLink,
-    notification: notice.sent ? 'sent' : notice.reason === 'TELEGRAM_NOT_CONFIGURED' ? 'not_configured' : 'failed',
-    notificationChannel: notice.sent ? notice.channel : null,
-    links: notice.links
+    notification: 'panel',
+    links
   });
 });
 
@@ -478,9 +475,9 @@ router.get('/owner/status', auth, owner, async (req, res) => {
     success: true,
     database,
     // Names and presence only; values are never returned.
-    config: Object.fromEntries(['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL', 'AUTH_SECRET', 'OWNER_EMAIL', 'CORS_ORIGINS', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'EMAIL_FROM', 'RESEND_API_KEY', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'].map(n => [n, configured(n)])),
+    config: Object.fromEntries(['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL', 'AUTH_SECRET', 'OWNER_EMAIL', 'CORS_ORIGINS', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAYMENT_GATEWAY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'EMAIL_FROM', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY', 'GITHUB_TOKEN'].map(n => [n, configured(n)])),
     authConfigured: missingAuthConfig().length === 0,
-    payments: { pakasirConfigured: pakasir.isConfigured(), automaticSettlement: pakasir.isVerificationConfigured() ? 'configured_not_verified' : 'disabled_fail_closed' },
+    payments: { pakasirConfigured: pakasir.isConfigured(), gateway: pakasir.isEnabled() ? 'on' : 'maintenance', automaticSettlement: pakasir.isVerificationConfigured() ? 'configured_not_verified' : 'disabled_fail_closed' },
     notifications: notifier.status(),
     email: emailService.status(),
     plugins: { loaded, registryWithoutHandler: registry.filter(p => !loaded.includes(p)), handlerWithoutRegistry: loaded.filter(p => !registry.includes(p)) },

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Developer Console — Yannz API</title>
-<link rel="icon" href="/api/logo-proxy">
+<link rel="icon" type="image/png" href="/assets/favicon.png?v=2"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
 <meta name="theme-color" content="#0b0b0c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -215,17 +215,19 @@ loaders.status = async () => {
   try {
     const s = await api('/owner/status');
     const db = s.database;
-    const cfg = Object.entries(s.config).map(([k, v]) => chip(k, v ? 'ok' : 'warn')).join(' ');
+    // Optional settings show grey when empty instead of red.
+    const OPTIONAL = new Set(['PAYMENT_GATEWAY', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'GITHUB_TOKEN', 'CORS_ORIGINS']);
+    const cfg = Object.entries(s.config).map(([k, v]) => chip(k + (v || !OPTIONAL.has(k) ? '' : ' (opsional)'), v ? 'ok' : OPTIONAL.has(k) ? '' : 'warn')).join(' ');
     $('#status-data').innerHTML = `
       <h3>Database</h3>${chip(db.connected ? 'connected' : 'disconnected', db.connected ? 'ok' : 'bad')} ${db.ok === undefined ? '' : chip(db.ok ? 'schema ok' : 'migration required', db.ok ? 'ok' : 'bad')}
       ${db.missing?.length ? `<p class="error">Kurang: ${db.missing.map(esc).join(', ')}</p>` : ''}${db.error ? `<p class="error">${esc(db.error)}</p>` : ''}
       <h3>Environment</h3><p>${cfg}</p><small>Hijau = terisi, putih = kosong. Nilai tidak pernah ditampilkan.</small>
-      <h3>Pembayaran</h3><p>Pakasir: ${chip(s.payments.pakasirConfigured ? 'configured' : 'not configured', s.payments.pakasirConfigured ? 'ok' : 'warn')} Settlement otomatis: ${chip(s.payments.automaticSettlement, s.payments.automaticSettlement === 'disabled_fail_closed' ? 'warn' : 'ok')}</p>
-      <small>Settlement otomatis tetap mati (fail-closed) sampai endpoint verifikasi resmi Pakasir dikonfigurasi di PAKASIR_V2_VERIFY_URL dan diuji.</small>
+      <h3>Pembayaran</h3><p>Manual (QRIS, DANA, GoPay + bukti): ${chip('aktif', 'ok')} Payment gateway (Pakasir): ${chip(s.payments.gateway === 'on' ? 'aktif' : 'maintenance', s.payments.gateway === 'on' ? 'ok' : 'warn')}</p>
+      <small>${s.payments.gateway === 'on' ? `Gateway aktif. Settlement otomatis: ${s.payments.automaticSettlement === 'disabled_fail_closed' ? 'mati — tier diaktifkan lewat Approve di tab Payments' : 'dikonfigurasi'}.` : 'Gateway sedang maintenance: pembeli hanya bisa bayar manual lalu upload bukti. Untuk menyalakan lagi isi PAYMENT_GATEWAY=on (plus PAKASIR_PROJECT dan PAKASIR_API_KEY) di Vercel.'}</small>
       <h3>Email (verifikasi &amp; reset sandi)</h3><p>${chip(s.email.configured ? 'provider: ' + s.email.provider : 'belum dikonfigurasi', s.email.configured ? 'ok' : 'warn')} Pengirim: ${chip(s.email.senderName)}</p>
       <small>${s.email.configured ? 'Kode dikirim atas nama YannApi.' : 'Tanpa provider email, pendaftaran email &amp; lupa sandi menjawab EMAIL_NOT_CONFIGURED. Isi EMAIL_FROM + SMTP_* atau RESEND_API_KEY.'}</small>
-      <h3>Notifikasi WhatsApp</h3><p>${chip(s.notifications.configured ? 'provider aktif' : 'provider belum ada', s.notifications.configured ? 'ok' : 'warn')} OWNER_WA: ${chip(s.notifications.ownerWaConfigured ? 'set' : 'kosong', s.notifications.ownerWaConfigured ? 'ok' : 'warn')}</p>
-      <small>Tidak ada pesan WhatsApp yang dikirim sampai provider resmi diintegrasikan.</small>
+      <h3>Konfirmasi pembayaran</h3><p>Bukti masuk ke tab Payments ${chip('aktif', 'ok')} Tombol WhatsApp: ${chip(s.notifications.whatsapp?.link ? 'aktif' : 'nomor kosong', s.notifications.whatsapp?.link ? 'ok' : 'warn')} Tombol Telegram: ${chip(s.notifications.telegram?.link ? 'aktif' : 'link kosong', s.notifications.telegram?.link ? 'ok' : 'warn')}</p>
+      <small>Setelah upload bukti, pembeli bisa langsung chat kamu lewat WhatsApp (OWNER_WA / link WhatsApp di settings.js, pesan detail order sudah terisi) atau Telegram (link Telegram di settings.js). Tidak ada pesan yang dikirim otomatis.</small>
       <h3>Plugin</h3><p>${s.plugins.loaded.map(p => chip(p, 'ok')).join(' ') || '—'}</p>
       ${s.plugins.registryWithoutHandler.length ? `<p>Metadata tanpa handler: ${s.plugins.registryWithoutHandler.map(p => chip(p, 'warn')).join(' ')}</p>` : ''}
       <h3>Runtime</h3><p>${chip(s.runtime.node)} ${chip(s.runtime.vercel ? 'vercel' : 'local')} ${s.runtime.region ? chip(s.runtime.region) : ''}</p>`;
@@ -521,9 +523,7 @@ loaders.server = async () => {
     $('#maint').checked = settings.maintenance_enabled; $('#maint-msg').value = settings.maintenance_message || '';
     $('#dana-number').value = settings.payment_dana_number || ''; $('#dana-name').value = settings.payment_dana_name || '';
     $('#gopay-number').value = settings.payment_gopay_number || ''; $('#gopay-name').value = settings.payment_gopay_name || '';
-    $('#notify-state').textContent = notifications?.telegram
-      ? 'Notifikasi Telegram aktif: bukti pembayaran manual dikirim ke chat developer.'
-      : 'Notifikasi Telegram belum aktif (set TELEGRAM_BOT_TOKEN dan TELEGRAM_OWNER_CHAT_ID di Vercel). Bukti tetap tampil di tab Payments; pembeli juga diberi tombol WhatsApp.';
+    $('#notify-state').textContent = 'Bukti pembayaran manual tampil di tab Payments. Setelah upload, pembeli diberi tombol chat WhatsApp' + (notifications?.telegram?.link ? ' dan Telegram' : '') + ' ke kamu untuk konfirmasi.';
   } catch (e) { $('#server-msg').textContent = e.message; }
 };
 $('#save-pay').addEventListener('click', async () => {

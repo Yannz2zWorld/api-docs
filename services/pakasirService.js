@@ -23,5 +23,8 @@ async function verifyTransaction(orderCode,amount){
  return Boolean(t&&String(t.order_id||orderCode)===String(orderCode)&&Number(t.amount)===Number(amount)&&String(t.status||'').toLowerCase()==='completed');
 }
 function isConfigured(){return Boolean(process.env.PAKASIR_PROJECT&&process.env.PAKASIR_API_KEY);}
+// The gateway is off ("maintenance") until PAYMENT_GATEWAY=on is set, even with the keys present;
+// manual payments (QRIS image, DANA, GoPay + proof) keep working.
+function isEnabled(){return isConfigured()&&/^(on|true|1)$/i.test(String(process.env.PAYMENT_GATEWAY||'').trim());}
 function isVerificationConfigured(){return isConfigured()&&/^https:\/\//i.test(process.env.PAKASIR_V2_VERIFY_URL||'');}
-module.exports={METHODS,createTransaction,verifyTransaction,isConfigured,isVerificationConfigured};
+module.exports={METHODS,createTransaction,verifyTransaction,isConfigured,isEnabled,isVerificationConfigured};
