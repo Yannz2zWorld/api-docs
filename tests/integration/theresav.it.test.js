@@ -177,3 +177,27 @@ it('Image/Lumi Art: downloads the imageUrl and forwards it as the upstream image
   assert.equal((await call('/api/image/lumiart')).json.error, 'PARAM_REQUIRED');
   assert.equal((await call('/api/image/lumiart?imageUrl=https://127.0.0.1/x.png')).status, 400);
 });
+
+it('developer self-test: probes sampled endpoints, marks the rest manual, and disables the failing ones', async () => {
+  const owner = await app.login(h.OWNER_EMAIL);
+  const o = (method, url, body) => app.request(method, url, { cookie: owner, headers: { origin: app.origin }, body });
+  reply = (call) => (call.url.pathname === '/api/ai/claude'
+    ? { status: 200, json: { status: false, error: 'quota habis' } }
+    : { status: 200, json: { status: true, creator: 'X', result: 'ok' } });
+  const r = await o('POST', '/owner/api/selftest', {});
+  assert.equal(r.status, 200, r.text);
+  assert.ok(r.json.summary.ok >= 28, JSON.stringify(r.json.summary));
+  assert.ok(r.json.summary.manual >= 20, 'url/photo endpoints need a real input → manual');
+  const claude = r.json.results.find(x => x.path === '/api/ai/claude');
+  assert.equal(claude.result, 'error');
+  assert.match(claude.error, /quota habis/);
+  const lumi = r.json.results.find(x => x.path === '/api/image/lumiart');
+  assert.equal(lumi.result, 'manual');
+
+  // disable the failing one; the gateway then refuses it
+  const dis = await o('POST', '/owner/api/endpoints/bulk-status', { ids: [claude.id], status: 'disabled' });
+  assert.equal(dis.json.changed, 1);
+  const blocked = await call('/api/ai/claude?text=hi');
+  assert.deepEqual([blocked.status, blocked.json.error], [404, 'ENDPOINT_UNAVAILABLE']);
+  await o('POST', '/owner/api/endpoints/bulk-status', { ids: [claude.id], status: 'active' });
+});

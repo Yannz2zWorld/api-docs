@@ -122,6 +122,8 @@ module.exports = async (req, res) =&gt; {
       <div class="actions"><button class="primary" type="submit" id="ep-submit">Tambah &amp; deploy</button>
         <p class="muted">Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), lalu endpoint aktif. Script berjalan di server, jadi hanya upload kode yang kamu percaya.</p></div>
     </form>
+    <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Uji endpoint theresav</button><small class="muted" id="selftest-note">Menguji endpoint AI/Downloader/Maker/Image ke theresav dari server. Memakai kuota theresav kamu.</small></div>
+    <div id="selftest-data"></div>
     <div id="endpoints-data">Memuat…</div>
   </section>
 
@@ -434,6 +436,33 @@ $('#access-list').addEventListener('click', async e => {
 });
 
 // ---------- endpoints
+let selftestResults = [];
+$('#selftest-btn').addEventListener('click', async () => {
+  if (!confirm('Uji semua endpoint theresav ke server upstream sekarang? Ini memakai kuota theresav kamu.')) return;
+  const btn = $('#selftest-btn'); btn.disabled = true; btn.textContent = 'Menguji…';
+  $('#selftest-data').innerHTML = '<p class="muted">Menguji… ini bisa 1–2 menit.</p>';
+  try {
+    const d = await send('/owner/api/selftest', 'POST', {});
+    selftestResults = d.results;
+    const ic = { ok: ['OK', 'ok'], error: ['ERROR', 'bad'], manual: ['uji manual', 'warn'], not_configured: ['belum diatur', 'warn'] };
+    const sum = Object.entries(d.summary).map(([k, v]) => `${esc((ic[k] || [k])[0])}: ${v}`).join(' · ');
+    const errs = d.results.filter(r => r.result === 'error' && r.id && r.endpointStatus === 'active');
+    $('#selftest-data').innerHTML = `<p class="muted">${esc(sum)}</p>` +
+      (errs.length ? `<div class="row" style="margin:4px 0 10px"><button type="button" class="sm danger" id="disable-failing">Nonaktifkan ${errs.length} endpoint error</button></div>` : '') +
+      `<table><tr><th>Endpoint</th><th>Hasil</th><th>Detail</th></tr>${d.results.map(r => { const c = ic[r.result] || [r.result, '']; return `<tr>
+        <td><b>${esc(r.name)}</b><br><small>${esc(r.category)} · ${esc(r.path)}</small></td>
+        <td>${chip(c[0], c[1])}${r.endpointStatus === 'disabled' ? ' ' + chip('nonaktif', 'warn') : ''}</td>
+        <td><small>${r.result === 'ok' ? (r.ms || '') + ' ms' : r.result === 'manual' ? 'perlu link/foto asli — uji di Sandbox' : r.result === 'error' ? esc(String(r.error || '').slice(0, 120)) + (r.status ? ` (${r.status})` : '') : 'THERESAV_API_KEY belum diatur'}</small></td></tr>`; }).join('')}</table>`;
+    const df = $('#disable-failing');
+    if (df) df.addEventListener('click', async () => {
+      if (!confirm(`Nonaktifkan ${errs.length} endpoint yang error? Bisa diaktifkan lagi nanti dari daftar di bawah.`)) return;
+      try { const r = await send('/owner/api/endpoints/bulk-status', 'POST', { ids: errs.map(e => e.id), status: 'disabled' }); alert(`${r.changed} endpoint dinonaktifkan.`); loaders.endpoints(); df.disabled = true; }
+      catch (err) { alert(err.message); }
+    });
+  } catch (e) { $('#selftest-data').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
+  finally { btn.disabled = false; btn.textContent = 'Uji endpoint theresav'; }
+});
+
 loaders.endpoints = async () => {
   try {
     const d = await api('/owner/api/endpoints');

@@ -17,6 +17,7 @@ const emailService = require('../services/emailService');
 const passwords = require('../services/passwordService');
 const activity = require('../services/activityService');
 const pluginService = require('../services/githubPluginService');
+const theresav = require('../lib/theresav');
 
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
@@ -902,6 +903,52 @@ function withHandler(req, row) {
 router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
   const rows = await query('SELECT * FROM endpoints ORDER BY name');
   res.json({ success: true, endpoints: rows.map(r => withHandler(req, r)) });
+});
+
+// Self-test the theresav-backed endpoints from the server (which can reach theresav even when a
+// build environment cannot): each is called upstream with a safe sample input. Endpoints without a
+// sample (they need a real link/photo) are reported "manual" so they are tested in the Sandbox.
+// Owner-only; uses the owner's theresav quota, so it is an explicit action.
+const selfTestLimiter = { running: false };
+router.post('/owner/api/selftest', sameOrigin, auth, owner, async (req, res) => {
+  if (!process.env.THERESAV_API_KEY) return fail(res, 503, 'UPSTREAM_NOT_CONFIGURED', 'Isi THERESAV_API_KEY di Vercel lalu redeploy sebelum menguji.');
+  if (selfTestLimiter.running) return fail(res, 409, 'SELFTEST_BUSY', 'Pengujian lain sedang berjalan. Tunggu sampai selesai.');
+  selfTestLimiter.running = true;
+  try {
+    const loaded = req.app.locals.loadedPluginPaths || new Set();
+    const rows = await query("SELECT id,path,status FROM endpoints");
+    const byPath = new Map(rows.map(r => [r.path, r]));
+    const only = Array.isArray(req.body?.paths) ? new Set(req.body.paths) : null;
+    const entries = theresav.registry().filter(e => loaded.has(e.path) && (!only || only.has(e.path)));
+    const out = [];
+    // Small concurrency so one run does not hammer the upstream.
+    const queue = entries.slice();
+    async function worker() {
+      for (let e = queue.shift(); e; e = queue.shift()) {
+        let r;
+        try { r = await theresav.probe(e); } catch (err) { r = { result: 'error', error: err?.message || 'gagal' }; }
+        const row = byPath.get(e.path);
+        out.push({ path: e.path, name: e.name, category: e.category, ...r, id: row?.id || null, endpointStatus: row?.status || null });
+      }
+    }
+    await Promise.all([worker(), worker(), worker()]);
+    out.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+    const summary = out.reduce((m, r) => (m[r.result] = (m[r.result] || 0) + 1, m), {});
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_selftest', targetType: 'endpoint', metadata: summary, ipAddress: ip(req) }).catch(() => {});
+    res.json({ success: true, results: out, summary });
+  } finally {
+    selfTestLimiter.running = false;
+  }
+});
+
+// Disable (or enable) several endpoints at once, by id — used by "nonaktifkan yang error".
+router.post('/owner/api/endpoints/bulk-status', sameOrigin, auth, owner, async (req, res) => {
+  const status = req.body?.status === 'active' ? 'active' : 'disabled';
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(x => UUID_RE.test(String(x))).slice(0, 200) : [];
+  if (!ids.length) return fail(res, 400, 'NO_IDS', 'Tidak ada endpoint yang dipilih.');
+  const r = await query('UPDATE endpoints SET status=$2,updated_at=now() WHERE id = ANY($1::uuid[]) RETURNING id', [ids, status]);
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_bulk_status', targetType: 'endpoint', metadata: { status, count: r.length }, ipAddress: ip(req) });
+  res.json({ success: true, changed: r.length, status });
 });
 
 router.post('/owner/api/endpoints', sameOrigin, auth, owner, async (req, res) => {
