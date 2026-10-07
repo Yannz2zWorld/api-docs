@@ -210,6 +210,28 @@ app.get('/assets/theme.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'theme.css'));
 });
 app.use('/views', express.static(path.join(__dirname, 'views')));
+
+// ------------------------------------------------------------------------ CDN (gambar)
+// Publik dan tanpa autentikasi: server lain harus bisa fetch URL ini. Didefinisikan sebelum
+// middleware maintenance supaya tetap bisa diakses saat website maintenance. Unggah file lewat
+// POST /api/tools/upload (plugin/upload.js).
+const cdnService = require('./services/cdnService');
+app.get('/cdn/:id', async (req, res) => {
+  const id = String(req.params.id || '');
+  if (!cdnService.isValidId(id)) return res.status(404).json({ status: false, error: 'NOT_FOUND' });
+  try {
+    const f = await cdnService.fetchFile(id);
+    if (!f) return res.status(404).json({ status: false, error: 'NOT_FOUND' });
+    res.set('Cache-Control', 'public, max-age=86400, immutable');
+    res.set('Content-Type', f.mime);
+    res.set('Content-Length', String(f.size));
+    res.set('Content-Disposition', 'inline');
+    return res.end(f.buffer);
+  } catch (e) {
+    return res.status(503).json({ status: false, error: 'CDN_UNAVAILABLE' });
+  }
+});
+
 app.locals.getSession = currentUser;
 app.locals.maintenance = maintenance;
 
@@ -233,7 +255,7 @@ function sendMaintenance(req, res, message) {
 }
 app.locals.sendMaintenance = sendMaintenance;
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/assets/') || req.path.startsWith('/views/') || req.path.startsWith('/webhooks/') || MAINTENANCE_OPEN.has(req.path)) return next();
+  if (req.path.startsWith('/assets/') || req.path.startsWith('/views/') || req.path.startsWith('/webhooks/') || req.path.startsWith('/cdn/') || MAINTENANCE_OPEN.has(req.path)) return next();
   let m;
   try { m = await maintenance.state(); } catch { return next(); }
   if (!m.enabled) return next();
