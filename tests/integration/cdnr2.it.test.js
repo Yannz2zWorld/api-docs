@@ -47,7 +47,7 @@ const browserPut = (upload, bytes, overrideType) => fetch(upload.url, { method: 
 it('config reports large uploads (200 MB) when R2 is set up', async () => {
   const r = await app.request('GET', '/cdn/upload/config', { cookie: user });
   assert.equal(r.status, 200, r.text);
-  assert.deepEqual([r.json.large, r.json.maxBytes, r.json.smallMaxBytes], [true, 200 * 1024 * 1024, 4 * 1024 * 1024]);
+  assert.deepEqual([r.json.large, r.json.mode, r.json.maxBytes, r.json.smallMaxBytes], [true, 'r2', 200 * 1024 * 1024, 4 * 1024 * 1024]);
   assert.ok(!r.text.includes('secret-not-real') && !r.text.includes('AKIDTEST'));
 });
 

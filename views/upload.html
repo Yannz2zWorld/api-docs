@@ -183,6 +183,25 @@ async function uploadSmall(file, ttl) {
   if (r.status >= 400 || !d.status) throw Error(d.message || (r.status === 413 ? `File maksimal ${size(limits.smallMaxBytes)}.` : 'Upload gagal.'));
   return d.result;
 }
+// catbox.moe (used when R2 is not set up): the browser uploads the file there itself, then the
+// server records the link so the one people share is https://<this domain>/cdn/<id>.<ext>.
+const CATBOX_API = 'https://catbox.moe/user/api.php';
+const CATBOX_BLOCKED = 'yannz-catbox-blocked';
+const catboxBlocked = () => { try { return sessionStorage.getItem(CATBOX_BLOCKED) === '1'; } catch { return false; } };
+const markCatboxBlocked = () => { try { sessionStorage.setItem(CATBOX_BLOCKED, '1'); } catch {} };
+async function uploadCatbox(file, ttl) {
+  const form = () => { const f = new FormData(); f.append('reqtype', 'fileupload'); f.append('fileToUpload', file, file.name); return f; };
+  let r = null;
+  try { r = await send('POST', CATBOX_API, form(), {}); } catch {}
+  if (!r || !r.status) {
+    // Without a progress listener the upload is a plain form post (no CORS preflight).
+    try { const f = await fetch(CATBOX_API, { method: 'POST', body: form() }); r = { status: f.status, text: await f.text() }; } catch { r = null; }
+  }
+  if (!r) throw Object.assign(Error('Penyimpanan file besar tidak bisa dihubungi dari browser ini.'), { code: 'CATBOX_BLOCKED' });
+  const link = String(r.text || '').trim();
+  if (r.status !== 200 || !/^https:\/\/files\.catbox\.moe\/\S+$/.test(link)) throw Error('Penyimpanan menolak file ini' + (link && link.length < 160 ? `: ${link}` : '.'));
+  return (await api('/cdn/upload/register', { url: link, name: file.name, type: file.type, ttlHours: Number(ttl) })).result;
+}
 async function uploadLarge(file, ttl) {
   const start = await api('/cdn/upload/start', { name: file.name, type: file.type, size: file.size, ttlHours: Number(ttl) });
   const put = await send('PUT', start.upload.url, file, start.upload.headers);
@@ -197,7 +216,20 @@ $('#up-form').addEventListener('submit', async e => {
   const btn = $('#up-btn');
   btn.disabled = true; btn.textContent = 'Mengunggah…'; say(''); progress(0);
   try {
-    const result = limits.large && chosen.size > limits.smallMaxBytes ? await uploadLarge(chosen, ttl) : await uploadSmall(chosen, ttl);
+    const small = chosen.size <= limits.smallMaxBytes;
+    let result;
+    if (limits.mode === 'r2' && !small) result = await uploadLarge(chosen, ttl);
+    else if (limits.mode === 'catbox' && !catboxBlocked()) {
+      try { result = await uploadCatbox(chosen, ttl); }
+      catch (err) {
+        if (err.code === 'CATBOX_BLOCKED') markCatboxBlocked();
+        if (!small) throw err.code === 'CATBOX_BLOCKED' ? Error(`Upload file besar sedang tidak bisa dari browser ini. Untuk sementara maksimal ${size(limits.smallMaxBytes)}.`) : err;
+        result = await uploadSmall(chosen, ttl);   // small files still work through this server
+      }
+    } else {
+      if (!small) throw Error(`File maksimal ${size(limits.smallMaxBytes)} untuk saat ini.`);
+      result = await uploadSmall(chosen, ttl);
+    }
     show(result);
     remember(result);
     say('Upload berhasil.', true);

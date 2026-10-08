@@ -100,8 +100,9 @@ router.get('/upload', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'upl
 // no daily API quota). Each account may start at most CDN_UPLOADS_PER_HOUR uploads per hour (per
 // instance, best effort) and keep at most CDN_ACCOUNT_LIMIT_MB (default 2048) of active files.
 //   Small files (<= 4 MB): POST /cdn/upload with the raw file as body (stored in Postgres).
-//   Large files (<= 200 MB, needs Cloudflare R2): POST /cdn/upload/start -> the browser PUTs the file
-//   straight to R2 -> POST /cdn/upload/finish. Big files never pass through Vercel (4.5 MB limit).
+//   Large files (<= 200 MB), never through Vercel (4.5 MB limit):
+//     with Cloudflare R2: POST /cdn/upload/start -> browser PUTs to R2 -> POST /cdn/upload/finish;
+//     otherwise catbox.moe: the browser uploads there -> POST /cdn/upload/register with the link.
 const CDN_UPLOADS_PER_HOUR = 30;
 const cdnUploads = new Map();   // account id -> timestamps of recent uploads
 function uploadSlot(req, res) {
@@ -121,23 +122,27 @@ function uploadSlot(req, res) {
 const ttlOf = v => Math.max(0, Math.min(24 * 365, Number(v) || 0));
 const mb = n => Math.round(n / 1048576);
 function cdnFail(res, e) {
-  if (e.code === 'FILE_TOO_LARGE') return fail(res, 413, 'FILE_TOO_LARGE', `File maksimal ${mb(cdn.largeEnabled() ? cdn.MAX_LARGE_BYTES : cdn.MAX_BYTES)} MB.`);
+  if (e.code === 'FILE_TOO_LARGE') return fail(res, 413, 'FILE_TOO_LARGE', `File maksimal ${mb(cdn.largeEnabled() || cdn.catboxEnabled() ? cdn.MAX_LARGE_BYTES : cdn.MAX_BYTES)} MB.`);
   if (e.code === 'NO_FILE') return fail(res, 400, 'NO_FILE', 'File kosong.');
   if (e.code === 'ACCOUNT_STORAGE_FULL') return fail(res, 413, 'ACCOUNT_STORAGE_FULL', `Penyimpanan akun penuh (maks ${mb(e.limit)} MB file aktif). Tunggu file sementara kedaluwarsa atau hubungi developer.`);
   if (e.code === 'R2_NOT_CONFIGURED') return fail(res, 503, 'LARGE_UPLOAD_UNAVAILABLE', `Upload file besar belum aktif. Maksimal ${mb(cdn.MAX_BYTES)} MB.`);
   if (e.code === 'NOT_FOUND') return fail(res, 404, 'NOT_FOUND', 'Upload tidak ditemukan.');
+  if (e.code === 'INVALID_URL') return fail(res, 400, 'INVALID_URL', 'Link file tidak valid.');
+  if (e.code === 'CATBOX_DISABLED') return fail(res, 503, 'LARGE_UPLOAD_UNAVAILABLE', `Upload file besar sedang dimatikan. Maksimal ${mb(cdn.MAX_BYTES)} MB.`);
   if (['UPLOAD_MISSING', 'UPLOAD_SIZE_MISMATCH', 'UPLOAD_TYPE_MISMATCH'].includes(e.code)) return fail(res, 400, e.code, 'Upload tidak lengkap atau tidak sesuai. Coba upload ulang.');
-  if (migrationMissing(e) || e.code === 'DATABASE_NOT_CONFIGURED' || e.isDatabaseError) return fail(res, 503, 'CDN_UNAVAILABLE', 'Penyimpanan belum siap. Jalankan migrasi 012 dan 013 di Neon.');
+  if (migrationMissing(e) || e.code === 'DATABASE_NOT_CONFIGURED' || e.isDatabaseError) return fail(res, 503, 'CDN_UNAVAILABLE', 'Penyimpanan belum siap. Jalankan migrasi 012, 013 dan 014 di Neon.');
   console.error('CDN upload failed:', { code: e?.code || null });
   return fail(res, 502, 'CDN_FAILED', 'Upload gagal. Coba lagi.');
 }
 const resultJson = (req, f) => ({ status: true, result: { url: cdn.absoluteUrl(req, f.id), id: f.id, name: f.name, mime: f.mime, size: f.size, preview: f.inline, expiresAt: f.expiresAt } });
 
 router.get('/cdn/upload/config', auth, async (req, res) => {
-  const large = cdn.largeEnabled();
+  // Large files go to R2 when it is configured, otherwise to catbox.moe (straight from the browser).
+  const mode = cdn.largeEnabled() ? 'r2' : cdn.catboxEnabled() ? 'catbox' : null;
+  const large = Boolean(mode);
   let used = null;
   try { used = await cdn.accountUsage(req.account.id); } catch {}
-  res.json({ success: true, large, maxBytes: large ? cdn.MAX_LARGE_BYTES : cdn.MAX_BYTES, smallMaxBytes: cdn.MAX_BYTES, accountLimitBytes: req.account.isOwner ? 0 : cdn.accountLimitBytes(), usedBytes: used, perHour: CDN_UPLOADS_PER_HOUR });
+  res.json({ success: true, large, mode, maxBytes: large ? cdn.MAX_LARGE_BYTES : cdn.MAX_BYTES, smallMaxBytes: cdn.MAX_BYTES, accountLimitBytes: req.account.isOwner ? 0 : cdn.accountLimitBytes(), usedBytes: used, perHour: CDN_UPLOADS_PER_HOUR });
 });
 
 router.post('/cdn/upload', sameOrigin, auth, async (req, res) => {
@@ -161,6 +166,18 @@ router.post('/cdn/upload/start', sameOrigin, auth, async (req, res) => {
     const started = await cdn.startLarge({ name: typeof b.name === 'string' ? b.name : null, type: typeof b.type === 'string' ? b.type : null, size: b.size, ownerId: req.account.id, isOwner: req.account.isOwner, ttlHours: ttlOf(b.ttlHours) });
     take();
     return res.json({ success: true, id: started.id, upload: started.upload });
+  } catch (e) { return cdnFail(res, e); }
+});
+
+// The browser uploaded the file to catbox.moe itself; record it so the shared link is ours.
+router.post('/cdn/upload/register', sameOrigin, auth, async (req, res) => {
+  const b = req.body || {};
+  const take = uploadSlot(req, res);
+  if (!take) return;
+  try {
+    const f = await cdn.registerCatbox({ url: b.url, name: typeof b.name === 'string' ? b.name : null, type: typeof b.type === 'string' ? b.type : null, ownerId: req.account.id, isOwner: req.account.isOwner, ttlHours: ttlOf(b.ttlHours) });
+    take();
+    return res.json(resultJson(req, f));
   } catch (e) { return cdnFail(res, e); }
 });
 
