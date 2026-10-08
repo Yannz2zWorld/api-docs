@@ -112,4 +112,5 @@ function boot(){let seen=false;try{seen=sessionStorage.getItem('yannz_boot_seen'
 verifySession().then(ok=>{if(ok){loadDashboard();boot();}});
 document.querySelector('#logout')?.addEventListener('click',async()=>{try{await fetch('/auth/logout',{method:'POST',credentials:'same-origin'})}finally{location.href='/';}});
 </script>
+<script src="/assets/music.js" defer></script>
 </body></html>
