@@ -18,6 +18,7 @@ const passwords = require('../services/passwordService');
 const activity = require('../services/activityService');
 const pluginService = require('../services/githubPluginService');
 const theresav = require('../lib/theresav');
+const apiproxy = require('../lib/apiproxy');
 
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
@@ -911,7 +912,8 @@ router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
 // Owner-only; uses the owner's theresav quota, so it is an explicit action.
 const selfTestLimiter = { running: false };
 router.post('/owner/api/selftest', sameOrigin, auth, owner, async (req, res) => {
-  if (!process.env.THERESAV_API_KEY) return fail(res, 503, 'UPSTREAM_NOT_CONFIGURED', 'Isi THERESAV_API_KEY di Vercel lalu redeploy sebelum menguji.');
+  const anyServerKey = Object.values(apiproxy.SERVERS).some(s => process.env[s.keyEnv]);
+  if (!process.env.THERESAV_API_KEY && !anyServerKey) return fail(res, 503, 'UPSTREAM_NOT_CONFIGURED', 'Isi THERESAV_API_KEY (atau salah satu key server lain) di Vercel lalu redeploy sebelum menguji.');
   if (selfTestLimiter.running) return fail(res, 409, 'SELFTEST_BUSY', 'Pengujian lain sedang berjalan. Tunggu sampai selesai.');
   selfTestLimiter.running = true;
   try {
@@ -919,14 +921,16 @@ router.post('/owner/api/selftest', sameOrigin, auth, owner, async (req, res) => 
     const rows = await query("SELECT id,path,status FROM endpoints");
     const byPath = new Map(rows.map(r => [r.path, r]));
     const only = Array.isArray(req.body?.paths) ? new Set(req.body.paths) : null;
-    const entries = theresav.registry().filter(e => loaded.has(e.path) && (!only || only.has(e.path)));
+    // Both the theresav-backed endpoints and the generic third-party-server endpoints; apiproxy
+    // entries carry a `server` field, theresav ones do not.
+    const entries = [...theresav.registry(), ...apiproxy.registry()].filter(e => loaded.has(e.path) && (!only || only.has(e.path)));
     const out = [];
     // Small concurrency so one run does not hammer the upstream.
     const queue = entries.slice();
     async function worker() {
       for (let e = queue.shift(); e; e = queue.shift()) {
         let r;
-        try { r = await theresav.probe(e); } catch (err) { r = { result: 'error', error: err?.message || 'gagal' }; }
+        try { r = await (e.server ? apiproxy : theresav).probe(e); } catch (err) { r = { result: 'error', error: err?.message || 'gagal' }; }
         const row = byPath.get(e.path);
         out.push({ path: e.path, name: e.name, category: e.category, ...r, id: row?.id || null, endpointStatus: row?.status || null });
       }

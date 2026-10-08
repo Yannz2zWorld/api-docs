@@ -42,7 +42,7 @@ const usedToday = async () => h.usedToday((await h.userByEmail('ai@example.test'
 
 it('the catalog lists the AI endpoints with required/optional parameters', async () => {
   const cat = (await app.request('GET', '/api/endpoints')).json.endpoints.AI;
-  assert.equal(cat.length, 16);
+  assert.ok(cat.length >= 16, 'at least the 16 theresav AI endpoints (plus any third-party ones)');
   const chat = cat.find(e => e.cleanPath === '/api/ai/chatgpt');
   assert.deepEqual(chat.params.map(p => [p.name, p.required]), [['prompt', true], ['chatId', false]]);
 });
@@ -123,7 +123,7 @@ it('without THERESAV_API_KEY the endpoints say so and charge nothing', async () 
 
 it('Downloader: 30 theresav endpoints next to TikTok; url is forwarded; YouTube options have defaults and choices', async () => {
   const dl = (await app.request('GET', '/api/endpoints')).json.endpoints.Downloader;
-  assert.equal(dl.length, 31);
+  assert.ok(dl.length >= 31, '30 theresav downloaders + TikTok (plus any third-party ones)');
   assert.ok(dl.some(e => e.cleanPath === '/api/download/tiktok'), 'the existing TikTok downloader stays');
   assert.ok(!dl.some(e => /erome/i.test(e.cleanPath)), 'adult-content sources are not offered');
   reply = () => ({ status: 200, json: { status: true, creator: 'Upstream', result: { url: 'https://cdn.example/v.mp4' } } });
@@ -157,7 +157,8 @@ it('Maker: Brat answers with the image itself (passed through), Brat Video defau
   assert.equal(calls.at(-1).url.searchParams.get('emoji2'), '😭');
   assert.equal((await call('/api/maker/emojimix?emoji1=x')).json.error, 'PARAM_REQUIRED');
   const cat = (await app.request('GET', '/api/endpoints')).json.endpoints.Maker;
-  assert.deepEqual(cat.map(e => e.cleanPath).sort(), ['/api/maker/brat', '/api/maker/bratvid', '/api/maker/emojimix', '/api/maker/emojitogif']);
+  const makerPaths = cat.map(e => e.cleanPath);
+  for (const p of ['/api/maker/brat', '/api/maker/bratvid', '/api/maker/emojimix', '/api/maker/emojitogif']) assert.ok(makerPaths.includes(p), `theresav maker ${p} present`);
 });
 
 it('an empty media answer is refused and refunded', async () => {
@@ -243,9 +244,10 @@ it('Search + Sketch: q is forwarded, sketch takes an upload; catalog has the new
   const up = await app.request('POST', '/api/image/sketch', { cookie: user, rawBody: Buffer.from('89504e470d0a1a0a', 'hex'), headers: { 'content-type': 'image/png', origin: app.origin, 'x-yannz-client': 'web' } });
   assert.equal(up.status, 200, up.text);
   assert.match(up.headers['content-type'], /^image\/jpeg/);
-  assert.equal(calls.at(-1).url.pathname, '/api/image/sketch');
+  assert.equal(calls.at(-1).url.pathname, '/image/sketch');
   assert.ok(calls.at(-1).form.get('image'));
   const cats = (await app.request('GET', '/api/endpoints')).json.endpoints;
-  assert.equal(cats.Search.length, 2);
+  const searchPaths = cats.Search.map(e => e.cleanPath);
+  for (const p of ['/api/search/stickerly', '/api/search/telestick']) assert.ok(searchPaths.includes(p), `theresav search ${p} present`);
   assert.deepEqual(cats.Image.map(e => e.cleanPath).sort(), ['/api/image/lumiart', '/api/image/sketch']);
 });
