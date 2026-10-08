@@ -1,7 +1,10 @@
 // Website background music: a play/pause button bottom-right with its own volume control.
-// The song loops. Volume, mute and play state are remembered in this browser, so the music carries
-// on (from the same spot) when moving between pages. Song info comes from /api/site-music; the
-// audio is /api/site-music/audio. Nothing plays until the visitor presses play.
+// The full song plays automatically on every page and loops. Browsers only allow sound after the
+// visitor has clicked or typed on the page; when the browser blocks it, the song starts at the
+// visitor's first click or key press anywhere on the page. Pressing pause stops it on every page
+// until play is pressed again. Volume, mute and the position in the song are remembered in this
+// browser, so the music carries on from the same spot between pages. Song info comes from
+// /api/site-music.
 (() => {
   if (window.__yannzMusic) return;
   window.__yannzMusic = true;
@@ -10,8 +13,8 @@
   const INFO_KEY = 'yannz-music-info';
   const load = (store, key) => { try { return JSON.parse(store.getItem(key) || 'null'); } catch { return null; } };
   const save = (store, key, v) => { try { store.setItem(key, JSON.stringify(v)); } catch {} };
-  const state = Object.assign({ vol: 0.5, muted: false, playing: false, t: 0, at: 0 }, load(localStorage, KEY) || {});
-  const persist = () => save(localStorage, KEY, { vol: state.vol, muted: state.muted, playing: state.playing, t: state.t, at: Date.now() });
+  const state = Object.assign({ vol: 0.5, muted: false, playing: false, paused: false, t: 0, at: 0 }, load(localStorage, KEY) || {});
+  const persist = () => save(localStorage, KEY, { vol: state.vol, muted: state.muted, playing: state.playing, paused: state.paused, t: state.t, at: Date.now() });
 
   const css = `
   .ym-dock{position:fixed;right:18px;bottom:18px;z-index:88;display:flex;align-items:center;gap:6px;padding:5px;border:2px solid var(--edge,#d4d4d8);border-radius:999px;background:#111113;box-shadow:4px 4px 0 var(--drop,#3f3f46);font:600 11px 'DM Mono',ui-monospace,monospace;color:#f4f4f5}
@@ -86,7 +89,22 @@
     function applyVolume() { audio.volume = state.vol; audio.muted = state.muted; }
     function setState(s) { dock.dataset.state = s; render(); }
 
+    const GESTURES = ['pointerdown', 'pointerup', 'touchend', 'keydown', 'click'];
+    let waiting = null;
+    function waitForGesture() {
+      if (waiting) return;
+      dock.dataset.wait = '';
+      waiting = ev => {
+        if (ev.target instanceof Node && dock.contains(ev.target)) return;   // the player's own buttons handle themselves
+        GESTURES.forEach(t => removeEventListener(t, waiting, true));
+        waiting = null;
+        if (!state.paused) start(true);
+      };
+      GESTURES.forEach(t => addEventListener(t, waiting, true));
+    }
+
     async function start(fromUser) {
+      if (fromUser) state.paused = false;
       if (!started) {
         audio.src = info.src;
         if (state.t > 0) audio.addEventListener('loadedmetadata', () => { try { audio.currentTime = state.t % (audio.duration || Infinity); } catch {} }, { once: true });
@@ -100,13 +118,10 @@
         state.playing = true; persist();
         setState('playing');
       } catch (e) {
-        if (e && e.name === 'NotAllowedError' && !fromUser) {
-          // The browser wants a click first: carry on at the visitor's first interaction.
-          dock.dataset.wait = '';
+        if (e && e.name === 'NotAllowedError') {
+          // The browser wants a click first: start at the visitor's first click or key press.
           setState('paused');
-          const resume = ev => { if (dock.contains(ev.target)) return; removeEventListener('pointerdown', resume, true); removeEventListener('keydown', resume, true); if (state.playing) start(true); };
-          addEventListener('pointerdown', resume, true);
-          addEventListener('keydown', resume, true);
+          waitForGesture();
         } else if (e && e.name !== 'AbortError') {
           setState('error');
         }
@@ -114,7 +129,7 @@
     }
     function stop() {
       audio.pause();
-      state.playing = false; persist();
+      state.playing = false; state.paused = true; persist();
       setState('paused');
     }
 
@@ -143,9 +158,10 @@
     addEventListener('pagehide', () => { if (started) state.t = audio.currentTime; persist(); });
 
     setState('paused');
-    // Was playing on the previous page (in the last 30 minutes): pick it up again.
-    if (state.playing && Date.now() - (state.at || 0) < 30 * 60 * 1000) start(false);
-    else if (state.playing) { state.playing = false; state.t = 0; persist(); }
+    // Autoplay unless the visitor paused it. Within 30 minutes of the last page it carries on from
+    // the same spot; otherwise the song starts from the beginning.
+    if (Date.now() - (state.at || 0) > 30 * 60 * 1000) state.t = 0;
+    if (!state.paused) start(false);
   }
 
   async function init() {
