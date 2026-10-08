@@ -14,5 +14,5 @@ module.exports = {
   clutch:   { base: 'https://api.clutch.web.id', keyEnv: 'CLUTCH_API_KEY',   keyMode: 'query', keyName: 'apikey' },
   dongtube: { base: 'https://api.dongtube.id',   keyEnv: 'DONGTUBE_API_KEY', keyMode: 'query', keyName: 'apikey' },
   pitucode: { base: 'https://api.pitucode.com',  keyEnv: 'PITUCODE_API_KEY', keyMode: 'query', keyName: 'apikey' },
-  termai:   { base: 'https://termai.cc',          keyEnv: 'TERMAI_API_KEY',   keyMode: 'query', keyName: 'apikey' }
+  termai:   { base: 'https://api.termai.cc',      keyEnv: 'TERMAI_API_KEY',   keyMode: 'query', keyName: 'key' }
 };
