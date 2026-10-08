@@ -538,7 +538,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
           app.get(cleanPath, apiGateway(cleanPath, run));
           if (route.upload) { uploadPaths.add(cleanPath); app.post(cleanPath, apiGateway(cleanPath, run)); }
           loadedPluginPaths.add(cleanPath);
-          registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET',(route.minimumTier && getTier(route.minimumTier) !== getTier('FREE')) ? route.minimumTier : 'FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
+          registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
           if (!rawEndpoints[category]) rawEndpoints[category] = [];
           rawEndpoints[category].push({
