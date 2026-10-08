@@ -65,3 +65,15 @@ it('ttlHours makes a temporary file (expiresAt set) and the catalog marks the up
   assert.ok(uploadEp, 'upload endpoint is in the catalog');
   assert.equal(uploadEp.params.find(p => p.name === 'image').type, 'file');
 });
+
+it('the /upload page is served to signed-in users, sends others to the login page, and is linked from the nav', async () => {
+  const anon = await app.request('GET', '/upload', {});
+  assert.equal(anon.status, 302);
+  assert.equal(anon.headers.location, '/');
+  const page = await app.request('GET', '/upload', app.asBrowser(user));
+  assert.equal(page.status, 200);
+  assert.match(page.text, /Upload Gambar/);
+  assert.match(page.text, /\/api\/tools\/upload/);
+  const profile = await app.request('GET', '/profile', app.asBrowser(user));
+  assert.match(profile.text, /<a href="\/upload">Upload<\/a>/);
+});

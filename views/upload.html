@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Upload CDN — Yannz API</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png?v=2"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
+<meta name="theme-color" content="#0b0b0c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/theme.css">
+<style>
+  .dropzone { min-height: 220px; transition: border-color .16s var(--ease), color .16s var(--ease); }
+  .dropzone input[type=file] { display: none; }
+  .dropzone strong { font: 600 16px "Space Grotesk", sans-serif; color: var(--ink); }
+  .dropzone .preview { display: none; }
+  .dropzone.has-file .preview { display: block; }
+  .dropzone.has-file .hint { display: none; }
+  .meta { font: 500 12px "DM Mono", monospace; color: var(--muted); overflow-wrap: anywhere; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+  .result { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: center; }
+  .result img { width: 96px; height: 96px; object-fit: cover; border-radius: 10px; border: var(--line); background: var(--surface-2); }
+  .urlrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+  .urlrow input { flex: 1; min-width: 200px; font: 500 13px "DM Mono", monospace; }
+  .history { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .history li { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; padding: 10px; border: 2px solid var(--edge-soft); border-radius: 10px; background: var(--surface-2); }
+  .history img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+  .history a { font: 500 12px "DM Mono", monospace; overflow-wrap: anywhere; color: var(--ink); }
+  .history small { color: var(--faint); display: block; margin-top: 2px; }
+  pre.snippet { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12.5px "DM Mono", monospace; background: var(--surface-2); border: 2px solid var(--edge-soft); border-radius: 10px; padding: 12px 14px; }
+  [hidden] { display: none !important; }
+  @media (max-width: 560px) { .result { grid-template-columns: 1fr; } .result img { width: 100%; height: auto; max-height: 260px; } .history li { grid-template-columns: 48px 1fr; } .history li > button { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/upload" aria-current="page">Upload</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/profile">Profile</a></nav></div></header>
+<main class="wrap">
+  <span class="kicker">CDN</span>
+  <h1>Upload Gambar</h1>
+  <p class="lead">Unggah gambar dan dapatkan link publik di domain ini. Link-nya bisa dipakai di endpoint yang meminta <code>url</code> gambar, atau dibagikan ke siapa saja.</p>
+
+  <section class="panel">
+    <form id="up-form">
+      <label class="dropzone" id="drop" for="file">
+        <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp">
+        <span class="hint"><strong>Pilih atau tarik gambar ke sini</strong><br><span class="meta">PNG, JPG, WebP, GIF, BMP · maks 8 MB</span></span>
+        <img class="preview" id="preview" alt="Pratinjau gambar">
+        <span class="meta" id="file-meta"></span>
+      </label>
+
+      <p class="muted" style="margin:16px 0 8px">Simpan selama</p>
+      <div class="seg" role="radiogroup" aria-label="Masa simpan">
+        <label><input type="radio" name="ttl" value="0" checked>Permanen</label>
+        <label><input type="radio" name="ttl" value="1">1 jam</label>
+        <label><input type="radio" name="ttl" value="24">24 jam</label>
+        <label><input type="radio" name="ttl" value="168">7 hari</label>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="submit" id="up-btn" disabled>Upload</button>
+        <button class="ghost" type="button" id="clear-btn" hidden>Ganti gambar</button>
+        <small class="muted">Setiap upload memakai 1 kuota harian. Upload yang gagal tidak memotong kuota.</small>
+      </div>
+      <p id="up-msg" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section class="panel" id="result-panel" hidden>
+    <h2>Berhasil diunggah</h2>
+    <div class="result">
+      <img id="res-img" alt="Gambar yang diunggah">
+      <div>
+        <div class="urlrow"><input id="res-url" readonly aria-label="Link gambar"><button type="button" class="sm" id="copy-btn">Salin</button><a class="btn sm" id="open-btn" target="_blank" rel="noopener">Buka</a></div>
+        <p class="meta" id="res-meta" style="margin:8px 0 0"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="history-panel" hidden>
+    <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Upload terakhir</h2><button type="button" class="sm ghost" id="history-clear">Bersihkan daftar</button></div>
+    <p class="muted" style="margin-top:6px">Daftar ini hanya tersimpan di browser ini. Menghapus daftar tidak menghapus gambarnya.</p>
+    <ul class="history" id="history"></ul>
+  </section>
+
+  <section class="panel">
+    <h2>Lewat API</h2>
+    <p class="muted">Kirim file sebagai body <code>POST</code> dengan API key kamu. Tambahkan <code>?ttlHours=24</code> untuk file sementara.</p>
+    <pre class="snippet" id="snippet"></pre>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const MAX = 8 * 1024 * 1024;
+const TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp'];
+const HISTORY_KEY = 'yannz-cdn-history';
+let chosen = null;
+let previewUrl = null;
+
+$('#snippet').textContent = `curl -X POST "${location.origin}/api/tools/upload" \\\n  -H "Authorization: Bearer YOUR_API_KEY" \\\n  -H "Content-Type: image/png" \\\n  --data-binary @gambar.png`;
+
+function say(text, ok) { const el = $('#up-msg'); el.className = ok ? 'ok' : 'error'; el.textContent = text; }
+function size(n) { return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(2) + ' MB'; }
+
+function choose(file) {
+  say('');
+  if (!file) return;
+  if (!TYPES.includes(file.type)) return say('File harus gambar PNG, JPG, WebP, GIF, atau BMP.');
+  if (file.size > MAX) return say(`Gambar terlalu besar (${size(file.size)}). Maksimal 8 MB.`);
+  chosen = file;
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = URL.createObjectURL(file);
+  $('#preview').src = previewUrl;
+  $('#file-meta').textContent = `${file.name} · ${size(file.size)}`;
+  $('#drop').classList.add('has-file');
+  $('#up-btn').disabled = false;
+  $('#clear-btn').hidden = false;
+}
+function reset() {
+  chosen = null;
+  $('#file').value = '';
+  $('#drop').classList.remove('has-file');
+  $('#file-meta').textContent = '';
+  $('#up-btn').disabled = true;
+  $('#clear-btn').hidden = true;
+}
+
+$('#file').addEventListener('change', e => choose(e.target.files[0]));
+$('#clear-btn').addEventListener('click', () => { reset(); $('#file').click(); });
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+drop.addEventListener('drop', e => choose(e.dataTransfer.files[0]));
+document.addEventListener('paste', e => { const f = [...(e.clipboardData?.files || [])].find(x => x.type.startsWith('image/')); if (f) choose(f); });
+
+$('#up-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!chosen) return;
+  const ttl = document.querySelector('input[name=ttl]:checked').value;
+  const btn = $('#up-btn');
+  btn.disabled = true; btn.textContent = 'Mengunggah…'; say('');
+  try {
+    const r = await fetch('/api/tools/upload' + (ttl !== '0' ? `?ttlHours=${ttl}` : ''), {
+      method: 'POST', credentials: 'same-origin', body: chosen,
+      headers: { 'Content-Type': chosen.type, 'X-Yannz-Client': 'web' }
+    });
+    if (r.status === 401) { location.replace('/'); return; }
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.status) throw Error(d.message || (r.status === 413 ? 'Gambar maksimal 8 MB.' : 'Upload gagal.') + (d.error ? ` (${d.error})` : ''));
+    show(d.result);
+    remember(d.result);
+    say('Upload berhasil.', true);
+    reset();
+  } catch (err) {
+    say(err.message);
+    btn.disabled = false;
+  } finally {
+    btn.textContent = 'Upload';
+  }
+});
+
+function expiry(at) { return at ? 'kedaluwarsa ' + new Date(at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'permanen'; }
+function show(res) {
+  $('#result-panel').hidden = false;
+  $('#res-img').src = res.url;
+  $('#res-url').value = res.url;
+  $('#open-btn').href = res.url;
+  $('#res-meta').textContent = `${res.mime} · ${size(res.size)} · ${expiry(res.expiresAt)}`;
+  $('#result-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+async function copy(text, btn) {
+  try { await navigator.clipboard.writeText(text); }
+  catch { const i = document.createElement('textarea'); i.value = text; document.body.append(i); i.select(); document.execCommand('copy'); i.remove(); }
+  const old = btn.textContent; btn.textContent = 'Tersalin'; setTimeout(() => { btn.textContent = old; }, 1400);
+}
+$('#copy-btn').addEventListener('click', e => copy($('#res-url').value, e.currentTarget));
+
+// ---------- upload history (this browser only)
+function load() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; } }
+function save(list) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 20))); } catch {} }
+function remember(res) { save([{ url: res.url, size: res.size, expiresAt: res.expiresAt, at: Date.now() }, ...load().filter(x => x.url !== res.url)]); renderHistory(); }
+function renderHistory() {
+  const list = load().filter(x => !x.expiresAt || Date.parse(x.expiresAt) > Date.now());
+  const ul = $('#history');
+  ul.replaceChildren();
+  $('#history-panel').hidden = !list.length;
+  for (const item of list) {
+    const li = document.createElement('li');
+    const img = document.createElement('img'); img.src = item.url; img.alt = ''; img.loading = 'lazy';
+    const info = document.createElement('div');
+    const a = document.createElement('a'); a.href = item.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = item.url;
+    const meta = document.createElement('small'); meta.textContent = `${size(item.size)} · ${expiry(item.expiresAt)}`;
+    info.append(a, meta);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'sm'; b.textContent = 'Salin';
+    b.addEventListener('click', () => copy(item.url, b));
+    li.append(img, info, b);
+    ul.append(li);
+  }
+}
+$('#history-clear').addEventListener('click', () => { save([]); renderHistory(); });
+renderHistory();
+</script>
+</body>
+</html>

@@ -92,6 +92,7 @@ function usagePayload(tier, used) {
 router.get('/pricing', (req, res) => res.sendFile(path.join(VIEWS, 'pricing.html')));
 router.get('/keys', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'keys.html')));
 router.get('/profile', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'profile.html')));
+router.get('/upload', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'upload.html')));
 
 // ---------------------------------------------------------------- profile
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,23}$/u;

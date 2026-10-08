@@ -242,7 +242,7 @@ app.locals.maintenance = maintenance;
 // calling an endpoint directly cannot get around it.
 const MAINTENANCE_OPEN = new Set(['/health', '/health/database', '/api/logo-proxy', '/api/set', '/auth/config', '/auth/me', '/auth/logout', '/owner-login', '/developer-login', '/auth/google', '/auth/google/callback', '/auth/google/credential', '/favicon.ico']);
 const MAINTENANCE_SIGN_IN = new Set(['/auth/login', '/auth/register', '/auth/email/verify', '/auth/email/resend', '/auth/password/forgot', '/auth/password/reset']);
-const SITE_PAGES = new Set(['/', '/home', '/keys', '/billing', '/pricing', '/profile', '/owner', '/api', '/api/playground', '/3d', '/scythe', '/usage']);
+const SITE_PAGES = new Set(['/', '/home', '/keys', '/billing', '/pricing', '/profile', '/upload', '/owner', '/api', '/api/playground', '/3d', '/scythe', '/usage']);
 let maintenancePage = null;
 function sendMaintenance(req, res, message) {
   res.set('Retry-After', '300');
@@ -281,7 +281,7 @@ app.use(async (req, res, next) => {
 app.get(['/owner-login', '/developer-login'], (req, res) => res.sendFile(path.join(__dirname, 'views', 'login.html')));
 app.get('/developer', (req, res) => res.redirect('/owner'));
 // Page visits of signed-in users for the owner's activity log (best effort, throttled).
-const TRACKED_PAGES = new Set(['/home', '/keys', '/billing', '/pricing', '/profile', '/owner', '/api', '/api/playground', '/3d', '/scythe']);
+const TRACKED_PAGES = new Set(['/home', '/keys', '/billing', '/pricing', '/profile', '/upload', '/owner', '/api', '/api/playground', '/3d', '/scythe']);
 app.use((req, res, next) => {
   if (req.method === 'GET' && TRACKED_PAGES.has(req.path)) {
     const s = currentUser(req);
