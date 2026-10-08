@@ -96,33 +96,79 @@ router.get('/profile', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'pr
 router.get('/upload', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'upload.html')));
 
 // ---------------------------------------------------------------- CDN upload (website feature)
-// The /upload page posts the raw file here (index.js gives this path the raw body parser). It is a
-// site feature for signed-in accounts, not an API endpoint: no API key, no daily API quota; instead
-// each account may upload at most CDN_UPLOADS_PER_HOUR files per hour (per instance, best effort).
+// Used by the /upload page; a site feature for signed-in accounts, not an API endpoint (no API key,
+// no daily API quota). Each account may start at most CDN_UPLOADS_PER_HOUR uploads per hour (per
+// instance, best effort) and keep at most CDN_ACCOUNT_LIMIT_MB (default 2048) of active files.
+//   Small files (<= 4 MB): POST /cdn/upload with the raw file as body (stored in Postgres).
+//   Large files (<= 200 MB, needs Cloudflare R2): POST /cdn/upload/start -> the browser PUTs the file
+//   straight to R2 -> POST /cdn/upload/finish. Big files never pass through Vercel (4.5 MB limit).
 const CDN_UPLOADS_PER_HOUR = 30;
 const cdnUploads = new Map();   // account id -> timestamps of recent uploads
-router.post('/cdn/upload', sameOrigin, auth, async (req, res) => {
+function uploadSlot(req, res) {
   const now = Date.now();
   const recent = (cdnUploads.get(req.account.id) || []).filter(t => now - t < 3600 * 1000);
   if (recent.length >= CDN_UPLOADS_PER_HOUR && !req.account.isOwner) {
     res.set('Retry-After', String(Math.ceil((recent[0] + 3600 * 1000 - now) / 1000)));
-    return fail(res, 429, 'UPLOAD_LIMIT', `Maksimal ${CDN_UPLOADS_PER_HOUR} upload per jam. Coba lagi nanti.`);
+    fail(res, 429, 'UPLOAD_LIMIT', `Maksimal ${CDN_UPLOADS_PER_HOUR} upload per jam. Coba lagi nanti.`);
+    return null;
   }
-  const buf = Buffer.isBuffer(req.body) && req.body.length ? req.body : null;
-  if (!buf) return fail(res, 400, 'NO_FILE', 'Pilih file yang mau diunggah.');
-  const ttlHours = Math.max(0, Math.min(24 * 365, Number(req.query.ttlHours) || 0));
-  try {
-    const saved = await cdn.store({ buffer: buf, name: typeof req.query.name === 'string' ? req.query.name : null, type: req.get('content-type'), ownerId: req.account.id, ttlHours });
+  return () => {
     recent.push(now);
     cdnUploads.set(req.account.id, recent);
     if (cdnUploads.size > 5000) cdnUploads.clear();
-    return res.json({ status: true, result: { url: cdn.absoluteUrl(req, saved.id), id: saved.id, name: saved.name, mime: saved.mime, size: saved.size, preview: saved.inline, expiresAt: saved.expiresAt } });
-  } catch (e) {
-    if (e.code === 'FILE_TOO_LARGE') return fail(res, 413, 'FILE_TOO_LARGE', 'File maksimal 4 MB.');
-    if (e.code === 'NO_FILE') return fail(res, 400, 'NO_FILE', 'File kosong.');
-    if (migrationMissing(e) || e.code === 'DATABASE_NOT_CONFIGURED' || e.isDatabaseError) return fail(res, 503, 'CDN_UNAVAILABLE', 'Penyimpanan belum siap. Jalankan migrasi 012_cdn_files.sql di Neon.');
-    return fail(res, 500, 'CDN_FAILED', 'Upload gagal.');
-  }
+  };
+}
+const ttlOf = v => Math.max(0, Math.min(24 * 365, Number(v) || 0));
+const mb = n => Math.round(n / 1048576);
+function cdnFail(res, e) {
+  if (e.code === 'FILE_TOO_LARGE') return fail(res, 413, 'FILE_TOO_LARGE', `File maksimal ${mb(cdn.largeEnabled() ? cdn.MAX_LARGE_BYTES : cdn.MAX_BYTES)} MB.`);
+  if (e.code === 'NO_FILE') return fail(res, 400, 'NO_FILE', 'File kosong.');
+  if (e.code === 'ACCOUNT_STORAGE_FULL') return fail(res, 413, 'ACCOUNT_STORAGE_FULL', `Penyimpanan akun penuh (maks ${mb(e.limit)} MB file aktif). Tunggu file sementara kedaluwarsa atau hubungi developer.`);
+  if (e.code === 'R2_NOT_CONFIGURED') return fail(res, 503, 'LARGE_UPLOAD_UNAVAILABLE', `Upload file besar belum aktif. Maksimal ${mb(cdn.MAX_BYTES)} MB.`);
+  if (e.code === 'NOT_FOUND') return fail(res, 404, 'NOT_FOUND', 'Upload tidak ditemukan.');
+  if (['UPLOAD_MISSING', 'UPLOAD_SIZE_MISMATCH', 'UPLOAD_TYPE_MISMATCH'].includes(e.code)) return fail(res, 400, e.code, 'Upload tidak lengkap atau tidak sesuai. Coba upload ulang.');
+  if (migrationMissing(e) || e.code === 'DATABASE_NOT_CONFIGURED' || e.isDatabaseError) return fail(res, 503, 'CDN_UNAVAILABLE', 'Penyimpanan belum siap. Jalankan migrasi 012 dan 013 di Neon.');
+  console.error('CDN upload failed:', { code: e?.code || null });
+  return fail(res, 502, 'CDN_FAILED', 'Upload gagal. Coba lagi.');
+}
+const resultJson = (req, f) => ({ status: true, result: { url: cdn.absoluteUrl(req, f.id), id: f.id, name: f.name, mime: f.mime, size: f.size, preview: f.inline, expiresAt: f.expiresAt } });
+
+router.get('/cdn/upload/config', auth, async (req, res) => {
+  const large = cdn.largeEnabled();
+  let used = null;
+  try { used = await cdn.accountUsage(req.account.id); } catch {}
+  res.json({ success: true, large, maxBytes: large ? cdn.MAX_LARGE_BYTES : cdn.MAX_BYTES, smallMaxBytes: cdn.MAX_BYTES, accountLimitBytes: req.account.isOwner ? 0 : cdn.accountLimitBytes(), usedBytes: used, perHour: CDN_UPLOADS_PER_HOUR });
+});
+
+router.post('/cdn/upload', sameOrigin, auth, async (req, res) => {
+  const buf = Buffer.isBuffer(req.body) && req.body.length ? req.body : null;
+  if (!buf) return fail(res, 400, 'NO_FILE', 'Pilih file yang mau diunggah.');
+  const take = uploadSlot(req, res);
+  if (!take) return;
+  try {
+    if (!req.account.isOwner && cdn.accountLimitBytes() > 0 && (await cdn.accountUsage(req.account.id)) + buf.length > cdn.accountLimitBytes()) throw Object.assign(new Error('full'), { code: 'ACCOUNT_STORAGE_FULL', limit: cdn.accountLimitBytes() });
+    const saved = await cdn.store({ buffer: buf, name: typeof req.query.name === 'string' ? req.query.name : null, type: req.get('content-type'), ownerId: req.account.id, ttlHours: ttlOf(req.query.ttlHours) });
+    take();
+    return res.json(resultJson(req, saved));
+  } catch (e) { return cdnFail(res, e); }
+});
+
+router.post('/cdn/upload/start', sameOrigin, auth, async (req, res) => {
+  const b = req.body || {};
+  const take = uploadSlot(req, res);
+  if (!take) return;
+  try {
+    const started = await cdn.startLarge({ name: typeof b.name === 'string' ? b.name : null, type: typeof b.type === 'string' ? b.type : null, size: b.size, ownerId: req.account.id, isOwner: req.account.isOwner, ttlHours: ttlOf(b.ttlHours) });
+    take();
+    return res.json({ success: true, id: started.id, upload: started.upload });
+  } catch (e) { return cdnFail(res, e); }
+});
+
+router.post('/cdn/upload/finish', sameOrigin, auth, async (req, res) => {
+  try {
+    const f = await cdn.finishLarge({ id: String(req.body?.id || ''), ownerId: req.account.id });
+    return res.json(resultJson(req, f));
+  } catch (e) { return cdnFail(res, e); }
 });
 
 // ---------------------------------------------------------------- profile
@@ -509,7 +555,7 @@ router.get('/owner/status', auth, owner, async (req, res) => {
     success: true,
     database,
     // Names and presence only; values are never returned.
-    config: Object.fromEntries(['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL', 'AUTH_SECRET', 'OWNER_EMAIL', 'CORS_ORIGINS', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAYMENT_GATEWAY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'EMAIL_FROM', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY', 'GITHUB_TOKEN'].map(n => [n, configured(n)])),
+    config: Object.fromEntries(['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL', 'AUTH_SECRET', 'OWNER_EMAIL', 'CORS_ORIGINS', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAYMENT_GATEWAY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'EMAIL_FROM', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY', 'GITHUB_TOKEN', 'PUBLIC_BASE_URL', 'THERESAV_API_KEY', 'CLUTCH_API_KEY', 'TERMAI_API_KEY', 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL'].map(n => [n, configured(n)])),
     authConfigured: missingAuthConfig().length === 0,
     payments: { pakasirConfigured: pakasir.isConfigured(), gateway: pakasir.isEnabled() ? 'on' : 'maintenance', automaticSettlement: pakasir.isVerificationConfigured() ? 'configured_not_verified' : 'disabled_fail_closed' },
     notifications: notifier.status(),

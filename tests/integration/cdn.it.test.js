@@ -132,3 +132,12 @@ it('the /upload page is served to signed-in users, sends others to the login pag
   const home = await app.request('GET', '/home', app.asBrowser(user));
   assert.match(home.text, /<a href="\/3d">3D Scythe<\/a><a href="\/upload">Upload CDN<\/a>/);
 });
+
+it('without Cloudflare R2 set up, large uploads are off and the page falls back to 4 MB direct uploads', async () => {
+  const cfg = await app.request('GET', '/cdn/upload/config', { cookie: user });
+  assert.equal(cfg.status, 200, cfg.text);
+  assert.deepEqual([cfg.json.large, cfg.json.maxBytes], [false, 4 * 1024 * 1024]);
+  const start = await app.request('POST', '/cdn/upload/start', { cookie: user, body: { name: 'film.mp4', type: 'video/mp4', size: 50 * 1024 * 1024 }, headers: { origin: app.origin } });
+  assert.equal(start.status, 503);
+  assert.equal(start.json.error, 'LARGE_UPLOAD_UNAVAILABLE');
+});

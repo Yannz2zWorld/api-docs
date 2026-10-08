@@ -223,6 +223,11 @@ app.get('/cdn/:id', async (req, res) => {
   try {
     const f = await cdnService.fetchFile(id);
     if (!f) return res.status(404).json({ status: false, error: 'NOT_FOUND' });
+    if ('redirect' in f) {   // large file stored in Cloudflare R2: send the browser to the bucket's public URL
+      if (!f.redirect) return res.status(503).json({ status: false, error: 'CDN_UNAVAILABLE' });
+      res.set('Cache-Control', 'public, max-age=300');
+      return res.redirect(302, f.redirect);
+    }
     // Uploaded files are served from this domain: safe types open in the browser, everything else
     // downloads, and the sandbox CSP keeps any uploaded content from running script here.
     const fname = encodeURIComponent(f.name).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());

@@ -11,6 +11,7 @@
 // nosniff, supaya file unggahan tidak bisa menjalankan script di domain ini.
 const crypto = require('crypto');
 const { query } = require('../lib/db');
+const r2 = require('../lib/r2');
 
 // Vercel membatasi body request dan respons di 4,5 MB; 4 MB menyisakan ruang untuk header.
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -48,7 +49,24 @@ function extOf(name) {
   return m ? m[1].toLowerCase() : null;
 }
 
-// Simpan sebuah file. Mengembalikan { id, name, mime, size, expiresAt, inline }.
+// Jenis file dari nama/Content-Type (gambar dideteksi dari isinya kalau buffer ada).
+function kindOf({ name, type, buffer }) {
+  const image = buffer ? sniff(buffer) : null;
+  const fileName = cleanName(name);
+  const clientType = String(type || '').split(';')[0].trim().toLowerCase();
+  const ext = image ? image.ext : (extOf(fileName) || MIME_EXT[clientType] || 'bin');
+  const mime = image ? image.mime : (TYPES[ext] || 'application/octet-stream');
+  return { image, fileName, ext, mime, inline: INLINE.has(ext) };
+}
+const newId = ext => crypto.randomBytes(16).toString('hex') + '.' + ext;
+const expiryOf = ttlHours => (ttlHours > 0 ? new Date(Date.now() + ttlHours * 3600 * 1000) : null);
+const iso = d => (d ? new Date(d).toISOString() : null);
+function disposition(inline, fileName, id) {
+  const enc = encodeURIComponent(fileName || id).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+  return `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${enc}`;
+}
+
+// Simpan sebuah file kecil (<= 4 MB) langsung di Postgres. Mengembalikan { id, name, mime, size, expiresAt, inline }.
 //   name       : nama asli file (dipakai untuk ekstensi dan nama unduhan)
 //   type       : Content-Type dari klien (cadangan kalau nama tidak punya ekstensi)
 //   ttlHours   : > 0 membuat file kedaluwarsa; default permanen
@@ -56,33 +74,95 @@ function extOf(name) {
 async function store({ buffer, name = null, type = null, ownerId = null, ttlHours = 0, imagesOnly = false } = {}) {
   if (!Buffer.isBuffer(buffer) || buffer.length === 0) throw fail('NO_FILE');
   if (buffer.length > MAX_BYTES) throw fail('FILE_TOO_LARGE');
-  const image = sniff(buffer);
-  if (imagesOnly && !image) throw fail('NOT_IMAGE');
-
-  const fileName = cleanName(name);
-  const clientType = String(type || '').split(';')[0].trim().toLowerCase();
-  const ext = image ? image.ext : (extOf(fileName) || MIME_EXT[clientType] || 'bin');
-  const mime = image ? image.mime : (TYPES[ext] || 'application/octet-stream');
-
-  const id = crypto.randomBytes(16).toString('hex') + '.' + ext;
-  const expiresAt = ttlHours > 0 ? new Date(Date.now() + ttlHours * 3600 * 1000) : null;
+  const k = kindOf({ name, type, buffer });
+  if (imagesOnly && !k.image) throw fail('NOT_IMAGE');
+  const id = newId(k.ext);
+  const expiresAt = expiryOf(ttlHours);
   await query(
     'INSERT INTO cdn_files(id, name, mime, data, size, owner_id, expires_at) VALUES($1,$2,$3,$4,$5,$6,$7)',
-    [id, fileName, mime, buffer.toString('base64'), buffer.length, ownerId, expiresAt]
+    [id, k.fileName, k.mime, buffer.toString('base64'), buffer.length, ownerId, expiresAt]
   );
-  return { id, name: fileName, mime, size: buffer.length, expiresAt: expiresAt ? expiresAt.toISOString() : null, inline: INLINE.has(ext) };
+  return { id, name: k.fileName, mime: k.mime, size: buffer.length, expiresAt: iso(expiresAt), inline: k.inline };
 }
 
-// Ambil sebuah file untuk dilayani. Mengembalikan { mime, name, buffer, size, inline } atau null
-// (tidak ada / sudah kedaluwarsa — dihapus sekalian).
+// ---------------------------------------------------------------- file besar lewat Cloudflare R2
+// 1) startLarge: catat file (ready=false) dan beri URL PUT bertanda tangan ke browser.
+// 2) browser meng-upload langsung ke R2.
+// 3) finishLarge: cek objek di R2 (ada, ukuran sesuai, Content-Type sesuai) lalu ready=true.
+const MAX_LARGE_BYTES = 200 * 1024 * 1024;
+const accountLimitBytes = () => {
+  const mb = Number(process.env.CDN_ACCOUNT_LIMIT_MB);
+  return (Number.isFinite(mb) && mb >= 0 ? mb : 2048) * 1024 * 1024;   // 0 = tanpa batas
+};
+
+// Total ukuran file aktif milik akun (untuk batas per akun).
+async function accountUsage(ownerId) {
+  const row = (await query("SELECT COALESCE(sum(size),0)::bigint AS n FROM cdn_files WHERE owner_id=$1 AND (expires_at IS NULL OR expires_at > now())", [ownerId]))[0];
+  return Number(row?.n || 0);
+}
+async function checkAccountRoom(ownerId, adding, isOwner) {
+  const limit = accountLimitBytes();
+  if (isOwner || !ownerId || limit === 0) return;
+  if ((await accountUsage(ownerId)) + adding > limit) throw Object.assign(fail('ACCOUNT_STORAGE_FULL'), { limit });
+}
+
+async function startLarge({ name, type, size, ownerId, isOwner = false, ttlHours = 0 }) {
+  if (!r2.isConfigured()) throw fail('R2_NOT_CONFIGURED');
+  size = Number(size);
+  if (!Number.isFinite(size) || size <= 0) throw fail('NO_FILE');
+  if (size > MAX_LARGE_BYTES) throw fail('FILE_TOO_LARGE');
+  await checkAccountRoom(ownerId, size, isOwner);
+  const k = kindOf({ name, type });
+  const id = newId(k.ext);
+  const contentType = k.inline ? k.mime : 'application/octet-stream';
+  const expiresAt = expiryOf(ttlHours);
+  await query(
+    "INSERT INTO cdn_files(id, name, mime, data, size, owner_id, expires_at, storage, ready) VALUES($1,$2,$3,NULL,$4,$5,$6,'r2',false)",
+    [id, k.fileName, contentType, size, ownerId, expiresAt]
+  );
+  const put = await r2.presignPut(id, { contentType, contentDisposition: disposition(k.inline, k.fileName, id) });
+  return { id, upload: put };
+}
+
+async function finishLarge({ id, ownerId }) {
+  if (!isValidId(id)) throw fail('NOT_FOUND');
+  const row = (await query("SELECT name, mime, size, expires_at, ready FROM cdn_files WHERE id=$1 AND owner_id=$2 AND storage='r2' LIMIT 1", [id, ownerId]))[0];
+  if (!row) throw fail('NOT_FOUND');
+  const ext = extOf(id);
+  const result = () => ({ id, name: row.name || null, mime: String(row.mime), size: Number(row.size), expiresAt: iso(row.expires_at), inline: INLINE.has(ext) });
+  if (row.ready) return result();
+  const obj = await r2.head(id);
+  const bad = !obj.exists ? 'UPLOAD_MISSING'
+    : obj.size > MAX_LARGE_BYTES || obj.size !== Number(row.size) ? 'UPLOAD_SIZE_MISMATCH'
+    : obj.contentType !== String(row.mime) ? 'UPLOAD_TYPE_MISMATCH' : null;
+  if (bad) {
+    if (obj.exists) await r2.remove(id);
+    await query('DELETE FROM cdn_files WHERE id=$1', [id]).catch(() => {});
+    throw fail(bad);
+  }
+  await query('UPDATE cdn_files SET ready=true, size=$2 WHERE id=$1', [id, obj.size]);
+  row.size = obj.size;
+  return result();
+}
+
+// Ambil sebuah file untuk dilayani. Mengembalikan null (tidak ada / belum selesai / kedaluwarsa —
+// dihapus sekalian), { redirect } untuk file di R2, atau { mime, name, buffer, size, inline }.
 async function fetchFile(id) {
   if (!isValidId(id)) return null;
-  const row = (await query('SELECT name, mime, data, size, expires_at FROM cdn_files WHERE id=$1 LIMIT 1', [id]))[0];
+  let row;
+  try {
+    row = (await query('SELECT name, mime, data, size, expires_at, storage, ready FROM cdn_files WHERE id=$1 LIMIT 1', [id]))[0];
+  } catch (e) {
+    if (e?.cause?.code !== '42703' && e?.code !== '42703') throw e;   // before migration 013
+    row = (await query('SELECT name, mime, data, size, expires_at FROM cdn_files WHERE id=$1 LIMIT 1', [id]))[0];
+  }
   if (!row) return null;
   if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
+    if (row.storage === 'r2') r2.remove(id).catch(() => {});
     query('DELETE FROM cdn_files WHERE id=$1', [id]).catch(() => {});
     return null;
   }
+  if (row.storage === 'r2') return row.ready ? { redirect: r2.publicUrl(id) } : null;
   const ext = extOf(id);
   return { mime: INLINE.has(ext) ? String(row.mime) : 'application/octet-stream', name: row.name ? String(row.name) : id, buffer: Buffer.from(String(row.data), 'base64'), size: Number(row.size), inline: INLINE.has(ext) };
 }
@@ -105,4 +185,4 @@ function absoluteUrl(req, id) {
   return `${base}/cdn/${id}`;
 }
 
-module.exports = { store, fetchFile, purgeExpired, absoluteUrl, isValidId, sniff, MAX_BYTES };
+module.exports = { store, startLarge, finishLarge, accountUsage, fetchFile, purgeExpired, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };

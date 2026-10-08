@@ -33,6 +33,9 @@
   .history .ftype { width: 56px; height: 56px; font-size: 11px; border-width: 1.5px; }
   .history a { font: 500 12px "DM Mono", monospace; overflow-wrap: anywhere; color: var(--ink); }
   .history small { color: var(--faint); display: block; margin-top: 2px; overflow-wrap: anywhere; }
+  .progress { position: relative; margin-top: 14px; height: 28px; border: 2px solid var(--edge-soft); border-radius: 8px; background: var(--surface-2); overflow: hidden; }
+  .progress .bar { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--accent); transition: width .2s linear; }
+  .progress .meta { position: relative; display: block; line-height: 24px; text-align: center; color: var(--ink); }
   [hidden] { display: none !important; }
   @media (max-width: 560px) { .result { grid-template-columns: 1fr; } .result .thumb > img, .result .thumb > video { width: 100%; height: auto; max-height: 260px; } .result .thumb > audio { width: 100%; } .history li { grid-template-columns: 48px 1fr; } .history li > button { grid-column: 1 / -1; } }
 </style>
@@ -48,7 +51,7 @@
     <form id="up-form">
       <label class="dropzone" id="drop" for="file">
         <input type="file" id="file">
-        <span class="hint"><strong>Pilih atau tarik file ke sini</strong><br><span class="meta">Foto, video, audio, dokumen, file apa saja · maks 4 MB</span></span>
+        <span class="hint"><strong>Pilih atau tarik file ke sini</strong><br><span class="meta">Foto, video, audio, dokumen, file apa saja · maks <span id="max-label">…</span></span></span>
         <span class="preview" id="preview"></span>
         <span class="meta" id="file-meta"></span>
       </label>
@@ -64,8 +67,9 @@
       <div class="actions">
         <button class="primary" type="submit" id="up-btn" disabled>Upload</button>
         <button class="ghost" type="button" id="clear-btn" hidden>Ganti file</button>
-        <small class="muted">Maksimal 30 upload per jam per akun.</small>
+        <small class="muted" id="limits-note">Maksimal 30 upload per jam per akun.</small>
       </div>
+      <div class="progress" id="progress" hidden><div class="bar" id="progress-bar"></div><span class="meta" id="progress-text"></span></div>
       <p id="up-msg" aria-live="polite"></p>
     </form>
   </section>
@@ -90,14 +94,20 @@
 </main>
 <script>
 const $ = s => document.querySelector(s);
-const MAX = 4 * 1024 * 1024;
+let limits = { large: false, maxBytes: 4 * 1024 * 1024, smallMaxBytes: 4 * 1024 * 1024, accountLimitBytes: 0, usedBytes: null, perHour: 30 };
+fetch('/cdn/upload/config', { credentials: 'same-origin' }).then(r => r.status === 401 ? location.replace('/') : r.json()).then(d => {
+  if (d && d.success) limits = d;
+  $('#max-label').textContent = size(limits.maxBytes);
+  const quota = limits.accountLimitBytes ? ` · penyimpanan akun ${limits.usedBytes == null ? '' : size(limits.usedBytes) + ' dari '}${size(limits.accountLimitBytes)}` : '';
+  $('#limits-note').textContent = `Maksimal ${limits.perHour} upload per jam${quota}.`;
+}).catch(() => { $('#max-label').textContent = size(limits.maxBytes); });
 const HISTORY_KEY = 'yannz-cdn-history';
 let chosen = null;
 let previewUrl = null;
 
 
 function say(text, ok) { const el = $('#up-msg'); el.className = ok ? 'ok' : 'error'; el.textContent = text; }
-function size(n) { return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(2) + ' MB'; }
+function size(n) { return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : n < 1073741824 ? +(n / 1048576).toFixed(2) + ' MB' : +(n / 1073741824).toFixed(2) + ' GB'; }
 function extOf(name) { const m = /\.([A-Za-z0-9]{1,10})$/.exec(name || ''); return m ? m[1].toLowerCase() : 'file'; }
 const SAFE_IMAGE = /^image\/(png|jpeg|gif|webp|bmp|avif)$/;
 // Media element for a file (images, video, audio); a labelled box for everything else.
@@ -112,7 +122,7 @@ function choose(file) {
   say('');
   if (!file) return;
   if (!file.size) return say('File kosong.');
-  if (file.size > MAX) return say(`File terlalu besar (${size(file.size)}). Maksimal 4 MB.`);
+  if (file.size > limits.maxBytes) return say(`File terlalu besar (${size(file.size)}). Maksimal ${size(limits.maxBytes)}.`);
   chosen = file;
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = URL.createObjectURL(file);
@@ -140,24 +150,56 @@ const drop = $('#drop');
 drop.addEventListener('drop', e => choose(e.dataTransfer.files[0]));
 document.addEventListener('paste', e => { const f = (e.clipboardData?.files || [])[0]; if (f) choose(f); });
 
+// XHR (not fetch) so the progress bar can follow big uploads.
+function send(method, url, body, headers) {
+  return new Promise((resolve, reject) => {
+    const x = new XMLHttpRequest();
+    x.open(method, url);
+    for (const [k, v] of Object.entries(headers || {})) x.setRequestHeader(k, v);
+    x.upload.onprogress = e => { if (e.lengthComputable) progress(e.loaded / e.total); };
+    x.onload = () => resolve({ status: x.status, text: x.responseText });
+    x.onerror = () => reject(Error('Koneksi terputus saat mengunggah. Coba lagi.'));
+    x.send(body);
+  });
+}
+function progress(p) {
+  $('#progress').hidden = false;
+  $('#progress-bar').style.width = Math.round(p * 100) + '%';
+  $('#progress-text').textContent = p >= 1 ? 'Memproses…' : `Mengunggah ${Math.round(p * 100)}%`;
+}
+async function api(url, body) {
+  const r = await fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw Error(d.message || 'Upload gagal.');
+  return d;
+}
+async function uploadSmall(file, ttl) {
+  const qs = new URLSearchParams({ name: file.name });
+  if (ttl !== '0') qs.set('ttlHours', ttl);
+  const r = await send('POST', '/cdn/upload?' + qs, file, { 'Content-Type': file.type || 'application/octet-stream' });
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  let d = {}; try { d = JSON.parse(r.text); } catch {}
+  if (r.status >= 400 || !d.status) throw Error(d.message || (r.status === 413 ? `File maksimal ${size(limits.smallMaxBytes)}.` : 'Upload gagal.'));
+  return d.result;
+}
+async function uploadLarge(file, ttl) {
+  const start = await api('/cdn/upload/start', { name: file.name, type: file.type, size: file.size, ttlHours: Number(ttl) });
+  const put = await send('PUT', start.upload.url, file, start.upload.headers);
+  if (put.status < 200 || put.status >= 300) throw Error('Upload ke penyimpanan gagal. Coba lagi.');
+  return (await api('/cdn/upload/finish', { id: start.id })).result;
+}
+
 $('#up-form').addEventListener('submit', async e => {
   e.preventDefault();
   if (!chosen) return;
   const ttl = document.querySelector('input[name=ttl]:checked').value;
-  const qs = new URLSearchParams({ name: chosen.name });
-  if (ttl !== '0') qs.set('ttlHours', ttl);
   const btn = $('#up-btn');
-  btn.disabled = true; btn.textContent = 'Mengunggah…'; say('');
+  btn.disabled = true; btn.textContent = 'Mengunggah…'; say(''); progress(0);
   try {
-    const r = await fetch('/cdn/upload?' + qs, {
-      method: 'POST', credentials: 'same-origin', body: chosen,
-      headers: { 'Content-Type': chosen.type || 'application/octet-stream' }
-    });
-    if (r.status === 401) { location.replace('/'); return; }
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok || !d.status) throw Error(d.message || (r.status === 413 ? 'File maksimal 4 MB.' : 'Upload gagal.') + (d.error ? ` (${d.error})` : ''));
-    show(d.result);
-    remember(d.result);
+    const result = limits.large && chosen.size > limits.smallMaxBytes ? await uploadLarge(chosen, ttl) : await uploadSmall(chosen, ttl);
+    show(result);
+    remember(result);
     say('Upload berhasil.', true);
     reset();
   } catch (err) {
@@ -165,6 +207,7 @@ $('#up-form').addEventListener('submit', async e => {
     btn.disabled = false;
   } finally {
     btn.textContent = 'Upload';
+    $('#progress').hidden = true;
   }
 });
 
