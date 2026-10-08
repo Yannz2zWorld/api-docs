@@ -91,3 +91,10 @@ it('photo endpoint without a file or url is rejected before calling upstream', a
   assert.equal(r.status, 400);
   assert.equal(calls.length, 0);
 });
+
+it('photo endpoint still takes images only (the CDN accepting any file does not change that)', async () => {
+  const r = await app.request('POST', '/api/maker/remini', { cookie: user, rawBody: Buffer.from('%PDF-1.4 bukan foto'), headers: { 'content-type': 'application/pdf', origin: app.origin, 'x-yannz-client': 'web' } });
+  assert.equal(r.status, 400);
+  assert.equal(r.json.error, 'NOT_IMAGE');
+  assert.equal(calls.length, 0);
+});

@@ -143,6 +143,7 @@ app.use((req, res, next) => {
 // Bodies are small everywhere except a manual payment, which carries the proof image
 // (<= 2 MB, base64 in JSON; Vercel's request limit is 4.5 MB).
 const uploadPaths = new Set();   // theresav file endpoints accept a raw uploaded file (POST body)
+uploadPaths.add('/cdn/upload');   // CDN upload page (routes/platform.js)
 const smallJson = express.json({ limit: '100kb' });
 const proofJson = express.json({ limit: '3mb' });
 const pluginJson = express.json({ limit: '768kb' });   // owner panel .js upload (max 200 KB of code), profile picture (max 512 KB image)
@@ -211,10 +212,10 @@ app.get('/assets/theme.css', (req, res) => {
 });
 app.use('/views', express.static(path.join(__dirname, 'views')));
 
-// ------------------------------------------------------------------------ CDN (gambar)
+// ------------------------------------------------------------------------ CDN (file)
 // Publik dan tanpa autentikasi: server lain harus bisa fetch URL ini. Didefinisikan sebelum
 // middleware maintenance supaya tetap bisa diakses saat website maintenance. Unggah file lewat
-// POST /api/tools/upload (plugin/upload.js).
+// halaman /upload (POST /cdn/upload di routes/platform.js).
 const cdnService = require('./services/cdnService');
 app.get('/cdn/:id', async (req, res) => {
   const id = String(req.params.id || '');
@@ -222,10 +223,16 @@ app.get('/cdn/:id', async (req, res) => {
   try {
     const f = await cdnService.fetchFile(id);
     if (!f) return res.status(404).json({ status: false, error: 'NOT_FOUND' });
+    // Uploaded files are served from this domain: safe types open in the browser, everything else
+    // downloads, and the sandbox CSP keeps any uploaded content from running script here.
+    const fname = encodeURIComponent(f.name).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
     res.set('Cache-Control', 'public, max-age=86400, immutable');
     res.set('Content-Type', f.mime);
     res.set('Content-Length', String(f.size));
-    res.set('Content-Disposition', 'inline');
+    res.set('Content-Disposition', `${f.inline ? 'inline' : 'attachment'}; filename*=UTF-8''${fname}`);
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Content-Security-Policy', f.mime === 'application/pdf' ? "default-src 'none'; frame-ancestors 'none'" : "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'; sandbox");
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     return res.end(f.buffer);
   } catch (e) {
     return res.status(503).json({ status: false, error: 'CDN_UNAVAILABLE' });
@@ -242,7 +249,7 @@ app.locals.maintenance = maintenance;
 // calling an endpoint directly cannot get around it.
 const MAINTENANCE_OPEN = new Set(['/health', '/health/database', '/api/logo-proxy', '/api/set', '/auth/config', '/auth/me', '/auth/logout', '/owner-login', '/developer-login', '/auth/google', '/auth/google/callback', '/auth/google/credential', '/favicon.ico']);
 const MAINTENANCE_SIGN_IN = new Set(['/auth/login', '/auth/register', '/auth/email/verify', '/auth/email/resend', '/auth/password/forgot', '/auth/password/reset']);
-const SITE_PAGES = new Set(['/', '/home', '/keys', '/billing', '/pricing', '/profile', '/owner', '/api', '/api/playground', '/3d', '/scythe', '/usage']);
+const SITE_PAGES = new Set(['/', '/home', '/keys', '/billing', '/pricing', '/profile', '/upload', '/owner', '/api', '/api/playground', '/3d', '/scythe', '/usage']);
 let maintenancePage = null;
 function sendMaintenance(req, res, message) {
   res.set('Retry-After', '300');
@@ -255,7 +262,7 @@ function sendMaintenance(req, res, message) {
 }
 app.locals.sendMaintenance = sendMaintenance;
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/assets/') || req.path.startsWith('/views/') || req.path.startsWith('/webhooks/') || req.path.startsWith('/cdn/') || MAINTENANCE_OPEN.has(req.path)) return next();
+  if (req.path.startsWith('/assets/') || req.path.startsWith('/views/') || req.path.startsWith('/webhooks/') || (req.method === 'GET' && req.path.startsWith('/cdn/')) || MAINTENANCE_OPEN.has(req.path)) return next();
   let m;
   try { m = await maintenance.state(); } catch { return next(); }
   if (!m.enabled) return next();
@@ -281,7 +288,7 @@ app.use(async (req, res, next) => {
 app.get(['/owner-login', '/developer-login'], (req, res) => res.sendFile(path.join(__dirname, 'views', 'login.html')));
 app.get('/developer', (req, res) => res.redirect('/owner'));
 // Page visits of signed-in users for the owner's activity log (best effort, throttled).
-const TRACKED_PAGES = new Set(['/home', '/keys', '/billing', '/pricing', '/profile', '/owner', '/api', '/api/playground', '/3d', '/scythe']);
+const TRACKED_PAGES = new Set(['/home', '/keys', '/billing', '/pricing', '/profile', '/upload', '/owner', '/api', '/api/playground', '/3d', '/scythe']);
 app.use((req, res, next) => {
   if (req.method === 'GET' && TRACKED_PAGES.has(req.path)) {
     const s = currentUser(req);
@@ -538,7 +545,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
           app.get(cleanPath, apiGateway(cleanPath, run));
           if (route.upload) { uploadPaths.add(cleanPath); app.post(cleanPath, apiGateway(cleanPath, run)); }
           loadedPluginPaths.add(cleanPath);
-          registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET',(route.minimumTier && getTier(route.minimumTier) !== getTier('FREE')) ? route.minimumTier : 'FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
+          registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
           if (!rawEndpoints[category]) rawEndpoints[category] = [];
           rawEndpoints[category].push({
