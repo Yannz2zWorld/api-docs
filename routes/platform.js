@@ -19,6 +19,7 @@ const activity = require('../services/activityService');
 const pluginService = require('../services/githubPluginService');
 const theresav = require('../lib/theresav');
 const apiproxy = require('../lib/apiproxy');
+const cdn = require('../services/cdnService');
 
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
@@ -93,6 +94,36 @@ router.get('/pricing', (req, res) => res.sendFile(path.join(VIEWS, 'pricing.html
 router.get('/keys', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'keys.html')));
 router.get('/profile', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'profile.html')));
 router.get('/upload', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'upload.html')));
+
+// ---------------------------------------------------------------- CDN upload (website feature)
+// The /upload page posts the raw file here (index.js gives this path the raw body parser). It is a
+// site feature for signed-in accounts, not an API endpoint: no API key, no daily API quota; instead
+// each account may upload at most CDN_UPLOADS_PER_HOUR files per hour (per instance, best effort).
+const CDN_UPLOADS_PER_HOUR = 30;
+const cdnUploads = new Map();   // account id -> timestamps of recent uploads
+router.post('/cdn/upload', sameOrigin, auth, async (req, res) => {
+  const now = Date.now();
+  const recent = (cdnUploads.get(req.account.id) || []).filter(t => now - t < 3600 * 1000);
+  if (recent.length >= CDN_UPLOADS_PER_HOUR && !req.account.isOwner) {
+    res.set('Retry-After', String(Math.ceil((recent[0] + 3600 * 1000 - now) / 1000)));
+    return fail(res, 429, 'UPLOAD_LIMIT', `Maksimal ${CDN_UPLOADS_PER_HOUR} upload per jam. Coba lagi nanti.`);
+  }
+  const buf = Buffer.isBuffer(req.body) && req.body.length ? req.body : null;
+  if (!buf) return fail(res, 400, 'NO_FILE', 'Pilih file yang mau diunggah.');
+  const ttlHours = Math.max(0, Math.min(24 * 365, Number(req.query.ttlHours) || 0));
+  try {
+    const saved = await cdn.store({ buffer: buf, name: typeof req.query.name === 'string' ? req.query.name : null, type: req.get('content-type'), ownerId: req.account.id, ttlHours });
+    recent.push(now);
+    cdnUploads.set(req.account.id, recent);
+    if (cdnUploads.size > 5000) cdnUploads.clear();
+    return res.json({ status: true, result: { url: cdn.absoluteUrl(req, saved.id), id: saved.id, name: saved.name, mime: saved.mime, size: saved.size, preview: saved.inline, expiresAt: saved.expiresAt } });
+  } catch (e) {
+    if (e.code === 'FILE_TOO_LARGE') return fail(res, 413, 'FILE_TOO_LARGE', 'File maksimal 4 MB.');
+    if (e.code === 'NO_FILE') return fail(res, 400, 'NO_FILE', 'File kosong.');
+    if (migrationMissing(e) || e.code === 'DATABASE_NOT_CONFIGURED' || e.isDatabaseError) return fail(res, 503, 'CDN_UNAVAILABLE', 'Penyimpanan belum siap. Jalankan migrasi 012_cdn_files.sql di Neon.');
+    return fail(res, 500, 'CDN_FAILED', 'Upload gagal.');
+  }
+});
 
 // ---------------------------------------------------------------- profile
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,23}$/u;

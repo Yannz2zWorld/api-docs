@@ -143,6 +143,7 @@ app.use((req, res, next) => {
 // Bodies are small everywhere except a manual payment, which carries the proof image
 // (<= 2 MB, base64 in JSON; Vercel's request limit is 4.5 MB).
 const uploadPaths = new Set();   // theresav file endpoints accept a raw uploaded file (POST body)
+uploadPaths.add('/cdn/upload');   // CDN upload page (routes/platform.js)
 const smallJson = express.json({ limit: '100kb' });
 const proofJson = express.json({ limit: '3mb' });
 const pluginJson = express.json({ limit: '768kb' });   // owner panel .js upload (max 200 KB of code), profile picture (max 512 KB image)
@@ -214,7 +215,7 @@ app.use('/views', express.static(path.join(__dirname, 'views')));
 // ------------------------------------------------------------------------ CDN (file)
 // Publik dan tanpa autentikasi: server lain harus bisa fetch URL ini. Didefinisikan sebelum
 // middleware maintenance supaya tetap bisa diakses saat website maintenance. Unggah file lewat
-// POST /api/tools/upload (plugin/upload.js).
+// halaman /upload (POST /cdn/upload di routes/platform.js).
 const cdnService = require('./services/cdnService');
 app.get('/cdn/:id', async (req, res) => {
   const id = String(req.params.id || '');
@@ -261,7 +262,7 @@ function sendMaintenance(req, res, message) {
 }
 app.locals.sendMaintenance = sendMaintenance;
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/assets/') || req.path.startsWith('/views/') || req.path.startsWith('/webhooks/') || req.path.startsWith('/cdn/') || MAINTENANCE_OPEN.has(req.path)) return next();
+  if (req.path.startsWith('/assets/') || req.path.startsWith('/views/') || req.path.startsWith('/webhooks/') || (req.method === 'GET' && req.path.startsWith('/cdn/')) || MAINTENANCE_OPEN.has(req.path)) return next();
   let m;
   try { m = await maintenance.state(); } catch { return next(); }
   if (!m.enabled) return next();

@@ -33,17 +33,16 @@
   .history .ftype { width: 56px; height: 56px; font-size: 11px; border-width: 1.5px; }
   .history a { font: 500 12px "DM Mono", monospace; overflow-wrap: anywhere; color: var(--ink); }
   .history small { color: var(--faint); display: block; margin-top: 2px; overflow-wrap: anywhere; }
-  pre.snippet { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12.5px "DM Mono", monospace; background: var(--surface-2); border: 2px solid var(--edge-soft); border-radius: 10px; padding: 12px 14px; }
   [hidden] { display: none !important; }
   @media (max-width: 560px) { .result { grid-template-columns: 1fr; } .result .thumb > img, .result .thumb > video { width: 100%; height: auto; max-height: 260px; } .result .thumb > audio { width: 100%; } .history li { grid-template-columns: 48px 1fr; } .history li > button { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/upload" aria-current="page">Upload</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/profile">Profile</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/profile">Profile</a></nav></div></header>
 <main class="wrap">
   <span class="kicker">CDN</span>
   <h1>Upload File</h1>
-  <p class="lead">Unggah file apa saja — foto, video, audio, dokumen, arsip — dan dapatkan link publik di domain ini untuk dibagikan atau dipakai di endpoint yang meminta <code>url</code>.</p>
+  <p class="lead">Unggah file apa saja — foto, video, audio, dokumen, arsip — dan dapatkan link publik di domain ini untuk dibagikan atau dipakai di endpoint yang meminta <code>url</code>. Foto, video, audio, PDF, dan teks bisa langsung dibuka di browser; file lain otomatis diunduh.</p>
 
   <section class="panel">
     <form id="up-form">
@@ -65,7 +64,7 @@
       <div class="actions">
         <button class="primary" type="submit" id="up-btn" disabled>Upload</button>
         <button class="ghost" type="button" id="clear-btn" hidden>Ganti file</button>
-        <small class="muted">Setiap upload memakai 1 kuota harian. Upload yang gagal tidak memotong kuota.</small>
+        <small class="muted">Maksimal 30 upload per jam per akun.</small>
       </div>
       <p id="up-msg" aria-live="polite"></p>
     </form>
@@ -88,12 +87,6 @@
     <ul class="history" id="history"></ul>
   </section>
 
-  <section class="panel">
-    <h2>Lewat API</h2>
-    <p class="muted">Kirim file sebagai body <code>POST</code> dengan API key kamu. <code>?name=</code> berisi nama file (untuk ekstensi link), tambahkan <code>&amp;ttlHours=24</code> untuk file sementara.</p>
-    <p class="muted">Foto, video, audio, PDF, dan teks bisa langsung dibuka di browser; file lain (arsip, HTML, APK, dll.) otomatis diunduh.</p>
-    <pre class="snippet" id="snippet"></pre>
-  </section>
 </main>
 <script>
 const $ = s => document.querySelector(s);
@@ -102,7 +95,6 @@ const HISTORY_KEY = 'yannz-cdn-history';
 let chosen = null;
 let previewUrl = null;
 
-$('#snippet').textContent = `curl -X POST "${location.origin}/api/tools/upload?name=dokumen.pdf" \\\n  -H "Authorization: Bearer YOUR_API_KEY" \\\n  -H "Content-Type: application/pdf" \\\n  --data-binary @dokumen.pdf`;
 
 function say(text, ok) { const el = $('#up-msg'); el.className = ok ? 'ok' : 'error'; el.textContent = text; }
 function size(n) { return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(2) + ' MB'; }
@@ -157,9 +149,9 @@ $('#up-form').addEventListener('submit', async e => {
   const btn = $('#up-btn');
   btn.disabled = true; btn.textContent = 'Mengunggah…'; say('');
   try {
-    const r = await fetch('/api/tools/upload?' + qs, {
+    const r = await fetch('/cdn/upload?' + qs, {
       method: 'POST', credentials: 'same-origin', body: chosen,
-      headers: { 'Content-Type': chosen.type || 'application/octet-stream', 'X-Yannz-Client': 'web' }
+      headers: { 'Content-Type': chosen.type || 'application/octet-stream' }
     });
     if (r.status === 401) { location.replace('/'); return; }
     const d = await r.json().catch(() => ({}));

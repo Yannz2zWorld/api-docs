@@ -1,6 +1,7 @@
 'use strict';
-// CDN: upload file apa saja (POST /api/tools/upload) disimpan di Postgres dan dilayani publik di
-// /cdn/<id>.<ext> tanpa autentikasi. Jenis aman dibuka di browser, sisanya jadi unduhan.
+// CDN: upload file apa saja dari halaman /upload (POST /cdn/upload, fitur website — bukan endpoint API)
+// disimpan di Postgres dan dilayani publik di /cdn/<id>.<ext> tanpa autentikasi. Jenis aman dibuka di
+// browser, sisanya jadi unduhan.
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const h = require('./helpers');
@@ -17,7 +18,7 @@ before(async () => {
 });
 after(async () => { if (h.skip) return; await app?.close(); await h.teardownDatabase(); });
 const it = (name, fn) => test(name, { skip: h.skip }, fn);
-const up = (rawBody, headers = {}, qs = '') => app.request('POST', '/api/tools/upload' + qs, { cookie: user, rawBody, headers: { 'content-type': 'image/png', origin: app.origin, 'x-yannz-client': 'web', ...headers } });
+const up = (rawBody, headers = {}, qs = '') => app.request('POST', '/cdn/upload' + qs, { cookie: user, rawBody, headers: { 'content-type': 'image/png', origin: app.origin, 'x-yannz-client': 'web', ...headers } });
 
 it('upload returns a public /cdn URL that serves the exact bytes without auth', async () => {
   const r = await up(PNG);
@@ -96,25 +97,38 @@ it('an unknown or malformed id gives 404', async () => {
   assert.equal((await app.request('GET', '/cdn/' + 'a'.repeat(32) + '.png', {})).status, 404);
 });
 
-it('ttlHours makes a temporary file (expiresAt set) and the catalog marks the upload field as a file', async () => {
-  const temp = await app.request('POST', '/api/tools/upload?ttlHours=1', { cookie: user, rawBody: PNG, headers: { 'content-type': 'image/png', origin: app.origin, 'x-yannz-client': 'web' } });
+it('ttlHours makes a temporary file; the CDN is not an API endpoint (not in the catalog, no API key)', async () => {
+  const temp = await up(PNG, {}, '?ttlHours=1');
   assert.equal(temp.status, 200, temp.text);
   assert.ok(temp.json.result.expiresAt, 'expiresAt should be set when ttlHours > 0');
 
-  const tools = (await app.request('GET', '/api/endpoints')).json.endpoints.Tools;
-  const uploadEp = tools.find(e => e.cleanPath === '/api/tools/upload');
-  assert.ok(uploadEp, 'upload endpoint is in the catalog');
-  assert.equal(uploadEp.params.find(p => p.name === 'file').type, 'file');
+  const cat = (await app.request('GET', '/api/endpoints')).json.endpoints;
+  const all = Object.values(cat).flat().map(e => e.cleanPath);
+  assert.ok(!all.includes('/api/tools/upload') && !all.some(p => p.startsWith('/cdn')), 'upload is not listed as an endpoint');
+  assert.equal((await app.request('POST', '/api/tools/upload', { rawBody: PNG, headers: { 'content-type': 'image/png' } })).status, 404);
 });
 
-it('the /upload page is served to signed-in users, sends others to the login page, and is linked from the nav', async () => {
+it('upload needs a signed-in account and is limited to 30 per hour per account', async () => {
+  const anon = await app.request('POST', '/cdn/upload', { rawBody: PNG, headers: { 'content-type': 'image/png', origin: app.origin } });
+  assert.equal(anon.status, 401);
+
+  const heavy = await app.login('cdn-heavy@example.test');
+  const send = () => app.request('POST', '/cdn/upload', { cookie: heavy, rawBody: PNG, headers: { 'content-type': 'image/png', origin: app.origin } });
+  for (let i = 0; i < 30; i++) assert.equal((await send()).status, 200, 'upload ' + (i + 1));
+  const over = await send();
+  assert.equal(over.status, 429);
+  assert.equal(over.json.error, 'UPLOAD_LIMIT');
+});
+
+it('the /upload page is served to signed-in users, sends others to the login page, and sits in the menu under 3D Scythe', async () => {
   const anon = await app.request('GET', '/upload', {});
   assert.equal(anon.status, 302);
   assert.equal(anon.headers.location, '/');
   const page = await app.request('GET', '/upload', app.asBrowser(user));
   assert.equal(page.status, 200);
   assert.match(page.text, /Upload File/);
-  assert.match(page.text, /\/api\/tools\/upload/);
-  const profile = await app.request('GET', '/profile', app.asBrowser(user));
-  assert.match(profile.text, /<a href="\/upload">Upload<\/a>/);
+  assert.match(page.text, /\/cdn\/upload/);
+  // reachable from the dashboard's ☰ MENU, right under 3D Scythe (not from the endpoint catalog)
+  const home = await app.request('GET', '/home', app.asBrowser(user));
+  assert.match(home.text, /<a href="\/3d">3D Scythe<\/a><a href="\/upload">Upload CDN<\/a>/);
 });
