@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Upload CDN — Yannz API</title>
+<title>Upload File — Yannz API</title>
 <link rel="icon" type="image/png" href="/assets/favicon.png?v=2"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
 <meta name="theme-color" content="#0b0b0c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,38 +14,43 @@
   .dropzone { min-height: 220px; transition: border-color .16s var(--ease), color .16s var(--ease); }
   .dropzone input[type=file] { display: none; }
   .dropzone strong { font: 600 16px "Space Grotesk", sans-serif; color: var(--ink); }
-  .dropzone .preview { display: none; }
-  .dropzone.has-file .preview { display: block; }
+  .dropzone .preview { display: none; max-width: 100%; }
+  .dropzone.has-file .preview { display: grid; place-items: center; }
+  .dropzone .preview img, .dropzone .preview video { max-width: 100%; max-height: 220px; border-radius: 8px; }
+  .dropzone .preview audio { width: min(420px, 100%); }
+  .ftype { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 10px; border: var(--line); background: var(--surface-2); font: 700 15px "DM Mono", monospace; color: var(--ink); text-transform: uppercase; overflow: hidden; }
   .dropzone.has-file .hint { display: none; }
   .meta { font: 500 12px "DM Mono", monospace; color: var(--muted); overflow-wrap: anywhere; }
   .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
   .result { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: center; }
-  .result img { width: 96px; height: 96px; object-fit: cover; border-radius: 10px; border: var(--line); background: var(--surface-2); }
+  .result .thumb > img, .result .thumb > video { width: 96px; height: 96px; object-fit: cover; border-radius: 10px; border: var(--line); background: var(--surface-2); display: block; }
+  .result .thumb > audio { width: 96px; }
   .urlrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
   .urlrow input { flex: 1; min-width: 200px; font: 500 13px "DM Mono", monospace; }
   .history { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
   .history li { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; padding: 10px; border: 2px solid var(--edge-soft); border-radius: 10px; background: var(--surface-2); }
   .history img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+  .history .ftype { width: 56px; height: 56px; font-size: 11px; border-width: 1.5px; }
   .history a { font: 500 12px "DM Mono", monospace; overflow-wrap: anywhere; color: var(--ink); }
-  .history small { color: var(--faint); display: block; margin-top: 2px; }
+  .history small { color: var(--faint); display: block; margin-top: 2px; overflow-wrap: anywhere; }
   pre.snippet { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12.5px "DM Mono", monospace; background: var(--surface-2); border: 2px solid var(--edge-soft); border-radius: 10px; padding: 12px 14px; }
   [hidden] { display: none !important; }
-  @media (max-width: 560px) { .result { grid-template-columns: 1fr; } .result img { width: 100%; height: auto; max-height: 260px; } .history li { grid-template-columns: 48px 1fr; } .history li > button { grid-column: 1 / -1; } }
+  @media (max-width: 560px) { .result { grid-template-columns: 1fr; } .result .thumb > img, .result .thumb > video { width: 100%; height: auto; max-height: 260px; } .result .thumb > audio { width: 100%; } .history li { grid-template-columns: 48px 1fr; } .history li > button { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/upload" aria-current="page">Upload</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/profile">Profile</a></nav></div></header>
 <main class="wrap">
   <span class="kicker">CDN</span>
-  <h1>Upload Gambar</h1>
-  <p class="lead">Unggah gambar dan dapatkan link publik di domain ini. Link-nya bisa dipakai di endpoint yang meminta <code>url</code> gambar, atau dibagikan ke siapa saja.</p>
+  <h1>Upload File</h1>
+  <p class="lead">Unggah file apa saja — foto, video, audio, dokumen, arsip — dan dapatkan link publik di domain ini untuk dibagikan atau dipakai di endpoint yang meminta <code>url</code>.</p>
 
   <section class="panel">
     <form id="up-form">
       <label class="dropzone" id="drop" for="file">
-        <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp">
-        <span class="hint"><strong>Pilih atau tarik gambar ke sini</strong><br><span class="meta">PNG, JPG, WebP, GIF, BMP · maks 8 MB</span></span>
-        <img class="preview" id="preview" alt="Pratinjau gambar">
+        <input type="file" id="file">
+        <span class="hint"><strong>Pilih atau tarik file ke sini</strong><br><span class="meta">Foto, video, audio, dokumen, file apa saja · maks 4 MB</span></span>
+        <span class="preview" id="preview"></span>
         <span class="meta" id="file-meta"></span>
       </label>
 
@@ -59,7 +64,7 @@
 
       <div class="actions">
         <button class="primary" type="submit" id="up-btn" disabled>Upload</button>
-        <button class="ghost" type="button" id="clear-btn" hidden>Ganti gambar</button>
+        <button class="ghost" type="button" id="clear-btn" hidden>Ganti file</button>
         <small class="muted">Setiap upload memakai 1 kuota harian. Upload yang gagal tidak memotong kuota.</small>
       </div>
       <p id="up-msg" aria-live="polite"></p>
@@ -69,9 +74,9 @@
   <section class="panel" id="result-panel" hidden>
     <h2>Berhasil diunggah</h2>
     <div class="result">
-      <img id="res-img" alt="Gambar yang diunggah">
+      <div class="thumb" id="res-thumb"></div>
       <div>
-        <div class="urlrow"><input id="res-url" readonly aria-label="Link gambar"><button type="button" class="sm" id="copy-btn">Salin</button><a class="btn sm" id="open-btn" target="_blank" rel="noopener">Buka</a></div>
+        <div class="urlrow"><input id="res-url" readonly aria-label="Link file"><button type="button" class="sm" id="copy-btn">Salin</button><a class="btn sm" id="open-btn" target="_blank" rel="noopener">Buka</a></div>
         <p class="meta" id="res-meta" style="margin:8px 0 0"></p>
       </div>
     </div>
@@ -79,38 +84,47 @@
 
   <section class="panel" id="history-panel" hidden>
     <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Upload terakhir</h2><button type="button" class="sm ghost" id="history-clear">Bersihkan daftar</button></div>
-    <p class="muted" style="margin-top:6px">Daftar ini hanya tersimpan di browser ini. Menghapus daftar tidak menghapus gambarnya.</p>
+    <p class="muted" style="margin-top:6px">Daftar ini hanya tersimpan di browser ini. Menghapus daftar tidak menghapus file-nya.</p>
     <ul class="history" id="history"></ul>
   </section>
 
   <section class="panel">
     <h2>Lewat API</h2>
-    <p class="muted">Kirim file sebagai body <code>POST</code> dengan API key kamu. Tambahkan <code>?ttlHours=24</code> untuk file sementara.</p>
+    <p class="muted">Kirim file sebagai body <code>POST</code> dengan API key kamu. <code>?name=</code> berisi nama file (untuk ekstensi link), tambahkan <code>&amp;ttlHours=24</code> untuk file sementara.</p>
+    <p class="muted">Foto, video, audio, PDF, dan teks bisa langsung dibuka di browser; file lain (arsip, HTML, APK, dll.) otomatis diunduh.</p>
     <pre class="snippet" id="snippet"></pre>
   </section>
 </main>
 <script>
 const $ = s => document.querySelector(s);
-const MAX = 8 * 1024 * 1024;
-const TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp'];
+const MAX = 4 * 1024 * 1024;
 const HISTORY_KEY = 'yannz-cdn-history';
 let chosen = null;
 let previewUrl = null;
 
-$('#snippet').textContent = `curl -X POST "${location.origin}/api/tools/upload" \\\n  -H "Authorization: Bearer YOUR_API_KEY" \\\n  -H "Content-Type: image/png" \\\n  --data-binary @gambar.png`;
+$('#snippet').textContent = `curl -X POST "${location.origin}/api/tools/upload?name=dokumen.pdf" \\\n  -H "Authorization: Bearer YOUR_API_KEY" \\\n  -H "Content-Type: application/pdf" \\\n  --data-binary @dokumen.pdf`;
 
 function say(text, ok) { const el = $('#up-msg'); el.className = ok ? 'ok' : 'error'; el.textContent = text; }
 function size(n) { return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(2) + ' MB'; }
+function extOf(name) { const m = /\.([A-Za-z0-9]{1,10})$/.exec(name || ''); return m ? m[1].toLowerCase() : 'file'; }
+const SAFE_IMAGE = /^image\/(png|jpeg|gif|webp|bmp|avif)$/;
+// Media element for a file (images, video, audio); a labelled box for everything else.
+function media(src, mime, name, controls) {
+  if (SAFE_IMAGE.test(mime)) { const i = document.createElement('img'); i.src = src; i.alt = name || ''; i.loading = 'lazy'; return i; }
+  if (/^video\//.test(mime)) { const v = document.createElement('video'); v.src = src; v.muted = true; v.playsInline = true; v.preload = 'metadata'; if (controls) v.controls = true; return v; }
+  if (/^audio\//.test(mime) && controls) { const a = document.createElement('audio'); a.src = src; a.controls = true; a.preload = 'metadata'; return a; }
+  const b = document.createElement('span'); b.className = 'ftype'; b.textContent = extOf(name); return b;
+}
 
 function choose(file) {
   say('');
   if (!file) return;
-  if (!TYPES.includes(file.type)) return say('File harus gambar PNG, JPG, WebP, GIF, atau BMP.');
-  if (file.size > MAX) return say(`Gambar terlalu besar (${size(file.size)}). Maksimal 8 MB.`);
+  if (!file.size) return say('File kosong.');
+  if (file.size > MAX) return say(`File terlalu besar (${size(file.size)}). Maksimal 4 MB.`);
   chosen = file;
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = URL.createObjectURL(file);
-  $('#preview').src = previewUrl;
+  $('#preview').replaceChildren(media(previewUrl, file.type, file.name, true));
   $('#file-meta').textContent = `${file.name} · ${size(file.size)}`;
   $('#drop').classList.add('has-file');
   $('#up-btn').disabled = false;
@@ -120,6 +134,7 @@ function reset() {
   chosen = null;
   $('#file').value = '';
   $('#drop').classList.remove('has-file');
+  $('#preview').replaceChildren();
   $('#file-meta').textContent = '';
   $('#up-btn').disabled = true;
   $('#clear-btn').hidden = true;
@@ -131,22 +146,24 @@ const drop = $('#drop');
 ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
 ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
 drop.addEventListener('drop', e => choose(e.dataTransfer.files[0]));
-document.addEventListener('paste', e => { const f = [...(e.clipboardData?.files || [])].find(x => x.type.startsWith('image/')); if (f) choose(f); });
+document.addEventListener('paste', e => { const f = (e.clipboardData?.files || [])[0]; if (f) choose(f); });
 
 $('#up-form').addEventListener('submit', async e => {
   e.preventDefault();
   if (!chosen) return;
   const ttl = document.querySelector('input[name=ttl]:checked').value;
+  const qs = new URLSearchParams({ name: chosen.name });
+  if (ttl !== '0') qs.set('ttlHours', ttl);
   const btn = $('#up-btn');
   btn.disabled = true; btn.textContent = 'Mengunggah…'; say('');
   try {
-    const r = await fetch('/api/tools/upload' + (ttl !== '0' ? `?ttlHours=${ttl}` : ''), {
+    const r = await fetch('/api/tools/upload?' + qs, {
       method: 'POST', credentials: 'same-origin', body: chosen,
-      headers: { 'Content-Type': chosen.type, 'X-Yannz-Client': 'web' }
+      headers: { 'Content-Type': chosen.type || 'application/octet-stream', 'X-Yannz-Client': 'web' }
     });
     if (r.status === 401) { location.replace('/'); return; }
     const d = await r.json().catch(() => ({}));
-    if (!r.ok || !d.status) throw Error(d.message || (r.status === 413 ? 'Gambar maksimal 8 MB.' : 'Upload gagal.') + (d.error ? ` (${d.error})` : ''));
+    if (!r.ok || !d.status) throw Error(d.message || (r.status === 413 ? 'File maksimal 4 MB.' : 'Upload gagal.') + (d.error ? ` (${d.error})` : ''));
     show(d.result);
     remember(d.result);
     say('Upload berhasil.', true);
@@ -162,10 +179,11 @@ $('#up-form').addEventListener('submit', async e => {
 function expiry(at) { return at ? 'kedaluwarsa ' + new Date(at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'permanen'; }
 function show(res) {
   $('#result-panel').hidden = false;
-  $('#res-img').src = res.url;
+  $('#res-thumb').replaceChildren(media(res.url, res.mime, res.name || res.id, true));
   $('#res-url').value = res.url;
   $('#open-btn').href = res.url;
-  $('#res-meta').textContent = `${res.mime} · ${size(res.size)} · ${expiry(res.expiresAt)}`;
+  $('#open-btn').textContent = res.preview ? 'Buka' : 'Unduh';
+  $('#res-meta').textContent = `${res.name ? res.name + ' · ' : ''}${res.mime} · ${size(res.size)} · ${expiry(res.expiresAt)}`;
   $('#result-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 async function copy(text, btn) {
@@ -178,7 +196,7 @@ $('#copy-btn').addEventListener('click', e => copy($('#res-url').value, e.curren
 // ---------- upload history (this browser only)
 function load() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; } }
 function save(list) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 20))); } catch {} }
-function remember(res) { save([{ url: res.url, size: res.size, expiresAt: res.expiresAt, at: Date.now() }, ...load().filter(x => x.url !== res.url)]); renderHistory(); }
+function remember(res) { save([{ url: res.url, name: res.name, mime: res.mime, size: res.size, expiresAt: res.expiresAt, at: Date.now() }, ...load().filter(x => x.url !== res.url)]); renderHistory(); }
 function renderHistory() {
   const list = load().filter(x => !x.expiresAt || Date.parse(x.expiresAt) > Date.now());
   const ul = $('#history');
@@ -186,14 +204,14 @@ function renderHistory() {
   $('#history-panel').hidden = !list.length;
   for (const item of list) {
     const li = document.createElement('li');
-    const img = document.createElement('img'); img.src = item.url; img.alt = ''; img.loading = 'lazy';
+    const thumb = media(item.url, item.mime || 'image/png', item.name || item.url, false);
     const info = document.createElement('div');
-    const a = document.createElement('a'); a.href = item.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = item.url;
-    const meta = document.createElement('small'); meta.textContent = `${size(item.size)} · ${expiry(item.expiresAt)}`;
+    const a = document.createElement('a'); a.href = item.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = item.name || item.url;
+    const meta = document.createElement('small'); meta.textContent = `${item.url} · ${size(item.size)} · ${expiry(item.expiresAt)}`;
     info.append(a, meta);
     const b = document.createElement('button'); b.type = 'button'; b.className = 'sm'; b.textContent = 'Salin';
     b.addEventListener('click', () => copy(item.url, b));
-    li.append(img, info, b);
+    li.append(thumb, info, b);
     ul.append(li);
   }
 }

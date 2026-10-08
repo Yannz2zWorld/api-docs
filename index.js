@@ -211,7 +211,7 @@ app.get('/assets/theme.css', (req, res) => {
 });
 app.use('/views', express.static(path.join(__dirname, 'views')));
 
-// ------------------------------------------------------------------------ CDN (gambar)
+// ------------------------------------------------------------------------ CDN (file)
 // Publik dan tanpa autentikasi: server lain harus bisa fetch URL ini. Didefinisikan sebelum
 // middleware maintenance supaya tetap bisa diakses saat website maintenance. Unggah file lewat
 // POST /api/tools/upload (plugin/upload.js).
@@ -222,10 +222,16 @@ app.get('/cdn/:id', async (req, res) => {
   try {
     const f = await cdnService.fetchFile(id);
     if (!f) return res.status(404).json({ status: false, error: 'NOT_FOUND' });
+    // Uploaded files are served from this domain: safe types open in the browser, everything else
+    // downloads, and the sandbox CSP keeps any uploaded content from running script here.
+    const fname = encodeURIComponent(f.name).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
     res.set('Cache-Control', 'public, max-age=86400, immutable');
     res.set('Content-Type', f.mime);
     res.set('Content-Length', String(f.size));
-    res.set('Content-Disposition', 'inline');
+    res.set('Content-Disposition', `${f.inline ? 'inline' : 'attachment'}; filename*=UTF-8''${fname}`);
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Content-Security-Policy', f.mime === 'application/pdf' ? "default-src 'none'; frame-ancestors 'none'" : "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'; sandbox");
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     return res.end(f.buffer);
   } catch (e) {
     return res.status(503).json({ status: false, error: 'CDN_UNAVAILABLE' });
