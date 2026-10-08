@@ -133,11 +133,20 @@ it('the /upload page is served to signed-in users, sends others to the login pag
   assert.match(home.text, /<a href="\/3d">3D Scythe<\/a><a href="\/upload">Upload CDN<\/a>/);
 });
 
-it('without Cloudflare R2 set up, large uploads are off and the page falls back to 4 MB direct uploads', async () => {
+it('without Cloudflare R2, large files go to catbox (200 MB); CDN_CATBOX=off falls back to 4 MB', async () => {
   const cfg = await app.request('GET', '/cdn/upload/config', { cookie: user });
   assert.equal(cfg.status, 200, cfg.text);
-  assert.deepEqual([cfg.json.large, cfg.json.maxBytes], [false, 4 * 1024 * 1024]);
+  assert.deepEqual([cfg.json.large, cfg.json.mode, cfg.json.maxBytes, cfg.json.smallMaxBytes], [true, 'catbox', 200 * 1024 * 1024, 4 * 1024 * 1024]);
+  // the R2 path itself is not available
   const start = await app.request('POST', '/cdn/upload/start', { cookie: user, body: { name: 'film.mp4', type: 'video/mp4', size: 50 * 1024 * 1024 }, headers: { origin: app.origin } });
   assert.equal(start.status, 503);
   assert.equal(start.json.error, 'LARGE_UPLOAD_UNAVAILABLE');
+
+  process.env.CDN_CATBOX = 'off';
+  try {
+    const off = await app.request('GET', '/cdn/upload/config', { cookie: user });
+    assert.deepEqual([off.json.large, off.json.mode, off.json.maxBytes], [false, null, 4 * 1024 * 1024]);
+    const reg = await app.request('POST', '/cdn/upload/register', { cookie: user, body: { url: 'https://files.catbox.moe/abc123.mp4' }, headers: { origin: app.origin } });
+    assert.equal(reg.status, 503);
+  } finally { delete process.env.CDN_CATBOX; }
 });

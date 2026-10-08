@@ -145,16 +145,54 @@ async function finishLarge({ id, ownerId }) {
   return result();
 }
 
+// ---------------------------------------------------------------- file besar lewat catbox.moe
+// Tanpa R2: browser meng-upload langsung ke catbox.moe (gratis, maks 200 MB), lalu link-nya
+// didaftarkan di sini supaya yang dibagikan tetap https://<domain>/cdn/<id>.<ext>. Server mengecek
+// file itu benar ada di catbox dan ukurannya (permintaan Range 1 byte, tidak mengunduh isinya).
+const CATBOX_URL = /^https:\/\/files\.catbox\.moe\/([a-z0-9]{4,16})\.([a-z0-9]{1,10})$/i;
+const catboxEnabled = () => String(process.env.CDN_CATBOX || 'on').toLowerCase() !== 'off';
+
+async function remoteSize(url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const r = await fetch(url, { headers: { Range: 'bytes=0-0', 'User-Agent': 'Mozilla/5.0 (YannzAPI)' }, redirect: 'manual', signal: controller.signal });
+    try { await r.body?.cancel(); } catch {}
+    if (r.status !== 200 && r.status !== 206) return null;
+    const total = /\/(\d+)$/.exec(r.headers.get('content-range') || '');
+    return total ? Number(total[1]) : Number(r.headers.get('content-length') || 0);
+  } catch { return null; } finally { clearTimeout(timer); }
+}
+
+async function registerCatbox({ url, name, type, ownerId, isOwner = false, ttlHours = 0 }) {
+  if (!catboxEnabled()) throw fail('CATBOX_DISABLED');
+  const m = CATBOX_URL.exec(String(url || '').trim());
+  if (!m) throw fail('INVALID_URL');
+  const size = await remoteSize(m[0]);
+  if (size == null || size <= 0) throw fail('UPLOAD_MISSING');
+  if (size > MAX_LARGE_BYTES) throw fail('FILE_TOO_LARGE');
+  await checkAccountRoom(ownerId, size, isOwner);
+  const ext = m[2].toLowerCase();
+  const k = kindOf({ name: name || `file.${ext}`, type });
+  const id = newId(ext);
+  const expiresAt = expiryOf(ttlHours);
+  await query(
+    "INSERT INTO cdn_files(id, name, mime, data, size, owner_id, expires_at, storage, ready, url) VALUES($1,$2,$3,NULL,$4,$5,$6,'catbox',true,$7)",
+    [id, k.fileName, k.mime, size, ownerId, expiresAt, m[0]]
+  );
+  return { id, name: k.fileName, mime: k.mime, size, expiresAt: iso(expiresAt), inline: INLINE.has(ext) };
+}
+
 // Ambil sebuah file untuk dilayani. Mengembalikan null (tidak ada / belum selesai / kedaluwarsa —
-// dihapus sekalian), { redirect } untuk file di R2, atau { mime, name, buffer, size, inline }.
+// dihapus sekalian), { redirect } untuk file di R2/catbox, atau { mime, name, buffer, size, inline }.
 async function fetchFile(id) {
   if (!isValidId(id)) return null;
+  // Newest columns first; older databases (before migration 014 / 013) still work.
+  const missingColumn = e => e?.code === '42703' || e?.cause?.code === '42703';
   let row;
-  try {
-    row = (await query('SELECT name, mime, data, size, expires_at, storage, ready FROM cdn_files WHERE id=$1 LIMIT 1', [id]))[0];
-  } catch (e) {
-    if (e?.cause?.code !== '42703' && e?.code !== '42703') throw e;   // before migration 013
-    row = (await query('SELECT name, mime, data, size, expires_at FROM cdn_files WHERE id=$1 LIMIT 1', [id]))[0];
+  for (const cols of ['name, mime, data, size, expires_at, storage, ready, url', 'name, mime, data, size, expires_at, storage, ready', 'name, mime, data, size, expires_at']) {
+    try { row = (await query(`SELECT ${cols} FROM cdn_files WHERE id=$1 LIMIT 1`, [id]))[0]; break; }
+    catch (e) { if (!missingColumn(e)) throw e; }
   }
   if (!row) return null;
   if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
@@ -163,6 +201,7 @@ async function fetchFile(id) {
     return null;
   }
   if (row.storage === 'r2') return row.ready ? { redirect: r2.publicUrl(id) } : null;
+  if (row.storage === 'catbox') return { redirect: row.url || null };
   const ext = extOf(id);
   return { mime: INLINE.has(ext) ? String(row.mime) : 'application/octet-stream', name: row.name ? String(row.name) : id, buffer: Buffer.from(String(row.data), 'base64'), size: Number(row.size), inline: INLINE.has(ext) };
 }
@@ -185,4 +224,4 @@ function absoluteUrl(req, id) {
   return `${base}/cdn/${id}`;
 }
 
-module.exports = { store, startLarge, finishLarge, accountUsage, fetchFile, purgeExpired, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };
+module.exports = { store, startLarge, finishLarge, registerCatbox, catboxEnabled, accountUsage, fetchFile, purgeExpired, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };
