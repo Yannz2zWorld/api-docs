@@ -182,6 +182,12 @@ app.get('/assets/scythe.glb', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400');
   res.type('model/gltf-binary').sendFile(path.join(__dirname, 'views', 'assets', 'scythe.glb'));
 });
+// The full website song (see services/siteMusicService.js); sendFile answers Range requests, so the
+// browser can seek and stream it.
+app.get('/assets/site-music.mp3', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=604800');
+  res.type('audio/mpeg').sendFile(path.join(__dirname, 'views', 'assets', 'site-music.mp3'));
+});
 app.get('/assets/music.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'music.js'));
@@ -375,15 +381,15 @@ app.get('/api/tiers', (req, res) => {
   })) });
 });
 
-// Website background music (views/music.js): song info, and the audio itself as a redirect to the
-// current TikTok audio link (looked up through the AIO downloader, see services/siteMusicService.js).
+// Website background music (views/music.js): song info, and /api/site-music/audio, which redirects to
+// the bundled song or, with SITE_MUSIC_URL set to a TikTok link, to its current audio link.
 const siteMusic = require('./services/siteMusicService');
 app.get('/api/site-music', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   if (!siteMusic.enabled()) return res.json({ status: true, enabled: false });
   const m = await siteMusic.resolve();
   if (!m) return res.status(502).json({ status: false, enabled: true, error: 'MUSIC_UNAVAILABLE', message: 'Lagu sedang tidak bisa dimuat.' });
-  return res.json({ status: true, enabled: true, title: m.title, author: m.author, src: '/api/site-music/audio' });
+  return res.json({ status: true, enabled: true, title: m.title, author: m.author, src: m.local ? m.audio : '/api/site-music/audio' });
 });
 app.get('/api/site-music/audio', async (req, res) => {
   const m = siteMusic.enabled() ? await siteMusic.resolve() : null;

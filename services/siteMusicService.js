@@ -1,18 +1,29 @@
 'use strict';
-// Website background music: the sound of one TikTok video (SITE_MUSIC_URL), played by the widget in
-// views/music.js. The audio link is looked up on the server through the AIO downloader
-// (api.theresav.eu/api/download/aio, the same upstream as /api/download/aio), with tikwm (as used by
-// plugin/tiktok.js) as a fallback. TikTok audio links expire, so the result is cached for a while
-// and looked up again later. The upstream key never reaches the browser.
-const DEFAULT_URL = 'https://vt.tiktok.com/ZSbpMHCBM/';
+// Website background music, played by the widget in views/music.js.
+//   Default: the full song bundled with the site, views/assets/site-music.mp3 (served at
+//   /assets/site-music.mp3), complete and uncut. Its name comes from SITE_MUSIC_TITLE /
+//   SITE_MUSIC_ARTIST.
+//   SITE_MUSIC_URL=<TikTok link>: the sound of that video instead, looked up on the server through
+//   the AIO downloader (api.theresav.eu/api/download/aio) with tikwm (as used by plugin/tiktok.js)
+//   as a fallback; TikTok audio links expire, so the result is cached and looked up again later.
+//   The upstream key never reaches the browser.
+//   SITE_MUSIC_URL=off: no music player.
+const path = require('path');
+const fs = require('fs');
+const DEFAULT_URL = 'https://vt.tiktok.com/ZSbpMHCBM/';   // where the bundled song comes from
+const LOCAL_FILE = path.join(__dirname, '..', 'views', 'assets', 'site-music.mp3');
+let localVersion = null;
+function localSrc() {
+  if (localVersion == null) { try { localVersion = String(fs.statSync(LOCAL_FILE).size); } catch { localVersion = ''; } }
+  return localVersion ? `/assets/site-music.mp3?v=${localVersion}` : null;
+}
 const CACHE_MS = 30 * 60 * 1000;
 const FAIL_CACHE_MS = 60 * 1000;
 const TIMEOUT_MS = 20000;
 
-const sourceUrl = () => {
-  const v = String(process.env.SITE_MUSIC_URL ?? '').trim();
-  return v.toLowerCase() === 'off' ? null : v || DEFAULT_URL;
-};
+const setting = () => String(process.env.SITE_MUSIC_URL ?? '').trim();
+const mode = () => { const v = setting(); return v.toLowerCase() === 'off' ? 'off' : v ? 'tiktok' : 'file'; };
+const sourceUrl = () => (mode() === 'tiktok' ? setting() : null);
 
 let cache = null;      // { at, value: { audio, title, author, via } | null }
 let pending = null;
@@ -95,8 +106,13 @@ async function viaTikwm(url) {
 
 // { audio, title, author, via } or null. Cached; concurrent callers share one lookup.
 async function resolve() {
+  const m = mode();
+  if (m === 'off') return null;
+  if (m === 'file') {
+    const audio = localSrc();
+    return audio ? { audio, title: clean(process.env.SITE_MUSIC_TITLE, 120), author: clean(process.env.SITE_MUSIC_ARTIST, 80), via: 'file', local: true } : null;
+  }
   const src = sourceUrl();
-  if (!src) return null;
   if (cache && Date.now() - cache.at < (cache.value ? CACHE_MS : FAIL_CACHE_MS)) return cache.value;
   if (!pending) {
     pending = (async () => {
@@ -109,7 +125,7 @@ async function resolve() {
   return pending;
 }
 
-const enabled = () => Boolean(sourceUrl());
+const enabled = () => mode() !== 'off';
 const reset = () => { cache = null; };
 
-module.exports = { resolve, enabled, findAudio, findMeta, reset, DEFAULT_URL };
+module.exports = { resolve, enabled, mode, findAudio, findMeta, reset, DEFAULT_URL, LOCAL_FILE };
