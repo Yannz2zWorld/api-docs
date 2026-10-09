@@ -47,7 +47,7 @@ function configured(path) {
   const apiproxy = require('../lib/apiproxy');
   if (theresav.registry().some(e => e.path === path)) return Boolean(process.env.THERESAV_API_KEY);
   const a = apiproxy.registry().find(e => e.path === path);
-  if (a) { const srv = apiproxy.SERVERS[a.server] || {}; return srv.keyMode === 'none' || Boolean(process.env[srv.keyEnv]); }
+  if (a) { const srv = apiproxy.SERVERS[a.server] || {}; return a.keyOptional || srv.keyMode === 'none' || Boolean(process.env[srv.keyEnv]); }
   return true;   // local plugins
 }
 
@@ -118,4 +118,4 @@ async function execute(req, res, primary, members) {
   return replay(res, last.out, last.member, primary);
 }
 
-module.exports = { chain, execute, membersOf, groupPaths, mapQuery, reset };
+module.exports = { chain, execute, membersOf, groupPaths, mapQuery, configured, reset };

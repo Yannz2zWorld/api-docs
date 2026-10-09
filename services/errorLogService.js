@@ -44,7 +44,7 @@ async function record({ path, status = null, upstreamStatus = null, code = null,
   } catch (e) { if (!missing(e)) throw e; problem = { at: new Date().toISOString(), step: 'log', code: e.code || null }; return; }
   hiddenCache = null;
   if (!hide) return;
-  const members = groupMembers(path);
+  const members = usableMembers(path);
   if (members) {
     const raw = await rawHiddenPaths();
     if (members.some(m => !raw.has(m))) return;   // a backup still works: the gateway uses it, the endpoint stays
@@ -83,7 +83,7 @@ async function hiddenPaths() {
   const raw = await rawHiddenPaths();
   const out = new Set();
   for (const path of raw) {
-    const members = groupMembers(path);
+    const members = usableMembers(path);
     if (members && members.some(m => !raw.has(m))) continue;
     out.add(path);
   }
@@ -96,6 +96,14 @@ function groupMembers(path) {
     for (const g of require('../config/endpointGroups')) GROUPS.set(g.path, [g.path, ...(g.backups || []).map(b => (typeof b === 'string' ? b : b.path))]);
   }
   return GROUPS.get(path) || null;
+}
+// The members that can actually answer: a backup whose server key isn't set in Vercel can't, so it
+// doesn't keep a broken endpoint visible.
+function usableMembers(path) {
+  const members = groupMembers(path);
+  if (!members) return null;
+  const { configured } = require('./failoverService');
+  return members.filter((m, i) => i === 0 || configured(m));
 }
 const lastProblem = () => problem;
 const resetHidden = () => { hiddenCache = null; };

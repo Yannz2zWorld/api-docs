@@ -1,0 +1,109 @@
+'use strict';
+// Dongtube endpoints (plugin/dongtube.js + lib/apiproxy.js). Upstreams are stubbed: nothing leaves
+// the machine. Checks the catalog, public endpoints that work without the key, Dongtube's own
+// branding being dropped, fixed parameters, and the failover onto Dongtube backups.
+const { test, before, after, beforeEach } = require('node:test');
+const assert = require('node:assert/strict');
+const h = require('./helpers');
+
+const realFetch = global.fetch;
+let calls = [];
+let reply = () => ({ status: 200, json: { author: 'Dongtube API', channel: 'https://whatsapp.com/channel/x', status: true, data: { ok: 1 } } });
+let app, user;
+before(async () => {
+  if (h.skip) return;
+  global.fetch = async (url, opts = {}) => {
+    const u = new URL(String(url));
+    if (['api.dongtube.id', 'api.clutch.web.id'].includes(u.hostname)) {
+      calls.push({ host: u.hostname, path: u.pathname, query: Object.fromEntries(u.searchParams) });
+      const r = reply(u);
+      return new Response(JSON.stringify(r.json), { status: r.status, headers: { 'content-type': 'application/json' } });
+    }
+    return realFetch(url, opts);
+  };
+  await h.setupDatabase();
+  app = await h.startApp({ CLUTCH_API_KEY: 'ckey' });
+  delete process.env.DONGTUBE_API_KEY;
+  user = await app.login('dongtube@example.test');
+});
+after(async () => { global.fetch = realFetch; if (h.skip) return; await app?.close(); await h.teardownDatabase(); });
+beforeEach(() => {
+  calls = [];
+  reply = () => ({ status: 200, json: { author: 'Dongtube API', channel: 'https://whatsapp.com/channel/x', status: true, data: { ok: 1 } } });
+  delete process.env.DONGTUBE_API_KEY;
+  require('../../services/errorLogService').resetHidden();
+  require('../../services/failoverService').reset();
+});
+const it = (name, fn) => test(name, { skip: h.skip }, fn);
+const get = p => app.request('GET', p, app.asBrowser(user));
+const catalog = async () => (await app.request('GET', '/api/endpoints')).json.endpoints;
+
+it('catalog lists the new Dongtube endpoints; the backup-only ones stay out of it', async () => {
+  const cat = await catalog();
+  assert.ok(cat.News.some(e => e.cleanPath === '/api/news/cnn'));
+  assert.ok(cat.Games.some(e => e.cleanPath === '/api/games/tebakkata'));
+  assert.ok(cat.Tools.some(e => e.cleanPath === '/api/tools/text2qr'));
+  const all = Object.values(cat).flat().map(e => e.cleanPath);
+  assert.ok(!all.some(p => p.startsWith('/api/dongtube/')), 'backups are not listed on their own');
+  for (const left of ['/api/tools/vccgen', '/api/canvas/fake-dana', '/api/get/pp-wa', '/api/tools/nik-parser']) assert.ok(!all.includes(left), left);
+});
+
+it('a public Dongtube endpoint works without DONGTUBE_API_KEY, and their branding is dropped', async () => {
+  const r = await get('/api/tools/text2base64?text=halo');
+  assert.equal(r.status, 200, r.text);
+  assert.equal(calls[0].host, 'api.dongtube.id');
+  assert.equal(calls[0].path, '/tools/text2base64');
+  assert.equal(calls[0].query.text, 'halo');
+  assert.equal(calls[0].query.apikey, undefined, 'no key sent while none is set');
+  assert.deepEqual(r.json.data, { ok: 1 });
+  assert.equal(r.json.channel, undefined);
+  assert.notEqual(r.json.author, 'Dongtube API');
+});
+
+it('with the key set it is sent as ?apikey=, never shown in the answer', async () => {
+  process.env.DONGTUBE_API_KEY = 'dkey';
+  const r = await get('/api/search/cookpad?q=ayam');
+  assert.equal(r.status, 200, r.text);
+  assert.equal(calls[0].query.apikey, 'dkey');
+  assert.ok(!r.text.includes('dkey'));
+});
+
+it('an endpoint that needs the key does not call Dongtube while the key is missing', async () => {
+  const r = await get('/api/search/cookpad?q=ayam');
+  assert.notEqual(r.status, 200);
+  assert.equal(calls.length, 0);
+});
+
+it('fixed parameters: Pixiv always asks for safe content, whatever the caller sends', async () => {
+  process.env.DONGTUBE_API_KEY = 'dkey';
+  const r = await get('/api/search/pixiv?q=landscape&mode=r18');
+  assert.equal(r.status, 200, r.text);
+  assert.equal(calls[0].query.mode, 'safe');
+});
+
+it('Dongtube variants back each other up: KBBI switches to the second one with its own parameter name', async () => {
+  process.env.DONGTUBE_API_KEY = 'dkey';
+  reply = u => (u.pathname === '/search/kbbi' ? { status: 500, json: { status: false, error: 'down' } } : { status: 200, json: { status: true, result: 'arti' } });
+  const r = await get('/api/search/kbbi?q=makan');
+  assert.equal(r.status, 200, r.text);
+  assert.equal(r.headers['x-yannz-backup'], '/api/dongtube/tools/kbbi');
+  assert.deepEqual(calls.map(c => c.path), ['/search/kbbi', '/tools/kbbi']);
+  assert.equal(calls[1].query.word, 'makan');
+});
+
+it('an existing endpoint falls back to Dongtube: GitHub stalk (clutch) -> Dongtube with user=', async () => {
+  process.env.DONGTUBE_API_KEY = 'dkey';
+  reply = u => (u.hostname === 'api.clutch.web.id' ? { status: 502, json: { status: false, message: 'server error' } } : { status: 200, json: { status: true, result: { login: 'torvalds' } } });
+  const r = await get('/api/stalk/github?username=torvalds');
+  assert.equal(r.status, 200, r.text);
+  assert.equal(r.headers['x-yannz-backup'], '/api/dongtube/stalk/github');
+  assert.equal(calls[1].host, 'api.dongtube.id');
+  assert.equal(calls[1].query.user, 'torvalds');
+});
+
+it('without the Dongtube key its backups are skipped instead of tried', async () => {
+  reply = u => (u.hostname === 'api.clutch.web.id' ? { status: 502, json: { status: false, message: 'server error' } } : { status: 200, json: { status: true } });
+  const r = await get('/api/stalk/github?username=torvalds');
+  assert.equal(r.status >= 500, true);
+  assert.ok(calls.every(c => c.host === 'api.clutch.web.id'));
+});
