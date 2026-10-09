@@ -195,6 +195,10 @@ app.get('/assets/music.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'music.js'));
 });
+app.get('/assets/endpoint-monitor.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'endpoint-monitor.js'));
+});
 // Website translation (views/i18n.js) and its English dictionary.
 // no-cache = the browser checks for a newer version on every page (a quick 304 when unchanged),
 // so new or changed texts are translated right after a deploy.

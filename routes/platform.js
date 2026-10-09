@@ -21,6 +21,7 @@ const theresav = require('../lib/theresav');
 const apiproxy = require('../lib/apiproxy');
 const cdn = require('../services/cdnService');
 const backups = require('../services/backupService');
+const endpointStatus = require('../services/endpointStatusService');
 
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
@@ -1028,35 +1029,77 @@ router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
 // sample (they need a real link/photo) are reported "manual" so they are tested in the Sandbox.
 // Owner-only; uses the owner's theresav quota, so it is an explicit action.
 const selfTestLimiter = { running: false };
+// Probes every loaded theresav / third-party endpoint (or only `only` paths) with its safe sample
+// and stores the outcome for the ~/endpoints monitor (services/endpointStatusService.js).
+async function runSelfTest(app, only = null) {
+  const loaded = app.locals.loadedPluginPaths || new Set();
+  const rows = await query("SELECT id,path,status FROM endpoints");
+  const byPath = new Map(rows.map(r => [r.path, r]));
+  // Both the theresav-backed endpoints and the generic third-party-server endpoints; apiproxy
+  // entries carry a `server` field, theresav ones do not.
+  const entries = [...theresav.registry(), ...apiproxy.registry()].filter(e => loaded.has(e.path) && (!only || only.has(e.path)));
+  const out = [];
+  // Small concurrency so one run does not hammer the upstream.
+  const queue = entries.slice();
+  async function worker() {
+    for (let e = queue.shift(); e; e = queue.shift()) {
+      let r;
+      try { r = await (e.server ? apiproxy : theresav).probe(e); } catch (err) { r = { result: 'error', error: err?.message || 'gagal' }; }
+      const row = byPath.get(e.path);
+      out.push({ path: e.path, name: e.name, category: e.category, ...r, id: row?.id || null, endpointStatus: row?.status || null });
+    }
+  }
+  await Promise.all([worker(), worker(), worker()]);
+  out.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+  await endpointStatus.saveChecks(out).catch(e => console.error('Saving endpoint checks failed:', { code: e?.code || null }));
+  const summary = out.reduce((m, r) => (m[r.result] = (m[r.result] || 0) + 1, m), {});
+  return { out, summary };
+}
+const upstreamConfigured = () => !!process.env.THERESAV_API_KEY || Object.values(apiproxy.SERVERS).some(s => process.env[s.keyEnv]);
+
 router.post('/owner/api/selftest', sameOrigin, auth, owner, async (req, res) => {
-  const anyServerKey = Object.values(apiproxy.SERVERS).some(s => process.env[s.keyEnv]);
-  if (!process.env.THERESAV_API_KEY && !anyServerKey) return fail(res, 503, 'UPSTREAM_NOT_CONFIGURED', 'Isi dulu THERESAV_API_KEY (atau salah satu key server lain) di Vercel, terus redeploy sebelum ngetes.');
+  if (!upstreamConfigured()) return fail(res, 503, 'UPSTREAM_NOT_CONFIGURED', 'Isi dulu THERESAV_API_KEY (atau salah satu key server lain) di Vercel, terus redeploy sebelum ngetes.');
   if (selfTestLimiter.running) return fail(res, 409, 'SELFTEST_BUSY', 'Ada pengujian lain yang lagi jalan. Tunggu sampai selesai ya.');
   selfTestLimiter.running = true;
   try {
-    const loaded = req.app.locals.loadedPluginPaths || new Set();
-    const rows = await query("SELECT id,path,status FROM endpoints");
-    const byPath = new Map(rows.map(r => [r.path, r]));
-    const only = Array.isArray(req.body?.paths) ? new Set(req.body.paths) : null;
-    // Both the theresav-backed endpoints and the generic third-party-server endpoints; apiproxy
-    // entries carry a `server` field, theresav ones do not.
-    const entries = [...theresav.registry(), ...apiproxy.registry()].filter(e => loaded.has(e.path) && (!only || only.has(e.path)));
-    const out = [];
-    // Small concurrency so one run does not hammer the upstream.
-    const queue = entries.slice();
-    async function worker() {
-      for (let e = queue.shift(); e; e = queue.shift()) {
-        let r;
-        try { r = await (e.server ? apiproxy : theresav).probe(e); } catch (err) { r = { result: 'error', error: err?.message || 'gagal' }; }
-        const row = byPath.get(e.path);
-        out.push({ path: e.path, name: e.name, category: e.category, ...r, id: row?.id || null, endpointStatus: row?.status || null });
-      }
-    }
-    await Promise.all([worker(), worker(), worker()]);
-    out.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
-    const summary = out.reduce((m, r) => (m[r.result] = (m[r.result] || 0) + 1, m), {});
+    const { out, summary } = await runSelfTest(req.app, Array.isArray(req.body?.paths) ? new Set(req.body.paths) : null);
     await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_selftest', targetType: 'endpoint', metadata: summary, ipAddress: ip(req) }).catch(() => {});
     res.json({ success: true, results: out, summary });
+  } finally {
+    selfTestLimiter.running = false;
+  }
+});
+
+// Public: the latest real status of every endpoint, for the ~/endpoints monitor on the dashboard.
+router.get('/api/endpoints/status', async (req, res) => {
+  try {
+    const data = await endpointStatus.list();
+    res.set('Cache-Control', 'public, max-age=15');
+    return res.json({ success: true, ...data });
+  } catch (e) {
+    return fail(res, 503, 'STATUS_UNAVAILABLE', 'Status endpoint lagi nggak bisa dimuat.');
+  }
+});
+
+// Daily automatic endpoint check (vercel.json "crons"), same CRON_SECRET bearer as the backup.
+function cronAuthorized(req) {
+  const secret = process.env.CRON_SECRET || '';
+  if (!secret) return null;
+  const given = Buffer.from(String(req.headers.authorization || ''));
+  const want = Buffer.from(`Bearer ${secret}`);
+  return given.length === want.length && crypto.timingSafeEqual(given, want);
+}
+router.get('/cron/endpoint-check', async (req, res) => {
+  const okAuth = cronAuthorized(req);
+  if (okAuth === null) return fail(res, 503, 'CRON_NOT_CONFIGURED', 'Set CRON_SECRET di Vercel untuk cek endpoint otomatis harian.');
+  if (!okAuth) return fail(res, 401, 'UNAUTHORIZED', 'Unauthorized.');
+  if (!upstreamConfigured()) return fail(res, 503, 'UPSTREAM_NOT_CONFIGURED', 'Belum ada key server API yang diisi.');
+  if (selfTestLimiter.running) return fail(res, 409, 'SELFTEST_BUSY', 'Ada pengujian lain yang lagi jalan.');
+  selfTestLimiter.running = true;
+  try {
+    const { summary } = await runSelfTest(req.app);
+    await audit.writeAudit({ actorUserId: null, action: 'endpoint_selftest', targetType: 'endpoint', metadata: { ...summary, auto: true }, ipAddress: ip(req) }).catch(() => {});
+    return res.json({ success: true, summary });
   } finally {
     selfTestLimiter.running = false;
   }

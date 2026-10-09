@@ -893,7 +893,18 @@
   "GAMPANG · CEPAT · SIAP PAKAI": "EASY · FAST · READY TO USE",
   "API key kamu": "Your API key",
   "Pilih API, isi datanya, terus langsung jalanin dari sini. Belum punya key? Santai, cukup login aja, nanti pakai kuota harian akunmu.": "Pick an API, fill in the details and run it right here. No key yet? No worries, just log in and it uses your account's daily quota.",
-  "Coba API": "Try an API"
+  "Coba API": "Try an API",
+  "Status endpoint": "Endpoint status",
+  "Kode status diambil dari request asli 24 jam terakhir dan cek otomatis tiap hari. Yang belum pernah dipakai atau dicek tampil": "Status codes come from real requests in the last 24 hours and a daily automatic check. Endpoints nobody has used or checked yet show",
+  "Status endpoint lagi nggak bisa dimuat. Dicoba lagi bentar…": "Couldn't load endpoint status. Trying again in a moment…",
+  "$ siap nerima request ▍": "$ ready for incoming requests ▍",
+  "Contoh kode": "Code examples",
+  "siap copas": "ready to copy",
+  "Salin kode": "Copy code",
+  "Bahasa": "Language",
+  "Ganti": "Replace",
+  "sama key kamu dari halaman API Keys, dan": "with your key from the API Keys page, and",
+  "sama isi parameternya.": "with the parameter values."
  },
  "patterns": [
   [
