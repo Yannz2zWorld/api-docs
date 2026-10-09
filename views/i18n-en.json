@@ -1,5 +1,7 @@
 {
  "exact": {
+  "— pilih —": "— choose —",
+  "— bawaan —": "— default —",
   "Navigasi utama": "Main navigation",
   "Memuat…": "Loading…",
   "Salin": "Copy",
@@ -969,6 +971,10 @@
   "Cadangan buat": "Backup for"
  },
  "patterns": [
+  [
+   "^· (\\d+) pilihan$",
+   "· $1 choices"
+  ],
   [
    "^Endpoint ini lagi nggak tersedia untuk sementara\\. Coba lagi nanti atau pakai endpoint lain dulu ya\\.(?: Kuota nggak dipotong\\.)?(?: \\((ENDPOINT_UNAVAILABLE|\\d{3})\\))?$",
    "This endpoint is temporarily unavailable. Try again later or use another endpoint for now."

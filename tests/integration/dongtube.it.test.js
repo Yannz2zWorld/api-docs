@@ -152,3 +152,15 @@ it('an endpoint whose automatic check fails twice in a row is hidden, and comes 
   await check();
   assert.equal(await inCatalog(), true, 'works again: back by itself');
 });
+
+it('parameters with fixed choices reach API Docs as a menu (options), with their default', async () => {
+  const all = Object.values(await catalog()).flat();
+  const p = (path, name) => all.find(e => e.cleanPath === path)?.params.find(x => x.name === name);
+  assert.deepEqual(p('/api/download/ytmp4', 'resolution').options, ['360', '480', '720', '1080', '1440', '2160']);
+  assert.equal(p('/api/download/ytmp4', 'resolution').default, '720');
+  assert.deepEqual(p('/api/download/youtube', 'quality').options, ['144p', '240p', '360p', '480p', '720p', '1080p']);
+  assert.deepEqual(p('/api/download/bilibili', 'quality').options, ['360P', '480P', '720P']);
+  assert.equal(p('/api/download/bilibili', 'url').options, undefined, 'free text stays a text box');
+  const page = require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'views', 'api.html'), 'utf8');
+  assert.match(page, /function paramSelect\(p\)/);
+});

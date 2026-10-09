@@ -177,6 +177,14 @@ function paramsOf(api) {
   return (api.params = query.map(name => ({ name, required: name !== 'imageUrl', placeholder: hints[name] || `Isi ${name} di sini`, local: true })));
 }
 
+// A parameter with fixed choices (quality 360 / 480 / 720 / 1080, format, voice, ...) is a menu of
+// exactly those choices; its default is picked already.
+function paramSelect(p) {
+  const head = p.default ? '' : `<option value="">${p.required ? '— pilih —' : '— bawaan —'}</option>`;
+  const opts = p.options.map(o => `<option value="${esc(o)}" data-no-i18n${String(o) === String(p.default || '') ? ' selected' : ''}>${esc(o)}</option>`).join('');
+  return `<div class="field" style="margin:0"><label for="param-input-${esc(p.name)}"><span data-no-i18n>${esc(p.name)}</span>${p.required ? ' *' : ' (opsional)'} <span class="muted">· ${p.options.length} pilihan</span></label><select id="param-input-${esc(p.name)}" data-param="${esc(p.name)}">${head}${opts}</select></div>`;
+}
+
 function selectEndpoint(api, category) {
   selectedApi = api;
   $('#active-api-name').setAttribute('data-no-i18n', ''); $('#active-api-name').textContent = api.name;
@@ -188,6 +196,7 @@ function selectEndpoint(api, category) {
   $('#params-form').innerHTML = params.length
     ? params.map(p => p.type === 'file'
         ? `<div class="field" style="margin:0"><label for="param-input-${esc(p.name)}"><span data-no-i18n>${esc(p.name)}</span>${p.required ? ' *' : ' (opsional)'} <span>— upload file</span></label><input type="file" id="param-input-${esc(p.name)}" data-file="${esc(p.name)}" accept="${esc(p.accept || '*')}"><small class="muted" id="file-note-${esc(p.name)}" data-no-i18n></small></div>`
+        : Array.isArray(p.options) && p.options.length ? paramSelect(p)
         : `<div class="field" style="margin:0"><label for="param-input-${esc(p.name)}"><span data-no-i18n>${esc(p.name)}</span>${p.required ? ' *' : ' (opsional)'}</label><input id="param-input-${esc(p.name)}" data-param="${esc(p.name)}"${p.local ? '' : ' data-no-i18n'} placeholder="${esc(p.placeholder || '')}" value="${esc(p.default || '')}" autocapitalize="off" spellcheck="false"></div>`).join('')
     : '<p class="muted" style="margin:0">Endpoint ini nggak butuh parameter.</p>';
   const path = api.cleanPath || api.path.split('?')[0];

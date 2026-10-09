@@ -55,7 +55,7 @@ module.exports = [
   { name: 'Qwen AI', desc: 'AI Assistant by Alibaba Cloud (Qwen) with universal support for Text and any File format (Image, Audio, Video, PDF, Documents) with Dragonfly session cache.', path: '/api/ai/qwen', upstream: '/api/ai/qwen', multipart: true,
     file: { param: 'fileUrl', field: 'file', accept: '*' },
     params: [{ name: 'text', required: true, aliases: ['prompt'], placeholder: 'Ringkas dokumen ini' }, { name: 'fileUrl', type: 'url', placeholder: 'Opsional — URL file https' }, chatId,
-      { name: 'search', type: 'bool', placeholder: 'true / false' }, { name: 'think', type: 'bool', placeholder: 'true / false' }] },
+      { name: 'search', type: 'bool', options: ['true', 'false'] }, { name: 'think', type: 'bool', options: ['true', 'false'] }] },
   { name: 'Talefy AI Story', desc: 'Generate AI stories based on prompt and genre using Talefy AI.', path: '/api/ai/talefy', upstream: '/api/ai/talefy',
     params: [{ name: 'text', required: true, aliases: ['prompt'], placeholder: 'Kucing yang bisa terbang' }, { name: 'genre', required: true, options: GENRES }] },
   { name: 'TurboSeek AI', desc: 'Searches for an answer using TurboSeek AI.', path: '/api/ai/turboseek', upstream: '/api/ai/turboseek',
