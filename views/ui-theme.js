@@ -21,15 +21,15 @@
     pop: { name: 'Brutal Pop', desc: 'Abu bertitik, kartu putih tebal, aksen ungu cerah.', dark: false,
       bg: '#e4e4e7', dot: '#a1a1aa', surface: '#ffffff', surface2: '#f4f4f5', surface3: '#ececf0', ink: '#0a0a0a', muted: '#3f3f46', faint: '#71717a',
       edge: '#0a0a0a', edgeSoft: '#0a0a0a', drop: '#0a0a0a', border: 3, radius: 22, shadow: [8, 8], accent: '#6366f1', font: "'Space Grotesk', Outfit, sans-serif" },
-    neon: { name: 'Midnight Neon', desc: 'Biru malam, garis menyala sesuai warna pilihan.', dark: true,
+    neon: { name: 'Midnight', desc: 'Biru malam, garis tegas sesuai warna pilihan, bayangan kotak.', dark: true,
       bg: '#070b18', dot: '#16203d', surface: '#0d1428', surface2: '#121b35', surface3: '#182343', ink: '#e8ecff', muted: '#9aa5c8', faint: '#6c7699',
-      edge: 'accent', edgeSoft: '#25335c', drop: 'glow', border: 2, radius: 14, shadow: [0, 0], accent: '#22d3ee', glow: true },
-    glass: { name: 'Glass', desc: 'Kaca buram di atas gradasi warna, lembut dan modern.', dark: true,
-      bg: '#0c0a1f', dot: 'transparent', surface: 'rgba(255,255,255,.07)', surface2: 'rgba(255,255,255,.1)', surface3: 'rgba(255,255,255,.14)', ink: '#f5f3ff', muted: '#c4bfe6', faint: '#8f89b8',
-      edge: 'rgba(255,255,255,.28)', edgeSoft: 'rgba(255,255,255,.14)', drop: 'rgba(0,0,0,.35)', border: 1, radius: 20, shadow: [0, 10], accent: '#a855f7', glass: true },
-    minimal: { name: 'Minimal Light', desc: 'Putih bersih, garis tipis, bayangan halus.', dark: false,
+      edge: 'accent', edgeSoft: '#25335c', drop: '#020409', border: 2, radius: 14, shadow: [6, 6], accent: '#22d3ee' },
+    glass: { name: 'Graphite', desc: 'Abu grafit, garis tebal, rata tanpa efek.', dark: true,
+      bg: '#2a2a2e', dot: '#3a3a40', surface: '#34343a', surface2: '#3c3c43', surface3: '#45454d', ink: '#f4f4f5', muted: '#c4c4cc', faint: '#9a9aa3',
+      edge: '#f4f4f5', edgeSoft: '#56565f', drop: '#121214', border: 3, radius: 10, shadow: [5, 5], accent: '#f97316' },
+    minimal: { name: 'Minimal Light', desc: 'Putih bersih, garis tipis, rapi.', dark: false,
       bg: '#fafafa', dot: 'transparent', surface: '#ffffff', surface2: '#f6f6f7', surface3: '#efeff1', ink: '#18181b', muted: '#52525b', faint: '#8b8b94',
-      edge: '#e4e4e7', edgeSoft: '#e4e4e7', drop: 'rgba(24,24,27,.08)', border: 1, radius: 12, shadow: [0, 4], accent: '#2563eb', soft: true },
+      edge: '#d4d4d8', edgeSoft: '#e4e4e7', drop: '#e4e4e7', border: 1, radius: 12, shadow: [0, 3], accent: '#2563eb' },
     terminal: { name: 'Terminal', desc: 'Hitam pekat, huruf mesin ketik, sudut lancip.', dark: true,
       bg: '#000000', dot: '#0f1a0f', surface: '#050805', surface2: '#0a110a', surface3: '#0f180f', ink: '#d1fae5', muted: '#86c9a3', faint: '#4d7a5f',
       edge: 'accent', edgeSoft: '#1d3b28', drop: '#0f2a1a', border: 1, radius: 0, shadow: [4, 4], accent: '#22c55e', font: "'DM Mono', ui-monospace, monospace" },
@@ -84,14 +84,15 @@
 
   function css(s) {
     const edge = s.edge === 'accent' ? 'var(--accent)' : s.edge;
-    const drop = s.drop === 'glow' ? 'color-mix(in srgb, var(--accent) 45%, transparent)' : s.drop;
-    const shadow = s.soft || s.glass ? `${s.shadow[0]}px ${s.shadow[1]}px 24px var(--drop)` : s.glow ? '0 0 22px var(--drop)' : `${s.shadow[0]}px ${s.shadow[1]}px 0 var(--drop)`;
+    const drop = s.drop;
+    // Flat, hard-edged shadows only: no glow, no blur.
+    const shadow = `${s.shadow[0]}px ${s.shadow[1]}px 0 var(--drop)`;
     const R = 'html[data-ui]';
     return `${R}{--bg:${s.bg};--dot:${s.dot};--surface:${s.surface};--surface-2:${s.surface2};--surface-3:${s.surface3};--ink:${s.ink};--muted:${s.muted};--faint:${s.faint};
 --edge:${edge};--edge-soft:${s.edgeSoft};--drop:${drop};--radius:${s.radius}px;--line:${s.border}px solid var(--edge);--shadow:${shadow};
 --red:var(--accent);--red-deep:color-mix(in srgb,var(--accent) 78%,#000);--paper:var(--surface);--yellow:var(--accent);--blood:var(--accent);--blood-deep:var(--red-deep);--blue:var(--muted);--green:var(--edge);
 --ok:${s.dark ? '#86efac' : '#15803d'};--bad:${s.dark ? '#fca5a5' : '#b91c1c'};--warn:${s.dark ? '#e4e4e7' : '#3f3f46'};color-scheme:${s.dark ? 'dark' : 'light'}}
-${R} body{background-color:var(--bg);background-image:${s.glass ? 'radial-gradient(60% 50% at 15% 10%,color-mix(in srgb,var(--accent) 45%,transparent),transparent 70%),radial-gradient(50% 45% at 90% 85%,color-mix(in srgb,var(--accent) 30%,#0ea5e9 20%),transparent 70%)' : 'radial-gradient(var(--dot) 1.2px,transparent 1.2px)'};background-size:${s.glass ? 'auto' : '22px 22px'};background-attachment:${s.glass ? 'fixed' : 'scroll'};color:var(--ink)${s.font ? `;font-family:${s.font}` : ''}}
+${R} body{background-color:var(--bg);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.2px);background-size:22px 22px;color:var(--ink)${s.font ? `;font-family:${s.font}` : ''}}
 ${s.font ? `${R} h1,${R} h2,${R} h3,${R} .brand,${R} .hero h1,${R} .section-head h2,${R} .metric-value{font-family:${s.font}}` : ''}
 ${R} .topbar{background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom-color:var(--edge-soft)}
 ${R} a:hover,${R} button:hover,${R} .btn:hover{color:var(--ink)}
@@ -110,9 +111,7 @@ ${R} .feature p,${R} .metric-note,${R} .endpoint small,${R} .endpoint-head span,
 ${R} .endpoints{background:var(--surface);color:var(--ink)}${R} .endpoint{background:var(--surface-2);border-color:var(--edge-soft)}
 ${R} .footer{background:var(--surface);color:var(--ink);border-top-color:var(--edge-soft)}${R} .footer-links a{border-color:var(--edge-soft);color:var(--ink)}${R} .footer-links a:hover{background:var(--surface-2)}${R} .copyright{border-top-color:var(--edge-soft)}
 ${R} .hero h1 span,${R} .mark,${R} .account-menu summary,${R} .shell .btn:not(.secondary){color:var(--accent-ink)}
-${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-pop button:hover,${R} .logout:hover{color:var(--ink)}
-${s.glass ? `${R} .panel,${R} .card,${R} .metric,${R} .feature,${R} .endpoints,${R} dialog,${R} .topbar{backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3)}` : ''}
-${s.glow ? `${R} .panel,${R} .card,${R} .metric,${R} .feature,${R} .endpoints{box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 35%,transparent),0 0 24px var(--drop)}` : ''}`;
+${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-pop button:hover,${R} .logout:hover{color:var(--ink)}`;
   }
 
   let rgbTimer = null;

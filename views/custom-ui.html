@@ -41,7 +41,7 @@
   .hex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
   .hex-row input { width: 130px; font-family: "DM Mono", monospace; text-transform: uppercase; }
   .toggle { display: inline-flex; gap: 10px; align-items: center; cursor: pointer; font-weight: 600; }
-  .rainbow { background: linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
+  .rainbow { font-weight: 800; }
   /* live preview, made of the site's own parts */
   .preview { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
   .member { border: var(--line); border-radius: var(--radius); box-shadow: var(--shadow); background: var(--accent); color: var(--accent-ink); padding: 18px; display: grid; gap: 10px; }
@@ -124,11 +124,11 @@
     $('#looks').innerHTML = Object.entries(UI.STYLES).map(([id, s]) => {
       const dot = s.dot === 'transparent' ? 'none' : `radial-gradient(${s.dot} 1px, transparent 1px)`;
       const edge = s.edge === 'accent' ? s.accent : s.edge;
-      const shadow = s.shadow[0] || s.shadow[1] ? `${Math.min(s.shadow[0], 4)}px ${Math.min(s.shadow[1], 4)}px 0 ${s.drop === 'glow' ? s.accent : s.drop}` : 'none';
-      const bg = s.glass ? `radial-gradient(70% 60% at 20% 20%, ${s.accent}99, transparent), ${s.bg}` : s.bg;
+      const shadow = s.shadow[0] || s.shadow[1] ? `${Math.min(s.shadow[0], 4)}px ${Math.min(s.shadow[1], 4)}px 0 ${s.drop}` : 'none';
+      const bg = s.bg;
       const tile = `border:${Math.min(s.border, 2)}px solid ${edge};box-shadow:${shadow};border-radius:${Math.min(s.radius, 12)}px`;
       return `<button type="button" class="look" data-style="${id}" aria-pressed="false">
-        <span class="mini" aria-hidden="true" style="background:${bg};background-image:${s.glass ? '' : dot}">
+        <span class="mini" aria-hidden="true" style="background:${bg};background-image:${dot}">
           <span class="bar" style="background:${s.surface};${tile}"></span>
           <span class="tile a" style="background:${s.accent};color:${UI.inkOn(s.accent)};${tile}">Aa</span>
           <span class="tile" style="background:${s.surface};${tile}"></span>

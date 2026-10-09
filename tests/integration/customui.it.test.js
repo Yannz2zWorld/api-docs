@@ -50,6 +50,16 @@ it('looks and colours: many looks, any colour, readable text on it, RGB mode', (
   const UI = sandbox.window.YannzUI;
   assert.ok(Object.keys(UI.STYLES).length >= 8);
   for (const k of ['default', 'cream', 'pop', 'neon', 'glass', 'minimal', 'terminal']) assert.ok(UI.STYLES[k], k);
+  // No "AI glow" anywhere: flat, hard-edged shadows only; no glow, blur or glowing gradients.
+  const css = [];
+  sandbox.document.createElement = () => ({ set textContent(v) { css.push(v); } });
+  sandbox.document.getElementById = () => null;
+  for (const k of Object.keys(UI.STYLES)) UI.apply({ style: k, accent: '#22d3ee', rgb: false });
+  const all = css.join('\n');
+  assert.ok(css.length >= 8);
+  assert.ok(!/\b0 0 \d+px|blur\(|text-shadow|drop-shadow|\d+px \d+px [1-9]\d*px/.test(all), 'no glow or soft/blurred shadows');
+  assert.ok(!/radial-gradient\([^)]*(accent|%,transparent)/.test(all.replace(/radial-gradient\(var\(--dot\) 1\.2px,transparent 1\.2px\)/g, '')), 'no glowing gradients (only the dot pattern)');
+  assert.ok(!/glow/i.test(view('ui-theme.js').replace('no glow', '')), 'no glow look');
   assert.equal(UI.inkOn('#ffd60a'), '#0a0a0a', 'dark text on yellow');
   assert.equal(UI.inkOn('#6366f1'), '#ffffff', 'white text on indigo');
   UI.set({ style: 'cream', accent: '#123456', rgb: false });
