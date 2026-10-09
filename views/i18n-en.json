@@ -196,7 +196,6 @@
   "Cari…": "Search…",
   "Cari pilihan": "Search options",
   "Nggak ada yang cocok.": "No matches.",
-  "Jalanin endpoint langsung dari browser. Kalau nggak pakai key, Sandbox pakai sesi login dan kuota harian akunmu.": "Run endpoints right from your browser. Without a key, the Sandbox uses your login session and your account's daily quota.",
   "Lihat katalog →": "See the catalog →",
   "Pilih endpoint": "Choose an endpoint",
   "Lagi dimuat…": "Loading…",
@@ -249,7 +248,7 @@
   "Buka / download": "Open / download",
   "Musik": "Music",
   "Katalog endpoint": "Endpoint catalog",
-  "Cari endpoint, cek tier yang dibutuhin, terus langsung coba di Sandbox pakai sesi login atau API key kamu.": "Search for an endpoint, check which tier it needs, then try it right away in the Sandbox with your login session or API key.",
+  "Cari endpoint, cek tier yang dibutuhin, terus langsung coba di API Docs pakai sesi login atau API key kamu.": "Search for an endpoint, check which tier it needs, then try it right away in the API Docs with your login session or API key.",
   "endpoint tersedia": "endpoints available",
   "Cari nama, deskripsi, atau path…": "Search by name, description or path…",
   "Cari endpoint": "Search endpoints",
@@ -337,7 +336,7 @@
   "Lagi memuat paket…": "Loading plans…",
   "DEVELOPER itu peran khusus buat operasional, jadi nggak dijual.": "DEVELOPER is an operations-only role, so it's not for sale.",
   "Custom API key tanpa batas": "Unlimited custom API keys",
-  "Nggak bisa bikin custom API key (pakai Sandbox lewat login)": "No custom API keys (use the Sandbox with your login)",
+  "Nggak bisa bikin custom API key (pakai API Docs lewat login)": "No custom API keys (use the API Docs with your login)",
   "Endpoint tier FREE": "FREE tier endpoints",
   "Semua endpoint yang aktif": "All active endpoints",
   "Paket kamu sekarang": "Your current plan",
@@ -617,7 +616,7 @@
   "Lagi ngetes…": "Testing…",
   "Lagi ngetes… bisa 1–2 menit.": "Testing… this can take 1–2 minutes.",
   "tes manual": "manual test",
-  "butuh link/foto asli — tes di Sandbox": "needs a real link/photo — test it in Sandbox",
+  "butuh link/foto asli — tes di API Docs": "needs a real link/photo — test it in API Docs",
   "THERESAV_API_KEY belum diatur": "THERESAV_API_KEY isn't set",
   "nunggu deploy": "waiting for deploy",
   "Label endpoint": "Endpoint label",
@@ -892,7 +891,9 @@
   "Lihat semua API": "See all APIs",
   "Buka daftar API": "Open the API list",
   "GAMPANG · CEPAT · SIAP PAKAI": "EASY · FAST · READY TO USE",
-  "API key kamu": "Your API key"
+  "API key kamu": "Your API key",
+  "Pilih API, isi datanya, terus langsung jalanin dari sini. Belum punya key? Santai, cukup login aja, nanti pakai kuota harian akunmu.": "Pick an API, fill in the details and run it right here. No key yet? No worries, just log in and it uses your account's daily quota.",
+  "Coba API": "Try an API"
  },
  "patterns": [
   [

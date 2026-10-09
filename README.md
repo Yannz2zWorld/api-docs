@@ -238,7 +238,7 @@ nothing is claimed as sent). The owner panel Status tab shows which provider is 
 
 | Tier   | Price    | Requests/day | Custom API keys | Access |
 |--------|----------|--------------|-----------------|--------|
-| FREE   | Rp0      | 100          | 0 (use Sandbox with login) | endpoints with minimum tier FREE |
+| FREE   | Rp0      | 100          | 0 (use API Docs with login) | endpoints with minimum tier FREE |
 | SULTAN | Rp5.000  | 1.000        | 2               | all active endpoints up to SULTAN |
 | SEPUH  | Rp10.000 | 10.000       | 3               | up to SEPUH |
 | DEWA   | Rp25.000 | 100.000      | unlimited       | up to DEWA |
@@ -396,7 +396,7 @@ cookies or secrets).
 - `GET /health`, `GET /health/database`, `GET /auth/config`, `GET /auth/me`, `POST /auth/logout`
 - `POST /auth/google/credential`, `GET /auth/google`, `GET /auth/google/callback`
 - `GET /api/tiers`, `GET /api/endpoints`, `GET /api/stats`, `GET /api/tools/ping`
-- Pages: `/`, `/home`, `/api` (Sandbox), `/api/playground`, `/pricing`, `/keys`, `/billing`, `/owner`
+- Pages: `/`, `/home`, `/api` (API Docs), `/api/playground`, `/pricing`, `/keys`, `/billing`, `/owner`
 - `GET /usage`, `GET /api/dashboard`
 - `GET|POST /api/keys`, `DELETE /api/keys/:id`, `POST /api/keys/:id/revoke`
 - `GET|POST /api/orders`, `POST /api/orders/:id/pakasir`, `GET /api/orders/:id/qr.svg`, `POST /api/orders/:id/manual`
