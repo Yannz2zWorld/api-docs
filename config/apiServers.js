@@ -5,6 +5,7 @@
 // Environment Variables.
 //
 //   keyMode : 'query'  -> key dikirim sebagai query param (?<keyName>=KEY)   [paling umum]
+//             'none'   -> server publik, nggak pakai key
 //             'header'  -> key dikirim sebagai header (<keyName>: KEY)
 //   keyName : nama param/header untuk key (default 'apikey')
 //
@@ -14,5 +15,7 @@ module.exports = {
   clutch:   { base: 'https://api.clutch.web.id', keyEnv: 'CLUTCH_API_KEY',   keyMode: 'query', keyName: 'apikey' },
   dongtube: { base: 'https://api.dongtube.id',   keyEnv: 'DONGTUBE_API_KEY', keyMode: 'query', keyName: 'apikey' },
   pitucode: { base: 'https://api.pitucode.com',  keyEnv: 'PITUCODE_API_KEY', keyMode: 'query', keyName: 'apikey' },
-  termai:   { base: 'https://api.termai.cc',      keyEnv: 'TERMAI_API_KEY',   keyMode: 'query', keyName: 'key' }
+  termai:   { base: 'https://api.termai.cc',      keyEnv: 'TERMAI_API_KEY',   keyMode: 'query', keyName: 'key' },
+  // Public, no key needed. Endpoints from here are mostly backups (config/endpointGroups.js).
+  faa:      { base: 'https://api-faa.my.id',      keyEnv: null,               keyMode: 'none' }
 };

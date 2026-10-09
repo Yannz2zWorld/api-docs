@@ -964,7 +964,9 @@
   "Letak": "Where",
   "Penyebab": "Why",
   "Pesan asli": "Original message",
-  "terakhir": "last"
+  "terakhir": "last",
+  "Cadangan": "Backups",
+  "Cadangan buat": "Backup for"
  },
  "patterns": [
   [

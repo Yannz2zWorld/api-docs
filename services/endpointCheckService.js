@@ -124,7 +124,7 @@ async function checkStale(app, limit = 6, { okAfterMs = OK_STALE_MS, failAfterMs
     // Active endpoints, plus the ones hidden automatically (so they come back once they work again).
     const active = new Set((await query("SELECT path FROM endpoints WHERE status = 'active' OR auto_disabled")
       .catch(e => { if (e.code !== '42703') throw e; return query("SELECT path FROM endpoints WHERE status = 'active'"); })).map(r => r.path));
-    for (const p of await errorLog.hiddenPaths().catch(() => new Set())) active.add(p);
+    for (const p of await errorLog.rawHiddenPaths().catch(() => new Set())) active.add(p);
     const paths = [...items.keys()].filter(p => active.has(p));
     if (!paths.length) return [];
     await query('INSERT INTO endpoint_checks (path) SELECT unnest($1::text[]) ON CONFLICT (path) DO NOTHING', [paths]);
