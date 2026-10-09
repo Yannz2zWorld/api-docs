@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
 <script src="/assets/i18n.js"></script>
+<script src="/assets/human-check.js"></script>
 <style>
   .hero-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
   .counter { font: 700 13px "DM Mono", monospace; color: var(--muted); }
@@ -116,7 +117,8 @@ function render() {
   $('#grid').innerHTML = folders.length ? folders.join('') : '<div class="empty"><b>Nggak ada yang cocok.</b><br>Coba kata kunci lain.</div>';
 }
 
-fetch('/api/endpoints').then(r => r.json()).then(d => {
+// The list needs the entry check (or a session); views/human-check.js sends the visitor back to the door if the pass ran out.
+YannzHuman.json('/api/endpoints').then(d => {
   catalog = d.endpoints || {};
   $('#api-counter').textContent = d.total ?? Object.values(catalog).flat().length;
   // ?cat=AI opens that folder (links from elsewhere).

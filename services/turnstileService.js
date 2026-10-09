@@ -31,9 +31,11 @@ async function verify(token, remoteIp) {
 }
 
 // Express middleware: reads the token from the JSON body ("turnstileToken") and drops it after use.
+// A visitor who passed the entry check (services/humanCheckService.js) isn't asked again.
+const passed = req => { const h = require('./humanCheckService'); return h.enabled() && h.hasPass(req); };
 function guard() {
   return async (req, res, next) => {
-    if (req.method !== 'POST' || !isEnabled()) return next();
+    if (req.method !== 'POST' || !isEnabled() || passed(req)) { if (req.body) delete req.body.turnstileToken; return next(); }
     const token = req.body && req.body.turnstileToken;
     if (req.body) delete req.body.turnstileToken;
     const ip = (req.ip || '').replace(/^::ffff:/, '') || undefined;
@@ -47,7 +49,7 @@ function guard() {
 // sent back to the login page instead of to Google, so no OAuth state is ever issued.
 function redirectGuard(back = '/?auth=turnstile') {
   return async (req, res, next) => {
-    if (!isEnabled()) return next();
+    if (!isEnabled() || passed(req)) return next();
     const ip = (req.ip || '').replace(/^::ffff:/, '') || undefined;
     const result = await verify(req.query.ts, ip);
     if (result.ok) return next();
