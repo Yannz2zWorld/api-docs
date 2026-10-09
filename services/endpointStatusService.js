@@ -30,7 +30,8 @@ async function list(loaded = null) {
   const live = new Map(traffic.map(r => [r.path, { code: norm(r.status), ms: r.duration_ms, at: new Date(r.created_at), source: 'live' }]));
   const checked = new Map(checks.map(r => [r.path, { code: r.status ? norm(r.status) : 503, ms: r.ms, at: new Date(r.checked_at), source: 'check' }]));
   // Disabled endpoints (by the developer, or hidden automatically after a plan/quota error) are not shown.
-  const out = endpoints.filter(e => (!loaded || loaded.has(e.path)) && (!e.status || e.status === 'active')).map(e => {
+  const hidden = await require('./errorLogService').hiddenPaths().catch(() => new Set());
+  const out = endpoints.filter(e => (!loaded || loaded.has(e.path)) && (!e.status || e.status === 'active') && !hidden.has(e.path)).map(e => {
     const base = { path: e.path, method: (e.method || 'GET').toUpperCase() };
     const a = live.get(e.path), b = checked.get(e.path);
     const pick = a && b ? (a.at >= b.at ? a : b) : a || b;

@@ -25,7 +25,21 @@
   @media (max-width: 720px) { .ep-new { grid-template-columns: 1fr; } }
   .tab-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--bad, #f87171); color: #111; font: 700 10px/1 "DM Mono", monospace; }
   .tab-count[hidden] { display: none; }
-  .err-msg { max-width: 420px; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 "DM Mono", monospace; }
+  #err-data { display: grid; gap: 12px; }
+  .err-card { border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); padding: 14px 16px; }
+  .err-card.done { opacity: .7; }
+  .err-card header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+  .err-card header code { margin-left: 4px; }
+  .err-card dl { display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; margin: 12px 0; }
+  .err-card dt { color: var(--muted); font: 600 11px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .05em; padding-top: 2px; }
+  .err-card dd { margin: 0; font-size: 14px; line-height: 1.5; }
+  .err-card footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+  .err-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  @media (max-width: 560px) { .err-card dl { grid-template-columns: 1fr; } .err-card dt { padding-top: 6px; } }
+  .err-help { margin: 10px 0 14px; font-size: 13px; color: var(--muted); }
+  .err-help summary { cursor: pointer; font-weight: 600; color: var(--ink, #f4f4f5); }
+  .err-help ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+  .err-msg { margin: 0; padding: 8px 10px; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 "DM Mono", monospace; max-height: 160px; overflow: auto; }
   .backup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 14px; }
   .backup-card { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); }
   .backup-card h3 { margin: 0; }
@@ -165,6 +179,14 @@ module.exports = async (req, res) =&gt; {
     <h2>Error</h2>
     <p class="muted">Semua error endpoint, dari request asli maupun cek otomatis. Kalau server sumbernya bilang limit plan, kuota/kredit habis, atau key ditolak, endpoint-nya otomatis disembunyikan dari API Docs, Playground, dan status endpoint. Endpoint itu tetap dicek, dan begitu jalan lagi bakal muncul lagi sendiri.</p>
     <div class="row"><span id="err-summary" class="muted">Memuat…</span><span style="flex:1"></span><button type="button" class="sm" id="err-reload">Muat ulang</button><button type="button" class="sm" id="err-clear">Hapus yang udah beres</button></div>
+    <div id="err-warn"></div>
+    <details class="err-help"><summary>Arti tombol-tombolnya</summary>
+      <ul>
+        <li><b>Tampilkan lagi</b> → <span>munculin lagi endpoint yang disembunyikan otomatis. Kalau server sumbernya masih nolak, nanti disembunyikan lagi sendiri.</span></li>
+        <li><b>Hapus catatan</b> → <span>cuma ngehapus baris catatan error itu dari daftar ini. Endpoint-nya nggak dihapus atau diubah apa-apa. Kalau error yang sama kejadian lagi, catatannya muncul lagi.</span></li>
+        <li><b>Hapus yang udah beres</b> → <span>hapus semua catatan yang endpoint-nya udah jalan lagi (status "udah jalan lagi").</span></li>
+      </ul>
+    </details>
     <div id="err-data">Memuat…</div>
   </section>
 
@@ -685,24 +707,31 @@ function errBadge(n) { const b = $('#err-count'); b.textContent = n; b.hidden = 
 loaders.errors = async () => {
   try {
     const d = await api('/owner/api/errors');
+    const en = window.YannzI18n?.lang === 'en';
     errBadge(d.open);
     $('#err-summary').textContent = tr(`${d.open} error belum beres · ${d.hidden} endpoint disembunyikan otomatis`);
-    $('#err-data').innerHTML = d.errors.length ? `<table><tr><th>Endpoint</th><th>Kode</th><th>Pesan error</th><th>Dari</th><th>Kejadian</th><th>Terakhir</th><th>Status</th><th></th></tr>${d.errors.map(e => {
-      const hidden = e.endpoint_status && e.endpoint_status !== 'active';
-      const state = e.resolved_at ? chip(tr('udah jalan lagi'), 'ok') : e.auto_disabled ? chip(tr('disembunyikan otomatis'), 'bad') : hidden ? chip(tr('nonaktif'), 'bad') : chip(tr('masih tampil'), 'warn');
-      return `<tr>
-        <td data-no-i18n><b>${esc(e.name || '')}</b><br><code>${esc(e.path)}</code></td>
-        <td>${e.status ? chip(e.status, 'bad') : '—'}<br><small data-no-i18n>${esc(e.code || '')}</small></td>
-        <td><div class="err-msg" data-no-i18n>${esc(e.message || '—')}</div></td>
-        <td><small>${e.source === 'check' ? tr('cek otomatis') : tr('request asli')}</small></td>
-        <td>${num(e.count)}×</td>
-        <td><small>${when(e.last_seen)}</small></td>
-        <td>${state}</td>
-        <td>${hidden ? `<button type="button" class="sm" data-err-show="${esc(e.path)}">${tr('Tampilkan lagi')}</button> ` : ''}<button type="button" class="sm danger" data-err-del="${esc(e.id)}">${tr('Hapus')}</button></td></tr>`;
-    }).join('')}</table>` : `<p>${tr('Belum ada error. Aman 👍')}</p>`;
+    $('#err-warn').innerHTML = !d.schemaReady
+      ? `<p class="error">${tr('Database belum siap: jalankan migrations/019_endpoint_errors.sql di Neon dulu, biar endpoint bisa disembunyikan otomatis.')}</p>`
+      : d.problem ? `<p class="error">${tr(`Ada langkah yang gagal waktu nyimpen/nyembunyiin error (kode ${d.problem.code || '?'}). Endpoint yang kena tetap disembunyikan dari daftar.`)}</p>` : '';
+    $('#err-data').innerHTML = d.errors.length ? d.errors.map(e => {
+      const hidden = e.hidden_now || (e.endpoint_status && e.endpoint_status !== 'active');
+      const state = e.resolved_at ? chip(tr('udah jalan lagi'), 'ok') : e.hidden_now ? chip(tr('disembunyikan otomatis'), 'bad') : hidden ? chip(tr('nonaktif'), 'bad') : chip(tr('masih tampil'), 'warn');
+      return `<article class="err-card${e.resolved_at ? ' done' : ''}">
+        <header><div data-no-i18n><b>${esc(e.name || e.path)}</b> <code>${esc(e.path)}</code></div><div>${e.status ? chip(e.status, 'bad') : ''} ${state}</div></header>
+        <dl>
+          <dt>${tr('Letak')}</dt><dd data-no-i18n>${esc(en ? e.whereEn : e.where)}</dd>
+          <dt>${tr('Penyebab')}</dt><dd data-no-i18n>${esc(en ? e.whyEn : e.why)}</dd>
+          <dt>${tr('Pesan asli')}</dt><dd><pre class="err-msg" data-no-i18n>${esc(e.message || '—')}</pre></dd>
+        </dl>
+        <footer><small class="muted">${e.source === 'check' ? tr('cek otomatis') : tr('request asli')} · ${num(e.count)}× · ${tr('terakhir')} ${when(e.last_seen)} · <span data-no-i18n>${esc(e.code || '')}</span></small>
+          <span class="err-actions">${hidden && !e.resolved_at ? `<button type="button" class="sm" data-err-show="${esc(e.path)}">${tr('Tampilkan lagi')}</button>` : ''}<button type="button" class="sm danger" data-err-del="${esc(e.id)}" title="${esc(tr('Cuma hapus catatan error ini. Endpoint-nya nggak berubah.'))}">${tr('Hapus catatan')}</button></span></footer>
+      </article>`;
+    }).join('') : `<p>${tr('Belum ada error. Aman 👍')}</p>`;
   } catch (e) { fail('#err-data', e); }
 };
 $('#err-reload').addEventListener('click', () => loaders.errors());
+// The explanations come in both languages from the server: switch with the page.
+addEventListener('yannz:lang', () => { if (!$('#tab-errors').hidden) loaders.errors(); });
 $('#err-clear').addEventListener('click', async () => { try { await send('/owner/api/errors/clear-resolved'); loaders.errors(); } catch (e) { say(e.message); } });
 $('#err-data').addEventListener('click', async e => {
   const show = e.target.closest('[data-err-show]');

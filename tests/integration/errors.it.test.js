@@ -37,6 +37,9 @@ it('an upstream "plan quota" error hides the endpoint everywhere and shows why i
   reply = () => ({ status: 403, json: { status: false, error: "You've reached your plan quota. Your credits will renew with your plan — top up a credit pack to continue now." } });
   const r = await call(`${P}?prompt=hi`);
   assert.ok(r.status >= 500, r.text);
+  // The caller never sees the upstream's plan message; it only goes to the Error tab.
+  assert.deepEqual([r.status, r.json.error], [503, 'ENDPOINT_UNAVAILABLE']);
+  assert.ok(!/plan|quota|credit/i.test(r.text), r.text);
 
   assert.equal(await inCatalog(P), false, 'gone from API Docs / Playground');
   assert.equal(await inMonitor(P), false, 'gone from the status monitor');
@@ -47,12 +50,34 @@ it('an upstream "plan quota" error hides the endpoint everywhere and shows why i
   assert.equal(errs.length, 1);
   assert.match(errs[0].message, /plan quota/);
   assert.deepEqual([errs[0].source, errs[0].hidden, errs[0].auto_disabled, errs[0].endpoint_status], ['live', true, true, 'disabled']);
+  // Where it happens and why, in short (both languages).
+  assert.equal(errs[0].where, 'Server sumber: api.theresav.eu (/api/ai/chatgpt)');
+  assert.match(errs[0].why, /Kuota\/plan akun kita di server api\.theresav\.eu habis/);
+  assert.match(errs[0].whyEn, /quota\/plan on the server api\.theresav\.eu is used up/);
   const list = await o('GET', '/owner/api/errors');
   assert.ok(list.json.open >= 1 && list.json.hidden >= 1);
   const row = (await o('GET', '/owner/api/endpoints')).json.endpoints.find(e => e.path === P);
   assert.equal(row.auto_disabled, true);
   assert.match(row.disabled_reason, /plan quota/);
   assert.equal((await app.request('GET', '/owner/api/errors', { cookie: user })).status, 403);
+  assert.equal(list.json.schemaReady, true);
+  assert.equal(list.json.errors.find(e => e.path === P).hidden_now, true);
+});
+
+it('an open "hidden" error keeps the endpoint hidden even if the endpoints table was not updated', async () => {
+  const P = '/api/ai/copilot';
+  await h.db().query("INSERT INTO endpoint_errors (path, fingerprint, status, code, message, source, hidden) VALUES ($1, 'manual-test', 502, 'UPSTREAM_FAILED', 'API Error (403): plan quota', 'live', true)", [P]);
+  const svc = require('../../services/errorLogService');
+  svc.resetHidden();   // the list is cached for 15 s; this row was written straight to the database
+  try {
+    assert.equal((await h.db().query('SELECT status FROM endpoints WHERE path=$1', [P])).rows[0].status, 'active');
+    assert.equal(await inCatalog(P), false);
+    assert.equal(await inMonitor(P), false);
+    const r = await call(`${P}?prompt=hi`);
+    assert.deepEqual([r.status, r.json.error], [404, 'ENDPOINT_UNAVAILABLE']);
+    assert.ok(!/plan|quota/i.test(r.text));
+  } finally { await h.db().query("DELETE FROM endpoint_errors WHERE fingerprint='manual-test'"); svc.resetHidden(); }
+  assert.equal(await inCatalog(P), true, 'deleting the record lifts it');
 });
 
 it('the hidden endpoint keeps being checked and comes back by itself once it works', async () => {
@@ -88,6 +113,9 @@ it('failed automatic checks are logged too; a missing server key hides the endpo
   assert.equal(svc.isPlanError({ upstreamStatus: 401, message: 'x' }), true);
   assert.equal(svc.isPlanError({ status: 502, message: 'API Error (403): {"error":"plan"}' }), true);
   assert.equal(svc.isPlanError({ status: 504, message: 'timeout' }), false);
+  assert.match(svc.explain({ path: '/api/ai/bard', status: 503, code: 'UPSTREAM_NOT_CONFIGURED' }).why, /Key TERMAI_API_KEY belum diisi di Vercel/);
+  assert.match(svc.explain({ path: '/api/ai/hyperai', status: 504, code: 'TIMEOUT', message: 'timeout' }).why, /Server api\.clutch\.web\.id kelamaan jawab/);
+  assert.equal(svc.explain({ path: '/api/tools/ping', status: 503, code: 'GATEWAY_UNAVAILABLE' }).where, 'Website kita (Vercel)');
   reply = u => (u.pathname === '/api/ai/claude' ? { status: 402, json: { status: false, message: 'Payment Required: insufficient balance' } } : { status: 200, json: { status: true, result: 'ok' } });
   await h.db().query("UPDATE endpoint_checks SET checked_at = now() - interval '7 hours'");
   for (let i = 0; i < 30; i++) { const r = await app.request('POST', '/api/endpoints/autocheck', { headers: { 'x-yannz-client': 'web' } }); if (!r.json.checked.length) break; }

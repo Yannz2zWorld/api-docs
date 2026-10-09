@@ -206,7 +206,8 @@ router.get('/api/me/recent-endpoints', auth, async (req, res) => {
     let rows;
     try { rows = await query(sql('e.name, e.minimum_tier, e.locked, e.status, e.badge'), [req.account.id]); }
     catch (e) { if (e.code !== '42703') throw e; rows = await query(sql('e.name, e.minimum_tier, e.locked, e.status'), [req.account.id]); }   // before migration 015
-    return res.json({ success: true, endpoints: rows.map(r => ({ path: r.path, name: r.name, minimumTier: r.minimum_tier, locked: r.locked, status: r.status, badge: r.badge || null, lastAt: r.last_at, calls: r.calls })) });
+    const hidden = await errorLog.hiddenPaths().catch(() => new Set());
+    return res.json({ success: true, endpoints: rows.filter(r => !hidden.has(r.path)).map(r => ({ path: r.path, name: r.name, minimumTier: r.minimum_tier, locked: r.locked, status: r.status, badge: r.badge || null, lastAt: r.last_at, calls: r.calls })) });
   } catch (e) {
     if (migrationMissing(e)) return res.json({ success: true, endpoints: [] });
     return fail(res, 503, 'RECENT_UNAVAILABLE', 'Riwayat endpoint lagi nggak bisa dimuat.');
@@ -1282,7 +1283,10 @@ router.post('/owner/payments/:id/reject', sameOrigin, auth, owner, validId('id')
 router.get('/owner/api/errors', auth, owner, async (req, res) => {
   const rows = await errorLog.list({ includeResolved: req.query.all !== '0' });
   const open = rows.filter(r => !r.resolved_at);
-  res.json({ success: true, errors: rows, open: open.length, hidden: new Set(rows.filter(r => r.auto_disabled).map(r => r.path)).size });
+  const hiddenSet = await errorLog.hiddenPaths();
+  res.json({ success: true, errors: rows.map(r => ({ ...r, ...errorLog.explain(r), hidden_now: r.auto_disabled || (hiddenSet.has(r.path) && !r.resolved_at) })),
+    open: open.length, hidden: new Set([...rows.filter(r => r.auto_disabled).map(r => r.path), ...hiddenSet]).size,
+    schemaReady: await errorLog.schemaReady(), problem: errorLog.lastProblem() });
 });
 router.post('/owner/api/errors/show', sameOrigin, auth, owner, async (req, res) => {
   const path = String(req.body?.path || '');
