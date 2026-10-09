@@ -60,7 +60,7 @@
 <main class="wrap wide">
   <span class="kicker">Tampilan</span>
   <h1>Custom UI</h1>
-  <p class="lead">Pilih gaya tampilan dan warna favoritmu. Langsung berubah di semua halaman, dan tersimpan di browser ini.</p>
+  <p class="lead">Pilih gaya tampilan dan warna favoritmu. Langsung berubah di semua halaman, dan tersimpan di akunmu: login di HP atau browser lain, tampilannya tetap sama.</p>
 
   <section class="panel" aria-labelledby="looks-title">
     <h2 id="looks-title">1. Pilih gaya</h2>
@@ -110,10 +110,15 @@
   const style = () => UI.STYLES[pref.style] || UI.STYLES.default;
   const current = () => pref.accent || style().accent;
 
+  let saving = 0;
   function commit(msg) {
-    UI.set(pref);
+    const n = ++saving;
     render();
-    $('#saved').textContent = msg || 'Tersimpan.';
+    $('#saved').textContent = msg || '';
+    UI.set(pref).then(ok => {
+      if (n !== saving) return;   // a newer change is on its way
+      $('#saved').textContent = (msg ? msg + ' ' : '') + (ok ? 'Tersimpan di akunmu, ikut ke HP / browser mana pun kamu login.' : 'Tersimpan di browser ini (belum ke akun, coba lagi nanti).');
+    });
   }
   function looks() {
     $('#looks').innerHTML = Object.entries(UI.STYLES).map(([id, s]) => {

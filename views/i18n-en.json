@@ -1,7 +1,7 @@
 {
  "exact": {
   "Tampilan": "Appearance",
-  "Pilih gaya tampilan dan warna favoritmu. Langsung berubah di semua halaman, dan tersimpan di browser ini.": "Pick a look and your favourite colour. It changes every page right away and is saved in this browser.",
+  "Pilih gaya tampilan dan warna favoritmu. Langsung berubah di semua halaman, dan tersimpan di akunmu: login di HP atau browser lain, tampilannya tetap sama.": "Pick a look and your favourite colour. It changes every page right away and is saved on your account: sign in on another phone or browser and it looks the same.",
   "1. Pilih gaya": "1. Pick a look",
   "2. Pilih warna": "2. Pick a colour",
   "Warna utama buat tombol, kartu, dan sorotan. Semua warna bisa.": "The main colour for buttons, cards and highlights. Any colour works.",
@@ -1011,6 +1011,14 @@
   "Cadangan buat": "Backup for"
  },
  "patterns": [
+  [
+   "^(.*?) ?Tersimpan di akunmu, ikut ke HP / browser mana pun kamu login\\.$",
+   "{{$1}} Saved on your account; it follows you to any phone or browser you sign in on."
+  ],
+  [
+   "^(.*?) ?Tersimpan di browser ini \\(belum ke akun, coba lagi nanti\\)\\.$",
+   "{{$1}} Saved in this browser (not on your account yet, try again later)."
+  ],
   [
    "^Gaya (.+) dipakai\\.$",
    "Look $1 applied."

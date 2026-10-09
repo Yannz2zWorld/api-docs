@@ -290,6 +290,30 @@ router.get('/api/profile', auth, async (req, res) => {
   } });
 });
 
+// Custom UI saved on the account (migration 021): the look and colour follow the user to any device.
+const UI_STYLES = new Set(['default', 'cream', 'pop', 'neon', 'glass', 'minimal', 'terminal', 'pastel', 'paper']);
+router.get('/api/profile/ui', auth, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  let ui = null;
+  try { ui = (await query('SELECT ui_prefs FROM users WHERE id=$1', [req.account.id]))[0]?.ui_prefs || null; }
+  catch (e) { if (!migrationMissing(e)) throw e; }
+  res.json({ success: true, user: String(req.account.publicId || req.account.id), ui });
+});
+router.put('/api/profile/ui', sameOrigin, auth, async (req, res) => {
+  const b = req.body || {};
+  const style = String(b.style || 'default');
+  const accent = typeof b.accent === 'string' ? b.accent.trim().toLowerCase() : '';
+  if (!UI_STYLES.has(style)) return fail(res, 400, 'INVALID_STYLE', 'Gaya tampilan ini nggak ada.');
+  if (accent && !/^#[0-9a-f]{6}$/.test(accent)) return fail(res, 400, 'INVALID_COLOR', 'Warnanya harus kode HEX, misal #ffd60a.');
+  const ui = { style, accent, rgb: b.rgb === true };
+  try { await query('UPDATE users SET ui_prefs=$2::jsonb, updated_at=now() WHERE id=$1', [req.account.id, JSON.stringify(ui)]); }
+  catch (e) {
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Simpan tampilan ke akun butuh migration 021_user_ui.sql dulu.');
+    throw e;
+  }
+  res.json({ success: true, ui });
+});
+
 // Account name for the live chat / profile. Empty = back to the name derived from the email.
 router.patch('/api/profile', sameOrigin, auth, async (req, res) => {
   const raw = typeof req.body?.displayName === 'string' ? req.body.displayName.trim().replace(/\s+/g, ' ') : null;

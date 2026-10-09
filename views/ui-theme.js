@@ -1,6 +1,7 @@
 // Custom UI (menu "Custom UI", page /custom-ui): the visitor picks a look and a colour for the site.
-// Saved in this browser (localStorage "yannz-ui": { style, accent, rgb }) and applied on every page
-// that loads this script, before the page is drawn. Every look is a set of colour / border / shadow
+// Saved on the account (GET / PUT /api/profile/ui, migration 021), so it follows the user to any
+// device they sign in on, with a copy in this browser (localStorage "yannz-ui": { style, accent, rgb,
+// uid }) so it's applied on every page that loads this script before the page is drawn. Every look is a set of colour / border / shadow
 // tokens put on <html data-ui="…">; the pages are built on those tokens (views/theme.css and the
 // dashboard's own variables), so one set restyles everything.
 //   accent : any colour (#rrggbb); empty = the look's own colour
@@ -46,6 +47,33 @@
     return { style: 'default', accent: '', rgb: false };
   }
   function save(pref) { try { localStorage.setItem(KEY, JSON.stringify(pref)); } catch {} }
+  const owner = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null')?.uid || null; } catch { return null; } };
+  let uid = null;   // the signed-in account, once known
+  const same = (a, b) => a.style === b.style && (a.accent || '') === (b.accent || '') && Boolean(a.rgb) === Boolean(b.rgb);
+
+  // The account's choice wins. An account without one takes this browser's choice, but only one
+  // made by this account (or before saving to accounts existed), never someone else's on a shared
+  // browser.
+  async function sync() {
+    let d;
+    try { const r = await fetch('/api/profile/ui', { credentials: 'same-origin', cache: 'no-store' }); if (!r.ok) return; d = await r.json(); } catch { return; }
+    uid = d.user || null;
+    const local = load(), mine = !owner() || owner() === uid;
+    if (d.ui && STYLES[d.ui.style]) {
+      const pref = { style: d.ui.style, accent: HEX.test(d.ui.accent || '') ? d.ui.accent.toLowerCase() : '', rgb: Boolean(d.ui.rgb) };
+      save({ ...pref, uid });
+      if (!same(pref, local)) apply(pref);
+    } else if (mine && (local.style !== 'default' || local.accent || local.rgb)) {
+      save({ ...local, uid }); push(local);
+    } else if (!mine) {
+      const pref = { style: 'default', accent: '', rgb: false };
+      save({ ...pref, uid }); apply(pref);
+    }
+  }
+  function push(pref) {
+    return fetch('/api/profile/ui', { method: 'PUT', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ style: pref.style, accent: pref.accent || '', rgb: Boolean(pref.rgb) }) })
+      .then(r => r.ok).catch(() => false);
+  }
 
   // Black or white text on a colour, whichever reads better.
   function inkOn(hex) {
@@ -114,8 +142,10 @@ ${s.glow ? `${R} .panel,${R} .card,${R} .metric,${R} .feature,${R} .endpoints{bo
     }
   }
 
-  window.YannzUI = { STYLES, load, save, apply, inkOn, set(pref) { save(pref); apply(pref); } };
+  // set(): applied at once, kept in this browser, saved on the account (resolves true when saved there).
+  window.YannzUI = { STYLES, load, save, apply, inkOn, sync, set(pref) { save({ ...pref, uid: uid || owner() }); apply(pref); return push(pref); } };
   apply();
+  sync();
   // Another tab changed it: follow.
   addEventListener('storage', e => { if (e.key === KEY) apply(); });
 })();

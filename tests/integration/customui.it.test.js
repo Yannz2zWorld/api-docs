@@ -44,7 +44,8 @@ it('looks and colours: many looks, any colour, readable text on it, RGB mode', (
     setAttribute(k, v) { this.attrs[k] = v; }, removeAttribute(k) { delete this.attrs[k]; } };
   const sandbox = { window: {}, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; } },
     document: { documentElement: root, head: { append() {} }, getElementById: () => null, createElement: () => ({}) },
-    matchMedia: () => ({ matches: false }), addEventListener() {}, setInterval: () => 1, clearInterval() {} };
+    matchMedia: () => ({ matches: false }), addEventListener() {}, setInterval: () => 1, clearInterval() {},
+    fetch: async () => ({ ok: false, json: async () => ({}) }) };
   vm.runInNewContext(view('ui-theme.js'), sandbox);
   const UI = sandbox.window.YannzUI;
   assert.ok(Object.keys(UI.STYLES).length >= 8);
@@ -54,9 +55,37 @@ it('looks and colours: many looks, any colour, readable text on it, RGB mode', (
   UI.set({ style: 'cream', accent: '#123456', rgb: false });
   assert.equal(root.attrs['data-ui'], 'cream');
   assert.equal(root.style.props['--accent'], '#123456');
-  assert.deepEqual(JSON.parse(store['yannz-ui']), { style: 'cream', accent: '#123456', rgb: false });
+  assert.deepEqual(JSON.parse(store['yannz-ui']), { style: 'cream', accent: '#123456', rgb: false, uid: null }, 'kept in the browser (account not known in this sandbox)');
   UI.set({ style: 'default', accent: '', rgb: false });
   assert.equal(root.attrs['data-ui'], undefined, 'the original look needs no override');
   store['yannz-ui'] = '{"style":"nope","accent":"red"}';
   assert.deepEqual({ ...UI.load() }, { style: 'default', accent: '', rgb: false }, 'bad saved values fall back');
+});
+
+it('the look is saved on the account: it follows the user, other accounts keep their own', async () => {
+  assert.equal((await app.request('GET', '/api/profile/ui')).status, 401, 'signed-out: nothing to read');
+  const first = await app.request('GET', '/api/profile/ui', { cookie: user });
+  assert.equal(first.status, 200, first.text);
+  assert.equal(first.json.ui, null, 'nothing chosen yet');
+  const put = body => app.request('PUT', '/api/profile/ui', { cookie: user, headers: { origin: app.origin }, body });
+  const saved = await put({ style: 'cream', accent: '#FFD60A', rgb: false });
+  assert.equal(saved.status, 200, saved.text);
+  assert.deepEqual(saved.json.ui, { style: 'cream', accent: '#ffd60a', rgb: false });
+  // Another device / browser, same account: same look.
+  assert.deepEqual((await app.request('GET', '/api/profile/ui', { cookie: user })).json.ui, { style: 'cream', accent: '#ffd60a', rgb: false });
+  // Someone else keeps their own.
+  const other = await app.login('ui-other@example.test');
+  assert.equal((await app.request('GET', '/api/profile/ui', { cookie: other })).json.ui, null);
+  // Only real looks and real colours; never from another site.
+  assert.equal((await put({ style: 'hacker' })).status, 400);
+  assert.equal((await put({ style: 'pop', accent: 'red;}body{display:none' })).status, 400);
+  assert.equal((await app.request('PUT', '/api/profile/ui', { cookie: user, headers: { origin: 'https://evil.example' }, body: { style: 'pop' } })).status, 403);
+  assert.deepEqual((await put({ style: 'pop', accent: '', rgb: true })).json.ui, { style: 'pop', accent: '', rgb: true });
+});
+
+it('the page script syncs with the account', () => {
+  const js = view('ui-theme.js');
+  assert.match(js, /fetch\('\/api\/profile\/ui'/);
+  assert.match(js, /method: 'PUT'/);
+  assert.match(fs.readFileSync(path.join(__dirname, '..', '..', 'migrations', '021_user_ui.sql'), 'utf8'), /ADD COLUMN IF NOT EXISTS ui_prefs jsonb/);
 });
