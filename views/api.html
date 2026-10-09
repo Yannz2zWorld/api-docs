@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/i18n.js"></script>
 <style>
   .layout { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); margin-top: 18px; }
   @media (min-width: 980px) { .layout { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; } .console { position: sticky; top: 84px; } }
@@ -49,35 +50,35 @@
 </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span><span id="web-title">Yannz API</span></a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api" aria-current="page">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span><span id="web-title">Yannz API</span></a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api" aria-current="page">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap wide">
   <span class="kicker">Sandbox</span>
   <h1>API Sandbox</h1>
-  <p class="lead">Jalankan endpoint langsung dari browser. Tanpa key, Sandbox memakai sesi login dan kuota harian akunmu.</p>
+  <p class="lead">Jalanin endpoint langsung dari browser. Kalau nggak pakai key, Sandbox pakai sesi login dan kuota harian akunmu.</p>
 
   <div class="layout">
     <div class="stack">
       <section class="panel">
         <div class="panel-head"><h2>Endpoint</h2><a href="/api/playground"><small>Lihat katalog →</small></a></div>
-        <select id="endpoint-select" aria-label="Pilih endpoint"><option>Memuat…</option></select>
+        <select id="endpoint-select" aria-label="Pilih endpoint"><option>Lagi dimuat…</option></select>
         <div id="endpoint-info" aria-live="polite">
-          <p class="ep-title" id="active-api-name">—</p>
-          <p class="muted" id="active-api-desc"></p>
+          <p class="ep-title" id="active-api-name" data-no-i18n>—</p>
+          <p class="muted" id="active-api-desc" data-no-i18n></p>
           <div id="active-api-chips"></div>
         </div>
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h2>Autentikasi</h2><span class="chip" id="auth-badge">memeriksa…</span></div>
+        <div class="panel-head"><h2>Autentikasi</h2><span class="chip" id="auth-badge">lagi ngecek…</span></div>
         <div class="field">
-          <label for="sandbox-apikey-input">API key (opsional jika sudah login)</label>
+          <label for="sandbox-apikey-input">API key (opsional kalau udah login)</label>
           <div class="key-wrap">
-            <input type="password" id="sandbox-apikey-input" placeholder="Kosongkan = pakai sesi login" autocomplete="off" spellcheck="false" autocapitalize="off">
-            <button type="button" class="ghost" id="toggle-key" aria-label="Tampilkan key">Lihat</button>
+            <input type="password" id="sandbox-apikey-input" placeholder="Kosongin aja = pakai sesi login" autocomplete="off" spellcheck="false" autocapitalize="off">
+            <button type="button" class="ghost" id="toggle-key" aria-label="Lihat key">Lihat</button>
           </div>
         </div>
-        <p class="muted" id="session-status" aria-live="polite">Memeriksa sesi…</p>
-        <p><small>Untuk integrasi di luar browser kirim header <code>Authorization: Bearer &lt;API_KEY&gt;</code> (custom key juga bisa). Jangan taruh key di URL.</small></p>
+        <p class="muted" id="session-status" aria-live="polite">Lagi ngecek sesi…</p>
+        <p><small>Buat integrasi di luar browser, kirim header <code>Authorization: Bearer &lt;API_KEY&gt;</code> (custom key juga bisa). Jangan taruh key di URL.</small></p>
       </section>
 
       <section class="panel">
@@ -89,9 +90,9 @@
         <div class="panel-head"><h2>Request</h2><span class="chip">GET</span></div>
         <div class="url-box">
           <pre id="active-request-url">—</pre>
-          <div class="row"><button type="button" class="sm ghost" id="copy-url">Salin URL</button><button type="button" class="sm ghost" id="copy-curl">Salin cURL</button></div>
+          <div class="row"><button type="button" class="sm ghost" id="copy-url" data-idle="Salin URL">Salin URL</button><button type="button" class="sm ghost" id="copy-curl" data-idle="Salin cURL">Salin cURL</button></div>
         </div>
-        <button type="button" class="primary run" id="execute-btn" style="margin-top:16px">Kirim permintaan</button>
+        <button type="button" class="primary run" id="execute-btn" style="margin-top:16px">Kirim request</button>
       </section>
     </div>
 
@@ -102,16 +103,22 @@
         <div id="output-error" class="err-box" hidden></div>
         <div id="output-media" class="media" hidden></div>
         <p id="media-note" class="media-note" hidden></p>
-        <pre id="sandbox-output-text">Pilih endpoint, isi parameter, lalu klik “Kirim permintaan”.</pre>
-        <div class="term-foot"><span id="content-type">—</span><button type="button" class="sm ghost" id="copy-output">Salin hasil</button></div>
+        <pre id="sandbox-output-text" data-hint="Pilih endpoint, isi parameternya, terus klik “Kirim request”.">Pilih endpoint, isi parameternya, terus klik “Kirim request”.</pre>
+        <div class="term-foot"><span id="content-type">—</span><button type="button" class="sm ghost" id="copy-output" data-idle="Salin hasil">Salin hasil</button></div>
       </div>
     </section>
   </div>
 </main>
 <script>
 const $ = s => document.querySelector(s);
+const epBadge = b => { const m = { new: ['🍃', 'New'], hot: ['🔥', 'Hot'], recommend: ['👍', 'Recommend'] }[b]; return m ? `<span class="ep-badge ep-badge--${b}"><span class="ep-badge-ic" aria-hidden="true">${m[0]}</span>${m[1]}</span>` : ''; };
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = n => Number(n || 0).toLocaleString('id-ID');
+const t = s => (window.YannzI18n ? window.YannzI18n.t(s) : s);
+// The console <pre> holds API results, which are never translated; its own hint lines are, here.
+function setConsoleHint(text) { const pre = $('#sandbox-output-text'); pre.dataset.hint = text; pre.textContent = t(text); }
+function setConsoleText(text) { const pre = $('#sandbox-output-text'); delete pre.dataset.hint; pre.textContent = text; }
+window.addEventListener('yannz:lang', () => { const pre = $('#sandbox-output-text'); if (pre.dataset.hint) pre.textContent = t(pre.dataset.hint); });
 let allEndpoints = {};
 let selectedApi = null;
 let sessionInfo = null;
@@ -123,13 +130,13 @@ function renderSessionStatus() {
   const badge = $('#auth-badge');
   if (key) { badge.className = 'chip ok'; badge.textContent = 'API key'; }
   else if (sessionInfo) { badge.className = 'chip ok'; badge.textContent = 'sesi ' + (sessionInfo.user.isOwner ? 'DEVELOPER' : sessionInfo.user.tier); }
-  else { badge.className = 'chip bad'; badge.textContent = 'perlu login / key'; }
+  else { badge.className = 'chip bad'; badge.textContent = 'butuh login / key'; }
   if (!sessionInfo) {
-    $('#session-status').innerHTML = 'Belum login. Masukkan API key, atau <a href="/">login</a> untuk memakai kuota FREE 100 request/hari.';
+    $('#session-status').innerHTML = 'Belum login. Masukin API key, atau <a href="/">login</a> buat pakai kuota FREE 100 request/hari.';
     return;
   }
   const u = sessionInfo.usage || {};
-  const quota = u.limit == null ? 'kuota tanpa batas' : `${num(u.used)} / ${num(u.limit)} terpakai hari ini (sisa ${num(u.remaining)})`;
+  const quota = u.limit == null ? 'kuota tanpa batas' : `${num(u.used)} / ${num(u.limit)} kepakai hari ini (sisa ${num(u.remaining)})`;
   $('#session-status').textContent = `Login sebagai ${sessionInfo.user.email} · tier ${sessionInfo.user.isOwner ? 'DEVELOPER' : sessionInfo.user.tier} · ${quota}.`;
 }
 fetch('/auth/me', { credentials: 'same-origin', cache: 'no-store' })
@@ -141,7 +148,7 @@ $('#sandbox-apikey-input').addEventListener('input', () => { renderSessionStatus
 $('#toggle-key').addEventListener('click', e => {
   const input = $('#sandbox-apikey-input');
   input.type = input.type === 'password' ? 'text' : 'password';
-  e.target.textContent = input.type === 'password' ? 'Lihat' : 'Sembunyi';
+  e.target.textContent = input.type === 'password' ? 'Lihat' : 'Sembunyiin';
 });
 fetch('/api/set').then(r => r.json()).then(s => { $('#web-title').textContent = s.webName || 'Yannz API'; }).catch(() => {});
 
@@ -149,23 +156,24 @@ fetch('/api/set').then(r => r.json()).then(s => { $('#web-title').textContent = 
 function paramsOf(api) {
   if (api.params && api.params.length) return api.params;
   const query = (api.path.split('?')[1] || '').split('&').map(p => p.split('=')[0]).filter(k => k && k !== 'apikey');
-  const hints = { url: 'https://vt.tiktok.com/…', text: 'Masukkan teks', time: 'Contoh: 12.30', imageUrl: 'URL gambar (opsional)' };
-  return (api.params = query.map(name => ({ name, required: name !== 'imageUrl', placeholder: hints[name] || `Masukkan ${name}` })));
+  const hints = { url: 'https://vt.tiktok.com/…', text: 'Tulis teksnya', time: 'Misal: 12.30', imageUrl: 'URL gambar (opsional)' };
+  // local: these hints are written here (translatable); params from the API are endpoint data.
+  return (api.params = query.map(name => ({ name, required: name !== 'imageUrl', placeholder: hints[name] || `Isi ${name} di sini`, local: true })));
 }
 
 function selectEndpoint(api, category) {
   selectedApi = api;
-  $('#active-api-name').textContent = api.name;
+  $('#active-api-name').setAttribute('data-no-i18n', ''); $('#active-api-name').textContent = api.name;
   $('#active-api-desc').textContent = api.desc || '';
   const tier = (t => (t === 'OWNER' ? 'DEVELOPER' : t))(api.access?.minimum_tier || 'FREE');
   const state = api.access?.status && api.access.status !== 'active' ? ['nonaktif', 'bad'] : api.access?.locked ? ['terkunci', 'warn'] : ['aktif', 'ok'];
-  $('#active-api-chips').innerHTML = `<span class="chip">${esc(category)}</span><span class="chip">tier ${esc(tier)}</span><span class="chip ${state[1]}">${state[0]}</span>`;
+  $('#active-api-chips').innerHTML = `<span class="chip" data-no-i18n>${esc(category)}</span><span class="chip">tier ${esc(tier)}</span><span class="chip ${state[1]}">${state[0]}</span>${epBadge(api.access?.badge)}`;
   const params = paramsOf(api);
   $('#params-form').innerHTML = params.length
     ? params.map(p => p.type === 'file'
-        ? `<div class="field" style="margin:0"><label for="param-input-${esc(p.name)}">${esc(p.name)}${p.required ? ' *' : ' (opsional)'} — unggah file</label><input type="file" id="param-input-${esc(p.name)}" data-file="${esc(p.name)}" accept="${esc(p.accept || '*')}"><small class="muted" id="file-note-${esc(p.name)}"></small></div>`
-        : `<div class="field" style="margin:0"><label for="param-input-${esc(p.name)}">${esc(p.name)}${p.required ? ' *' : ' (opsional)'}</label><input id="param-input-${esc(p.name)}" data-param="${esc(p.name)}" placeholder="${esc(p.placeholder || '')}" value="${esc(p.default || '')}" autocapitalize="off" spellcheck="false"></div>`).join('')
-    : '<p class="muted" style="margin:0">Endpoint ini tidak butuh parameter.</p>';
+        ? `<div class="field" style="margin:0"><label for="param-input-${esc(p.name)}"><span data-no-i18n>${esc(p.name)}</span>${p.required ? ' *' : ' (opsional)'} <span>— upload file</span></label><input type="file" id="param-input-${esc(p.name)}" data-file="${esc(p.name)}" accept="${esc(p.accept || '*')}"><small class="muted" id="file-note-${esc(p.name)}" data-no-i18n></small></div>`
+        : `<div class="field" style="margin:0"><label for="param-input-${esc(p.name)}"><span data-no-i18n>${esc(p.name)}</span>${p.required ? ' *' : ' (opsional)'}</label><input id="param-input-${esc(p.name)}" data-param="${esc(p.name)}"${p.local ? '' : ' data-no-i18n'} placeholder="${esc(p.placeholder || '')}" value="${esc(p.default || '')}" autocapitalize="off" spellcheck="false"></div>`).join('')
+    : '<p class="muted" style="margin:0">Endpoint ini nggak butuh parameter.</p>';
   const path = api.cleanPath || api.path.split('?')[0];
   $('#endpoint-select').value = path;
   history.replaceState(null, '', '/api?endpoint=' + encodeURIComponent(path));
@@ -182,7 +190,7 @@ function requestPath() {
 function updateActiveUrlString() {
   if (!selectedApi) return;
   const fileParam = (selectedApi.params || []).find(p => p.type === 'file');
-  const prefix = fileParam ? 'POST (unggah file) ' : '';
+  const prefix = fileParam ? 'POST (upload file) ' : '';
   $('#active-request-url').textContent = prefix + location.origin + requestPath();
 }
 $('#params-form').addEventListener('input', updateActiveUrlString);
@@ -192,14 +200,14 @@ $('#params-form').addEventListener('submit', e => { e.preventDefault(); executeA
 fetch('/api/endpoints').then(r => r.json()).then(d => {
   allEndpoints = d.endpoints || {};
   const entries = Object.entries(allEndpoints);
-  $('#endpoint-select').innerHTML = entries.map(([cat, items]) => `<optgroup label="${esc(cat)}">${items.map(api => { const p = api.cleanPath || api.path.split('?')[0]; return `<option value="${esc(p)}">${esc(api.name)} — ${esc(p)}</option>`; }).join('')}</optgroup>`).join('');
+  $('#endpoint-select').innerHTML = entries.map(([cat, items]) => `<optgroup label="${esc(cat)}" data-no-i18n>${items.map(api => { const p = api.cleanPath || api.path.split('?')[0]; return `<option value="${esc(p)}" data-no-i18n>${esc(api.name)} — ${esc(p)}</option>`; }).join('')}</optgroup>`).join('');
   const wanted = new URLSearchParams(location.search).get('endpoint');
   const find = path => { for (const [cat, items] of entries) { const api = items.find(a => (a.cleanPath || a.path.split('?')[0]) === path || a.path === path); if (api) return [api, cat]; } return null; };
   const hit = (wanted && find(wanted)) || (entries[0] && entries[0][1][0] ? [entries[0][1][0], entries[0][0]] : null);
   if (hit) selectEndpoint(...hit);
-  else $('#active-api-name').textContent = 'Belum ada endpoint.';
+  else { $('#active-api-name').removeAttribute('data-no-i18n'); $('#active-api-name').textContent = 'Belum ada endpoint.'; }
   $('#endpoint-select').addEventListener('change', e => { const h = find(e.target.value); if (h) selectEndpoint(...h); });
-}).catch(() => { $('#active-api-name').textContent = 'Katalog sementara tidak tersedia.'; });
+}).catch(() => { $('#active-api-name').removeAttribute('data-no-i18n'); $('#active-api-name').textContent = 'Katalog lagi nggak bisa dibuka.'; });
 
 // ---------------------------------------------------------------- console
 function resetConsoleMonitor() {
@@ -208,39 +216,40 @@ function resetConsoleMonitor() {
   $('#response-meta').textContent = ''; $('#content-type').textContent = '—';
   $('#output-error').hidden = true; $('#output-media').hidden = true; $('#output-media').innerHTML = '';
   $('#media-note').hidden = true; $('#sandbox-output-text').hidden = false;
-  $('#sandbox-output-text').textContent = 'Isi parameter lalu klik “Kirim permintaan”.';
+  setConsoleHint('Isi parameternya, terus klik “Kirim request”.');
 }
-function showConsoleError(message) { $('#output-error').textContent = message; $('#output-error').hidden = false; }
+// Each part is its own text node, so the hints written here translate apart from the server's message.
+function showConsoleError(...parts) { $('#output-error').replaceChildren(...parts.filter(Boolean).flatMap((p, i) => [i ? ' ' : '', el('span', { textContent: p })])); $('#output-error').hidden = false; }
 
 // Shows the server's own message plus its stable error code (never a guessed reason).
 function describeApiError(status, data) {
   const code = data.error || `HTTP_${status}`;
   const hints = {
-    QUOTA_EXCEEDED: data.resetAt ? `Kuota reset ${new Date(data.resetAt).toLocaleString('id-ID')}.` : '',
-    TIER_RESTRICTED: 'Upgrade paket di halaman Pricing untuk membuka endpoint ini.',
-    AUTH_REQUIRED: 'Login atau masukkan API key.',
-    API_KEY_REVOKED: 'Buat key baru di halaman API Keys.',
-    TOO_MANY_INVALID_KEYS: 'Periksa lagi API key kamu.'
+    QUOTA_EXCEEDED: data.resetAt ? `Kuota reset lagi ${new Date(data.resetAt).toLocaleString('id-ID')}.` : '',
+    TIER_RESTRICTED: 'Upgrade paket di halaman Pricing buat buka endpoint ini.',
+    AUTH_REQUIRED: 'Login dulu atau masukin API key.',
+    API_KEY_REVOKED: 'Bikin key baru di halaman API Keys.',
+    TOO_MANY_INVALID_KEYS: 'Cek lagi API key kamu.'
   };
-  return [data.message || 'Permintaan gagal.', hints[code] || '', `(${code})`].filter(Boolean).join(' ');
+  return [data.message || 'Request-nya gagal.', hints[code] || '', `(${code})`];
 }
 
 async function executeApiSandbox() {
   if (!selectedApi) return;
   const key = $('#sandbox-apikey-input').value.trim();
   resetConsoleMonitor();
-  if (!key && !sessionInfo) { showConsoleError('Login terlebih dahulu atau masukkan API key.'); return; }
+  if (!key && !sessionInfo) { showConsoleError('Login dulu atau masukin API key.'); return; }
   const missing = paramsOf(selectedApi).filter(p => { const el = document.getElementById('param-input-' + p.name); if (!p.required) return false; return p.type === 'file' ? !el?.files?.length : !el?.value.trim(); }).map(p => p.name);
   if (missing.length) { showConsoleError(`Parameter wajib belum diisi: ${missing.join(', ')}.`); return; }
   // With a key: Bearer auth. Without: the HttpOnly session cookie plus the same-site marker
   // header the gateway requires for cookie-based calls (blocks cross-site quota spending).
   const headers = key ? { Authorization: `Bearer ${key}` } : { 'X-Yannz-Client': 'web' };
   const btn = $('#execute-btn');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Memproses…';
-  $('#sandbox-output-text').textContent = 'Menunggu respons…';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Lagi diproses…';
+  setConsoleHint('Nunggu respons…');
   const fileParam = paramsOf(selectedApi).find(p => p.type === 'file');
   const chosen = fileParam ? document.getElementById('param-input-' + fileParam.name)?.files?.[0] : null;
-  if (chosen && chosen.size > 8 * 1024 * 1024) { showConsoleError('File maksimal 8 MB.'); btn.disabled = false; btn.textContent = 'Kirim permintaan'; return; }
+  if (chosen && chosen.size > 8 * 1024 * 1024) { showConsoleError('Ukuran file maksimal 8 MB.'); btn.disabled = false; btn.textContent = 'Kirim request'; return; }
   const opts = chosen
     ? { method: 'POST', headers: { ...headers, 'Content-Type': chosen.type || 'application/octet-stream' }, body: chosen, credentials: 'same-origin' }
     : { headers, credentials: 'same-origin' };
@@ -262,25 +271,25 @@ async function executeApiSandbox() {
     }
     if (type.includes('application/json')) {
       const data = await res.json();
-      $('#sandbox-output-text').textContent = JSON.stringify(data, null, 2);
-      if (!ok || data.status === false || data.success === false) showConsoleError(describeApiError(res.status, data));
+      setConsoleText(JSON.stringify(data, null, 2));
+      if (!ok || data.status === false || data.success === false) showConsoleError(...describeApiError(res.status, data));
       else showJsonMedia(data);
     } else if (/^(image|audio|video)\//.test(type)) {
       const blob = await res.blob();
       mediaUrl = URL.createObjectURL(blob);
       const kind = type.split('/')[0];
       $('#output-media').innerHTML = kind === 'image' ? `<img src="${mediaUrl}" alt="Hasil">` : kind === 'audio' ? `<audio controls src="${mediaUrl}"></audio>` : `<video controls playsinline src="${mediaUrl}"></video>`;
-      $('#output-media').insertAdjacentHTML('beforeend', `<a class="btn sm" href="${mediaUrl}" download>Unduh</a>`);
+      $('#output-media').insertAdjacentHTML('beforeend', `<a class="btn sm" href="${mediaUrl}" download>Download</a>`);
       $('#output-media').hidden = false;
-      $('#sandbox-output-text').textContent = `[${kind}] ${num(blob.size)} byte · ${blob.type}`;
+      setConsoleText(`[${kind}] ${num(blob.size)} byte · ${blob.type}`);
     } else {
-      $('#sandbox-output-text').textContent = await res.text();
+      setConsoleText(await res.text());
     }
   } catch (err) {
-    showConsoleError(`Koneksi terputus: ${err.message || err}`);
-    $('#sandbox-output-text').textContent = '';
+    showConsoleError(`Koneksi putus: ${err.message || err}`);
+    setConsoleText('');
   } finally {
-    btn.disabled = false; btn.textContent = 'Kirim permintaan';
+    btn.disabled = false; btn.textContent = 'Kirim request';
   }
 }
 $('#execute-btn').addEventListener('click', executeApiSandbox);
@@ -291,7 +300,7 @@ $('#execute-btn').addEventListener('click', executeApiSandbox);
 // if the media cannot be shown, it falls back to the plain JSON.
 const MEDIA_EXT = { image: /\.(jpe?g|png|webp|gif|avif|bmp)(\?|#|$)/i, video: /\.(mp4|webm|mov|m4v)(\?|#|$)/i, audio: /\.(mp3|m4a|aac|ogg|oga|wav|opus|flac)(\?|#|$)/i };
 const MEDIA_KEY = { image: /(photo|image|img|thumb|cover|picture|poster|avatar)/i, video: /(video|play|mp4|watermark|nowm)/i, audio: /(music|audio|mp3|sound|song)/i };
-const VARIANT_LABEL = { nowatermark: 'Tanpa WM', nowatermark_hd: 'HD', watermark: 'Dengan WM' };
+const VARIANT_LABEL = { nowatermark: 'Tanpa WM', nowatermark_hd: 'HD', watermark: 'Pakai WM' };
 const isHttp = v => typeof v === 'string' && /^https?:\/\/\S+$/i.test(v);
 function kindOf(url, key) {
   for (const k of ['video', 'audio', 'image']) if (MEDIA_EXT[k].test(url)) return k;
@@ -336,11 +345,11 @@ function showJsonMedia(data) {
   if (!m.videos.length && !m.photos.length && !m.audio) return;          // plain JSON result
   const fallback = why => {
     box.hidden = true; box.innerHTML = '';
-    pre.hidden = false; note.hidden = false; note.textContent = why + ' Menampilkan JSON.';
+    pre.hidden = false; note.hidden = false; note.textContent = why + ' Jadi ditampilin JSON-nya aja.';
   };
   const jsonToggle = el('button', { type: 'button', className: 'sm ghost', textContent: 'Lihat JSON' });
-  jsonToggle.addEventListener('click', () => { pre.hidden = !pre.hidden; jsonToggle.textContent = pre.hidden ? 'Lihat JSON' : 'Sembunyikan JSON'; });
-  const open = url => el('a', { className: 'btn sm', href: url, target: '_blank', rel: 'noopener noreferrer', textContent: 'Buka / unduh' });
+  jsonToggle.addEventListener('click', () => { pre.hidden = !pre.hidden; jsonToggle.textContent = pre.hidden ? 'Lihat JSON' : 'Sembunyiin JSON'; });
+  const open = url => el('a', { className: 'btn sm', href: url, target: '_blank', rel: 'noopener noreferrer', textContent: 'Buka / download' });
   box.innerHTML = '';
 
   if (m.videos.length) {
@@ -362,7 +371,7 @@ function showJsonMedia(data) {
     });
     video.addEventListener('error', () => {
       const next = m.videos.findIndex((_, i) => i > current);
-      if (next >= 0) play(next); else fallback('Video tidak bisa diputar di browser.');
+      if (next >= 0) play(next); else fallback('Video nggak bisa diputar di browser.');
     });
     box.append(video);
     if (m.videos.length > 1) box.append(variants);
@@ -374,7 +383,7 @@ function showJsonMedia(data) {
     let alive = m.photos.length;
     m.photos.forEach((p, i) => {
       const img = el('img', { src: p.url, alt: `Hasil ${i + 1}`, loading: 'lazy', referrerPolicy: 'no-referrer' });
-      img.addEventListener('error', () => { img.remove(); if (--alive === 0) fallback('Gambar tidak bisa dimuat.'); });
+      img.addEventListener('error', () => { img.remove(); if (--alive === 0) fallback('Gambar nggak bisa dimuat.'); });
       gallery.append(el('a', { href: p.url, target: '_blank', rel: 'noopener noreferrer' }, [img]));
     });
     box.append(gallery, el('div', { className: 'media-actions' }, [jsonToggle]));
@@ -389,7 +398,8 @@ function showJsonMedia(data) {
   pre.hidden = true;
 }
 
-const flash = (btn, text) => { const old = btn.textContent; btn.textContent = text; setTimeout(() => { btn.textContent = old; }, 1400); };
+// data-idle keeps the Indonesian label, so the translator still knows the restored text.
+const flash = (btn, text) => { const old = btn.dataset.idle || btn.textContent; btn.textContent = text; setTimeout(() => { btn.textContent = old; }, 1400); };
 $('#copy-url').addEventListener('click', e => navigator.clipboard.writeText($('#active-request-url').textContent).then(() => flash(e.target, 'Tersalin ✓')));
 $('#copy-curl').addEventListener('click', e => {
   const fileParam = (selectedApi?.params || []).find(p => p.type === 'file');

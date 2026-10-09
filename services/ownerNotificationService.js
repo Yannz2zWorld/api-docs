@@ -32,7 +32,7 @@ function messageText(p) {
 
 // Prefilled chat links the buyer can tap; the image cannot be attached automatically.
 function contactLinks(p) {
-  const text = messageText(p) + '\n\nBukti transfer saya lampirkan di chat ini.';
+  const text = messageText(p) + '\n\nBukti transfernya aku lampirin di chat ini ya.';
   const wa = ownerWaNumber();
   return {
     whatsapp: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(text)}` : null,

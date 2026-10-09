@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/i18n.js"></script>
 <style>
   .who { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
   .avatar { width: 88px; height: 88px; border-radius: 20px; border: var(--line); box-shadow: 4px 4px 0 var(--drop); background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 700 36px "Space Grotesk", sans-serif; flex: none; overflow: hidden; }
@@ -29,7 +30,7 @@
 </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/profile" aria-current="page">Profile</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/profile" aria-current="page">Profile</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap">
   <span class="kicker">Akun</span>
   <h1>Profile</h1>
@@ -40,8 +41,8 @@
       <small id="photo-msg" aria-live="polite"></small></div></div>
     <dl class="facts" style="margin-top:20px">
       <dt>User ID</dt><dd class="idline"><code id="user-id">—</code><button type="button" class="sm ghost" id="copy-id">Salin</button></dd>
-      <dt>Email</dt><dd id="email">—</dd>
-      <dt>Nama</dt><dd id="full-name">—</dd>
+      <dt>Email</dt><dd id="email" data-no-i18n>—</dd>
+      <dt>Nama</dt><dd id="full-name" data-no-i18n>—</dd>
       <dt>Tier</dt><dd id="tier">—</dd>
       <dt>Login</dt><dd id="methods">—</dd>
       <dt>Bergabung</dt><dd id="joined">—</dd>
@@ -50,7 +51,7 @@
 
   <section class="panel">
     <h2>Nama akun</h2>
-    <p class="muted">Nama ini yang tampil di Live Chat — email kamu tidak pernah ditampilkan. Kosongkan untuk kembali ke nama otomatis dari email (<b id="default-name">—</b>).</p>
+    <p class="muted">Nama ini yang muncul di Live Chat — email kamu nggak pernah ditampilin. Kosongin aja kalau mau balik ke nama otomatis dari email (<b id="default-name" data-no-i18n>—</b>).</p>
     <form id="name-form" class="row" autocomplete="off">
       <input id="display-name" maxlength="24" placeholder="Nama akun" aria-label="Nama akun" style="flex:1;min-width:200px">
       <button class="primary" type="submit">Simpan nama</button>
@@ -60,7 +61,7 @@
 
   <section class="panel" id="password-panel">
     <h2 id="pass-title">Ganti sandi</h2>
-    <p class="muted" id="pass-note">Ini sandi akun website Yannz API — bukan sandi Google/Gmail kamu. Masukkan sandi lama dulu, baru buat sandi baru.</p>
+    <p class="muted" id="pass-note">Ini sandi akun website Yannz API — bukan sandi Google/Gmail kamu. Masukin sandi lama dulu, baru bikin sandi baru.</p>
     <form id="pass-form" autocomplete="on">
       <input type="email" autocomplete="username" id="pass-user" hidden>
       <div class="field" id="current-field"><label for="current">Sandi lama</label><input id="current" type="password" autocomplete="current-password" required maxlength="128"></div>
@@ -78,9 +79,9 @@ const $ = s => document.querySelector(s);
 const when = v => v ? new Date(v).toLocaleString('id-ID', { dateStyle: 'medium' }) : '—';
 async function call(url, opts = {}) {
   const r = await fetch(url, { credentials: 'same-origin', ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
-  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi kamu udah habis.'); }
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status})`);
+  if (!r.ok) throw Error(`${d.message || 'Request gagal.'} (${d.error || r.status})`);
   return d;
 }
 function say(el, text, ok) { el.className = ok ? 'ok' : 'error'; el.textContent = text; }
@@ -108,13 +109,13 @@ async function load() {
 // Accounts made with Google have no website password yet: they create one (no old password).
 // Accounts with a password (register / email login, or created here before) must give the old one.
 function passwordMode(has) {
-  $('#pass-title').textContent = has ? 'Ganti sandi' : 'Buat sandi website';
+  $('#pass-title').textContent = has ? 'Ganti sandi' : 'Bikin sandi website';
   $('#pass-note').textContent = has
-    ? 'Ini sandi akun website Yannz API — bukan sandi Google/Gmail kamu. Masukkan sandi lama dulu, baru buat sandi baru.'
-    : 'Kamu masuk lewat Google dan belum punya sandi website. Buat sandi di sini supaya bisa login juga pakai email + sandi. Sandi Google kamu tidak berubah.';
+    ? 'Ini sandi akun website Yannz API — bukan sandi Google/Gmail kamu. Masukin sandi lama dulu, baru bikin sandi baru.'
+    : 'Kamu masuk lewat Google dan belum punya sandi website. Bikin sandi di sini biar bisa login juga pakai email + sandi. Sandi Google kamu nggak berubah.';
   $('#current-field').hidden = !has;
   $('#current').required = has;
-  $('#pass-btn').textContent = has ? 'Ganti sandi' : 'Buat sandi';
+  $('#pass-btn').textContent = has ? 'Ganti sandi' : 'Bikin sandi';
 }
 // ---------- profile picture: cropped to a centred square and scaled to 256 px in the browser,
 // so uploads stay small (the server takes JPEG/PNG/WebP up to 512 KB).
@@ -143,22 +144,22 @@ $('#photo-file').addEventListener('change', async e => {
   const file = e.target.files[0]; e.target.value = '';
   if (!file) return;
   const msg = $('#photo-msg');
-  if (!/^image\//.test(file.type)) return say(msg, 'Pilih file gambar (JPG, PNG atau WebP).');
-  if (file.size > 15 * 1024 * 1024) return say(msg, 'Gambar terlalu besar (maks 15 MB sebelum dikecilkan).');
-  msg.className = ''; msg.textContent = 'Mengunggah…';
+  if (!/^image\//.test(file.type)) return say(msg, 'Pilih file gambar ya (JPG, PNG atau WebP).');
+  if (file.size > 15 * 1024 * 1024) return say(msg, 'Gambarnya kegedean (maks 15 MB sebelum dikecilin).');
+  msg.className = ''; msg.textContent = 'Lagi upload…';
   try {
     const image = await squareImage(file);
     const d = await call('/api/profile/avatar', { method: 'PUT', body: JSON.stringify({ image }) });
     showAvatar(d.avatarUrl);
-    say(msg, 'Foto profil diperbarui.', true);
-  } catch (err) { say(msg, err.message.includes('createImageBitmap') || err.name === 'InvalidStateError' ? 'Gambar tidak bisa dibaca. Coba file lain.' : err.message); }
+    say(msg, 'Foto profil udah diganti.', true);
+  } catch (err) { say(msg, err.message.includes('createImageBitmap') || err.name === 'InvalidStateError' ? 'Gambarnya nggak kebaca. Coba file lain.' : err.message); }
 });
 $('#photo-delete').addEventListener('click', async () => {
   if (!confirm('Hapus foto profil?')) return;
   try {
     await call('/api/profile/avatar', { method: 'DELETE' });
     showAvatar(null);
-    say($('#photo-msg'), 'Foto profil dihapus.', true);
+    say($('#photo-msg'), 'Foto profil udah dihapus.', true);
   } catch (err) { say($('#photo-msg'), err.message); }
 });
 $('#copy-id').addEventListener('click', e => navigator.clipboard.writeText(String(profile?.publicId || profile?.id || '')).then(() => { e.target.textContent = 'Tersalin ✓'; setTimeout(() => { e.target.textContent = 'Salin'; }, 1400); }));
@@ -174,8 +175,8 @@ document.addEventListener('submit', async e => {
   if (e.target.id !== 'pass-form') return;
   e.preventDefault();
   const msg = $('#pass-msg'), next = $('#new-pass').value;
-  if (next.length < 8 || !/[A-Za-z]/.test(next) || !/[0-9]/.test(next)) return say(msg, 'Sandi baru minimal 8 karakter dan berisi huruf serta angka.');
-  if (next !== $('#confirm').value) return say(msg, 'Konfirmasi sandi tidak sama.');
+  if (next.length < 8 || !/[A-Za-z]/.test(next) || !/[0-9]/.test(next)) return say(msg, 'Sandi baru minimal 8 karakter, campur huruf dan angka.');
+  if (next !== $('#confirm').value) return say(msg, 'Konfirmasi sandinya nggak sama.');
   $('#pass-btn').disabled = true;
   try {
     const d = await call('/api/profile/password', { method: 'POST', body: JSON.stringify({ ...(profile?.hasPassword ? { current: $('#current').value } : {}), password: next }) });

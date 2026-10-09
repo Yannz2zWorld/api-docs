@@ -56,7 +56,7 @@
     dock.className = 'ym-dock';
     dock.setAttribute('role', 'region');
     dock.setAttribute('aria-label', 'Musik website');
-    dock.innerHTML = `<div class="ym-pop" hidden><span class="ym-title"></span><span class="ym-sub">Diputar berulang</span>
+    dock.innerHTML = `<div class="ym-pop" hidden><span class="ym-title"></span><span class="ym-sub">Diputar terus (loop)</span>
       <div class="ym-row"><button type="button" class="ym-btn ym-mute"></button><input type="range" min="0" max="100" step="1" aria-label="Volume musik"><span class="ym-pct"></span></div></div>
       <button type="button" class="ym-btn ym-vol" aria-haspopup="true" aria-expanded="false" aria-label="Atur volume"></button>
       <button type="button" class="ym-btn ym-play"></button>`;
@@ -66,6 +66,7 @@
     const play = $('.ym-play'), volBtn = $('.ym-vol'), pop = $('.ym-pop'), range = $('input'), pct = $('.ym-pct'), mute = $('.ym-mute');
     const song = [info.title, info.author].filter(Boolean).join(' — ') || 'Lagu website';
     $('.ym-title').textContent = song;
+    if (info.title || info.author) $('.ym-title').setAttribute('data-no-i18n', '');   // the song's name is data, never translated
     $('.ym-title').title = song;
 
     const audio = new Audio();
@@ -76,13 +77,13 @@
     function render() {
       const s = dock.dataset.state;
       play.innerHTML = s === 'loading' ? ICON.load : s === 'playing' ? ICON.pause : ICON.play;
-      play.setAttribute('aria-label', s === 'playing' ? `Jeda lagu: ${song}` : s === 'error' ? 'Lagu tidak bisa diputar' : `Putar lagu: ${song}`);
+      play.setAttribute('aria-label', s === 'playing' ? `Jeda lagu: ${song}` : s === 'error' ? 'Lagunya nggak bisa diputar' : `Putar lagu: ${song}`);
       play.setAttribute('aria-pressed', String(s === 'playing'));
-      play.title = s === 'error' ? 'Lagu tidak bisa diputar sekarang' : song;
+      play.title = s === 'error' ? 'Lagunya lagi nggak bisa diputar' : song;
       const silent = state.muted || state.vol === 0;
       volBtn.innerHTML = silent ? ICON.mute : ICON.vol;
       mute.innerHTML = silent ? ICON.mute : ICON.vol;
-      mute.setAttribute('aria-label', silent ? 'Bunyikan' : 'Bisukan');
+      mute.setAttribute('aria-label', silent ? 'Nyalain suara' : 'Matiin suara');
       range.value = String(Math.round(state.vol * 100));
       pct.textContent = `${Math.round(state.vol * 100)}%`;
     }

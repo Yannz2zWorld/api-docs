@@ -201,7 +201,7 @@ it('Maintenance Info Website: pages, API and every sign-in are closed to users; 
     for (const url of ['/', '/home', '/profile', '/keys', '/api', '/pricing']) {
       const r = await app.request('GET', url, { cookie: alice, headers: { accept: 'text/html' } });
       assert.equal(r.status, 503, url);
-      assert.match(r.text, /Website sedang dalam maintenance/, url);
+      assert.match(r.text, /Website lagi maintenance/, url);
       assert.match(r.text, /Upgrade server &lt;b&gt;malam ini&lt;\/b&gt;/, 'message is escaped');
     }
     const apiCall = await app.request('GET', '/api/profile', { cookie: alice });

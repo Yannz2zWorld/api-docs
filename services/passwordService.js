@@ -44,7 +44,7 @@ function passwordProblem(password) {
   const value = String(password || '');
   if (value.length < MIN_LENGTH) return `Sandi minimal ${MIN_LENGTH} karakter.`;
   if (value.length > MAX_LENGTH) return `Sandi maksimal ${MAX_LENGTH} karakter.`;
-  if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) return 'Sandi harus berisi huruf dan angka.';
+  if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) return 'Sandi harus ada huruf dan angkanya.';
   return null;
 }
 

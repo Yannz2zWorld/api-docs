@@ -67,6 +67,10 @@
     return 'Pilih';
   }
 
+  // A select marked data-no-i18n (e.g. the endpoint picker) holds data: the option text copied out of
+  // it is never translated either. The widget's own UI text (search, "no matches") still is.
+  const keep = (select, node) => { if (select.closest('[data-no-i18n]')) node.setAttribute('data-no-i18n', ''); return node; };
+
   function enhance(select) {
     if (select.__ys || select.multiple || (select.size && select.size > 1) || select.closest('[data-native-select]')) return;
     const id = 'ys' + (++uid);
@@ -75,6 +79,7 @@
     trigger.setAttribute('aria-haspopup', 'listbox');
     trigger.setAttribute('aria-expanded', 'false');
     const label = el('span', 'ys-label');
+    keep(select, label);
     trigger.append(label);
     trigger.insertAdjacentHTML('beforeend', CHEV);
     // Keep the select's size: full width where it filled its container, else its own width.
@@ -105,7 +110,7 @@
     }
     select.addEventListener('change', refresh);
     select.form?.addEventListener('reset', () => setTimeout(refresh));
-    new MutationObserver(refresh).observe(select, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'selected', 'hidden', 'label'] });
+    new MutationObserver(refresh).observe(select, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['disabled', 'selected', 'hidden', 'label'] });   // characterData: option text changed by the translator
     trigger.addEventListener('click', () => open(select, trigger, id));
     trigger.addEventListener('keydown', e => { if (['ArrowDown', 'ArrowUp'].includes(e.key)) { e.preventDefault(); open(select, trigger, id); } });
     if (select.id) document.querySelectorAll(`label[for="${CSS.escape(select.id)}"]`).forEach(l => l.addEventListener('click', e => { e.preventDefault(); trigger.focus(); }));
@@ -165,7 +170,7 @@
         if (group && group !== lastGroup) {
           const count = [...group.children].filter(c => !c.hidden).length;
           const g = el('li', 'ys-group'); g.setAttribute('role', 'presentation');
-          g.append(el('span', '', group.label), el('span', '', String(count)));
+          g.append(keep(select, el('span', '', group.label)), el('span', '', String(count)));
           list.append(g);
         }
         lastGroup = group;
@@ -173,14 +178,14 @@
         const li = el('li', 'ys-opt'); li.setAttribute('role', 'option'); li.id = id + '-' + rows.length;
         li.setAttribute('aria-selected', String(o.selected));
         if (o.disabled) li.setAttribute('aria-disabled', 'true');
-        const text = el('span', '', main || '—');
+        const text = keep(select, el('span', '', main || '—'));
         if (sub) text.append(el('small', '', sub));
         li.append(text); li.insertAdjacentHTML('beforeend', CHECK);
         li.addEventListener('click', () => choose(o));
         li.addEventListener('mousemove', () => setActive(rows.indexOf(li)));
         list.append(li); rows.push(li); li.__opt = o;
       }
-      if (!rows.length) list.append(el('li', 'ys-empty', 'Tidak ada yang cocok.'));
+      if (!rows.length) list.append(el('li', 'ys-empty', 'Nggak ada yang cocok.'));
       setActive(Math.max(0, rows.findIndex(r => r.__opt.selected)), true);
     }
     function setActive(i, scroll) {

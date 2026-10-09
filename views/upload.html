@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/i18n.js"></script>
 <style>
   .dropzone { min-height: 220px; transition: border-color .16s var(--ease), color .16s var(--ease); }
   .dropzone input[type=file] { display: none; }
@@ -41,19 +42,19 @@
 </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/profile">Profile</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/profile">Profile</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap">
   <span class="kicker">CDN</span>
   <h1>Upload File</h1>
-  <p class="lead">Unggah file apa saja — foto, video, audio, dokumen, arsip — dan dapatkan link publik di domain ini untuk dibagikan atau dipakai di endpoint yang meminta <code>url</code>. Foto, video, audio, PDF, dan teks bisa langsung dibuka di browser; file lain otomatis diunduh.</p>
+  <p class="lead">Upload file apa aja — foto, video, audio, dokumen, arsip — terus dapetin link publik di domain ini buat dibagiin atau dipakai di endpoint yang butuh <code>url</code>. Foto, video, audio, PDF, dan teks bisa langsung dibuka di browser; file lain otomatis ke-download.</p>
 
   <section class="panel">
     <form id="up-form">
       <label class="dropzone" id="drop" for="file">
         <input type="file" id="file">
-        <span class="hint"><strong>Pilih atau tarik file ke sini</strong><br><span class="meta">Foto, video, audio, dokumen, file apa saja · maks <span id="max-label">…</span></span></span>
+        <span class="hint"><strong>Pilih atau tarik file ke sini</strong><br><span class="meta">Foto, video, audio, dokumen, file apa aja · maks <span id="max-label">…</span></span></span>
         <span class="preview" id="preview"></span>
-        <span class="meta" id="file-meta"></span>
+        <span class="meta" id="file-meta" data-no-i18n></span>
       </label>
 
       <p class="muted" style="margin:16px 0 8px">Simpan selama</p>
@@ -67,7 +68,7 @@
       <div class="actions">
         <button class="primary" type="submit" id="up-btn" disabled>Upload</button>
         <button class="ghost" type="button" id="clear-btn" hidden>Ganti file</button>
-        <small class="muted" id="limits-note">Maksimal 30 upload per jam per akun.</small>
+        <small class="muted" id="limits-note">Maks 30 upload per jam per akun.</small>
       </div>
       <div class="progress" id="progress" hidden><div class="bar" id="progress-bar"></div><span class="meta" id="progress-text"></span></div>
       <p id="up-msg" aria-live="polite"></p>
@@ -75,7 +76,7 @@
   </section>
 
   <section class="panel" id="result-panel" hidden>
-    <h2>Berhasil diunggah</h2>
+    <h2>Berhasil di-upload</h2>
     <div class="result">
       <div class="thumb" id="res-thumb"></div>
       <div>
@@ -86,8 +87,8 @@
   </section>
 
   <section class="panel" id="history-panel" hidden>
-    <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Upload terakhir</h2><button type="button" class="sm ghost" id="history-clear">Bersihkan daftar</button></div>
-    <p class="muted" style="margin-top:6px">Daftar ini hanya tersimpan di browser ini. Menghapus daftar tidak menghapus file-nya.</p>
+    <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Upload terakhir</h2><button type="button" class="sm ghost" id="history-clear">Bersihin daftar</button></div>
+    <p class="muted" style="margin-top:6px">Daftar ini cuma kesimpan di browser ini. Hapus daftar nggak bakal ngehapus file-nya.</p>
     <ul class="history" id="history"></ul>
   </section>
 
@@ -99,7 +100,7 @@ fetch('/cdn/upload/config', { credentials: 'same-origin' }).then(r => r.status =
   if (d && d.success) limits = d;
   $('#max-label').textContent = size(limits.maxBytes);
   const quota = limits.accountLimitBytes ? ` · penyimpanan akun ${limits.usedBytes == null ? '' : size(limits.usedBytes) + ' dari '}${size(limits.accountLimitBytes)}` : '';
-  $('#limits-note').textContent = `Maksimal ${limits.perHour} upload per jam${quota}.`;
+  $('#limits-note').textContent = `Maks ${limits.perHour} upload per jam${quota}.`;
 }).catch(() => { $('#max-label').textContent = size(limits.maxBytes); });
 const HISTORY_KEY = 'yannz-cdn-history';
 let chosen = null;
@@ -121,8 +122,8 @@ function media(src, mime, name, controls) {
 function choose(file) {
   say('');
   if (!file) return;
-  if (!file.size) return say('File kosong.');
-  if (file.size > limits.maxBytes) return say(`File terlalu besar (${size(file.size)}). Maksimal ${size(limits.maxBytes)}.`);
+  if (!file.size) return say('File-nya kosong.');
+  if (file.size > limits.maxBytes) return say(`File-nya kegedean (${size(file.size)}). Maks ${size(limits.maxBytes)}.`);
   chosen = file;
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = URL.createObjectURL(file);
@@ -158,18 +159,18 @@ function send(method, url, body, headers) {
     for (const [k, v] of Object.entries(headers || {})) x.setRequestHeader(k, v);
     x.upload.onprogress = e => { if (e.lengthComputable) progress(e.loaded / e.total); };
     x.onload = () => resolve({ status: x.status, text: x.responseText });
-    x.onerror = () => reject(Error('Koneksi terputus saat mengunggah. Coba lagi.'));
+    x.onerror = () => reject(Error('Koneksi putus pas lagi upload. Coba lagi ya.'));
     x.send(body);
   });
 }
 function progress(p) {
   $('#progress').hidden = false;
   $('#progress-bar').style.width = Math.round(p * 100) + '%';
-  $('#progress-text').textContent = p >= 1 ? 'Memproses…' : `Mengunggah ${Math.round(p * 100)}%`;
+  $('#progress-text').textContent = p >= 1 ? 'Lagi diproses…' : `Lagi upload ${Math.round(p * 100)}%`;
 }
 async function api(url, body) {
   const r = await fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi kamu udah habis.'); }
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw Error(d.message || 'Upload gagal.');
   return d;
@@ -178,9 +179,9 @@ async function uploadSmall(file, ttl) {
   const qs = new URLSearchParams({ name: file.name });
   if (ttl !== '0') qs.set('ttlHours', ttl);
   const r = await send('POST', '/cdn/upload?' + qs, file, { 'Content-Type': file.type || 'application/octet-stream' });
-  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi kamu udah habis.'); }
   let d = {}; try { d = JSON.parse(r.text); } catch {}
-  if (r.status >= 400 || !d.status) throw Error(d.message || (r.status === 413 ? `File maksimal ${size(limits.smallMaxBytes)}.` : 'Upload gagal.'));
+  if (r.status >= 400 || !d.status) throw Error(d.message || (r.status === 413 ? `File maks ${size(limits.smallMaxBytes)}.` : 'Upload gagal.'));
   return d.result;
 }
 // catbox.moe (used when R2 is not set up): the browser uploads the file there itself, then the
@@ -197,9 +198,9 @@ async function uploadCatbox(file, ttl) {
     // Without a progress listener the upload is a plain form post (no CORS preflight).
     try { const f = await fetch(CATBOX_API, { method: 'POST', body: form() }); r = { status: f.status, text: await f.text() }; } catch { r = null; }
   }
-  if (!r) throw Object.assign(Error('Penyimpanan file besar tidak bisa dihubungi dari browser ini.'), { code: 'CATBOX_BLOCKED' });
+  if (!r) throw Object.assign(Error('Penyimpanan file besar nggak bisa dihubungi dari browser ini.'), { code: 'CATBOX_BLOCKED' });
   const link = String(r.text || '').trim();
-  if (r.status !== 200 || !/^https:\/\/files\.catbox\.moe\/\S+$/.test(link)) throw Error('Penyimpanan menolak file ini' + (link && link.length < 160 ? `: ${link}` : '.'));
+  if (r.status !== 200 || !/^https:\/\/files\.catbox\.moe\/\S+$/.test(link)) throw Error('Penyimpanan nolak file ini' + (link && link.length < 160 ? `: ${link}` : '.'));
   return (await api('/cdn/upload/register', { url: link, name: file.name, type: file.type, ttlHours: Number(ttl) })).result;
 }
 async function uploadLarge(file, ttl) {
@@ -214,7 +215,7 @@ $('#up-form').addEventListener('submit', async e => {
   if (!chosen) return;
   const ttl = document.querySelector('input[name=ttl]:checked').value;
   const btn = $('#up-btn');
-  btn.disabled = true; btn.textContent = 'Mengunggah…'; say(''); progress(0);
+  btn.disabled = true; btn.textContent = 'Lagi upload…'; say(''); progress(0);
   try {
     const small = chosen.size <= limits.smallMaxBytes;
     let result;
@@ -223,11 +224,11 @@ $('#up-form').addEventListener('submit', async e => {
       try { result = await uploadCatbox(chosen, ttl); }
       catch (err) {
         if (err.code === 'CATBOX_BLOCKED') markCatboxBlocked();
-        if (!small) throw err.code === 'CATBOX_BLOCKED' ? Error(`Upload file besar sedang tidak bisa dari browser ini. Untuk sementara maksimal ${size(limits.smallMaxBytes)}.`) : err;
+        if (!small) throw err.code === 'CATBOX_BLOCKED' ? Error(`Upload file besar lagi nggak bisa dari browser ini. Untuk sementara maks ${size(limits.smallMaxBytes)} dulu.`) : err;
         result = await uploadSmall(chosen, ttl);   // small files still work through this server
       }
     } else {
-      if (!small) throw Error(`File maksimal ${size(limits.smallMaxBytes)} untuk saat ini.`);
+      if (!small) throw Error(`Untuk sekarang file maks ${size(limits.smallMaxBytes)}.`);
       result = await uploadSmall(chosen, ttl);
     }
     show(result);
@@ -244,13 +245,15 @@ $('#up-form').addEventListener('submit', async e => {
 });
 
 function expiry(at) { return at ? 'kedaluwarsa ' + new Date(at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'permanen'; }
+// File names, links, types and sizes are data: never translated (data-no-i18n).
+function dataSpan(text) { const s = document.createElement('span'); s.setAttribute('data-no-i18n', ''); s.textContent = text; return s; }
 function show(res) {
   $('#result-panel').hidden = false;
   $('#res-thumb').replaceChildren(media(res.url, res.mime, res.name || res.id, true));
   $('#res-url').value = res.url;
   $('#open-btn').href = res.url;
-  $('#open-btn').textContent = res.preview ? 'Buka' : 'Unduh';
-  $('#res-meta').textContent = `${res.name ? res.name + ' · ' : ''}${res.mime} · ${size(res.size)} · ${expiry(res.expiresAt)}`;
+  $('#open-btn').textContent = res.preview ? 'Buka' : 'Download';
+  $('#res-meta').replaceChildren(dataSpan(`${res.name ? res.name + ' · ' : ''}${res.mime} · ${size(res.size)} · `), expiry(res.expiresAt));
   $('#result-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 async function copy(text, btn) {
@@ -273,8 +276,8 @@ function renderHistory() {
     const li = document.createElement('li');
     const thumb = media(item.url, item.mime || 'image/png', item.name || item.url, false);
     const info = document.createElement('div');
-    const a = document.createElement('a'); a.href = item.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = item.name || item.url;
-    const meta = document.createElement('small'); meta.textContent = `${item.url} · ${size(item.size)} · ${expiry(item.expiresAt)}`;
+    const a = document.createElement('a'); a.href = item.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = item.name || item.url; a.setAttribute('data-no-i18n', '');
+    const meta = document.createElement('small'); meta.append(dataSpan(`${item.url} · ${size(item.size)} · `), expiry(item.expiresAt));
     info.append(a, meta);
     const b = document.createElement('button'); b.type = 'button'; b.className = 'sm'; b.textContent = 'Salin';
     b.addEventListener('click', () => copy(item.url, b));

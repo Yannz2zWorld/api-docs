@@ -118,14 +118,16 @@ body.world .attacks .ctl{padding:8px 14px}
 #loader.err .msg{color:#fca5a5}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){#loader .sigil{animation-duration:3s}}
+.toggles .lang-switch{flex:0 0 auto;align-self:center;margin-left:4px;color:var(--ink)}
 </style>
+<script src="/assets/i18n.js"></script>
 </head>
 <body>
-<div id="stage" aria-label="Tampilan 3D sabit. Geser untuk memutar, cubit atau scroll untuk zoom, dua jari untuk menggeser."></div>
+<div id="stage" aria-label="Tampilan 3D sabit. Geser buat muter, cubit atau scroll buat zoom, dua jari buat geser."></div>
 
 <header class="hud top">
   <div class="title plate">
-    <a class="back" href="/home" aria-label="Kembali ke dashboard Yannz API"><b>Y</b>Dashboard</a>
+    <a class="back" href="/home" aria-label="Balik ke dashboard Yannz API"><b>Y</b>Dashboard</a>
     <div class="grow">
       <h1>Crimson Requiem</h1>
       <p>Sabit tulang, baja hitam, dan cahaya merah darah</p>
@@ -144,7 +146,7 @@ body.world .attacks .ctl{padding:8px 14px}
       <button class="btn atk" data-move="spin" title="Tombol 3">Putaran</button>
       <button class="btn atk combo" data-move="combo" title="Spasi">Kombo</button>
     </div>
-    <div class="ctrlhint">Seret jari memutari titik merah di gagang untuk mengayun sabit. Ayun cepat untuk tebasan, hantam ke tanah untuk ledakan, ketuk 2× untuk Putaran.</div>
+    <div class="ctrlhint">Seret jari muterin titik merah di gagang buat ngayunin sabit. Ayun cepat buat tebasan, hantam ke tanah buat ledakan, ketuk 2× buat Putaran.</div>
     <div class="row" id="views" role="group" aria-label="Sudut kamera">
       <button class="btn" data-view="full">Seluruh senjata</button>
       <button class="btn" data-view="battle">Arena</button>
@@ -164,7 +166,8 @@ body.world .attacks .ctl{padding:8px 14px}
       <button class="btn" id="tAura" aria-pressed="true">Aura gelap</button>
       <button class="btn" id="tPose" aria-pressed="false">Pose miring</button>
       <button class="btn" id="tWire" aria-pressed="false">Wireframe</button>
-      <span class="hint">Geser untuk memutar, cubit untuk zoom</span>
+      <span class="hint">Geser buat muter, cubit buat zoom</span>
+      <div data-lang-switch></div>
     </div>
   </div>
 </nav>
@@ -182,7 +185,7 @@ body.world .attacks .ctl{padding:8px 14px}
 'use strict';
 const $ = s => document.querySelector(s);
 function fail(msg){ const l=$('#loader'); l.classList.add('err'); l.querySelector('.msg').textContent=msg; }
-if (typeof THREE === 'undefined'){ fail('Three.js gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.'); return; }
+if (typeof THREE === 'undefined'){ fail('Three.js gagal dimuat. Cek koneksi internet, terus refresh halamannya.'); return; }
 
 /* ============================================================
    Basic helpers
@@ -379,7 +382,7 @@ const LITE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, inn
 const PR_MAX = Math.min(window.devicePixelRatio || 1, LITE ? 1 : 1.35), PR_MIN = 0.6;
 let pixelRatio = PR_MAX;
 try { renderer=new THREE.WebGLRenderer({antialias:!LITE, alpha:true, powerPreference:'high-performance'}); }
-catch(e){ fail('WebGL tidak aktif di perangkat atau browser ini, jadi model 3D tidak bisa ditampilkan.'); return; }
+catch(e){ fail('WebGL nggak aktif di perangkat atau browser ini, jadi model 3D-nya nggak bisa ditampilin.'); return; }
 renderer.setPixelRatio(pixelRatio);
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -2044,7 +2047,7 @@ function gestureMove(e){
 function gestureUp(e){
   G.down=false; const now=performance.now();
   if(now-G.downT<230 && G.moved<14){
-    if(now-G.lastTap<340){ neutralQ(W.aim); W.mode='idle'; G.lastTap=0; showToast('Posisi sabit direset',1200); } else G.lastTap=now;
+    if(now-G.lastTap<340){ neutralQ(W.aim); W.mode='idle'; G.lastTap=0; showToast('Posisi sabit di-reset',1200); } else G.lastTap=now;
   }
 }
 function resetOrientationNow(){ neutralQ(W.q); W.aim.copy(W.q); W.prevFrame.copy(W.q); W.mode='idle'; W.spinW=0; }
@@ -2061,7 +2064,7 @@ function enterWorld(){
   resetOrientationNow();
   camera.position.copy(RIG_BASE).add(V3(0,3.2+Math.sin(.38)*world.dist,Math.cos(.38)*world.dist)); controls.target.copy(RIG_BASE).add(V3(0,3.2,0));
   updateScore();
-  showToast('Joystick kiri: terbang. ▲▼: naik/turun. Usap cepat: tebas ke arah usapan. Putar jari melingkar: sabit berputar bebas. Seret pelan: putar sabit. Ketuk 2×: reset. Dua jari: putar kamera & zoom.',8000);
+  showToast('Joystick kiri: terbang. ▲▼: naik/turun. Usap cepat: tebas ke arah usapan. Putar jari melingkar: sabit muter bebas. Seret pelan: puter sabit. Ketuk 2×: reset. Dua jari: puter kamera & zoom.',8000);
 }
 function exitWorld(){
   world.on=false; worldGroup.visible=false; document.body.classList.remove('world');

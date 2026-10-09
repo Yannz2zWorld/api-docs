@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/i18n.js"></script>
 <style>
   .ep-new { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; margin: 14px 0 22px; padding: 16px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); }
   .ep-new h3 { grid-column: 1 / -1; margin: 0; }
@@ -22,10 +23,16 @@
   .ep-new .actions { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .ep-new .actions p { margin: 0; }
   @media (max-width: 720px) { .ep-new { grid-template-columns: 1fr; } }
+  .backup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 14px; }
+  .backup-card { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); }
+  .backup-card h3 { margin: 0; }
+  .backup-card p { flex: 1; margin: 0; }
+  .backup-checks { margin: 6px 0 0; padding-left: 0; list-style: none; display: grid; gap: 6px; }
+  #backup-msg .ok { color: var(--ok); font-weight: 600; }
 </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><a href="/owner" aria-current="page">Developer</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><a href="/owner" aria-current="page">Developer</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap wide">
   <span class="kicker">Developer only</span>
   <h1>Developer Console</h1>
@@ -39,25 +46,25 @@
     <button role="tab" data-tab="server">Server &amp; Pembayaran</button>
     <button role="tab" data-tab="activity">Activity</button>
     <button role="tab" data-tab="audit">Audit</button>
-    <a class="btn" href="/owner/backup">Backup JSON</a>
+    <button role="tab" data-tab="backup">Backup</button>
   </nav>
 
-  <section class="panel" id="tab-status"><h2>System status</h2><div id="status-data"><p class="loading">Memuat status…</p></div></section>
-  <section class="panel" id="tab-dash" hidden><h2>Dashboard</h2><div id="dash-data" class="stats">Memuat…</div></section>
+  <section class="panel" id="tab-status"><h2>System status</h2><div id="status-data"><p class="loading">Lagi muat status…</p></div></section>
+  <section class="panel" id="tab-dash" hidden><h2>Dashboard</h2><div id="dash-data" class="stats">Lagi dimuat…</div></section>
 
   <section class="panel" id="tab-users" hidden>
     <h2>Users</h2>
     <form class="row" id="user-filter">
-      <input name="q" placeholder="Cari email / nama / ID (mis. 12345678)" aria-label="Cari user">
+      <input name="q" placeholder="Cari email / nama / ID (misal 12345678)" aria-label="Cari user">
       <select name="tier" aria-label="Filter tier"><option value="">Semua tier</option><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option value="OWNER">DEVELOPER</option></select>
       <select name="status" aria-label="Filter status"><option value="">Semua status</option><option>active</option><option>banned</option><option>pending</option></select>
       <button class="primary" type="submit">Cari</button>
     </form>
-    <div id="users-data">Memuat…</div>
+    <div id="users-data">Lagi dimuat…</div>
     <h3 style="margin-top:26px">Reset sandi user</h3>
     <form class="row" id="reset-form" autocomplete="off">
-      <input name="user" placeholder="ID (mis. 12345678) atau email user" aria-label="ID atau email user" required style="flex:1;min-width:220px" spellcheck="false">
-      <input name="password" type="text" placeholder="sandi baru (kosong = dibuat otomatis)" aria-label="Sandi baru" autocomplete="new-password" style="flex:1;min-width:220px" spellcheck="false">
+      <input name="user" placeholder="ID (misal 12345678) atau email user" aria-label="ID atau email user" required style="flex:1;min-width:220px" spellcheck="false">
+      <input name="password" type="text" placeholder="sandi baru (kosongin = dibikin otomatis)" aria-label="Sandi baru" autocomplete="new-password" style="flex:1;min-width:220px" spellcheck="false">
       <button class="primary" type="submit">Reset sandi</button>
     </form>
     <div id="reset-msg" aria-live="polite"></div>
@@ -65,31 +72,31 @@
 
   <section class="panel" id="tab-activity" hidden>
     <h2>Activity</h2>
-    <p class="muted" id="activity-summary">Semua aktivitas di web: login & event akun, panggilan API, dan kunjungan halaman.</p>
+    <p class="muted" id="activity-summary">Semua aktivitas di web: login & event akun, panggilan API, sama kunjungan halaman.</p>
     <form class="row" id="activity-filter">
       <input name="q" placeholder="Filter email / nama user" aria-label="Filter user" style="flex:1;min-width:200px">
       <select name="kind" aria-label="Jenis aktivitas"><option value="">Semua</option><option value="account">Akun (login, key, pembayaran…)</option><option value="api">Panggilan API</option><option value="page">Kunjungan halaman</option></select>
       <button class="primary" type="submit">Muat</button>
-      <label class="row" style="gap:6px"><input type="checkbox" id="activity-live"> live (10 dtk)</label>
+      <label class="row" style="gap:6px"><input type="checkbox" id="activity-live"> live (10 detik)</label>
     </form>
-    <div id="activity-data">Memuat…</div>
+    <div id="activity-data">Lagi dimuat…</div>
   </section>
 
   <section class="panel" id="tab-keys" hidden>
     <h2>API keys</h2>
     <form class="ep-new" id="key-new" autocomplete="off">
-      <h3>Buat API key</h3>
+      <h3>Bikin API key</h3>
       <label><span><b>1</b> Nama key</span><input name="name" placeholder="Bot WhatsApp" maxlength="80" required></label>
-      <label><span><b>2</b> Custom key (opsional)</span><input name="custom_key" placeholder="kosong = dibuat otomatis" maxlength="64" pattern="[A-Za-z0-9_\-]{6,64}" title="6–64 karakter: huruf, angka, _ atau -" spellcheck="false"></label>
+      <label><span><b>2</b> Custom key (opsional)</span><input name="custom_key" placeholder="kosongin = dibikin otomatis" maxlength="64" pattern="[A-Za-z0-9_\-]{6,64}" title="6–64 karakter: huruf, angka, _ atau -" spellcheck="false"></label>
       <label id="key-tier-field"><span><b>3</b> Tier key</span><select name="tier"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option></select></label>
       <label><span><b>4</b> Masa aktif</span><span class="row" style="gap:8px"><select name="duration" style="flex:1"><option value="12h">12 jam</option><option value="1d" selected>24 jam / 1 hari</option><option value="3d">3 hari</option><option value="7d">7 hari</option><option value="14d">14 hari</option><option value="30d">30 hari</option><option value="custom">Custom (hari)</option><option value="permanent">Tanpa batas</option></select><input name="days" type="number" min="1" max="1000" placeholder="hari (maks 1000)" hidden style="width:150px"></span></label>
       <label class="full"><span><b>5</b> Pemilik key</span><select name="kind">
-        <option value="public">Public — semua user boleh pakai (tidak terikat email)</option>
-        <option value="private">Private — hanya user/email yang diberi akses</option>
-        <option value="owner">Developer — hanya developer (developer key)</option></select></label>
+        <option value="public">Public — semua user boleh pakai (nggak terikat email)</option>
+        <option value="private">Private — cuma user/email yang dikasih akses</option>
+        <option value="owner">Developer — cuma developer (developer key)</option></select></label>
       <label class="full" id="key-access-field" hidden><span>Akses private — satu email / ID per baris</span><textarea name="access" rows="3" placeholder="user1@gmail.com&#10;user2@gmail.com&#10;12345678" spellcheck="false" style="min-height:80px"></textarea></label>
-      <div class="actions"><button class="primary" type="submit">Buat key</button>
-        <p class="muted"><b>Public</b>: siapa pun yang punya key bisa memakai. <b>Private</b>: server mengecek key <i>dan</i> akun yang sedang login — user lain ditolak walau tahu key-nya. <b>Developer</b>: hanya akun developer. Key hanya bisa mengakses endpoint sampai tier-nya dan punya kuota harian sendiri. Custom key berlaku untuk semua jenis dan tidak boleh sama dengan key lain.</p></div>
+      <div class="actions"><button class="primary" type="submit">Bikin key</button>
+        <p class="muted"><b>Public</b>: siapa pun yang punya key bisa pakai. <b>Private</b>: server ngecek key dan akun yang lagi login — user lain ditolak walaupun tahu key-nya. <b>Developer</b>: cuma akun developer. Key cuma bisa akses endpoint sampai tier-nya dan punya kuota harian sendiri. Custom key berlaku buat semua jenis dan nggak boleh sama dengan key lain.</p></div>
       <div class="full" id="key-made" hidden></div>
     </form>
     <p class="muted" id="keys-totals"></p>
@@ -99,8 +106,8 @@
       <select name="status" aria-label="Filter status key"><option value="">Semua status</option><option value="active">active</option><option value="disabled">nonaktif</option><option value="revoked">revoked</option></select>
       <button class="primary" type="submit">Cari</button>
     </form>
-    <p class="muted"><small>Nilai key lengkap tidak pernah disimpan (hanya hash SHA-256), jadi tidak bisa ditampilkan lagi — termasuk untuk developer. Tempel key lengkap di pencarian untuk menemukan pemiliknya. <b>Nonaktifkan</b> mematikan sementara (bisa diaktifkan lagi); <b>Reset</b> membuat nilai key baru dan key lama langsung tidak berlaku; <b>Cabut</b> mematikan permanen tapi menyimpan catatannya; <b>Hapus</b> menghapus key (riwayat pemakaian tetap ada).</small></p>
-    <div id="keys-data">Memuat…</div>
+    <p class="muted"><small>Nilai key lengkap nggak pernah disimpan (cuma hash SHA-256), jadi nggak bisa ditampilin lagi — developer juga nggak bisa. Tempel key lengkap di pencarian buat nemuin pemiliknya. <b>Nonaktifkan</b> matiin key sementara (bisa diaktifin lagi); <b>Reset</b> bikin nilai key baru dan key lama langsung nggak berlaku; <b>Cabut</b> matiin key permanen tapi catatannya tetap disimpan; <b>Hapus</b> ngehapus key (riwayat pemakaiannya tetap ada).</small></p>
+    <div id="keys-data">Lagi dimuat…</div>
   </section>
 
   <section class="panel" id="tab-endpoints" hidden>
@@ -117,31 +124,31 @@ module.exports = async (req, res) =&gt; {
   if (!text) return res.status(400).json({ status: false, error: 'PARAM_REQUIRED', message: 'Parameter text wajib diisi.' });
   res.json({ status: true, result: text.toUpperCase() });
 };"></textarea></label>
-      <label class="full"><span><b>4</b> Deskripsi</span><input name="description" placeholder="Apa yang dilakukan endpoint ini" maxlength="500"></label>
+      <label class="full"><span><b>4</b> Deskripsi</span><input name="description" placeholder="Endpoint ini buat apa" maxlength="500"></label>
       <label><span><b>5</b> Tier minimum</span><select name="minimum_tier"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option value="OWNER">DEVELOPER</option></select></label>
       <div class="actions"><button class="primary" type="submit" id="ep-submit">Tambah &amp; deploy</button>
-        <p class="muted">Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), lalu endpoint aktif. Script berjalan di server, jadi hanya upload kode yang kamu percaya.</p></div>
+        <p class="muted">Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Script jalan di server, jadi cuma upload kode yang kamu percaya.</p></div>
     </form>
-    <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Uji endpoint theresav</button><small class="muted" id="selftest-note">Menguji endpoint AI/Downloader/Maker/Image ke theresav dari server. Memakai kuota theresav kamu.</small></div>
+    <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Tes endpoint theresav</button><small class="muted" id="selftest-note">Ngetes endpoint AI/Downloader/Maker/Image ke theresav dari server. Pakai kuota theresav kamu.</small></div>
     <div id="selftest-data"></div>
-    <div id="endpoints-data">Memuat…</div>
+    <div id="endpoints-data">Lagi dimuat…</div>
   </section>
 
   <section class="panel" id="tab-payments" hidden>
     <h2>Payments</h2>
     <div class="row"><select id="pay-status" aria-label="Filter status pembayaran"><option value="pending">pending</option><option value="">semua</option><option value="paid">paid</option><option value="rejected">rejected</option><option value="expired">expired</option></select></div>
-    <div id="payments-data">Memuat…</div>
+    <div id="payments-data">Lagi dimuat…</div>
   </section>
 
   <section class="panel" id="tab-server" hidden>
     <h2>Maintenance Info Website</h2>
-    <p class="muted">Saat ON, <b>seluruh website</b> masuk mode maintenance: Home, Login, Register, Profile, Dashboard, API dan halaman user lain menampilkan info maintenance; login Google, login email + sandi dan daftar ditolak (dicek di server). Hanya kamu (developer) yang tetap bisa masuk — lewat <a href="/developer-login">/developer-login</a> — dan mengatur website.</p>
+    <p class="muted">Kalau ON, seluruh website masuk mode maintenance: Home, Login, Register, Profile, Dashboard, API dan halaman user lain nampilin info maintenance; login Google, login email + sandi, dan daftar ditolak (dicek di server). Cuma kamu (developer) yang tetap bisa masuk lewat <a href="/developer-login">/developer-login</a> dan ngatur website.</p>
     <label class="row"><input type="checkbox" id="maint"> Maintenance Info Website = ON</label>
     <div class="row"><input id="maint-msg" placeholder="Pesan maintenance" style="flex:1;min-width:240px" maxlength="500"><button class="primary" id="save-server" type="button">Simpan</button></div>
     <p id="server-msg" aria-live="polite"></p>
 
     <h2 style="margin-top:28px">Rekening pembayaran manual</h2>
-    <p class="muted">Nomor yang tampil ke pembeli untuk DANA / GoPay. Kosongkan untuk menyembunyikan metodenya. QRIS manual memakai gambar <code>views/assets/qris-manual.jpg</code>.</p>
+    <p class="muted">Nomor yang muncul ke pembeli buat DANA / GoPay. Kosongin aja kalau mau nyembunyiin metodenya. QRIS manual pakai gambar <code>views/assets/qris-manual.jpg</code>.</p>
     <div class="row"><input id="dana-number" inputmode="tel" placeholder="Nomor DANA" maxlength="20"><input id="dana-name" placeholder="Nama akun DANA" maxlength="60"></div>
     <div class="row" style="margin-top:10px"><input id="gopay-number" inputmode="tel" placeholder="Nomor GoPay" maxlength="20"><input id="gopay-name" placeholder="Nama akun GoPay" maxlength="60"></div>
     <div class="row" style="margin-top:10px"><button class="primary" id="save-pay" type="button">Simpan rekening</button></div>
@@ -149,33 +156,60 @@ module.exports = async (req, res) =&gt; {
     <p class="muted" id="notify-state"></p>
   </section>
 
+  <section class="panel" id="tab-backup" hidden>
+    <h2>Backup</h2>
+    <p class="muted">Jaga-jaga kalau website atau database bermasalah. Simpan file backup di tempat aman dan jangan dibagiin ke siapa pun, isinya data akun.</p>
+    <div class="backup-grid">
+      <div class="backup-card">
+        <h3>Backup database</h3>
+        <p class="muted"><small>Semua tabel &amp; data (<code>.sql</code>). Ini yang dipakai buat balikin database: jalanin dulu semua <code>migrations/*.sql</code>, terus jalanin file ini di SQL Editor Neon.</small></p>
+        <button class="primary" type="button" data-backup="database">Unduh .sql</button>
+      </div>
+      <div class="backup-card">
+        <h3>Backup file web</h3>
+        <p class="muted"><small>Semua kode website (<code>.zip</code>, diambil dari repo GitHub). Kalau web-nya rusak, tinggal upload/deploy ulang isi zip ini.</small></p>
+        <button class="primary" type="button" data-backup="web">Unduh .zip</button>
+      </div>
+      <div class="backup-card">
+        <h3>Backup JSON</h3>
+        <p class="muted"><small>Data yang sama kayak backup database, tapi dalam bentuk JSON. Gampang dibuka &amp; dibaca (misal buat cek data user atau pembayaran), tapi bukan buat restore.</small></p>
+        <button class="primary" type="button" data-backup="json">Unduh .json</button>
+      </div>
+    </div>
+    <h3 style="margin-top:26px">Kirim ke Gmail</h3>
+    <p class="muted"><small>Ketiga file di atas dikirim jadi lampiran ke email developer.</small></p>
+    <div id="backup-status" class="muted"><small>Lagi dimuat…</small></div>
+    <div class="row" style="margin-top:10px"><button class="primary" type="button" id="backup-email">Kirim backup ke Gmail sekarang</button></div>
+    <p id="backup-msg" aria-live="polite"></p>
+  </section>
+
   <section class="panel" id="tab-audit" hidden>
     <h2>Audit log</h2>
-    <div class="row"><input id="audit-action" placeholder="Filter action, mis. user_ban"><button id="audit-load" type="button">Muat</button></div>
-    <div id="audit-data">Memuat…</div>
+    <div class="row"><input id="audit-action" placeholder="Filter action, misal user_ban"><button id="audit-load" type="button">Muat</button></div>
+    <div id="audit-data">Lagi dimuat…</div>
   </section>
 </main>
 
 <dialog id="key-dialog"><form method="dialog" id="key-renew">
   <h2>Edit key</h2>
   <p id="key-renew-label" class="muted"></p>
-  <div class="row"><input name="name" placeholder="Nama key (kosong = tidak diubah)" maxlength="80" style="flex:1"></div>
+  <div class="row"><input name="name" placeholder="Nama key (kosongin = nggak diubah)" maxlength="80" style="flex:1"></div>
   <div class="row"><select name="extend"><option value="">— jangan ubah masa aktif —</option><option value="12h">12 jam</option><option value="1d">24 jam / 1 hari</option><option value="3d">3 hari</option><option value="7d">7 hari</option><option value="14d">14 hari</option><option value="30d">30 hari</option><option value="custom">Custom (hari)</option><option value="permanent">Tanpa batas</option></select><input name="days" type="number" min="1" max="1000" placeholder="hari" hidden style="width:120px"></div>
   <div class="row" style="margin-top:10px"><select name="tier"><option value="">— jangan ubah tier —</option><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option value="ACCOUNT">Ikut tier akun pemilik</option></select></div>
-  <p class="muted"><small>Perpanjangan dihitung dari masa aktif sekarang (atau dari sekarang kalau sudah habis).</small></p>
+  <p class="muted"><small>Perpanjangan dihitung dari masa aktif sekarang (atau dari sekarang kalau udah habis).</small></p>
   <div class="row" style="margin-top:12px"><button class="primary" value="save" type="submit">Simpan</button><button value="cancel" type="button" onclick="document.getElementById('key-dialog').close()">Batal</button></div>
 </form></dialog>
 <dialog id="secret-dialog"><div>
   <h2 id="secret-title">Key baru</h2>
   <p class="muted" id="secret-label"></p>
   <div class="row"><code id="secret-value" style="word-break:break-all"></code><button type="button" class="sm" id="secret-copy">Salin</button></div>
-  <p class="muted"><small>Key hanya ditampilkan sekali ini. Key lama sudah tidak berlaku.</small></p>
+  <p class="muted"><small>Key cuma ditampilin sekali ini. Key lama udah nggak berlaku.</small></p>
   <div class="row" style="margin-top:12px"><button class="primary" type="button" onclick="document.getElementById('secret-dialog').close()">Tutup</button></div>
 </div></dialog>
 <dialog id="access-dialog"><div>
   <h2>Akses key private</h2>
   <p class="muted" id="access-label"></p>
-  <div id="access-list">Memuat…</div>
+  <div id="access-list">Lagi dimuat…</div>
   <h3>Tambah / reset akses</h3>
   <textarea id="access-input" rows="3" placeholder="email atau ID user, satu per baris" spellcheck="false" style="width:100%"></textarea>
   <div class="row" style="margin-top:10px"><button class="primary" type="button" id="access-add">Tambah</button><button class="danger" type="button" id="access-reset">Reset akses (ganti semua)</button><button type="button" onclick="document.getElementById('access-dialog').close()">Tutup</button></div>
@@ -190,13 +224,18 @@ const when = v => v ? new Date(v).toLocaleString('id-ID') : '—';
 const num = n => n === null || n === undefined ? '∞' : Number(n).toLocaleString('id-ID');
 const chip = (text, cls = '') => `<span class="chip ${cls}">${esc(text)}</span>`;
 const TIERS = ['FREE', 'SULTAN', 'SEPUH', 'DEWA'];
+// Native alert / confirm / prompt text goes through the page translation (Terjemahan menu) first.
+const tr = m => (window.YannzI18n ? window.YannzI18n.t(String(m)) : m);
+const say = m => alert(tr(m));
+const ask = m => confirm(tr(m));
+const askText = (m, d) => prompt(tr(m), d);
 const tierName = t => (t === 'OWNER' ? 'DEVELOPER' : t);   // the OWNER role is shown as DEVELOPER
 
 async function api(url, opts = {}) {
   const r = await fetch(url, { credentials: 'same-origin', ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
-  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi kamu udah habis.'); }
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status})`);
+  if (!r.ok) throw Error(`${d.message || 'Request-nya gagal.'} (${d.error || r.status})`);
   return d;
 }
 const send = (url, method = 'POST', body) => api(url, { method, body: body === undefined ? undefined : JSON.stringify(body) });
@@ -222,14 +261,14 @@ loaders.status = async () => {
     const cfg = Object.entries(s.config).map(([k, v]) => chip(k + (v || !OPTIONAL.has(k) ? '' : ' (opsional)'), v ? 'ok' : OPTIONAL.has(k) ? '' : 'warn')).join(' ');
     $('#status-data').innerHTML = `
       <h3>Database</h3>${chip(db.connected ? 'connected' : 'disconnected', db.connected ? 'ok' : 'bad')} ${db.ok === undefined ? '' : chip(db.ok ? 'schema ok' : 'migration required', db.ok ? 'ok' : 'bad')}
-      ${db.missing?.length ? `<p class="error">Kurang: ${db.missing.map(esc).join(', ')}</p>` : ''}${db.error ? `<p class="error">${esc(db.error)}</p>` : ''}
-      <h3>Environment</h3><p>${cfg}</p><small>Hijau = terisi, putih = kosong. Nilai tidak pernah ditampilkan.</small>
+      ${db.missing?.length ? `<p class="error">Yang kurang: ${db.missing.map(esc).join(', ')}</p>` : ''}${db.error ? `<p class="error">${esc(db.error)}</p>` : ''}
+      <h3>Environment</h3><p>${cfg}</p><small>Hijau = udah diisi, putih = kosong. Nilainya nggak pernah ditampilin.</small>
       <h3>Pembayaran</h3><p>Manual (QRIS, DANA, GoPay + bukti): ${chip('aktif', 'ok')} Payment gateway (Pakasir): ${chip(s.payments.gateway === 'on' ? 'aktif' : 'maintenance', s.payments.gateway === 'on' ? 'ok' : 'warn')}</p>
-      <small>${s.payments.gateway === 'on' ? `Gateway aktif. Settlement otomatis: ${s.payments.automaticSettlement === 'disabled_fail_closed' ? 'mati — tier diaktifkan lewat Approve di tab Payments' : 'dikonfigurasi'}.` : 'Gateway sedang maintenance: pembeli hanya bisa bayar manual lalu upload bukti. Untuk menyalakan lagi isi PAYMENT_GATEWAY=on (plus PAKASIR_PROJECT dan PAKASIR_API_KEY) di Vercel.'}</small>
-      <h3>Email (verifikasi &amp; reset sandi)</h3><p>${chip(s.email.configured ? 'provider: ' + s.email.provider : 'belum dikonfigurasi', s.email.configured ? 'ok' : 'warn')} Pengirim: ${chip(s.email.senderName)}</p>
-      <small>${s.email.configured ? 'Kode dikirim atas nama YannApi.' : 'Tanpa provider email, pendaftaran email &amp; lupa sandi menjawab EMAIL_NOT_CONFIGURED. Isi EMAIL_FROM + SMTP_* atau RESEND_API_KEY.'}</small>
+      <small>${s.payments.gateway === 'on' ? s.payments.automaticSettlement === 'disabled_fail_closed' ? 'Gateway aktif. Settlement otomatis: mati — tier diaktifin lewat Approve di tab Payments.' : 'Gateway aktif. Settlement otomatis: udah dikonfigurasi.' : 'Gateway lagi maintenance: pembeli cuma bisa bayar manual terus upload bukti. Buat nyalain lagi, isi PAYMENT_GATEWAY=on (plus PAKASIR_PROJECT dan PAKASIR_API_KEY) di Vercel.'}</small>
+      <h3>Email (verifikasi &amp; reset sandi)</h3><p>${chip(s.email.configured ? 'provider: ' + s.email.provider : 'belum diatur', s.email.configured ? 'ok' : 'warn')} Pengirim: ${chip(s.email.senderName)}</p>
+      <small>${s.email.configured ? 'Kode dikirim atas nama YannApi.' : 'Tanpa provider email, daftar pakai email &amp; lupa sandi bakal dijawab EMAIL_NOT_CONFIGURED. Isi EMAIL_FROM + SMTP_* atau RESEND_API_KEY.'}</small>
       <h3>Konfirmasi pembayaran</h3><p>Bukti masuk ke tab Payments ${chip('aktif', 'ok')} Tombol WhatsApp: ${chip(s.notifications.whatsapp?.link ? 'aktif' : 'nomor kosong', s.notifications.whatsapp?.link ? 'ok' : 'warn')} Tombol Telegram: ${chip(s.notifications.telegram?.link ? 'aktif' : 'link kosong', s.notifications.telegram?.link ? 'ok' : 'warn')}</p>
-      <small>Setelah upload bukti, pembeli bisa langsung chat kamu lewat WhatsApp (OWNER_WA / link WhatsApp di settings.js, pesan detail order sudah terisi) atau Telegram (link Telegram di settings.js). Tidak ada pesan yang dikirim otomatis.</small>
+      <small>Habis upload bukti, pembeli bisa langsung chat kamu lewat WhatsApp (OWNER_WA / link WhatsApp di settings.js, pesan detail order udah keisi) atau Telegram (link Telegram di settings.js). Nggak ada pesan yang dikirim otomatis.</small>
       <h3>Plugin</h3><p>${s.plugins.loaded.map(p => chip(p, 'ok')).join(' ') || '—'}</p>
       ${s.plugins.registryWithoutHandler.length ? `<p>Metadata tanpa handler: ${s.plugins.registryWithoutHandler.map(p => chip(p, 'warn')).join(' ')}</p>` : ''}
       <h3>Runtime</h3><p>${chip(s.runtime.node)} ${chip(s.runtime.vercel ? 'vercel' : 'local')} ${s.runtime.region ? chip(s.runtime.region) : ''}</p>`;
@@ -252,10 +291,10 @@ loaders.users = async () => {
   try {
     const d = await api('/owner/users?' + qs);
     $('#users-data').innerHTML = d.users.length ? `<table><tr><th>User</th><th>Tier / status</th><th>Hari ini</th><th>Aksi</th></tr>${d.users.map(u => `<tr>
-      <td><b>${esc(u.name)}</b><br><small>${esc(u.email)}</small></td>
-      <td>${chip(tierName(u.tier), u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? `<br><small>${esc(u.ban_reason)}</small>` : ''}</td>
+      <td data-no-i18n><b>${esc(u.name)}</b><br><small>${esc(u.email)}</small></td>
+      <td>${chip(tierName(u.tier), u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? `<br><small data-no-i18n>${esc(u.ban_reason)}</small>` : ''}</td>
       <td>${num(u.used_today)} req · ${num(u.active_keys)} key</td>
-      <td><button class="sm" data-act="detail" data-id="${esc(u.id)}">Detail</button>${u.isOwner ? '' : ` ${u.status === 'banned' ? `<button class="sm" data-act="unban" data-id="${esc(u.id)}">Unban</button>` : `<button class="sm danger" data-act="ban" data-id="${esc(u.id)}">Ban</button>`} <button class="sm danger" data-act="delete" data-id="${esc(u.id)}" data-email="${esc(u.email)}">Hapus</button>`}<br><small>ID <code>${esc(u.publicId || u.id)}</code></small></td></tr>`).join('')}</table>` : '<p>Tidak ada user yang cocok.</p>';
+      <td><button class="sm" data-act="detail" data-id="${esc(u.id)}">Detail</button>${u.isOwner ? '' : ` ${u.status === 'banned' ? `<button class="sm" data-act="unban" data-id="${esc(u.id)}">Unban</button>` : `<button class="sm danger" data-act="ban" data-id="${esc(u.id)}">Ban</button>`} <button class="sm danger" data-act="delete" data-id="${esc(u.id)}" data-email="${esc(u.email)}">Hapus</button>`}<br><small>ID <code>${esc(u.publicId || u.id)}</code></small></td></tr>`).join('')}</table>` : '<p>Nggak ada user yang cocok.</p>';
   } catch (e) { fail('#users-data', e); }
 };
 $('#user-filter').addEventListener('submit', e => { e.preventDefault(); loaders.users(); });
@@ -265,41 +304,41 @@ async function showUser(id) {
     const d = await api('/owner/users/' + encodeURIComponent(id));
     const u = d.user;
     const tierSel = `<select id="tier-sel">${TIERS.map(t => `<option ${t === u.storedTier ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
-    $('#user-detail').innerHTML = `<h2>${esc(u.name)}</h2><p>${esc(u.email)}<br><small>ID <code>${esc(u.publicId || u.id)}</code> · dibuat ${when(u.created_at)}</small></p>
+    $('#user-detail').innerHTML = `<h2 data-no-i18n>${esc(u.name)}</h2><p><span data-no-i18n>${esc(u.email)}</span><br><small>ID <code>${esc(u.publicId || u.id)}</code> · dibuat ${when(u.created_at)}</small></p>
       <p>Login: ${(u.loginMethods || []).map(m => chip(m)).join(' ') || '—'} ${u.email_verified ? chip('email terverifikasi', 'ok') : chip('email belum diverifikasi', 'warn')}</p>
-      <p>${chip(tierName(u.tier), u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? ` <small>Alasan: ${esc(u.ban_reason)}</small>` : ''}
-        <br><small>${u.isOwner || u.tier === 'FREE' ? (u.storedTier !== u.tier && !u.isOwner ? `Tier ${esc(u.storedTier)} sudah kedaluwarsa ${when(u.tier_expires_at)}` : '') : u.tierExpiresAt ? 'Aktif sampai ' + when(u.tierExpiresAt) : 'Tanpa masa berlaku'}</small></p>
+      <p>${chip(tierName(u.tier), u.isOwner ? 'ok' : '')} ${chip(u.status, u.status === 'active' ? 'ok' : 'bad')}${u.ban_reason ? ` <small>Alasan: <span data-no-i18n>${esc(u.ban_reason)}</span></small>` : ''}
+        <br><small>${u.isOwner || u.tier === 'FREE' ? (u.storedTier !== u.tier && !u.isOwner ? `Tier ${esc(u.storedTier)} udah kedaluwarsa ${when(u.tier_expires_at)}` : '') : u.tierExpiresAt ? 'Aktif sampai ' + when(u.tierExpiresAt) : 'Nggak ada masa berlaku'}</small></p>
       <p><b>Kuota hari ini:</b> ${num(d.usage.used)} / ${num(d.usage.limit)} · sisa ${num(d.usage.remaining)}</p>
-      ${u.isOwner ? '<p class="muted">Akun developer (OWNER_EMAIL) tidak bisa diban, diubah tier, atau dihapus dari panel.</p>' : `<div class="row">${tierSel}<input id="tier-days" type="number" min="1" max="3650" placeholder="hari (kosong = permanen)" style="width:190px"><button class="sm primary" data-act="tier" data-id="${esc(u.id)}">Set tier</button>
+      ${u.isOwner ? '<p class="muted">Akun developer (OWNER_EMAIL) nggak bisa diban, diubah tier-nya, atau dihapus dari panel.</p>' : `<div class="row">${tierSel}<input id="tier-days" type="number" min="1" max="3650" placeholder="hari (kosongin = permanen)" style="width:190px"><button class="sm primary" data-act="tier" data-id="${esc(u.id)}">Set tier</button>
         ${u.status === 'pending' ? `<button class="sm" data-act="approve" data-id="${esc(u.id)}">Approve</button>` : ''}
         ${u.status === 'banned' ? `<button class="sm" data-act="unban" data-id="${esc(u.id)}">Unban</button>` : `<button class="sm danger" data-act="ban" data-id="${esc(u.id)}">Ban</button>`}
         <button class="sm danger" data-act="delete" data-id="${esc(u.id)}" data-email="${esc(u.email)}">Hapus user</button></div>`}
-      <h3>Pemakaian 14 hari</h3>${d.usage.history.length ? d.usage.history.map(h => `${chip(h.date)} ${num(h.used)}`).join(' · ') : '<small>Belum ada.</small>'}
+      <h3>Pemakaian 14 hari terakhir</h3>${d.usage.history.length ? d.usage.history.map(h => `${chip(h.date)} ${num(h.used)}`).join(' · ') : '<small>Belum ada.</small>'}
       <h3>API keys (${d.apiKeys.filter(k => k.status === 'active').length} aktif / batas ${num(d.apiKeyLimit)})</h3>
-      ${d.apiKeys.length ? `<table><tr><th>Nama</th><th>Prefix</th><th>Status</th><th>Terakhir dipakai</th><th></th></tr>${d.apiKeys.map(k => `<tr><td>${esc(k.name)}</td><td><code>${esc(k.key_prefix)}…</code></td><td>${chip(k.status, k.status === 'active' ? 'ok' : '')}</td><td>${when(k.last_used_at)}</td><td>${k.status === 'active' ? `<button class="sm danger" data-act="revoke-key" data-id="${esc(u.id)}" data-key="${esc(k.id)}">Cabut</button>` : ''}</td></tr>`).join('')}</table>` : '<small>Tidak ada key.</small>'}
-      <h3>Order</h3>${d.orders.length ? `<table><tr><th>Kode</th><th>Tier</th><th>Jumlah</th><th>Status</th></tr>${d.orders.map(o => `<tr><td>${esc(o.order_code)}</td><td>${esc(o.tier)}</td><td>Rp${num(o.amount)}</td><td>${chip(o.status)} ${o.payment_status ? chip(o.provider + ':' + o.payment_status) : ''}</td></tr>`).join('')}</table>` : '<small>Belum ada order.</small>'}`;
+      ${d.apiKeys.length ? `<table><tr><th>Nama</th><th>Prefix</th><th>Status</th><th>Terakhir dipakai</th><th></th></tr>${d.apiKeys.map(k => `<tr><td data-no-i18n>${esc(k.name)}</td><td><code>${esc(k.key_prefix)}…</code></td><td>${chip(k.status, k.status === 'active' ? 'ok' : '')}</td><td>${when(k.last_used_at)}</td><td>${k.status === 'active' ? `<button class="sm danger" data-act="revoke-key" data-id="${esc(u.id)}" data-key="${esc(k.id)}">Cabut</button>` : ''}</td></tr>`).join('')}</table>` : '<small>Nggak ada key.</small>'}
+      <h3>Order</h3>${d.orders.length ? `<table><tr><th>Kode</th><th>Tier</th><th>Jumlah</th><th>Status</th></tr>${d.orders.map(o => `<tr><td data-no-i18n>${esc(o.order_code)}</td><td>${esc(o.tier)}</td><td>Rp${num(o.amount)}</td><td>${chip(o.status)} ${o.payment_status ? chip(o.provider + ':' + o.payment_status) : ''}</td></tr>`).join('')}</table>` : '<small>Belum ada order.</small>'}`;
     if (!$('#user-dialog').open) $('#user-dialog').showModal();
-  } catch (e) { alert(e.message); }
+  } catch (e) { say(e.message); }
 }
 
 async function userAction(btn) {
   const { act, id } = btn.dataset;
   try {
     if (act === 'detail') return showUser(id);
-    if (act === 'tier') { const tier = $('#tier-sel').value; const days = $('#tier-days').value ? Number($('#tier-days').value) : null; if (!confirm(`Ubah tier user menjadi ${tier}${days && tier !== 'FREE' ? ` selama ${days} hari` : ' (permanen)'}?`)) return; await send(`/owner/users/${id}/tier`, 'PATCH', { tier, days }); }
-    if (act === 'ban') { const reason = prompt('Alasan ban (wajib):'); if (!reason) return; await send(`/owner/users/${id}/ban`, 'POST', { reason }); }
-    if (act === 'unban') { if (!confirm('Unban user ini?')) return; await send(`/owner/users/${id}/unban`); }
-    if (act === 'approve') { if (!confirm('Approve user ini?')) return; await send(`/owner/users/${id}/approve`); }
-    if (act === 'revoke-key') { if (!confirm('Cabut API key ini? Aplikasi user akan langsung ditolak.')) return; await send(`/owner/users/${id}/keys/${btn.dataset.key}/revoke`); }
+    if (act === 'tier') { const tier = $('#tier-sel').value; const days = $('#tier-days').value ? Number($('#tier-days').value) : null; if (!ask(`Ganti tier user jadi ${tier}${days && tier !== 'FREE' ? ` selama ${days} hari` : ' (permanen)'}?`)) return; await send(`/owner/users/${id}/tier`, 'PATCH', { tier, days }); }
+    if (act === 'ban') { const reason = askText('Alasan ban (wajib diisi):'); if (!reason) return; await send(`/owner/users/${id}/ban`, 'POST', { reason }); }
+    if (act === 'unban') { if (!ask('Unban user ini?')) return; await send(`/owner/users/${id}/unban`); }
+    if (act === 'approve') { if (!ask('Approve user ini?')) return; await send(`/owner/users/${id}/approve`); }
+    if (act === 'revoke-key') { if (!ask('Cabut API key ini? Aplikasi user bakal langsung ditolak.')) return; await send(`/owner/users/${id}/keys/${btn.dataset.key}/revoke`); }
     if (act === 'delete') {
-      const typed = prompt(`Hapus permanen user beserta key, order, dan pembayarannya?\nKetik email user untuk konfirmasi:\n${btn.dataset.email}`);
-      if (typed !== btn.dataset.email) { if (typed !== null) alert('Email tidak cocok. Dibatalkan.'); return; }
+      const typed = askText(`Hapus permanen user ini plus key, order, dan pembayarannya?\nKetik email user buat konfirmasi:\n${btn.dataset.email}`);
+      if (typed !== btn.dataset.email) { if (typed !== null) say('Email-nya nggak cocok. Dibatalin.'); return; }
       await send(`/owner/users/${id}`, 'DELETE');
       $('#user-dialog').close(); return loaders.users();
     }
     await showUser(id);
     loaders.users();
-  } catch (e) { alert(e.message); }
+  } catch (e) { say(e.message); }
 }
 document.addEventListener('click', e => { const b = e.target.closest('button[data-act]'); if (b) userAction(b); });
 
@@ -309,7 +348,7 @@ const expiry = k => {
   const ms = Date.parse(k.expires_at) - Date.now();
   if (ms <= 0) return `<span class="error">kedaluwarsa ${when(k.expires_at)}</span>`;
   const h = Math.round(ms / 36e5);
-  return `aktif s/d ${when(k.expires_at)} <small>(${h < 48 ? h + ' jam' : Math.round(h / 24) + ' hari'} lagi)</small>`;
+  return `aktif sampai ${when(k.expires_at)} <small>(${h < 48 ? h + ' jam' : Math.round(h / 24) + ' hari'} lagi)</small>`;
 };
 document.querySelectorAll('select[name=duration],select[name=extend]').forEach(sel => sel.addEventListener('change', () => { sel.parentElement.querySelector('[name=days]').hidden = sel.value !== 'custom'; }));
 const KEY_KIND = { public: 'Public', private: 'Private', owner: 'Developer' };
@@ -325,21 +364,21 @@ $('#key-new').addEventListener('submit', async e => {
   e.preventDefault();
   const body = Object.fromEntries(new FormData(e.target));
   const access = body.access.split(/[\n,;]+/).map(v => v.trim()).filter(Boolean);
-  if (body.kind === 'private' && !access.length) return alert('Isi minimal 1 email / ID user untuk key private.');
+  if (body.kind === 'private' && !access.length) return say('Isi minimal 1 email / ID user buat key private.');
   body.access = access;
-  const dur = e.target.duration.selectedOptions[0].textContent + (body.duration === 'custom' ? ` (${body.days} hari)` : '');
-  const who = body.kind === 'private' ? 'akses: ' + access.join(', ') : body.kind === 'owner' ? 'hanya owner' : 'semua user';
-  if (!confirm(`Buat key ${KEY_KIND[body.kind]}${body.kind === 'owner' ? '' : ' tier ' + body.tier}, masa aktif ${dur} (${who})?`)) return;
+  const dur = body.duration === 'custom' ? tr(`${body.days} hari`) : e.target.duration.selectedOptions[0].textContent;
+  const who = body.kind === 'private' ? 'akses: ' + access.join(', ') : body.kind === 'owner' ? 'cuma developer' : 'semua user';
+  if (!ask(`Bikin key ${KEY_KIND[body.kind]}${body.kind === 'owner' ? '' : ' tier ' + body.tier}, masa aktif ${dur} (${who})?`)) return;
   try {
     const d = await send('/owner/keys', 'POST', body);
     const box = $('#key-made'); box.hidden = false;
-    box.innerHTML = `<p class="ok"><b>Key ${esc(KEY_KIND[d.record.visibility] || '')} dibuat</b>${d.record.tier ? ' · tier ' + esc(d.record.tier) : ''} · ${d.record.expires_at ? 'aktif s/d ' + when(d.record.expires_at) : 'tanpa batas'}${d.record.access?.length ? ' · akses: ' + d.record.access.map(u => esc(u.email)).join(', ') : ''}</p>
+    box.innerHTML = `<p class="ok"><b>${KEY_KIND[d.record.visibility] ? `Key ${esc(KEY_KIND[d.record.visibility])} udah dibuat` : 'Key udah dibuat'}</b>${d.record.tier ? ' · tier ' + esc(d.record.tier) : ''} · <span>${d.record.expires_at ? 'aktif sampai ' + when(d.record.expires_at) : 'tanpa batas'}</span>${d.record.access?.length ? ' · <span>akses: ' + d.record.access.map(u => esc(u.email)).join(', ') + '</span>' : ''}</p>
       <div class="row"><code id="key-made-value" style="word-break:break-all">${esc(d.key)}</code><button type="button" class="sm" id="key-made-copy">Salin</button></div>
-      <p class="muted"><small>Key hanya ditampilkan sekali ini. Simpan sekarang.</small></p>`;
+      <p class="muted"><small>Key cuma ditampilin sekali ini. Simpan sekarang ya.</small></p>`;
     $('#key-made-copy').onclick = ev => navigator.clipboard.writeText(d.key).then(() => { ev.target.textContent = 'Tersalin ✓'; });
     e.target.elements.name.value = ''; e.target.elements.custom_key.value = ''; e.target.elements.access.value = '';
     loaders.keys();
-  } catch (err) { alert(err.message); }
+  } catch (err) { say(err.message); }
 });
 let renewing = null;
 $('#key-renew').addEventListener('submit', async e => {
@@ -348,7 +387,7 @@ $('#key-renew').addEventListener('submit', async e => {
   if (e.target.name.value.trim()) body.name = e.target.name.value.trim();
   if (e.target.extend.value) { body.extend = e.target.extend.value; if (body.extend === 'custom') body.days = e.target.days.value; }
   if (e.target.tier.value) body.tier = e.target.tier.value;
-  try { await send(`/owner/keys/${encodeURIComponent(renewing)}`, 'PATCH', body); } catch (err) { alert(err.message); }
+  try { await send(`/owner/keys/${encodeURIComponent(renewing)}`, 'PATCH', body); } catch (err) { say(err.message); }
   loaders.keys();
 });
 function keyButtons(k) {
@@ -363,13 +402,14 @@ loaders.keys = async () => {
   try {
     // POST, so a pasted full key never lands in a URL.
     const d = await send('/owner/keys/search', 'POST', { q: f.get('q') || '', status: f.get('status') || '', kind: f.get('kind') || '' });
-    $('#keys-totals').textContent = `${num(d.totals.active)} key aktif dari ${num(d.totals.total)} total.` + (d.ownerKey === 'created' ? ' Developer key "Yannz2z" dibuat.' : d.ownerKey === 'converted' ? ' Key "Yannz2z" kamu sekarang jadi developer key.' : d.ownerKey === 'taken' ? ' ⚠ "Yannz2z" sudah dipakai key user lain — buat developer key dengan custom key berbeda.' : d.ownerKey === 'unavailable' ? ' ⚠ Jalankan migration 011 untuk developer key / public / private.' : '');
+    const ownerNote = d.ownerKey === 'created' ? 'Developer key "Yannz2z" udah dibuat.' : d.ownerKey === 'converted' ? 'Key "Yannz2z" kamu sekarang jadi developer key.' : d.ownerKey === 'taken' ? '⚠ "Yannz2z" udah dipakai key user lain — bikin developer key pakai custom key yang beda.' : d.ownerKey === 'unavailable' ? '⚠ Jalanin migration 011 dulu buat developer key / public / private.' : '';
+    $('#keys-totals').innerHTML = `<span>${num(d.totals.active)} key aktif dari ${num(d.totals.total)} total.</span>` + (ownerNote ? ` <span>${esc(ownerNote)}</span>` : '');
     $('#keys-data').innerHTML = d.keys.length ? `<table><tr><th>Key</th><th>Pemilik</th><th>Status</th><th>Dibuat / terakhir dipakai</th><th>Aksi</th></tr>${d.keys.map(k => `<tr${k.exact_match ? ' style="outline:2px solid var(--accent)"' : ''}>
-      <td><b>${esc(k.name)}</b> ${kindChip(k)}${k.custom ? ' ' + chip('custom') : ''}${k.exact_match ? ' ' + chip('cocok persis', 'ok') : ''}<br><code>${esc(k.key_prefix)}…</code><br>${k.visibility === 'owner' ? '<small>akses DEVELOPER</small>' : k.tier ? chip('tier ' + k.tier, 'warn') : '<small>tier ikut akun</small>'} <small>${expiry(k)}</small></td>
-      <td>${k.visibility === 'public' ? '<small>Semua user</small>' : k.visibility === 'owner' ? '<small>Hanya developer</small>' : k.visibility === 'private' ? (k.access.length ? k.access.map(u => `<small>${esc(u.email)}${u.publicId ? ' · ' + esc(u.publicId) : ''}</small>`).join('<br>') : '<small class="error">belum ada akses</small>') : `<button class="sm" type="button" data-act="detail" data-id="${esc(k.user_id)}">${esc(k.user_name || k.user_email)}</button><br><small>${esc(k.user_email)} · ${esc(k.user_tier)}${k.user_status !== 'active' ? ' · ' + esc(k.user_status) : ''}</small>`}</td>
+      <td><b data-no-i18n>${esc(k.name)}</b> ${kindChip(k)}${k.custom ? ' ' + chip('custom') : ''}${k.exact_match ? ' ' + chip('cocok persis', 'ok') : ''}<br><code>${esc(k.key_prefix)}…</code><br>${k.visibility === 'owner' ? '<small>akses DEVELOPER</small>' : k.tier ? chip('tier ' + k.tier, 'warn') : '<small>tier ikut akun</small>'} <small>${expiry(k)}</small></td>
+      <td>${k.visibility === 'public' ? '<small>Semua user</small>' : k.visibility === 'owner' ? '<small>Cuma developer</small>' : k.visibility === 'private' ? (k.access.length ? k.access.map(u => `<small data-no-i18n>${esc(u.email)}${u.publicId ? ' · ' + esc(u.publicId) : ''}</small>`).join('<br>') : '<small class="error">belum ada akses</small>') : `<button class="sm" type="button" data-act="detail" data-id="${esc(k.user_id)}" data-no-i18n>${esc(k.user_name || k.user_email)}</button><br><small data-no-i18n>${esc(k.user_email)} · ${esc(k.user_tier)}${k.user_status !== 'active' ? ' · ' + esc(k.user_status) : ''}</small>`}</td>
       <td>${chip(k.status === 'disabled' ? 'nonaktif' : k.status, k.status === 'active' ? 'ok' : k.status === 'disabled' ? 'warn' : '')}${k.revoked_at ? `<br><small>dicabut ${when(k.revoked_at)}</small>` : ''}</td>
       <td><small>${when(k.created_at)}<br>${k.last_used_at ? 'dipakai ' + when(k.last_used_at) : 'belum pernah dipakai'}</small></td>
-      <td>${keyButtons(k)}</td></tr>`).join('')}</table>` : '<p>Tidak ada API key yang cocok.</p>';
+      <td>${keyButtons(k)}</td></tr>`).join('')}</table>` : '<p>Nggak ada API key yang cocok.</p>';
   } catch (e) { fail('#keys-data', e); }
 };
 $('#key-filter').addEventListener('submit', e => { e.preventDefault(); loaders.keys(); });
@@ -385,22 +425,22 @@ $('#keys-data').addEventListener('click', async e => {
   }
   if (keyAct === 'access') return openAccess(key, label);
   if (keyAct === 'enable' || keyAct === 'disable') {
-    if (keyAct === 'disable' && !confirm(`Nonaktifkan key ${label}? Key ditolak sampai diaktifkan lagi.`)) return;
-    try { await send(`/owner/keys/${encodeURIComponent(key)}/${keyAct}`); } catch (err) { alert(err.message); }
+    if (keyAct === 'disable' && !ask(`Nonaktifkan key ${label}? Key bakal ditolak sampai diaktifin lagi.`)) return;
+    try { await send(`/owner/keys/${encodeURIComponent(key)}/${keyAct}`); } catch (err) { say(err.message); }
     return loaders.keys();
   }
   if (keyAct === 'regenerate') {
-    const custom = prompt(`Reset key ${label}\n\nKey lama langsung tidak berlaku. Isi custom key baru, atau kosongkan untuk dibuat otomatis:`, '');
+    const custom = askText(`Reset key ${label}\n\nKey lama langsung nggak berlaku. Isi custom key baru, atau kosongin biar dibikin otomatis:`, '');
     if (custom === null) return;
     try {
       const d = await send(`/owner/keys/${encodeURIComponent(key)}/regenerate`, 'POST', custom.trim() ? { custom_key: custom.trim() } : {});
       showSecret('Key baru', label, d.key);
-    } catch (err) { alert(err.message); }
+    } catch (err) { say(err.message); }
     return loaders.keys();
   }
-  const q = keyAct === 'revoke' ? `Cabut key ${label}? Key langsung berhenti berfungsi.` : `Hapus permanen key ${label}? Key langsung berhenti berfungsi dan tidak bisa dikembalikan.`;
-  if (!confirm(q)) return;
-  try { await send(`/owner/keys/${encodeURIComponent(key)}${keyAct === 'revoke' ? '/revoke' : ''}`, keyAct === 'revoke' ? 'POST' : 'DELETE'); } catch (err) { alert(err.message); }
+  const q = keyAct === 'revoke' ? `Cabut key ${label}? Key-nya langsung berhenti jalan.` : `Hapus permanen key ${label}? Key-nya langsung berhenti jalan dan nggak bisa dibalikin.`;
+  if (!ask(q)) return;
+  try { await send(`/owner/keys/${encodeURIComponent(key)}${keyAct === 'revoke' ? '/revoke' : ''}`, keyAct === 'revoke' ? 'POST' : 'DELETE'); } catch (err) { say(err.message); }
   loaders.keys();
 });
 
@@ -412,25 +452,25 @@ function showSecret(title, label, value) {
 }
 let accessKey = null;
 function renderAccess(list) {
-  $('#access-list').innerHTML = list.length ? `<table><tr><th>User</th><th>ID</th><th></th></tr>${list.map(u => `<tr><td>${esc(u.name || '')}<br><small>${esc(u.email)}</small></td><td><code>${esc(u.publicId || '—')}</code></td><td><button class="sm danger" type="button" data-access-remove="${esc(u.id)}">Hapus</button></td></tr>`).join('')}</table>` : '<p class="error">Belum ada user yang diberi akses — key ini tidak bisa dipakai siapa pun.</p>';
+  $('#access-list').innerHTML = list.length ? `<table><tr><th>User</th><th>ID</th><th></th></tr>${list.map(u => `<tr><td data-no-i18n>${esc(u.name || '')}<br><small>${esc(u.email)}</small></td><td><code>${esc(u.publicId || '—')}</code></td><td><button class="sm danger" type="button" data-access-remove="${esc(u.id)}">Hapus</button></td></tr>`).join('')}</table>` : '<p class="error">Belum ada user yang dikasih akses — key ini nggak bisa dipakai siapa pun.</p>';
 }
 async function openAccess(key, label) {
   accessKey = key; $('#access-label').textContent = label; $('#access-input').value = ''; $('#access-msg').textContent = '';
-  $('#access-list').textContent = 'Memuat…'; $('#access-dialog').showModal();
+  $('#access-list').textContent = 'Lagi dimuat…'; $('#access-dialog').showModal();
   try { renderAccess((await api(`/owner/keys/${encodeURIComponent(key)}/access`)).access); } catch (e) { $('#access-list').textContent = e.message; }
 }
 async function changeAccess(method) {
   const users = $('#access-input').value.split(/[\n,;]+/).map(v => v.trim()).filter(Boolean);
   if (!users.length) return ($('#access-msg').textContent = 'Isi email / ID user dulu.');
-  if (method === 'PUT' && !confirm('Reset akses? Semua akses lama dihapus dan diganti dengan daftar ini.')) return;
-  try { renderAccess((await send(`/owner/keys/${encodeURIComponent(accessKey)}/access`, method, { users })).access); $('#access-input').value = ''; $('#access-msg').textContent = method === 'PUT' ? 'Akses direset.' : 'Akses ditambahkan.'; loaders.keys(); }
+  if (method === 'PUT' && !ask('Reset akses? Semua akses lama dihapus terus diganti sama daftar ini.')) return;
+  try { renderAccess((await send(`/owner/keys/${encodeURIComponent(accessKey)}/access`, method, { users })).access); $('#access-input').value = ''; $('#access-msg').textContent = method === 'PUT' ? 'Akses direset.' : 'Akses udah ditambah.'; loaders.keys(); }
   catch (e) { $('#access-msg').textContent = e.message; }
 }
 $('#access-add').addEventListener('click', () => changeAccess('POST'));
 $('#access-reset').addEventListener('click', () => changeAccess('PUT'));
 $('#access-list').addEventListener('click', async e => {
   const id = e.target.dataset.accessRemove; if (!id) return;
-  if (!confirm('Hapus akses user ini?')) return;
+  if (!ask('Hapus akses user ini?')) return;
   try { renderAccess((await send(`/owner/keys/${encodeURIComponent(accessKey)}/access/${encodeURIComponent(id)}`, 'DELETE')).access); loaders.keys(); }
   catch (err) { $('#access-msg').textContent = err.message; }
 });
@@ -438,38 +478,44 @@ $('#access-list').addEventListener('click', async e => {
 // ---------- endpoints
 let selftestResults = [];
 $('#selftest-btn').addEventListener('click', async () => {
-  if (!confirm('Uji semua endpoint theresav ke server upstream sekarang? Ini memakai kuota theresav kamu.')) return;
-  const btn = $('#selftest-btn'); btn.disabled = true; btn.textContent = 'Menguji…';
-  $('#selftest-data').innerHTML = '<p class="muted">Menguji… ini bisa 1–2 menit.</p>';
+  if (!ask('Tes semua endpoint theresav ke server upstream sekarang? Ini bakal pakai kuota theresav kamu.')) return;
+  const btn = $('#selftest-btn'); btn.disabled = true; btn.textContent = 'Lagi ngetes…';
+  $('#selftest-data').innerHTML = '<p class="muted">Lagi ngetes… bisa 1–2 menit.</p>';
   try {
     const d = await send('/owner/api/selftest', 'POST', {});
     selftestResults = d.results;
-    const ic = { ok: ['OK', 'ok'], error: ['ERROR', 'bad'], manual: ['uji manual', 'warn'], not_configured: ['belum diatur', 'warn'] };
-    const sum = Object.entries(d.summary).map(([k, v]) => `${esc((ic[k] || [k])[0])}: ${v}`).join(' · ');
+    const ic = { ok: ['OK', 'ok'], error: ['ERROR', 'bad'], manual: ['tes manual', 'warn'], not_configured: ['belum diatur', 'warn'] };
+    const sum = Object.entries(d.summary).map(([k, v]) => `<span>${esc((ic[k] || [k])[0])}: ${esc(v)}</span>`).join(' · ');
     const errs = d.results.filter(r => r.result === 'error' && r.id && r.endpointStatus === 'active');
-    $('#selftest-data').innerHTML = `<p class="muted">${esc(sum)}</p>` +
-      (errs.length ? `<div class="row" style="margin:4px 0 10px"><button type="button" class="sm danger" id="disable-failing">Nonaktifkan ${errs.length} endpoint error</button></div>` : '') +
+    $('#selftest-data').innerHTML = `<p class="muted">${sum}</p>` +
+      (errs.length ? `<div class="row" style="margin:4px 0 10px"><button type="button" class="sm danger" id="disable-failing">Nonaktifkan ${errs.length} endpoint yang error</button></div>` : '') +
       `<table><tr><th>Endpoint</th><th>Hasil</th><th>Detail</th></tr>${d.results.map(r => { const c = ic[r.result] || [r.result, '']; return `<tr>
-        <td><b>${esc(r.name)}</b><br><small>${esc(r.category)} · ${esc(r.path)}</small></td>
+        <td data-no-i18n><b>${esc(r.name)}</b><br><small>${esc(r.category)} · ${esc(r.path)}</small></td>
         <td>${chip(c[0], c[1])}${r.endpointStatus === 'disabled' ? ' ' + chip('nonaktif', 'warn') : ''}</td>
-        <td><small>${r.result === 'ok' ? (r.ms || '') + ' ms' : r.result === 'manual' ? 'perlu link/foto asli — uji di Sandbox' : r.result === 'error' ? esc(String(r.error || '').slice(0, 120)) + (r.status ? ` (${r.status})` : '') : 'THERESAV_API_KEY belum diatur'}</small></td></tr>`; }).join('')}</table>`;
+        <td><small${r.result === 'error' ? ' data-no-i18n' : ''}>${r.result === 'ok' ? (r.ms || '') + ' ms' : r.result === 'manual' ? 'butuh link/foto asli — tes di Sandbox' : r.result === 'error' ? esc(String(r.error || '').slice(0, 120)) + (r.status ? ` (${r.status})` : '') : 'THERESAV_API_KEY belum diatur'}</small></td></tr>`; }).join('')}</table>`;
     const df = $('#disable-failing');
     if (df) df.addEventListener('click', async () => {
-      if (!confirm(`Nonaktifkan ${errs.length} endpoint yang error? Bisa diaktifkan lagi nanti dari daftar di bawah.`)) return;
-      try { const r = await send('/owner/api/endpoints/bulk-status', 'POST', { ids: errs.map(e => e.id), status: 'disabled' }); alert(`${r.changed} endpoint dinonaktifkan.`); loaders.endpoints(); df.disabled = true; }
-      catch (err) { alert(err.message); }
+      if (!ask(`Nonaktifkan ${errs.length} endpoint yang error? Nanti bisa diaktifin lagi dari daftar di bawah.`)) return;
+      try { const r = await send('/owner/api/endpoints/bulk-status', 'POST', { ids: errs.map(e => e.id), status: 'disabled' }); say(`${r.changed} endpoint udah dinonaktifin.`); loaders.endpoints(); df.disabled = true; }
+      catch (err) { say(err.message); }
     });
   } catch (e) { $('#selftest-data').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
-  finally { btn.disabled = false; btn.textContent = 'Uji endpoint theresav'; }
+  finally { btn.disabled = false; btn.textContent = 'Tes endpoint theresav'; }
 });
 
+// Catalog label: new (green), hot (red), recommend (yellow); the emoji is the same size as the text.
+function epBadge(b) {
+  const m = { new: ['🍃', 'New'], hot: ['🔥', 'Hot'], recommend: ['👍', 'Recommend'] }[b];
+  return m ? `<span class="ep-badge ep-badge--${b}"><span class="ep-badge-ic" aria-hidden="true">${m[0]}</span>${m[1]}</span>` : '';
+}
 loaders.endpoints = async () => {
   try {
     const d = await api('/owner/api/endpoints');
-    $('#endpoints-data').innerHTML = `<table><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Status</th><th>Aksi</th></tr>${d.endpoints.map(e => `<tr>
-      <td><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></td>
-      <td>${e.handler_loaded ? chip('deployed', 'ok') : e.plugin ? chip('menunggu deploy', 'warn') : chip('metadata only', 'warn')}</td>
+    $('#endpoints-data').innerHTML = `<table><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Label</th><th>Status</th><th>Aksi</th></tr>${d.endpoints.map(e => `<tr>
+      <td data-no-i18n><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></td>
+      <td>${e.handler_loaded ? chip('deployed', 'ok') : e.plugin ? chip('nunggu deploy', 'warn') : chip('metadata only', 'warn')}</td>
       <td><select data-ep-tier="${esc(e.id)}">${['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'].map(t => `<option value="${t}" ${t === e.minimum_tier ? 'selected' : ''}>${tierName(t)}</option>`).join('')}</select></td>
+      <td><select data-ep-badge="${esc(e.id)}" aria-label="Label endpoint">${[['', 'Tanpa label'], ['new', '🍃 New'], ['hot', '🔥 Hot'], ['recommend', '👍 Recommend']].map(([v, l]) => `<option value="${v}" ${v === (e.badge || '') ? 'selected' : ''}>${l}</option>`).join('')}</select> ${epBadge(e.badge)}</td>
       <td>${chip(e.status, e.status === 'active' ? 'ok' : 'bad')} ${e.locked ? chip('locked', 'bad') : chip('open', 'ok')}</td>
       <td><button class="sm" data-ep="${e.locked ? 'unlock' : 'lock'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.locked ? 'Unlock' : 'Lock'}</button>
           <button class="sm" data-ep="status" data-status="${e.status === 'active' ? 'disabled' : 'active'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.status === 'active' ? 'Disable' : 'Enable'}</button>
@@ -477,26 +523,31 @@ loaders.endpoints = async () => {
   } catch (e) { fail('#endpoints-data', e); }
 };
 $('#endpoints-data').addEventListener('change', async e => {
+  const badgeId = e.target.dataset.epBadge;
+  if (badgeId) {
+    try { await send(`/owner/api/endpoints/${badgeId}`, 'PATCH', { badge: e.target.value || null }); } catch (err) { say(err.message); }
+    return loaders.endpoints();
+  }
   const id = e.target.dataset.epTier; if (!id) return;
-  if (!confirm(`Ubah tier minimum menjadi ${e.target.value}?`)) return loaders.endpoints();
-  try { await send(`/owner/api/endpoints/${id}`, 'PATCH', { minimum_tier: e.target.value }); } catch (err) { alert(err.message); }
+  if (!ask(`Ganti tier minimum jadi ${e.target.value}?`)) return loaders.endpoints();
+  try { await send(`/owner/api/endpoints/${id}`, 'PATCH', { minimum_tier: e.target.value }); } catch (err) { say(err.message); }
   loaders.endpoints();
 });
 $('#endpoints-data').addEventListener('click', async e => {
   const b = e.target.closest('button[data-ep]'); if (!b) return;
   const { ep, id, path } = b.dataset;
-  const q = { lock: `Kunci ${path}? Semua user non-owner akan ditolak (ENDPOINT_LOCKED).`, unlock: `Buka kunci ${path}?`, status: `${b.dataset.status === 'disabled' ? 'Nonaktifkan' : 'Aktifkan'} ${path}?`, delete: `Hapus metadata ${path}?` }[ep];
-  if (!confirm(q)) return;
+  const q = { lock: `Kunci ${path}? Semua user selain developer bakal ditolak (ENDPOINT_LOCKED).`, unlock: `Buka kunci ${path}?`, status: `${b.dataset.status === 'disabled' ? 'Nonaktifkan' : 'Aktifkan'} ${path}?`, delete: `Hapus metadata ${path}?` }[ep];
+  if (!ask(q)) return;
   try {
     if (ep === 'lock' || ep === 'unlock') await send(`/owner/api/endpoints/${id}/${ep}`);
     if (ep === 'status') await send(`/owner/api/endpoints/${id}`, 'PATCH', { status: b.dataset.status });
     if (ep === 'delete') await send(`/owner/api/endpoints/${id}`, 'DELETE');
-  } catch (err) { alert(err.message); }
+  } catch (err) { say(err.message); }
   loaders.endpoints();
 });
 $('#ep-file').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
-  if (f.size > 200 * 1024) { alert('Script maksimal 200 KB.'); e.target.value = ''; return; }
+  if (f.size > 200 * 1024) { say('Script maksimal 200 KB ya.'); e.target.value = ''; return; }
   $('#ep-code').value = await f.text();
   $('#ep-file-info').textContent = `${f.name} · ${(f.size / 1024).toFixed(1)} KB dimuat`;
 });
@@ -510,14 +561,14 @@ $('#ep-form [name=path]').addEventListener('input', e => { e.target.dataset.touc
 $('#ep-form').addEventListener('submit', async e => {
   e.preventDefault();
   const body = Object.fromEntries(new FormData(e.target));
-  if (!confirm(`Commit script ke plugin/ dan deploy ${body.path} (tier ${body.minimum_tier})?`)) return;
-  const btn = $('#ep-submit'); btn.disabled = true; btn.textContent = 'Meng-commit…';
+  if (!ask(`Commit script ke plugin/ dan deploy ${body.path} (tier ${body.minimum_tier})?`)) return;
+  const btn = $('#ep-submit'); btn.disabled = true; btn.textContent = 'Lagi commit…';
   try {
     const d = await send('/owner/api/endpoints', 'POST', body);
-    alert(d.message || d.warning || 'Endpoint tersimpan.');
+    say(d.message || d.warning || 'Endpoint udah disimpan.');
     e.target.reset(); delete $('#ep-form [name=path]').dataset.touched;
     $('#ep-file-info').textContent = 'Maks 200 KB. File langsung di-commit ke folder plugin/.';
-  } catch (err) { alert(err.message); }
+  } catch (err) { say(err.message); }
   btn.disabled = false; btn.textContent = 'Tambah & deploy';
   loaders.endpoints();
 });
@@ -527,21 +578,21 @@ loaders.payments = async () => {
   try {
     const d = await api('/owner/payments?status=' + encodeURIComponent($('#pay-status').value));
     $('#payments-data').innerHTML = d.payments.length ? `<table><tr><th>Order / user</th><th>Jumlah / metode</th><th>Status</th><th>Aksi</th></tr>${d.payments.map(p => `<tr>
-      <td><b>${esc(p.order_code)}</b> · ${esc(p.tier)}<br>${esc(p.name)} <small>${esc(p.email)}</small><br><small>${when(p.created_at)}</small></td>
+      <td data-no-i18n><b>${esc(p.order_code)}</b> · ${esc(p.tier)}<br>${esc(p.name)} <small>${esc(p.email)}</small><br><small>${when(p.created_at)}</small></td>
       <td>Rp${num(p.amount)} · ${num(p.duration_days)} hari<br>${esc(p.provider === 'pakasir' ? 'QRIS gateway' : 'manual')} · ${esc(p.payment_method)}
-        ${p.has_proof ? `<br><a href="/owner/payments/${esc(p.id)}/proof" target="_blank" rel="noopener"><img src="/owner/payments/${esc(p.id)}/proof" alt="Bukti ${esc(p.order_code)}" loading="lazy" style="max-width:120px;max-height:120px;border-radius:8px;margin-top:6px;display:block"></a>` : ''}
-        ${p.proof_url ? `<br><a href="${esc(p.proof_url)}" target="_blank" rel="noopener noreferrer">Lihat bukti (URL)</a> <small>(link dari user — periksa sebelum approve)</small>` : ''}
+        ${p.has_proof ? `<br><a href="/owner/payments/${esc(p.id)}/proof" target="_blank" rel="noopener"><img src="/owner/payments/${esc(p.id)}/proof" alt="Bukti bayar ${esc(p.order_code)}" loading="lazy" style="max-width:120px;max-height:120px;border-radius:8px;margin-top:6px;display:block"></a>` : ''}
+        ${p.proof_url ? `<br><a href="${esc(p.proof_url)}" target="_blank" rel="noopener noreferrer">Lihat bukti (URL)</a> <small>(link dari user — cek dulu sebelum approve)</small>` : ''}
         ${p.owner_notified ? `<br><small>dikirim ke ${esc(p.owner_notified)}</small>` : ''}</td>
       <td>${chip(p.status, p.status === 'paid' ? 'ok' : p.status === 'pending' ? 'warn' : '')}<br><small>order: ${esc(p.order_status)}</small></td>
-      <td>${p.status === 'pending' && p.order_status === 'pending' ? `<button class="sm primary" data-pay="approve" data-id="${esc(p.id)}" data-desc="${esc(p.order_code)} (${esc(p.tier)} ${num(p.duration_days)} hari, Rp${num(p.amount)}) untuk ${esc(p.email)}${p.provider === 'pakasir' ? '\nIni pembayaran QRIS gateway: cek dulu di dashboard Pakasir.' : ''}">Approve</button> <button class="sm danger" data-pay="reject" data-id="${esc(p.id)}" data-desc="${esc(p.order_code)}">Reject</button>` : '—'}</td></tr>`).join('')}</table>` : '<p>Tidak ada pembayaran.</p>';
+      <td>${p.status === 'pending' && p.order_status === 'pending' ? `<button class="sm primary" data-pay="approve" data-id="${esc(p.id)}" data-desc="${esc(p.order_code)} (${esc(p.tier)} ${num(p.duration_days)} hari, Rp${num(p.amount)}) buat ${esc(p.email)}${p.provider === 'pakasir' ? '\nIni pembayaran QRIS gateway: cek dulu di dashboard Pakasir.' : ''}">Approve</button> <button class="sm danger" data-pay="reject" data-id="${esc(p.id)}" data-desc="${esc(p.order_code)}">Reject</button>` : '—'}</td></tr>`).join('')}</table>` : '<p>Nggak ada pembayaran.</p>';
   } catch (e) { fail('#payments-data', e); }
 };
 $('#pay-status').addEventListener('change', () => loaders.payments());
 $('#payments-data').addEventListener('click', async e => {
   const b = e.target.closest('button[data-pay]'); if (!b) return;
   const approve = b.dataset.pay === 'approve';
-  if (!confirm(approve ? `Approve pembayaran ${b.dataset.desc}?\nTier user akan langsung naik. Pastikan dana sudah benar-benar masuk.` : `Tolak pembayaran ${b.dataset.desc}?`)) return;
-  try { await send(`/owner/payments/${b.dataset.id}/${b.dataset.pay}`); } catch (err) { alert(err.message); }
+  if (!ask(approve ? `Approve pembayaran ${b.dataset.desc}?\nTier user bakal langsung naik. Pastiin dananya beneran udah masuk.` : `Tolak pembayaran ${b.dataset.desc}?`)) return;
+  try { await send(`/owner/payments/${b.dataset.id}/${b.dataset.pay}`); } catch (err) { say(err.message); }
   loaders.payments();
 });
 
@@ -552,19 +603,19 @@ loaders.server = async () => {
     $('#maint').checked = settings.maintenance_enabled; $('#maint-msg').value = settings.maintenance_message || '';
     $('#dana-number').value = settings.payment_dana_number || ''; $('#dana-name').value = settings.payment_dana_name || '';
     $('#gopay-number').value = settings.payment_gopay_number || ''; $('#gopay-name').value = settings.payment_gopay_name || '';
-    $('#notify-state').textContent = 'Bukti pembayaran manual tampil di tab Payments. Setelah upload, pembeli diberi tombol chat WhatsApp' + (notifications?.telegram?.link ? ' dan Telegram' : '') + ' ke kamu untuk konfirmasi.';
+    $('#notify-state').textContent = (notifications?.telegram?.link ? 'Bukti pembayaran manual muncul di tab Payments. Habis upload, pembeli dikasih tombol chat WhatsApp dan Telegram ke kamu buat konfirmasi.' : 'Bukti pembayaran manual muncul di tab Payments. Habis upload, pembeli dikasih tombol chat WhatsApp ke kamu buat konfirmasi.');
   } catch (e) { $('#server-msg').textContent = e.message; }
 };
 $('#save-pay').addEventListener('click', async () => {
   try {
     const d = await send('/owner/server/payments', 'PATCH', { payment_dana_number: $('#dana-number').value, payment_dana_name: $('#dana-name').value, payment_gopay_number: $('#gopay-number').value, payment_gopay_name: $('#gopay-name').value });
-    $('#pay-msg').textContent = `Tersimpan. DANA ${d.settings.payment_dana_number ? 'aktif' : 'disembunyikan'}, GoPay ${d.settings.payment_gopay_number ? 'aktif' : 'disembunyikan'}.`;
+    $('#pay-msg').textContent = `Udah disimpan. DANA ${d.settings.payment_dana_number ? 'aktif' : 'disembunyikan'}, GoPay ${d.settings.payment_gopay_number ? 'aktif' : 'disembunyikan'}.`;
   } catch (e) { $('#pay-msg').textContent = e.message; }
 });
 $('#save-server').addEventListener('click', async () => {
   const enabled = $('#maint').checked;
-  if (!confirm(enabled ? 'Aktifkan Maintenance Info Website? Seluruh website ditutup untuk semua user kecuali developer, dan user tidak bisa login.' : 'Matikan maintenance? Website kembali normal.')) return;
-  try { const d = await send('/owner/server', 'PATCH', { maintenance_enabled: enabled, maintenance_message: $('#maint-msg').value }); $('#server-msg').textContent = `Tersimpan: Maintenance Info Website ${d.settings.maintenance_enabled ? 'ON' : 'OFF'}.`; }
+  if (!ask(enabled ? 'Nyalain Maintenance Info Website? Seluruh website ditutup buat semua user kecuali developer, dan user nggak bisa login.' : 'Matiin maintenance? Website balik normal.')) return;
+  try { const d = await send('/owner/server', 'PATCH', { maintenance_enabled: enabled, maintenance_message: $('#maint-msg').value }); $('#server-msg').textContent = `Udah disimpan: Maintenance Info Website ${d.settings.maintenance_enabled ? 'ON' : 'OFF'}.`; }
   catch (e) { $('#server-msg').textContent = e.message; }
 });
 
@@ -572,11 +623,11 @@ $('#save-server').addEventListener('click', async () => {
 $('#reset-form').addEventListener('submit', async e => {
   e.preventDefault();
   const body = Object.fromEntries(new FormData(e.target));
-  if (!confirm(`Reset sandi ${body.user}? User akan dikeluarkan dari semua perangkat.`)) return;
+  if (!ask(`Reset sandi ${body.user}? User-nya bakal dikeluarin dari semua perangkat.`)) return;
   const box = $('#reset-msg');
   try {
     const d = await send('/owner/users/reset-password', 'POST', body);
-    box.innerHTML = `<p><b>${esc(d.message)}</b> (${esc(d.user.email)})</p>` + (d.password ? `<div class="row"><code id="reset-pass">${esc(d.password)}</code><button type="button" class="sm" id="reset-copy">Salin</button></div><p class="muted"><small>Sandi ini hanya ditampilkan sekali. Kirim ke user lewat jalur aman dan minta dia menggantinya di Profile.</small></p>` : '');
+    box.innerHTML = `<p><b>${esc(d.message)}</b> <span data-no-i18n>(${esc(d.user.email)})</span></p>` + (d.password ? `<div class="row"><code id="reset-pass">${esc(d.password)}</code><button type="button" class="sm" id="reset-copy">Salin</button></div><p class="muted"><small>Sandi ini cuma ditampilin sekali. Kirim ke user lewat jalur yang aman, terus minta dia ganti di Profile.</small></p>` : '');
     if (d.password) $('#reset-copy').onclick = ev => navigator.clipboard.writeText(d.password).then(() => { ev.target.textContent = 'Tersalin ✓'; });
     e.target.reset();
   } catch (err) { box.innerHTML = `<p class="error">${esc(err.message)}</p>`; }
@@ -592,9 +643,9 @@ loaders.activity = async () => {
     $('#activity-data').innerHTML = d.activity.length ? `<table><tr><th>Waktu</th><th>Jenis</th><th>User</th><th>Apa</th><th>Detail</th></tr>${d.activity.map(a => `<tr>
       <td><small>${when(a.created_at)}</small></td>
       <td>${chip(KIND_LABEL[a.kind] || a.kind, a.kind === 'api' ? 'ok' : a.kind === 'page' ? '' : 'warn')}</td>
-      <td>${a.user_id ? `<button class="sm" type="button" data-act="detail" data-id="${esc(a.user_id)}">${esc(a.name || a.email)}</button><br><small>${esc(a.email || '')}</small>` : '<small>—</small>'}</td>
+      <td data-no-i18n>${a.user_id ? `<button class="sm" type="button" data-act="detail" data-id="${esc(a.user_id)}">${esc(a.name || a.email)}</button><br><small>${esc(a.email || '')}</small>` : '<small>—</small>'}</td>
       <td><code>${esc(a.what)}</code>${a.status ? ' ' + chip(String(a.status), a.status < 400 ? 'ok' : 'bad') : ''}${a.duration_ms !== null && a.duration_ms !== undefined ? ` <small>${num(a.duration_ms)} ms</small>` : ''}</td>
-      <td><small>${a.metadata ? esc(JSON.stringify(a.metadata)).slice(0, 160) : ''}${a.target_type ? `<br>${esc(a.target_type)} ${esc(a.target_id || '')}` : ''}${a.ip_address ? `<br>IP ${esc(a.ip_address)}` : ''}</small></td></tr>`).join('')}</table>` : '<p>Belum ada aktivitas.</p>';
+      <td data-no-i18n><small>${a.metadata ? esc(JSON.stringify(a.metadata)).slice(0, 160) : ''}${a.target_type ? `<br>${esc(a.target_type)} ${esc(a.target_id || '')}` : ''}${a.ip_address ? `<br>IP ${esc(a.ip_address)}` : ''}</small></td></tr>`).join('')}</table>` : '<p>Belum ada aktivitas.</p>';
   } catch (e) { fail('#activity-data', e); }
 };
 $('#activity-filter').addEventListener('submit', e => { e.preventDefault(); loaders.activity(); });
@@ -605,10 +656,50 @@ $('#activity-live').addEventListener('change', e => { clearInterval(activityTime
 loaders.audit = async () => {
   try {
     const d = await api('/owner/audit?action=' + encodeURIComponent($('#audit-action').value.trim()));
-    $('#audit-data').innerHTML = d.logs.length ? `<table><tr><th>Waktu</th><th>Aksi</th><th>Pelaku</th><th>Target</th><th>Detail</th></tr>${d.logs.map(l => `<tr><td>${when(l.created_at)}</td><td>${chip(l.action)}</td><td>${esc(l.actor_email || 'system')}</td><td><small>${esc(l.target_type)} ${esc(l.target_id)}</small></td><td><pre>${esc(JSON.stringify(l.metadata))}</pre><small>${esc(l.ip_address)}</small></td></tr>`).join('')}</table>` : '<p>Tidak ada log.</p>';
+    $('#audit-data').innerHTML = d.logs.length ? `<table><tr><th>Waktu</th><th>Aksi</th><th>Pelaku</th><th>Target</th><th>Detail</th></tr>${d.logs.map(l => `<tr><td>${when(l.created_at)}</td><td>${chip(l.action)}</td><td data-no-i18n>${esc(l.actor_email || 'system')}</td><td data-no-i18n><small>${esc(l.target_type)} ${esc(l.target_id)}</small></td><td data-no-i18n><pre>${esc(JSON.stringify(l.metadata))}</pre><small>${esc(l.ip_address)}</small></td></tr>`).join('')}</table>` : '<p>Nggak ada log.</p>';
   } catch (e) { fail('#audit-data', e); }
 };
 $('#audit-load').addEventListener('click', () => loaders.audit());
+
+// ---------- backup
+loaders.backup = async () => {
+  try {
+    const d = await api('/owner/backup/status');
+    const ok = (v, yes, no) => `<li>${v ? '✅' : '⚠️'} ${v ? yes : no}</li>`;
+    $('#backup-status').innerHTML = `<ul class="backup-checks">${[
+      ok(d.email.configured && d.email.to, `Email aktif, backup dikirim ke <b data-no-i18n>${esc(d.email.to)}</b>`, d.email.to ? 'Email belum aktif: isi <code>EMAIL_FROM</code> + <code>SMTP_HOST/SMTP_USER/SMTP_PASS</code> (Gmail App Password) atau <code>RESEND_API_KEY</code> di Vercel.' : 'Isi <code>OWNER_EMAIL</code> di Vercel.'),
+      ok(d.daily.enabled, 'Backup otomatis tiap hari jam 02.00 WIB nyala', 'Backup otomatis harian belum nyala: isi <code>CRON_SECRET</code> (teks acak bebas) di Vercel terus redeploy.'),
+      ok(d.github.token, `File web diambil dari GitHub <code>${esc(d.github.repo)}</code> (${esc(d.github.branch)})`, `Backup file web butuh <code>GITHUB_TOKEN</code> kalau repo <code>${esc(d.github.repo)}</code> private.`)
+    ].join('')}</ul>`;
+  } catch (e) { fail('#backup-status', e); }
+};
+document.querySelectorAll('[data-backup]').forEach(btn => btn.addEventListener('click', async () => {
+  const kind = btn.dataset.backup;
+  const msg = $('#backup-msg');
+  if (kind === 'web') { location.href = '/owner/backup/web'; return; }
+  // Put back the Indonesian label (not the translated text) so the translation can redo it.
+  btn.disabled = true; const label = { database: 'Unduh .sql', json: 'Unduh .json' }[kind] || btn.textContent; btn.textContent = 'Lagi dibuat…'; msg.textContent = '';
+  try {
+    const r = await fetch(`/owner/backup/${kind}`, { credentials: 'same-origin' });
+    if (!r.ok) { const d = await r.json().catch(() => ({})); throw Error(d.message || `Backup gagal (${r.status}).`); }
+    const name = (r.headers.get('content-disposition') || '').match(/filename="([^"]+)"/)?.[1] || `backup.${kind === 'json' ? 'json' : 'sql'}`;
+    const url = URL.createObjectURL(await r.blob());
+    const a = Object.assign(document.createElement('a'), { href: url, download: name });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    msg.innerHTML = `<span class="ok">${esc(name)} udah diunduh.</span>`;
+  } catch (e) { msg.innerHTML = `<span class="error">${esc(e.message)}</span>`; }
+  finally { btn.disabled = false; btn.textContent = label; }
+}));
+$('#backup-email').addEventListener('click', async () => {
+  const btn = $('#backup-email'), msg = $('#backup-msg');
+  btn.disabled = true; msg.textContent = 'Lagi bikin backup & ngirim email… (bisa sampai semenit)';
+  try {
+    const d = await send('/owner/backup/email');
+    msg.innerHTML = `<span class="ok">Terkirim ke ${esc(d.to)}.</span><ul class="backup-checks">${d.parts.map(p => `<li>${p.attached ? '✅' : '⚠️'} ${esc(p.label)}: ${p.attached ? `${esc(p.filename)} (${(p.size / 1048576).toFixed(2)} MB)` : esc(p.error)}</li>`).join('')}</ul>`;
+  } catch (e) { msg.innerHTML = `<span class="error">${esc(e.message)}</span>`; }
+  finally { btn.disabled = false; }
+});
 
 loaded.add('status');
 loaders.status();

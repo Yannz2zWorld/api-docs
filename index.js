@@ -39,7 +39,7 @@ const AUTH_SECRET = process.env.AUTH_SECRET || '';
 
 function requireAuthConfig() {
   if (!GOOGLE_CLIENT_ID || !AUTH_SECRET) {
-    throw new Error('Google OAuth belum dikonfigurasi. Isi GOOGLE_CLIENT_ID dan AUTH_SECRET di environment variables.');
+    throw new Error('Google OAuth belum diatur. Isi GOOGLE_CLIENT_ID dan AUTH_SECRET di environment variables.');
   }
 }
 
@@ -108,7 +108,7 @@ async function authRequired(req, res, next) {
     return next();
   } catch (err) {
     console.error('Authentication database check failed:', err.code || 'DATABASE_ERROR');
-    return res.status(503).send('Layanan akun sementara tidak tersedia. Silakan coba lagi.');
+    return res.status(503).send('Layanan akun lagi nggak tersedia. Coba lagi bentar ya.');
   }
 }
 // Several domains can serve the site at once (CORS_ORIGINS lists them). The Google redirect flow
@@ -162,14 +162,14 @@ const limiter = rateLimit({
   message: {
     creator: settings.creatorName || "YannAjah",
     status: false,
-    message: "Terlalu banyak permintaan dari IP Anda, silakan coba lagi nanti."
+    message: "Kebanyakan request dari IP kamu. Coba lagi nanti ya."
   },
   standardHeaders: true,
   legacyHeaders: false,
   validate: { trustProxy: false }
 });
 app.use(limiter);
-const authLimiter=rateLimit({windowMs:15*60*1000,max:Number(process.env.AUTH_RATE_LIMIT_PER_15MIN)||20,standardHeaders:true,legacyHeaders:false,message:{success:false,error:'AUTH_RATE_LIMIT',message:'Terlalu banyak percobaan autentikasi. Coba lagi nanti.'}});
+const authLimiter=rateLimit({windowMs:15*60*1000,max:Number(process.env.AUTH_RATE_LIMIT_PER_15MIN)||20,standardHeaders:true,legacyHeaders:false,message:{success:false,error:'AUTH_RATE_LIMIT',message:'Kebanyakan percobaan login. Coba lagi nanti ya.'}});
 app.use(['/auth/google','/auth/google/callback','/auth/google/credential','/auth/login','/auth/register','/auth/email/verify','/auth/email/resend','/auth/password/forgot','/auth/password/reset'],authLimiter);
 
 // Shared stylesheet for the account pages (explicit route so the Vercel bundle includes it).
@@ -191,6 +191,15 @@ app.get('/assets/site-music.mp3', (req, res) => {
 app.get('/assets/music.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'music.js'));
+});
+// Website translation (views/i18n.js) and its English dictionary.
+app.get('/assets/i18n.js', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'i18n.js'));
+});
+app.get('/assets/i18n-en.json', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.type('application/json').sendFile(path.join(__dirname, 'views', 'i18n-en.json'));
 });
 app.get('/assets/select.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
@@ -388,7 +397,7 @@ app.get('/api/site-music', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   if (!siteMusic.enabled()) return res.json({ status: true, enabled: false });
   const m = await siteMusic.resolve();
-  if (!m) return res.status(502).json({ status: false, enabled: true, error: 'MUSIC_UNAVAILABLE', message: 'Lagu sedang tidak bisa dimuat.' });
+  if (!m) return res.status(502).json({ status: false, enabled: true, error: 'MUSIC_UNAVAILABLE', message: 'Lagunya lagi nggak bisa dimuat.' });
   return res.json({ status: true, enabled: true, title: m.title, author: m.author, src: m.local ? m.audio : '/api/site-music/audio' });
 });
 app.get('/api/site-music/audio', async (req, res) => {
@@ -449,15 +458,15 @@ async function resolveIdentity(req) {
   if (presented) {
     const clientIp = (req.ip || '').replace(/^::ffff:/, '') || null;
     const key = await apiKeyService.findKey(presented, clientIp);
-    if (key?.throttled) return { error: [429, 'TOO_MANY_INVALID_KEYS', 'Terlalu banyak API key salah dari jaringan ini. Coba lagi dalam 15 menit.'] };
+    if (key?.throttled) return { error: [429, 'TOO_MANY_INVALID_KEYS', 'Kebanyakan API key salah dari jaringan ini. Coba lagi 15 menit lagi ya.'] };
     if (!key) {
       await apiKeyService.recordInvalidKey(clientIp);
-      return { error: [401, 'INVALID_API_KEY', 'API key tidak valid.'] };
+      return { error: [401, 'INVALID_API_KEY', 'API key-nya nggak valid.'] };
     }
-    if (key.key_status === 'disabled') return { error: [403, 'API_KEY_DISABLED', 'API key ini sedang dinonaktifkan oleh developer.'] };
-    if (key.key_status !== 'active') return { error: [401, 'API_KEY_REVOKED', 'API key ini sudah dicabut.'] };
-    if (key.key_expires_at && new Date(key.key_expires_at) <= new Date()) return { error: [401, 'API_KEY_EXPIRED', 'Masa aktif API key ini sudah habis. Minta developer memperpanjangnya.', { expiredAt: new Date(key.key_expires_at).toISOString() }] };
-    if (key.user_status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun tidak aktif.'] };
+    if (key.key_status === 'disabled') return { error: [403, 'API_KEY_DISABLED', 'API key ini lagi dinonaktifkan developer.'] };
+    if (key.key_status !== 'active') return { error: [401, 'API_KEY_REVOKED', 'API key ini udah dicabut.'] };
+    if (key.key_expires_at && new Date(key.key_expires_at) <= new Date()) return { error: [401, 'API_KEY_EXPIRED', 'Masa aktif API key ini udah habis. Minta developer buat perpanjang ya.', { expiredAt: new Date(key.key_expires_at).toISOString() }] };
+    if (key.user_status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun kamu lagi nggak aktif.'] };
     const kind = key.key_visibility;
     if (kind) {
       // Owner-managed keys. Private and owner keys check who is calling as well as the key: the
@@ -468,8 +477,8 @@ async function resolveIdentity(req) {
         return { identity: { userId: caller.id, keyId: key.key_id, tier: 'OWNER' } };
       }
       if (kind === 'private') {
-        if (!caller) return { error: [401, 'PRIVATE_KEY_LOGIN_REQUIRED', 'API key ini private: login dulu dengan akun yang diberi akses oleh developer.'] };
-        if (!caller.isOwner && !(await apiKeyService.hasAccess(key.key_id, caller.id))) return { error: [403, 'PRIVATE_KEY_DENIED', 'API key ini private dan tidak diberikan untuk akun kamu.'] };
+        if (!caller) return { error: [401, 'PRIVATE_KEY_LOGIN_REQUIRED', 'API key ini private: login dulu pakai akun yang dikasih akses sama developer.'] };
+        if (!caller.isOwner && !(await apiKeyService.hasAccess(key.key_id, caller.id))) return { error: [403, 'PRIVATE_KEY_DENIED', 'API key ini private dan nggak dikasih buat akun kamu.'] };
       }
       // public / private: the key's own tier and daily quota (never the owner's account tier).
       return { identity: { userId: caller?.id || key.uid, keyId: key.key_id, tier: key.key_tier || 'FREE', keyScoped: true } };
@@ -479,11 +488,11 @@ async function resolveIdentity(req) {
     return { identity: { userId: key.uid, keyId: key.key_id, tier: key.tier } };
   }
   const session = currentUser(req);
-  if (!session) return { error: [401, 'AUTH_REQUIRED', 'Login atau kirim API key lewat header Authorization: Bearer <key>.'] };
-  if (!sessionRequestAllowed(req)) return { error: [403, 'CSRF_BLOCKED', 'Akses dengan sesi login hanya dari halaman Yannz API. Gunakan API key untuk integrasi.'] };
+  if (!session) return { error: [401, 'AUTH_REQUIRED', 'Login dulu, atau kirim API key lewat header Authorization: Bearer <key>.'] };
+  if (!sessionRequestAllowed(req)) return { error: [403, 'CSRF_BLOCKED', 'Akses pakai sesi login cuma bisa dari halaman Yannz API. Buat integrasi, pakai API key.'] };
   const user = await userService.getUserForSession(session);
-  if (!user) return { error: [401, 'AUTH_REQUIRED', 'Sesi tidak valid. Silakan login lagi.'] };
-  if (user.status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun tidak aktif.'] };
+  if (!user) return { error: [401, 'AUTH_REQUIRED', 'Sesi kamu udah nggak valid. Login lagi ya.'] };
+  if (user.status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun kamu lagi nggak aktif.'] };
   return { identity: { userId: user.id, keyId: null, tier: user.tier } };
 }
 
@@ -505,10 +514,10 @@ function apiGateway(cleanPath, run) {
       // One round trip: endpoint access rules plus the global maintenance flag.
       endpoint = (await query('SELECT e.id,e.status,e.locked,e.minimum_tier,s.maintenance_enabled,s.maintenance_message FROM endpoints e LEFT JOIN server_settings s ON s.id=1 WHERE e.path=$1 LIMIT 1', [cleanPath]))[0];
       if (!endpoint) return gatewayFail(res, 503, 'ENDPOINT_REGISTRY_NOT_READY', 'Registry endpoint belum tersedia.');
-      if (endpoint.status !== 'active') return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', 'Endpoint sedang dinonaktifkan.');
-      if (endpoint.locked && !owner) return gatewayFail(res, 403, 'ENDPOINT_LOCKED', 'Endpoint ini sedang dikunci oleh developer.');
+      if (endpoint.status !== 'active') return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', 'Endpoint ini lagi dinonaktifkan.');
+      if (endpoint.locked && !owner) return gatewayFail(res, 403, 'ENDPOINT_LOCKED', 'Endpoint ini lagi dikunci developer.');
       if (!owner && !canAccess(identity.tier, endpoint.minimum_tier, false)) {
-        return gatewayFail(res, 403, 'TIER_RESTRICTED', `Endpoint ini membutuhkan tier ${endpoint.minimum_tier} atau lebih tinggi.`, { requiredTier: endpoint.minimum_tier, currentTier: identity.tier });
+        return gatewayFail(res, 403, 'TIER_RESTRICTED', `Endpoint ini butuh tier ${endpoint.minimum_tier} atau lebih tinggi.`, { requiredTier: endpoint.minimum_tier, currentTier: identity.tier });
       }
       if (endpoint.maintenance_enabled && !owner) return gatewayFail(res, 503, 'MAINTENANCE', endpoint.maintenance_message);
 
@@ -518,13 +527,13 @@ function apiGateway(cleanPath, run) {
       res.set('X-RateLimit-Reset', quota.resetAt);
       if (!quota.allowed) {
         res.set('Retry-After', String(Math.max(1, Math.ceil((Date.parse(quota.resetAt) - Date.now()) / 1000))));
-        return gatewayFail(res, 429, 'QUOTA_EXCEEDED', 'Batas request harian kamu sudah habis.', { used: quota.used, limit: quota.limit, remaining: 0, resetAt: quota.resetAt });
+        return gatewayFail(res, 429, 'QUOTA_EXCEEDED', 'Jatah request harian kamu udah habis.', { used: quota.used, limit: quota.limit, remaining: 0, resetAt: quota.resetAt });
       }
       if (identity.keyId) await query('UPDATE api_keys SET last_used_at=now() WHERE id=$1', [identity.keyId]);
     } catch (error) {
       const c = classifyDatabaseError(error);
       console.error('API gateway error:', { error: c.error, code: c.code });
-      return gatewayFail(res, 503, 'GATEWAY_UNAVAILABLE', 'API gateway sementara tidak tersedia.');
+      return gatewayFail(res, 503, 'GATEWAY_UNAVAILABLE', 'API gateway lagi nggak tersedia.');
     }
 
     // Refund (failed calls) and the activity record are written before the response is
@@ -548,7 +557,7 @@ function apiGateway(cleanPath, run) {
       await run(req, res);
     } catch (error) {
       console.error('Plugin handler failed:', { path: cleanPath, name: error?.name || null, code: error?.code || null });
-      if (!res.headersSent) return gatewayFail(res, 502, 'UPSTREAM_FAILED', 'Layanan sumber sedang bermasalah. Kuota tidak dipotong.');
+      if (!res.headersSent) return gatewayFail(res, 502, 'UPSTREAM_FAILED', 'Layanan sumbernya lagi bermasalah. Kuota nggak dipotong.');
     }
   };
 }
@@ -612,8 +621,8 @@ const sortedEndpoints = Object.keys(rawEndpoints)
   }, {});
 
 app.get('/api/endpoints', async (req, res) => {
-  try { const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints')]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.map(item=>({...item,access:meta[item.cleanPath]||null}))])); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
-  catch { return res.status(503).json({success:false,error:'ENDPOINTS_UNAVAILABLE',message:'Katalog sementara tidak tersedia.'}); }
+  try { const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description,badge FROM endpoints').catch(e=>{if(e.code!=='42703')throw e;return query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints');})]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.map(item=>({...item,access:meta[item.cleanPath]||null}))])); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
+  catch { return res.status(503).json({success:false,error:'ENDPOINTS_UNAVAILABLE',message:'Katalog lagi nggak tersedia.'}); }
 });
 
 
@@ -664,16 +673,16 @@ app.post('/auth/google/credential', turnstile.guard(), async (req, res) => {
 
   const origin = req.get('origin');
   if (origin && origin !== `${req.protocol}://${req.get('host')}`) {
-    return fail(403, 'CSRF_BLOCKED', 'Origin tidak diizinkan.', { stage: 'origin' });
+    return fail(403, 'CSRF_BLOCKED', 'Origin ini nggak diizinkan.', { stage: 'origin' });
   }
 
   const missing = missingAuthConfig();
   if (missing.length) {
-    return fail(503, 'AUTH_NOT_CONFIGURED', 'Google login belum dikonfigurasi di server.', { stage: 'config', missing });
+    return fail(503, 'AUTH_NOT_CONFIGURED', 'Login Google belum diatur di server.', { stage: 'config', missing });
   }
 
   const credential = typeof req.body?.credential === 'string' ? req.body.credential : '';
-  if (!credential) return fail(400, 'MISSING_CREDENTIAL', 'Google credential tidak ditemukan.');
+  if (!credential) return fail(400, 'MISSING_CREDENTIAL', 'Credential Google nggak ketemu.');
 
   let profile;
   try {
@@ -683,13 +692,13 @@ app.post('/auth/google/credential', turnstile.guard(), async (req, res) => {
   } catch (err) {
     const c = classifyGoogleVerifyError(err);
     const message = c.status === 503
-      ? 'Server tidak dapat menghubungi Google untuk verifikasi. Silakan coba lagi.'
-      : 'Google login gagal. Credential tidak valid atau sudah kedaluwarsa.';
+      ? 'Server nggak bisa nyambung ke Google buat verifikasi. Coba lagi ya.'
+      : 'Login Google gagal. Credential-nya nggak valid atau udah kedaluwarsa.';
     return fail(c.status, c.error, message, { stage: 'verify', reason: c.reason, code: c.code });
   }
 
   if (!profile?.sub || !profile.email || profile.email_verified !== true) {
-    return fail(403, 'EMAIL_NOT_VERIFIED', 'Akun Google harus memiliki email yang terverifikasi.', { stage: 'profile', reason: 'EMAIL_NOT_VERIFIED' });
+    return fail(403, 'EMAIL_NOT_VERIFIED', 'Akun Google kamu harus punya email yang udah terverifikasi.', { stage: 'profile', reason: 'EMAIL_NOT_VERIFIED' });
   }
   {
     const m = await maintenance.state();
@@ -706,23 +715,23 @@ app.post('/auth/google/credential', turnstile.guard(), async (req, res) => {
     });
   } catch (err) {
     const c = classifyDatabaseError(err);
-    return fail(c.status, c.error, 'Layanan akun sementara tidak tersedia. Silakan coba lagi.', { stage: 'database', error: c.error, code: c.code });
+    return fail(c.status, c.error, 'Layanan akun lagi nggak tersedia. Coba lagi bentar ya.', { stage: 'database', error: c.error, code: c.code });
   }
   if (account.status !== 'active') {
-    return fail(403, 'ACCOUNT_RESTRICTED', 'Akun ini tidak aktif. Hubungi developer jika merasa ini keliru.');
+    return fail(403, 'ACCOUNT_RESTRICTED', 'Akun ini lagi nggak aktif. Hubungi developer kalau menurut kamu ini salah.');
   }
   try {
     const sv = await userService.secureGoogleLink(account.id);
     if (sv !== null) account.sessionVersion = sv;
   } catch (err) {
     const c = classifyDatabaseError(err);
-    return fail(c.status, c.error, 'Layanan akun sementara tidak tersedia. Silakan coba lagi.', { stage: 'database', error: c.error, code: c.code });
+    return fail(c.status, c.error, 'Layanan akun lagi nggak tersedia. Coba lagi bentar ya.', { stage: 'database', error: c.error, code: c.code });
   }
 
   try {
     issueSession(res, profile.sub, account);
   } catch (err) {
-    return fail(500, 'SESSION_ERROR', 'Sesi login tidak dapat dibuat.', { stage: 'session', code: err?.code || null });
+    return fail(500, 'SESSION_ERROR', 'Sesi login gagal dibuat.', { stage: 'session', code: err?.code || null });
   }
   await auditService.writeAudit({ actorUserId: account.id, action: 'login', targetType: 'session', ipAddress: (req.ip || '').replace(/^::ffff:/, '') || null }).catch(() => {});
   return res.json({ success: true, redirect: '/home' });
@@ -743,7 +752,7 @@ app.get('/auth/google', turnstile.redirectGuard(), (req, res) => {
     res.redirect(url);
   } catch (err) {
     console.error('Google OAuth init error:', err.code || 'OAUTH_CONFIG_ERROR');
-    res.status(500).send('Google OAuth belum dikonfigurasi di server.');
+    res.status(500).send('Google OAuth belum diatur di server.');
   }
 });
 
@@ -755,14 +764,14 @@ app.get('/auth/google/callback', async (req, res) => {
 
     if (error) return res.redirect('/?oauth=denied');
     if (!code || !state || !cookies.oauth_state || !safeEqual(state,cookies.oauth_state)) {
-      return res.status(400).send('OAuth state tidak valid. Silakan coba login lagi.');
+      return res.status(400).send('OAuth state nggak valid. Coba login lagi ya.');
     }
 
     const client = createOAuthClient(req);
 
     const { tokens } = await client.getToken(String(code));
     if (!tokens?.id_token) {
-      throw new Error('Google tidak mengembalikan id_token.');
+      throw new Error('Google nggak ngirim id_token.');
     }
     // The ID token came straight from Google's token endpoint; verifying it still checks
     // signature, audience, issuer and expiry, and yields the same profile as the GIS flow.
@@ -770,7 +779,7 @@ app.get('/auth/google/callback', async (req, res) => {
     const profile = ticket.getPayload();
 
     if (!profile?.sub || !profile.email || profile.email_verified !== true) {
-      return res.status(403).send('Akun Google harus memiliki email yang terverifikasi.');
+      return res.status(403).send('Akun Google kamu harus punya email yang udah terverifikasi.');
     }
     if ((await maintenance.state()).enabled && !userService.isOwnerEmail(profile.email)) return res.redirect('/?auth=maintenance');
 
@@ -806,7 +815,7 @@ app.get('/auth/me', async (req, res) => {
     }
     if (user.status !== 'active') {
       clearCookie(res, 'yannz_session');
-      return res.status(403).json({ authenticated: false, error: 'Akun ini sedang dibatasi.' });
+      return res.status(403).json({ authenticated: false, error: 'Akun ini lagi dibatasi.' });
     }
     const used = await usageService.usageToday(user.id);
     const keyRows = await apiKeyService.listKeys(user.id);
@@ -818,18 +827,18 @@ app.get('/auth/me', async (req, res) => {
     apiKeys:{used:keyRows.filter(k=>k.status==='active').length,limit:Number.isFinite(limits.keys)?limits.keys:null} });
   } catch (err) {
     console.error('Auth profile database lookup failed:', err.code || 'DATABASE_ERROR');
-    return res.status(503).json({ authenticated: false, error: 'Profil sementara tidak dapat dimuat.' });
+    return res.status(503).json({ authenticated: false, error: 'Profil lagi nggak bisa dimuat.' });
   }
 });
 
 app.post('/auth/logout', async (req, res) => {
   const session=currentUser(req);
-  const origin=req.get('origin');if(origin&&origin!==`${req.protocol}://${req.get('host')}`)return res.status(403).json({success:false,error:'CSRF_BLOCKED',message:'Origin tidak diizinkan.'});
+  const origin=req.get('origin');if(origin&&origin!==`${req.protocol}://${req.get('host')}`)return res.status(403).json({success:false,error:'CSRF_BLOCKED',message:'Origin ini nggak diizinkan.'});
   clearCookie(res, 'yannz_session');
   if (session?.userId) {
     // Invalidate every cookie issued to this account so a copied cookie stops working too.
     try { await userService.revokeSessions(session.userId); }
-    catch (err) { console.error('Session revocation failed:', { code: err?.code || null }); return res.status(503).json({ success: false, error: 'DATABASE_UNAVAILABLE', message: 'Logout belum tersimpan di server. Coba lagi.' }); }
+    catch (err) { console.error('Session revocation failed:', { code: err?.code || null }); return res.status(503).json({ success: false, error: 'DATABASE_UNAVAILABLE', message: 'Logout belum kesimpan di server. Coba lagi ya.' }); }
     await auditService.writeAudit({actorUserId:session.userId,action:'logout',targetType:'session'}).catch(()=>{});
   }
   res.json({ success: true });
@@ -839,7 +848,7 @@ app.get('/', (req, res) => {
   try {
     res.sendFile(path.join(__dirname, 'views', 'login.html'));
   } catch (err) {
-    res.status(500).send('Gagal memuat halaman utama.');
+    res.status(500).send('Halaman utama gagal dimuat.');
   }
 });
 
@@ -847,7 +856,7 @@ app.get('/home', authRequired, (req, res) => {
   try {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
   } catch (err) {
-    res.status(500).send('Gagal memuat dashboard.');
+    res.status(500).send('Dashboard gagal dimuat.');
   }
 });
 
@@ -861,7 +870,7 @@ app.get('/api/playground', (req, res) => {
   try {
     res.sendFile(path.join(__dirname, 'views', 'playground.html'));
   } catch (err) {
-    res.status(500).send('Gagal memuat playground.');
+    res.status(500).send('Playground gagal dimuat.');
   }
 });
 
@@ -869,7 +878,7 @@ app.get('/api', (req, res) => {
   try {
     res.sendFile(path.join(__dirname, 'views', 'api.html'));
   } catch (err) {
-    res.status(500).send('Gagal memuat dokumentasi API.');
+    res.status(500).send('Dokumentasi API gagal dimuat.');
   }
 });
 
@@ -877,15 +886,15 @@ app.get('/api/stats', async (req, res) => {
   try { const session=currentUser(req); const account=session?await userService.getUserForSession(session):null; const today=account?await usageService.usageToday(account.id):0; const keys=account?await apiKeyService.listKeys(account.id):[]; const tier=account?.tier||'FREE'; const limit=getTier(tier).limit; const totals=await query("SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage WHERE usage_date=(now() AT TIME ZONE 'UTC')::date");
     const payload={status:true,totalRequests:totals[0].n,totalEndpoints:totalRoutes,userRequestsToday:today,remaining:Number.isFinite(limit)?Math.max(0,limit-today):null,tier,apiKeyCount:keys.filter(k=>k.status==='active').length,uptime:process.uptime()};
     if(account?.isOwner){const e=await query("SELECT count(*)::int AS n FROM endpoints WHERE status='active'");payload.endpointCount=e[0].n;}return res.json(payload);
-  } catch { return res.status(503).json({success:false,error:'STATS_UNAVAILABLE',message:'Statistik sementara tidak tersedia.'}); }
+  } catch { return res.status(503).json({success:false,error:'STATS_UNAVAILABLE',message:'Statistik lagi nggak tersedia.'}); }
 });
 
 app.use((err,req,res,next)=>{
   if(res.headersSent)return next(err);
-  if(err?.type==='entity.parse.failed')return res.status(400).json({success:false,error:'INVALID_JSON',message:'Body request bukan JSON yang valid.'});
-  if(err?.status===413)return res.status(413).json({success:false,error:'PAYLOAD_TOO_LARGE',message:'Ukuran request terlalu besar.'});
+  if(err?.type==='entity.parse.failed')return res.status(400).json({success:false,error:'INVALID_JSON',message:'Body request-nya bukan JSON yang valid.'});
+  if(err?.status===413)return res.status(413).json({success:false,error:'PAYLOAD_TOO_LARGE',message:'Request-nya kegedean.'});
   console.error('Request failed:',{ name: err?.name || null, code: err?.code || 'REQUEST_ERROR' });
-  return res.status(500).json({success:false,error:'INTERNAL_ERROR',message:'Terjadi kesalahan server.'});
+  return res.status(500).json({success:false,error:'INTERNAL_ERROR',message:'Ada masalah di server. Coba lagi bentar ya.'});
 });
 
 // Vercel imports the exported app; only `node index.js` (npm start) opens a port.

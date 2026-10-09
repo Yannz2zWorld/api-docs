@@ -11,5 +11,11 @@
       "src": "/(.*)",
       "dest": "index.js"
     }
+  ],
+  "crons": [
+    {
+      "path": "/cron/backup",
+      "schedule": "0 19 * * *"
+    }
   ]
 }
