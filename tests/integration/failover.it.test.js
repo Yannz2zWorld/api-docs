@@ -41,7 +41,7 @@ const errorsFor = async p => (await app.request('GET', '/owner/api/errors', { co
 it('TikTok: when the main source fails, the backup answers and the failure is logged', async () => {
   const r = await call('/api/download/tiktok?url=https://vt.tiktok.com/ZSabc/');
   assert.equal(r.status, 200, r.text);
-  assert.equal(r.headers['x-yannz-backup'], '/api/download/tiktok-termai');
+  assert.equal(r.headers['x-yannz-backup'], '/api/download/tiktok-v2');
   assert.equal(calls[0].host, 'api.termai.cc');
   assert.equal((await errorsFor('/api/download/tiktok')).length, 1, 'the broken main source is in the Error tab');
   assert.equal(await inCatalog('/api/download/tiktok'), true);
@@ -54,7 +54,7 @@ it('when the first backup is out of quota too, the next one is used; the public 
   assert.equal(r.headers['x-yannz-backup'], '/api/download/aio');
   assert.equal(r.json.result, 'from aio');
   assert.equal(await inCatalog('/api/download/tiktok'), true, 'still works through a backup');
-  assert.equal(await inCatalog('/api/download/tiktok-termai'), false, 'the out-of-quota one is hidden as its own endpoint');
+  assert.equal(await inCatalog('/api/download/tiktok-v2'), false, 'the out-of-quota one is hidden as its own endpoint');
   // Next call: the broken members are tried last, the working backup first.
   calls = [];
   const again = await call('/api/download/tiktok?url=https://vt.tiktok.com/ZSabc/');
@@ -101,6 +101,6 @@ it('the monitor shows a group as 200 while a backup works; the panel lists the b
   const ig = (await app.request('GET', '/api/endpoints/status')).json.endpoints.find(e => e.path === '/api/download/instagram');
   assert.deepEqual([ig.code, ig.source], [200, 'backup']);
   const rows = (await app.request('GET', '/owner/api/endpoints', { cookie: owner })).json.endpoints;
-  assert.deepEqual(rows.find(e => e.path === '/api/download/tiktok').backups, ['/api/download/tiktok-termai', '/api/dongtube/download/tiktok', '/api/download/aio', '/api/dongtube/download/aio']);
+  assert.deepEqual(rows.find(e => e.path === '/api/download/tiktok').backups, ['/api/download/tiktok-v2', '/api/alt/download/tiktok', '/api/download/aio', '/api/alt/download/aio']);
   assert.deepEqual(rows.find(e => e.path === '/api/download/aio').backup_for.sort(), ['/api/download/instagram', '/api/download/tiktok', '/api/download/youtube']);
 });

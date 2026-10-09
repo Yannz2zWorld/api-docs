@@ -10,12 +10,12 @@
 //             parameter tambahan / nama parameter beda: query = { namaDiCadangan: 'namaDiUtama' | { value } }.
 //
 // Cadangan boleh endpoint publik lain (mis. AIO) atau endpoint "backupOnly" yang nggak ditampilkan
-// sendiri (mis. dari Dongtube: /api/dongtube/...).
-const D = path => '/api/dongtube' + path;   // Dongtube backups (plugin/dongtube.js)
+// sendiri (mis. dari Dongtube: /api/alt/...).
+const D = path => '/api/alt' + path;   // Dongtube backups (plugin/dongtube.js)
 
 module.exports = [
   // ---------------------------------------------------------------- Downloader
-  { path: '/api/download/tiktok', backups: ['/api/download/tiktok-termai', D('/download/tiktok'), '/api/download/aio', D('/download/aio')] },
+  { path: '/api/download/tiktok', backups: ['/api/download/tiktok-v2', D('/download/tiktok'), '/api/download/aio', D('/download/aio')] },
   { path: '/api/download/instagram', backups: ['/api/download/kolid', '/api/download/aio', D('/download/aio')] },
   { path: '/api/download/youtube', backups: [{ path: '/api/download/ytmp4', query: { url: 'url', resolution: { value: '360' } } }, D('/download/youtube'), D('/download/youtube-v2'), '/api/download/aio', D('/download/savefrom')] },
   { path: '/api/download/ytmp3', backups: [{ path: D('/download/ytmp3'), query: { url: 'url' } }, { path: D('/download/ytmp3-v2'), query: { url: 'url' } },

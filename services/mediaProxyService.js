@@ -26,8 +26,13 @@ const MEDIA_EXT = /\.(jpe?g|png|gif|webp|bmp|avif|heic|ico|mp4|m4v|webm|mov|mkv|
 const MEDIA_KEY = /(image|img|thumb|cover|avatar|photo|picture|pic|icon|logo|banner|poster|video|audio|music|song|mp3|mp4|media|download|^dl|hdplay|wmplay|^play$|preview|sticker|gif|wallpaper|artwork)/i;
 // An object describing a file ({ url, quality, extension }, { url, type: 'video' } ...): its url is the file.
 const FILE_SIBLINGS = ['extension', 'ext', 'quality', 'mimeType', 'mimetype', 'mime', 'resolution', 'bitrate', 'filesize', 'format'];
-// Upstream API servers: what they link to is their own media.
-const UPSTREAM_HOSTS = new Set(['api.dongtube.id', 'api.theresav.eu', 'api.clutch.web.id', 'cdn-alip.clutch.web.id', 'api.termai.cc', 'api-faa.my.id', 'api.pitucode.com']);
+// Upstream API servers (config/apiServers.js + theresav): they only ever run in the background.
+// Whatever they link to is their own media, and their names never reach the caller.
+const UPSTREAM_HOSTS = new Set(['api.theresav.eu', 'cdn-alip.clutch.web.id',
+  ...Object.values(require('../config/apiServers')).map(s => { try { return new URL(s.base).hostname; } catch { return null; } }).filter(Boolean)]);
+const UPSTREAM_IN_TEXT = new RegExp(`https?://(?:${[...UPSTREAM_HOSTS].map(h => h.replace(/\./g, '\\.')).join('|')})(?:/[^\\s"'<>)]*)?`, 'gi');
+// Top-level fields an upstream uses to sign its answers (who made it, their channel, ...).
+const BRAND_KEYS = new Set(['author', 'channel', 'owner', 'developer', 'website', 'contact', 'credit', 'credits', 'powered_by', 'poweredBy', 'provider', 'donate', 'support', 'telegram', 'whatsapp', 'instagram_owner', 'github']);
 
 function isMediaLink(key, value, parent) {
   if (typeof value !== 'string' || value.length > 4000 || !/^https?:\/\//i.test(value)) return false;
@@ -88,18 +93,35 @@ function rewrite(body, req) {
   return walk(body, null, null, 0);
 }
 
+// For every answer, errors included: the upstream's own sign-off fields go, and any mention of an
+// upstream server's address (in a message, a note, ...) becomes our own address.
+function scrub(body, req) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return body;
+  const base = baseOf(req);
+  const clean = (v, depth) => {
+    if (typeof v === 'string') return v.length < 20000 ? v.replace(UPSTREAM_IN_TEXT, base) : v;
+    if (depth > 12) return v;
+    if (Array.isArray(v)) return v.map(x => clean(x, depth + 1));
+    if (v && typeof v === 'object') { const o = {}; for (const [k, x] of Object.entries(v)) o[k] = clean(x, depth + 1); return o; }
+    return v;
+  };
+  const out = {};
+  for (const [k, v] of Object.entries(body)) if (!BRAND_KEYS.has(k)) out[k] = clean(v, 1);
+  return out;
+}
+
 // ---------------------------------------------------------------- opening a link
 const idPrefix = url => crypto.createHash('sha256').update(url).digest('hex').slice(0, 32);
 
 // The source answer, following redirects only to public hosts. Returns the fetch Response.
-async function fetchSource(href) {
+async function fetchSource(href, extraHeaders = {}) {
   let url = new URL(href);
   for (let hop = 0; hop < 5; hop++) {
     if (!/^https?:$/.test(url.protocol) || !(await publicHost(url.hostname))) throw Object.assign(new Error('blocked'), { code: 'BLOCKED' });
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     let r;
-    try { r = await fetch(url, { redirect: 'manual', signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0 (YannzAPI media)', Accept: '*/*' } }); }
+    try { r = await fetch(url, { redirect: 'manual', signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0 (YannzAPI media)', Accept: '*/*', ...extraHeaders } }); }
     catch { throw Object.assign(new Error('unreachable'), { code: 'UNREACHABLE' }); }
     finally { clearTimeout(timer); }
     if (r.status >= 300 && r.status < 400 && r.headers.get('location')) { url = new URL(r.headers.get('location'), url); continue; }
@@ -118,7 +140,7 @@ async function cached(prefix) {
 
 // What /media/<token> answers with:
 //   { file }   a stored file ({ mime, name, buffer, size, inline } like cdnService.fetchFile)
-//   { stream } too big to store: { body, type, size } passed through from the source
+//   { passthrough } too big to store: the source link, passed through by stream() (seeking works)
 //   { error }  'NOT_FOUND' (bad / forged token) or 'SOURCE_FAILED'
 async function open(token) {
   const url = urlOf(token);
@@ -131,7 +153,7 @@ async function open(token) {
   const type = (r.headers.get('content-type') || 'application/octet-stream').split(';')[0].trim().toLowerCase();
   const size = Number(r.headers.get('content-length') || 0);
   const name = (() => { try { return decodeURIComponent(new URL(url).pathname.split('/').pop() || '') || 'file'; } catch { return 'file'; } })().slice(0, 120);
-  if (size > cdn.MAX_BYTES) return { stream: { body: r.body, type, size } };
+  if (size > cdn.MAX_BYTES) { r.body?.cancel().catch(() => {}); return { passthrough: url }; }
   const buffer = Buffer.from(await r.arrayBuffer());
   if (!buffer.length) return { error: 'SOURCE_FAILED', detail: 'EMPTY' };
   const saved = buffer.length <= cdn.MAX_BYTES ? await keep(prefix, { buffer, type, name }).catch(() => null) : null;
@@ -155,4 +177,26 @@ async function keep(prefix, { buffer, type, name }) {
   return cdn.fetchFile(id);
 }
 
-module.exports = { rewrite, open, isMediaLink, tokenFor, urlOf, STORE_DAYS };
+// Sends a file that lives elsewhere (a big media file, a large CDN upload kept in R2 / catbox, the
+// site's background song) through our own domain: the visitor never leaves it. Range requests are
+// passed on so videos can be skipped through.
+const INLINE = /^(image\/(png|jpeg|gif|webp|bmp|avif)|video\/(mp4|webm|quicktime|ogg)|audio\/(mpeg|mp4|aac|ogg|wav|flac|webm|x-m4a)|application\/pdf)$/;
+async function stream(req, res, url, { safeHeaders, cache = 'public, max-age=86400' } = {}) {
+  let r;
+  try { r = await fetchSource(url, req.get('range') ? { Range: req.get('range') } : {}); }
+  catch { res.set('Cache-Control', 'no-store'); return res.status(502).json({ status: false, error: 'MEDIA_UNAVAILABLE', message: 'File-nya lagi nggak bisa diambil. Coba lagi nanti.' }); }
+  const type = (r.headers.get('content-type') || 'application/octet-stream').split(';')[0].trim().toLowerCase();
+  const inline = INLINE.test(type);
+  res.status(r.status === 206 ? 206 : 200);
+  res.set('Cache-Control', cache);
+  res.set('Content-Type', inline ? type : 'application/octet-stream');
+  res.set('Content-Disposition', inline ? 'inline' : 'attachment');
+  res.set('Accept-Ranges', 'bytes');
+  for (const h of ['content-length', 'content-range']) if (r.headers.get(h)) res.set(h, r.headers.get(h));
+  if (safeHeaders) safeHeaders(res, type);
+  if (!r.body) return res.end();
+  const { Readable } = require('stream');
+  return Readable.fromWeb(r.body).on('error', () => res.destroy()).pipe(res);
+}
+
+module.exports = { rewrite, scrub, open, stream, isMediaLink, tokenFor, urlOf, STORE_DAYS, UPSTREAM_HOSTS };

@@ -69,8 +69,8 @@ const SPECS = [
     params: [{ name: 'username', required: true, placeholder: 'Nama' }, { name: 'text', required: true, placeholder: 'Isi pesan' }, { name: 'profile', required: false }, { name: 'bg', required: false, placeholder: '#000000' }] },
 
   // ---------------------------------------------------------------- Termai
-  { server: 'termai', category: 'AI', name: 'Bard Chat', desc: 'Chat AI Bard (Termai).', path: '/api/ai/bard', upstream: '/api/chat/bard', params: [{ name: 'query', required: true, aliases: ['prompt', 'text'], placeholder: 'Tanya apa saja' }], sample: { query: 'Halo' } },
-  { server: 'termai', category: 'Downloader', name: 'TikTok (Termai)', desc: 'Unduh video TikTok via Termai.', path: '/api/download/tiktok-termai', sample: { url: 'https://vt.tiktok.com/ZSbpMHCBM/' }, upstream: '/api/downloader/tiktok', params: [{ name: 'url', required: true, type: 'url', placeholder: 'https://vt.tiktok.com/...' }] },
+  { server: 'termai', category: 'AI', name: 'Bard Chat', desc: 'Ngobrol sama AI Bard.', path: '/api/ai/bard', upstream: '/api/chat/bard', params: [{ name: 'query', required: true, aliases: ['prompt', 'text'], placeholder: 'Tanya apa saja' }], sample: { query: 'Halo' } },
+  { server: 'termai', category: 'Downloader', name: 'TikTok Downloader v2', desc: 'Unduh video TikTok tanpa watermark.', path: '/api/download/tiktok-v2', sample: { url: 'https://vt.tiktok.com/ZSbpMHCBM/' }, upstream: '/api/downloader/tiktok', params: [{ name: 'url', required: true, type: 'url', placeholder: 'https://vt.tiktok.com/...' }] },
   { server: 'termai', category: 'Maker', name: 'Anime Diffusion', desc: 'Buat gambar anime dari teks.', path: '/api/maker/animediff', sample: { prompt: '1girl, smile, white hair' }, upstream: '/api/text2img/animediff', params: [{ name: 'prompt', required: true, placeholder: '1girl, white hair, kimono' }] }
 ];
 

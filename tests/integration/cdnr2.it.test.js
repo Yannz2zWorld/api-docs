@@ -17,6 +17,7 @@ before(async () => {
   global.fetch = async (input, init = {}) => {
     const req = typeof input === 'string' || input instanceof URL ? new Request(String(input), init) : input;
     const u = new URL(req.url);
+    if (u.origin === PUBLIC) { const o = objects.get(decodeURIComponent(u.pathname.slice(1))); return o ? new Response(Buffer.alloc(o.size, 7), { status: 200, headers: { 'content-type': o.contentType, 'content-length': String(o.size) } }) : new Response(null, { status: 404 }); }
     if (u.hostname !== R2_HOST) return realFetch(input, init);
     const key = decodeURIComponent(u.pathname.split('/').pop());
     calls.push({ method: req.method, key, signed: u.searchParams.has('X-Amz-Signature') || Boolean(req.headers.get('authorization')) });
@@ -32,6 +33,9 @@ before(async () => {
     if (req.method === 'DELETE') { objects.delete(key); return new Response(null, { status: 204 }); }
     return new Response(null, { status: 405 });
   };
+  // Passed-through files are fetched with the public-host check: these test hosts resolve publicly.
+  const dns = require('dns').promises, realLookup = dns.lookup;
+  dns.lookup = async (host, o) => (['pub-test.r2.dev'].includes(host) ? [{ address: '93.184.216.34', family: 4 }] : realLookup(host, o));
   await h.setupDatabase();
   app = await h.startApp({ R2_ACCOUNT_ID: 'acct123', R2_ACCESS_KEY_ID: 'AKIDTEST', R2_SECRET_ACCESS_KEY: 'secret-not-real', R2_BUCKET: 'yannz-cdn', R2_PUBLIC_URL: PUBLIC + '/', PUBLIC_BASE_URL: 'https://apiz2z.test' });
   user = await app.login('big@example.test');
@@ -51,7 +55,7 @@ it('config reports large uploads (200 MB) when R2 is set up', async () => {
   assert.ok(!r.text.includes('secret-not-real') && !r.text.includes('AKIDTEST'));
 });
 
-it('start -> browser PUT to R2 -> finish gives a /cdn link that redirects to the bucket', async () => {
+it('start -> browser PUT to R2 -> finish gives a /cdn link, passed through from the bucket', async () => {
   const bytes = Buffer.alloc(6 * 1024 * 1024, 7);   // bigger than the 4 MB direct limit
   const start = await post('/cdn/upload/start', { name: 'Video Liburan.mp4', type: 'video/mp4', size: bytes.length });
   assert.equal(start.status, 200, start.text);
@@ -75,8 +79,10 @@ it('start -> browser PUT to R2 -> finish gives a /cdn link that redirects to the
   assert.ok(calls.some(c => c.method === 'HEAD' && c.signed), 'finish checks the object in R2 with a signed request');
 
   const got = await app.request('GET', '/cdn/' + start.json.id, {});
-  assert.equal(got.status, 302);
-  assert.equal(got.headers.location, `${PUBLIC}/${start.json.id}`);
+  assert.equal(got.status, 200, got.text);
+  assert.equal(got.headers.location, undefined, 'never sent to the bucket: the file comes through our domain');
+  assert.equal(got.headers['content-type'], 'video/mp4');
+  assert.equal(Number(got.headers['content-length']), bytes.length);
 });
 
 it('limits: over 200 MB is refused; unsafe types are stored as downloads', async () => {

@@ -101,3 +101,20 @@ it('error answers are left alone', async () => {
   const r = await app.request('GET', '/api/tools/text2base64?text=x', app.asBrowser(user));
   assert.ok(r.status >= 400);
 });
+
+it('no answer names or links the upstream server: sign-off fields go, its address in a message becomes ours', async () => {
+  answer = () => ({ status: true, author: 'Dongtube API', channel: 'https://whatsapp.com/channel/x', note: 'Docs: https://api.dongtube.id/docs', data: { author: 'MrBeast' } });
+  const r = await app.request('GET', '/api/tools/text2base64?text=x', app.asBrowser(user));
+  assert.equal(r.status, 200, r.text);
+  assert.equal(r.json.channel, undefined);
+  assert.notEqual(r.json.author, 'Dongtube API');
+  assert.equal(r.json.note, 'Docs: https://apiz2z.web.id');
+  assert.equal(r.json.data.author, 'MrBeast', 'content fields are kept');
+  assert.ok(!/dongtube/i.test(r.text));
+  // An endpoint that is not set up does not name the server's key either.
+  const off = await app.request('GET', '/api/search/cookpad?q=x', app.asBrowser(user));
+  assert.ok(!/DONGTUBE|_API_KEY/.test(off.text), off.text);
+  // Public endpoint names / paths don't name upstreams.
+  const all = Object.values((await app.request('GET', '/api/endpoints')).json.endpoints).flat();
+  assert.ok(!all.some(e => /theresav|dongtube|clutch|termai|pitucode|api-faa/i.test(`${e.name} ${e.desc} ${e.path}`)), JSON.stringify(all.filter(e => /theresav|dongtube|clutch|termai/i.test(`${e.name} ${e.desc} ${e.path}`)).map(e => e.path)));
+});
