@@ -951,9 +951,30 @@
   "Error-nya nggak ketemu.": "Error not found.",
   "Key server API-nya belum diisi di Vercel.": "The API server key isn't set in Vercel yet.",
   "Letak & penyebab": "Where & why",
-  "Pesan error asli": "Original error message"
+  "Pesan error asli": "Original error message",
+  "Arti tombol-tombolnya": "What the buttons do",
+  "munculin lagi endpoint yang disembunyikan otomatis. Kalau server sumbernya masih nolak, nanti disembunyikan lagi sendiri.": "brings back an endpoint that was hidden automatically. If the upstream server still refuses, it gets hidden again by itself.",
+  "cuma ngehapus baris catatan error itu dari daftar ini. Endpoint-nya nggak dihapus atau diubah apa-apa. Kalau error yang sama kejadian lagi, catatannya muncul lagi.": "only removes that error record from this list. The endpoint itself isn't deleted or changed. If the same error happens again, the record comes back.",
+  "hapus semua catatan yang endpoint-nya udah jalan lagi (status \"udah jalan lagi\").": "removes every record whose endpoint works again (status \"working again\").",
+  "Hapus catatan": "Delete record",
+  "Cuma hapus catatan error ini. Endpoint-nya nggak berubah.": "Only deletes this error record. The endpoint doesn't change.",
+  "Database belum siap: jalankan migrations/019_endpoint_errors.sql di Neon dulu, biar endpoint bisa disembunyikan otomatis.": "The database isn't ready: run migrations/019_endpoint_errors.sql in Neon first so endpoints can be hidden automatically.",
+  "Endpoint ini lagi nggak tersedia untuk sementara. Coba lagi nanti atau pakai endpoint lain dulu ya.": "This endpoint is temporarily unavailable. Try again later or use another endpoint for now.",
+  "Detail error-nya ada di Developer Panel → Error.": "The error details are in the Developer Panel → Error.",
+  "Letak": "Where",
+  "Penyebab": "Why",
+  "Pesan asli": "Original message",
+  "terakhir": "last"
  },
  "patterns": [
+  [
+   "^Endpoint ini lagi nggak tersedia untuk sementara\\. Coba lagi nanti atau pakai endpoint lain dulu ya\\.(?: Kuota nggak dipotong\\.)?(?: \\((ENDPOINT_UNAVAILABLE|\\d{3})\\))?$",
+   "This endpoint is temporarily unavailable. Try again later or use another endpoint for now."
+  ],
+  [
+   "^Ada langkah yang gagal waktu nyimpen/nyembunyiin error \\(kode (.+)\\)\\. Endpoint yang kena tetap disembunyikan dari daftar\\.$",
+   "A step failed while saving/hiding an error (code $1). The affected endpoint stays hidden from the lists."
+  ],
   [
    "^Tampilkan lagi (\\S+)\\? Kalau server sumbernya masih nolak, nanti disembunyikan lagi otomatis\\.$",
    "Show $1 again? If the upstream server still refuses, it will be hidden again automatically."

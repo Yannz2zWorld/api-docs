@@ -533,6 +533,8 @@ function apiGateway(cleanPath, run) {
       endpoint = (await query('SELECT e.id,e.status,e.locked,e.minimum_tier,s.maintenance_enabled,s.maintenance_message FROM endpoints e LEFT JOIN server_settings s ON s.id=1 WHERE e.path=$1 LIMIT 1', [cleanPath]))[0];
       if (!endpoint) return gatewayFail(res, 503, 'ENDPOINT_REGISTRY_NOT_READY', 'Registry endpoint belum tersedia.');
       if (endpoint.status !== 'active') return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', 'Endpoint ini lagi dinonaktifkan.');
+      // Hidden after a plan / quota / key error from its upstream (services/errorLogService.js).
+      if ((await errorLog.hiddenPaths()).has(cleanPath)) return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', errorLog.UNAVAILABLE_MESSAGE);
       if (endpoint.locked && !owner) return gatewayFail(res, 403, 'ENDPOINT_LOCKED', 'Endpoint ini lagi dikunci developer.');
       if (!owner && !canAccess(identity.tier, endpoint.minimum_tier, false)) {
         return gatewayFail(res, 403, 'TIER_RESTRICTED', `Endpoint ini butuh tier ${endpoint.minimum_tier} atau lebih tinggi.`, { requiredTier: endpoint.minimum_tier, currentTier: identity.tier });
@@ -570,13 +572,27 @@ function apiGateway(cleanPath, run) {
       // Server-side failures go to the Developer Panel's "Error" tab (services/errorLogService.js);
       // a plan / quota / key problem from the upstream hides the endpoint until it works again.
       if (res.statusCode >= 500) {
-        let body = null;
-        try { const chunk = args[0]; if (chunk && (typeof chunk === 'string' || Buffer.isBuffer(chunk)) && chunk.length < 20000) body = JSON.parse(String(chunk)); } catch {}
-        tasks.push(errorLog.record({ path: cleanPath, status: res.statusCode, code: body?.error || null, message: body?.message || body?.error || null, source: 'live' })
+        let body = res.locals.realError?.body || null;
+        if (!body) { try { const chunk = args[0]; if (chunk && (typeof chunk === 'string' || Buffer.isBuffer(chunk)) && chunk.length < 20000) body = JSON.parse(String(chunk)); } catch {} }
+        tasks.push(errorLog.record({ path: cleanPath, status: res.locals.realError?.status || res.statusCode, code: body?.error || null, message: body?.message || body?.error || null, source: 'live' })
           .catch(e => console.error('Error log failed:', { code: e?.code || null })));
       }
       Promise.allSettled(tasks).finally(() => end.apply(this, args));
       return this;
+    };
+    // An upstream plan / quota / key error is not shown to the caller (it says nothing useful to them
+    // and exposes our upstream account): they get "temporarily unavailable"; the real message goes to
+    // the Developer Panel's Error tab, and the endpoint is hidden until it works again.
+    const sendJson = res.json.bind(res);
+    res.json = body => {
+      if (res.statusCode >= 500 && body && typeof body === 'object' && body.status === false
+          && errorLog.isPlanError({ status: res.statusCode, code: body.error, message: String(body.message || body.error || '') })) {
+        res.locals.realError = { status: res.statusCode, body };
+        res.status(503);
+        body = { ...(body.creator ? { creator: body.creator } : {}), status: false, error: 'ENDPOINT_UNAVAILABLE', message: `${errorLog.UNAVAILABLE_MESSAGE} Kuota nggak dipotong.`,
+          ...(identity.tier === 'OWNER' ? { developerNote: 'Detail error-nya ada di Developer Panel → Error.' } : {}) };
+      }
+      return sendJson(body);
     };
     req.apiAuth = { userId: identity.userId, keyId: identity.keyId, tier: identity.tier, quota };
     try {
@@ -648,7 +664,7 @@ const sortedEndpoints = Object.keys(rawEndpoints)
   }, {});
 
 app.get('/api/endpoints', async (req, res) => {
-  try { const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description,badge FROM endpoints').catch(e=>{if(e.code!=='42703')throw e;return query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints');})]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const visible=item=>{const m=meta[item.cleanPath];return !m||!m.status||m.status==='active';};/* disabled or auto-hidden endpoints (see services/errorLogService.js) are not listed */ const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.filter(visible).map(item=>({...item,access:meta[item.cleanPath]||null}))]).filter(([,items])=>items.length)); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
+  try { const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description,badge FROM endpoints').catch(e=>{if(e.code!=='42703')throw e;return query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints');})]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const hidden=await errorLog.hiddenPaths().catch(()=>new Set());const visible=item=>{const m=meta[item.cleanPath];return (!m||!m.status||m.status==='active')&&!hidden.has(item.cleanPath);};/* disabled or auto-hidden endpoints (see services/errorLogService.js) are not listed */ const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.filter(visible).map(item=>({...item,access:meta[item.cleanPath]||null}))]).filter(([,items])=>items.length)); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
   catch { return res.status(503).json({success:false,error:'ENDPOINTS_UNAVAILABLE',message:'Katalog lagi nggak tersedia.'}); }
 });
 

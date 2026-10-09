@@ -80,7 +80,7 @@ it('validation: required parameters, choices (case-insensitive) and booleans are
 
 it('upstream failures are refunded: status:false → 502, upstream validation → 400', async () => {
   const before = await usedToday();
-  reply = () => ({ status: 200, json: { status: false, error: 'API Error (403): quota' } });
+  reply = () => ({ status: 200, json: { status: false, error: 'API Error (500): boom' } });
   const r = await call('/api/ai/claude?text=hai');
   assert.deepEqual([r.status, r.json.error], [502, 'UPSTREAM_FAILED']);
   reply = () => ({ status: 400, json: { status: false, error: 'Validation failed', details: { genre: {} } } });
@@ -115,10 +115,16 @@ it('without THERESAV_API_KEY the endpoints say so and charge nothing', async () 
   delete process.env.THERESAV_API_KEY;
   try {
     const r = await call('/api/ai/gemini?prompt=hai');
-    assert.deepEqual([r.status, r.json.error], [503, 'UPSTREAM_NOT_CONFIGURED']);
+    // The caller just hears "temporarily unavailable"; the missing key is in the Error tab.
+    assert.deepEqual([r.status, r.json.error], [503, 'ENDPOINT_UNAVAILABLE']);
+    assert.ok(!/THERESAV_API_KEY/.test(r.text));
     assert.equal(calls.length, 0);
+    const log = require('../../services/errorLogService');
+    const errs = (await log.list()).filter(e => e.path === '/api/ai/gemini');
+    assert.equal(errs[0].code, 'UPSTREAM_NOT_CONFIGURED');
   } finally {
     process.env.THERESAV_API_KEY = saved;
+    await require('../../services/errorLogService').showAgain('/api/ai/gemini');
   }
 });
 

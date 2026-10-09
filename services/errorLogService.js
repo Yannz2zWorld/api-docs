@@ -11,21 +11,22 @@ const { query } = require('../lib/db');
 const missing = e => e && (e.code === '42P01' || e.code === '42703');
 const PLAN_WORDS = /\b(quota|plan|credits?|subscription|upgrade|expired|insufficient|balance|billing|payment required|premium|top ?up|limit (?:reached|exceeded)|kuota|saldo|langganan|kredit|invalid (?:api ?)?key|api ?key (?:invalid|expired|salah|tidak valid|nggak valid)|unauthori[sz]ed|forbidden|not configured|belum diatur)\b/i;
 const PLAN_CODES = new Set(['UPSTREAM_NOT_CONFIGURED']);
+// Our own note on failed calls ("Kuota nggak dipotong." = the caller's quota wasn't charged) is not
+// part of the upstream's error and must not read as a quota problem.
+const ownNote = /\s*(Kuota (nggak|tidak) dipotong|Your quota wasn't charged)\.?/gi;
+
 
 // Is this an error that means "this endpoint can't be used right now" rather than a passing hiccup?
 function isPlanError({ status, upstreamStatus, code, message }) {
   if (PLAN_CODES.has(code)) return true;
   if ([401, 402, 403].includes(Number(upstreamStatus))) return true;
-  const text = String(message || '');
+  const text = String(message || '').replace(ownNote, '');
   if (/API Error \((401|402|403)\)/.test(text)) return true;
   return PLAN_WORDS.test(text) && (Number(status) >= 400 || !status);
 }
 
 const clip = (v, n) => (v == null ? null : String(v).replace(/[\u0000-\u001f]/g, ' ').slice(0, n));
 
-// Our own note on failed calls ("Kuota nggak dipotong." = the caller's quota wasn't charged) is not
-// part of the upstream's error and must not read as a quota problem.
-const ownNote = /\s*(Kuota (nggak|tidak) dipotong|Your quota wasn't charged)\.?/gi;
 
 async function record({ path, status = null, upstreamStatus = null, code = null, message = null, source = 'live' }) {
   if (!path) return;
@@ -40,15 +41,43 @@ async function record({ path, status = null, upstreamStatus = null, code = null,
                  ON CONFLICT (path, fingerprint) DO UPDATE SET count = endpoint_errors.count + 1, last_seen = now(), message = EXCLUDED.message,
                    source = EXCLUDED.source, hidden = endpoint_errors.hidden OR EXCLUDED.hidden, resolved_at = NULL`,
     [path, fingerprint, status, clip(code, 60), msg, source, hide]);
-    if (hide) {
-      const r = await query(`UPDATE endpoints SET status = 'disabled', auto_disabled = true, disabled_reason = $2, disabled_at = now(), updated_at = now()
-                              WHERE path = $1 AND status = 'active' RETURNING id`, [path, clip(message || code, 300)]);
-      if (r.length) {
-        await query("INSERT INTO audit_logs(actor_user_id, action, target_type, target_id, metadata) VALUES (NULL, 'endpoint_auto_hidden', 'endpoint', $1, $2::jsonb)",
-          [String(r[0].id), JSON.stringify({ path, status, code, reason: clip(message, 200) })]).catch(() => {});
-      }
+  } catch (e) { if (!missing(e)) throw e; problem = { at: new Date().toISOString(), step: 'log', code: e.code || null }; return; }
+  hiddenCache = null;
+  if (!hide) return;
+  // Hide it in the endpoints table too. Even if this fails, the open "hidden" error above already
+  // keeps the endpoint out of every list and the gateway (hiddenPaths()); the failure is shown to
+  // the developer instead of being swallowed.
+  try {
+    const r = await query(`UPDATE endpoints SET status = 'disabled', auto_disabled = true, disabled_reason = $2, disabled_at = now(), updated_at = now()
+                            WHERE path = $1 AND status = 'active' RETURNING id`, [path, clip(message || code, 300)]);
+    if (r.length) {
+      await query("INSERT INTO audit_logs(actor_user_id, action, target_type, target_id, metadata) VALUES (NULL, 'endpoint_auto_hidden', 'endpoint', $1, $2::jsonb)",
+        [String(r[0].id), JSON.stringify({ path, status, code, reason: clip(message, 200) })]).catch(() => {});
     }
-  } catch (e) { if (!missing(e)) throw e; }
+  } catch (e) {
+    problem = { at: new Date().toISOString(), step: 'hide', path, code: e.code || null };
+    console.error('Auto-hide failed:', { path, code: e.code || null });
+  }
+}
+
+// Paths hidden because of an open plan/quota/key error (cached briefly; reset on every change).
+let hiddenCache = null;
+let problem = null;   // last failure to log/hide, shown in the Error tab
+async function hiddenPaths() {
+  if (hiddenCache && Date.now() - hiddenCache.at < 15000) return hiddenCache.set;
+  let set = new Set();
+  try { set = new Set((await query('SELECT DISTINCT path FROM endpoint_errors WHERE hidden AND resolved_at IS NULL')).map(r => r.path)); }
+  catch (e) { if (!missing(e)) throw e; }
+  hiddenCache = { at: Date.now(), set };
+  return set;
+}
+const lastProblem = () => problem;
+const resetHidden = () => { hiddenCache = null; };
+
+// Is the database ready for this feature (migration 019)?
+async function schemaReady() {
+  try { await query('SELECT auto_disabled, disabled_reason, disabled_at FROM endpoints LIMIT 0'); await query('SELECT id, hidden FROM endpoint_errors LIMIT 0'); return true; }
+  catch (e) { if (missing(e)) return false; throw e; }
 }
 
 // A check passed: an automatically hidden endpoint comes back, its errors are marked fixed.
@@ -57,6 +86,7 @@ async function resolved(path) {
     const r = await query(`UPDATE endpoints SET status = 'active', auto_disabled = false, disabled_reason = NULL, disabled_at = NULL, updated_at = now()
                             WHERE path = $1 AND auto_disabled RETURNING id`, [path]);
     await query('UPDATE endpoint_errors SET resolved_at = now() WHERE path = $1 AND resolved_at IS NULL', [path]);
+    hiddenCache = null;
     if (r.length) {
       await query("INSERT INTO audit_logs(actor_user_id, action, target_type, target_id, metadata) VALUES (NULL, 'endpoint_auto_shown', 'endpoint', $1, $2::jsonb)",
         [String(r[0].id), JSON.stringify({ path })]).catch(() => {});
@@ -80,9 +110,10 @@ async function showAgain(path) {
   const r = await query(`UPDATE endpoints SET status = 'active', auto_disabled = false, disabled_reason = NULL, disabled_at = NULL, updated_at = now()
                           WHERE path = $1 RETURNING id`, [path]);
   if (r.length) await query('UPDATE endpoint_errors SET resolved_at = now() WHERE path = $1 AND resolved_at IS NULL', [path]).catch(() => {});
+  hiddenCache = null;
   return r[0] || null;
 }
-const remove = id => query('DELETE FROM endpoint_errors WHERE id = $1 RETURNING id', [id]);
+const remove = async id => { const r = await query('DELETE FROM endpoint_errors WHERE id = $1 RETURNING id', [id]); hiddenCache = null; return r; };
 const clearResolved = () => query('DELETE FROM endpoint_errors WHERE resolved_at IS NOT NULL RETURNING id');
 
 // ---- Where the error happens and why, in short, for the Error tab.
@@ -155,4 +186,7 @@ function explain({ path, status, code, message }) {
   return { where, why: id, whereEn, whyEn: en };
 }
 
-module.exports = { record, resolved, list, showAgain, remove, clearResolved, isPlanError, explain, originOf };
+// What a caller sees instead of the upstream's plan/quota error (the real one is in the Error tab).
+const UNAVAILABLE_MESSAGE = 'Endpoint ini lagi nggak tersedia untuk sementara. Coba lagi nanti atau pakai endpoint lain dulu ya.';
+
+module.exports = { record, resolved, list, showAgain, remove, clearResolved, isPlanError, explain, originOf, hiddenPaths, resetHidden, lastProblem, schemaReady, UNAVAILABLE_MESSAGE };
