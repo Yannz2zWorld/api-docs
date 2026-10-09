@@ -263,19 +263,52 @@ app.get('/cdn/:id', async (req, res) => {
       res.set('Cache-Control', 'public, max-age=300');
       return res.redirect(302, f.redirect);
     }
-    // Uploaded files are served from this domain: safe types open in the browser, everything else
-    // downloads, and the sandbox CSP keeps any uploaded content from running script here.
-    const fname = encodeURIComponent(f.name).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
-    res.set('Cache-Control', 'public, max-age=86400, immutable');
-    res.set('Content-Type', f.mime);
-    res.set('Content-Length', String(f.size));
-    res.set('Content-Disposition', `${f.inline ? 'inline' : 'attachment'}; filename*=UTF-8''${fname}`);
-    res.set('X-Content-Type-Options', 'nosniff');
-    res.set('Content-Security-Policy', f.mime === 'application/pdf' ? "default-src 'none'; frame-ancestors 'none'" : "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'; sandbox");
-    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
-    return res.end(f.buffer);
+    return sendStoredFile(res, f);
   } catch (e) {
     return res.status(503).json({ status: false, error: 'CDN_UNAVAILABLE' });
+  }
+});
+
+// Files are served from this domain: safe types open in the browser, everything else downloads, and
+// the sandbox CSP keeps any uploaded / fetched content from running script here.
+function sendStoredFile(res, f) {
+  const fname = encodeURIComponent(f.name).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+  res.set('Cache-Control', 'public, max-age=86400, immutable');
+  res.set('Content-Type', f.mime);
+  res.set('Content-Length', String(f.size));
+  res.set('Content-Disposition', `${f.inline ? 'inline' : 'attachment'}; filename*=UTF-8''${fname}`);
+  safeFileHeaders(res, f.mime);
+  return res.end(f.buffer);
+}
+function safeFileHeaders(res, mime) {
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('Content-Security-Policy', mime === 'application/pdf' ? "default-src 'none'; frame-ancestors 'none'" : "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'; sandbox");
+  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+}
+
+// Media links in API results (services/mediaProxyService.js): the file is fetched once, kept here,
+// and always opened on this domain, never by sending the visitor to the source.
+const mediaProxy = require('./services/mediaProxyService');
+const MEDIA_INLINE = /^(image\/(png|jpeg|gif|webp|bmp|avif)|video\/(mp4|webm|quicktime|ogg)|audio\/(mpeg|mp4|aac|ogg|wav|flac|webm)|application\/pdf)$/;
+app.get('/media/:token', async (req, res) => {
+  try {
+    const r = await mediaProxy.open(req.params.token);
+    if (r.file) return sendStoredFile(res, r.file);
+    if (r.stream) {   // too big to keep: passed through from the source
+      const inline = MEDIA_INLINE.test(r.stream.type);
+      res.set('Cache-Control', 'public, max-age=86400');
+      res.set('Content-Type', inline ? r.stream.type : 'application/octet-stream');
+      if (r.stream.size) res.set('Content-Length', String(r.stream.size));
+      res.set('Content-Disposition', inline ? 'inline' : 'attachment');
+      safeFileHeaders(res, r.stream.type);
+      const { Readable } = require('stream');
+      return Readable.fromWeb(r.stream.body).on('error', () => res.destroy()).pipe(res);
+    }
+    if (r.error === 'NOT_FOUND') return res.status(404).json({ status: false, error: 'NOT_FOUND', message: 'Link media ini nggak valid.' });
+    res.set('Cache-Control', 'no-store');
+    return res.status(502).json({ status: false, error: 'MEDIA_UNAVAILABLE', message: 'File-nya lagi nggak bisa diambil dari sumbernya. Coba lagi nanti.' });
+  } catch (e) {
+    return res.status(503).json({ status: false, error: 'MEDIA_UNAVAILABLE', message: 'File-nya lagi nggak bisa dibuka. Coba lagi nanti.' });
   }
 });
 
@@ -594,6 +627,8 @@ function apiGateway(cleanPath, run) {
         body = { ...(body.creator ? { creator: body.creator } : {}), status: false, error: 'ENDPOINT_UNAVAILABLE', message: `${errorLog.UNAVAILABLE_MESSAGE} Kuota nggak dipotong.`,
           ...(identity.tier === 'OWNER' ? { developerNote: 'Detail error-nya ada di Developer Panel → Error.' } : {}) };
       }
+      // Media links in a working answer point at our own /media (services/mediaProxyService.js).
+      if (res.statusCode < 400) body = mediaProxy.rewrite(body, req);
       return sendJson(body);
     };
     req.apiAuth = { userId: identity.userId, keyId: identity.keyId, tier: identity.tier, quota };

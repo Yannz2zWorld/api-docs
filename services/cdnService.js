@@ -224,4 +224,4 @@ function absoluteUrl(req, id) {
   return `${base}/cdn/${id}`;
 }
 
-module.exports = { store, startLarge, finishLarge, registerCatbox, catboxEnabled, accountUsage, fetchFile, purgeExpired, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };
+module.exports = { kindOf, store, startLarge, finishLarge, registerCatbox, catboxEnabled, accountUsage, fetchFile, purgeExpired, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };
