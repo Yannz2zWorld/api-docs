@@ -46,7 +46,8 @@ test('endpoint names, descriptions and paths are never in the dictionary', () =>
 });
 
 let app;
-before(async () => { if (h.skip) return; await h.setupDatabase(); app = await h.startApp(); });
+// A tiny request limit, to check page assets never count against it.
+before(async () => { if (h.skip) return; await h.setupDatabase(); app = await h.startApp({ RATE_LIMIT_PER_MINUTE: '4' }); });
 after(async () => { if (h.skip) return; await app?.close(); await h.teardownDatabase(); });
 
 test('the translator and the dictionary are served', { skip: h.skip }, async () => {
@@ -64,4 +65,26 @@ test('the translator and the dictionary are served', { skip: h.skip }, async () 
   assert.deepEqual(paths.filter(p => p in dict.exact), []);
   const page = await app.request('GET', '/pricing');
   assert.match(page.text, /<script src="\/assets\/i18n\.js"><\/script>/);
+});
+
+test('page assets never hit the request limit and the dictionary is always revalidated', { skip: h.skip }, async () => {
+  for (let i = 0; i < 12; i++) {
+    for (const url of ['/assets/i18n-en.json', '/assets/i18n.js', '/assets/theme.css', '/assets/music.js']) {
+      const r = await app.request('GET', url);
+      assert.equal(r.status, 200, `${url} #${i}`);
+    }
+  }
+  const d = await app.request('GET', '/assets/i18n-en.json');
+  assert.equal(d.headers['cache-control'], 'no-cache');
+  assert.ok(d.headers.etag, 'ETag so unchanged copies answer 304');
+  const again = await app.request('GET', '/assets/i18n-en.json', { headers: { 'if-none-match': d.headers.etag } });
+  assert.equal(again.status, 304);
+  assert.equal((await app.request('GET', '/assets/i18n.js')).headers['cache-control'], 'no-cache');
+});
+
+test('dropdown labels (select.js) translate, endpoint names stay as they are', () => {
+  const pats = dict.patterns.map(([re, to]) => [new RegExp(re), to]);
+  const first = t => pats.find(([re]) => re.test(t));
+  assert.equal('Pilih endpoint: Bard Chat — /api/ai/bard'.replace(...first('Pilih endpoint: Bard Chat — /api/ai/bard')), 'Choose endpoint: Bard Chat — /api/ai/bard');
+  assert.ok(first('Pilih: FREE'));
 });

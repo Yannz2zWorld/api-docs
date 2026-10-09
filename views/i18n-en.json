@@ -897,6 +897,14 @@
  },
  "patterns": [
   [
+   "^Pilih endpoint: (.+)$",
+   "Choose endpoint: $1"
+  ],
+  [
+   "^Pilih: (.+)$",
+   "Choose: {{$1}}"
+  ],
+  [
    "^(.+) · aktif sampai (.+)$",
    "$1 · active until $2"
   ],
