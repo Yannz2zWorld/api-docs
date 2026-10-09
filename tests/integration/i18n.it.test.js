@@ -43,7 +43,6 @@ test('endpoint names, descriptions and paths are never in the dictionary', () =>
   const keys = new Set(Object.keys(dict.exact));
   const leaked = [...texts].filter(t => keys.has(t));
   assert.deepEqual(leaked, []);
-  assert.ok(![...keys].some(k => /^\/api\//.test(k)), 'no endpoint paths');
 });
 
 let app;
@@ -59,6 +58,10 @@ test('the translator and the dictionary are served', { skip: h.skip }, async () 
   assert.equal(json.status, 200);
   assert.match(json.headers['content-type'], /json/);
   assert.deepEqual(Object.keys(json.json).sort(), ['exact', 'patterns']);
+  // No real endpoint path is ever translated (the panel's "/api/kategori/nama" hint is fine).
+  const paths = Object.values((await app.request('GET', '/api/endpoints')).json.endpoints).flat().map(e => e.cleanPath);
+  assert.ok(paths.length > 10);
+  assert.deepEqual(paths.filter(p => p in dict.exact), []);
   const page = await app.request('GET', '/pricing');
   assert.match(page.text, /<script src="\/assets\/i18n\.js"><\/script>/);
 });

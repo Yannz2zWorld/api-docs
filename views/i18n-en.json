@@ -1,1 +1,1550 @@
-{ "exact": {}, "patterns": [] }
+{
+ "exact": {
+  "Navigasi utama": "Main navigation",
+  "Memuat…": "Loading…",
+  "Salin": "Copy",
+  "Tersalin ✓": "Copied ✓",
+  "Tersalin": "Copied",
+  "Sesi kamu udah habis.": "Your session has expired.",
+  "Request gagal.": "Request failed.",
+  "Akun": "Account",
+  "Ganti foto": "Change photo",
+  "Hapus foto": "Remove photo",
+  "Tambah foto": "Add photo",
+  "Nama": "Name",
+  "Bergabung": "Joined",
+  "Nama akun": "Account name",
+  "Nama ini yang muncul di Live Chat — email kamu nggak pernah ditampilin. Kosongin aja kalau mau balik ke nama otomatis dari email (": "This is the name people see in Live Chat — your email is never shown. Leave it empty to go back to the automatic name from your email (",
+  "Simpan nama": "Save name",
+  "Ganti sandi": "Change password",
+  "Ini sandi akun website Yannz API — bukan sandi Google/Gmail kamu. Masukin sandi lama dulu, baru bikin sandi baru.": "This is your Yannz API website password — not your Google/Gmail password. Enter your old password first, then set a new one.",
+  "Sandi lama": "Old password",
+  "Sandi baru": "New password",
+  "Minimal 8 karakter, huruf & angka": "At least 8 characters, letters & numbers",
+  "Ulangi sandi baru": "Repeat new password",
+  "Email & sandi": "Email & password",
+  "Bikin sandi website": "Create a website password",
+  "Kamu masuk lewat Google dan belum punya sandi website. Bikin sandi di sini biar bisa login juga pakai email + sandi. Sandi Google kamu nggak berubah.": "You signed in with Google and don't have a website password yet. Create one here so you can also log in with email + password. Your Google password stays the same.",
+  "Bikin sandi": "Create password",
+  "Pilih file gambar ya (JPG, PNG atau WebP).": "Please pick an image file (JPG, PNG or WebP).",
+  "Gambarnya kegedean (maks 15 MB sebelum dikecilin).": "That image is too big (max 15 MB before it gets shrunk).",
+  "Lagi upload…": "Uploading…",
+  "Foto profil udah diganti.": "Profile photo updated.",
+  "Gambarnya nggak kebaca. Coba file lain.": "Couldn't read that image. Try another file.",
+  "Hapus foto profil?": "Remove your profile photo?",
+  "Foto profil udah dihapus.": "Profile photo removed.",
+  "Sandi baru minimal 8 karakter, campur huruf dan angka.": "Your new password needs at least 8 characters, with both letters and numbers.",
+  "Konfirmasi sandinya nggak sama.": "The passwords don't match.",
+  "Memuat akun…": "Loading your account…",
+  "Order baru": "New order",
+  "Pilih tier": "Pick a tier",
+  "Memuat paket…": "Loading plans…",
+  "Atur durasi": "Set the duration",
+  "Durasi": "Duration",
+  "Durasi custom (hari)": "Custom duration (days)",
+  "hari (7–365)": "days (7–365)",
+  "Pilih pembayaran": "Pick a payment method",
+  "Metode pembayaran": "Payment method",
+  "Ringkasan": "Summary",
+  "Bikin order & bayar": "Create order & pay",
+  "Harga dihitung server dari harga per 30 hari. Order berlaku 2 jam. Tier langsung aktif begitu pembayaran terverifikasi atau di-approve developer. Upgrade ke tier yang lebih tinggi bakal mulai masa aktif baru; beli tier yang sama bakal nambah masa aktif kamu.": "The server works out the price from the 30-day price. Orders are valid for 2 hours. Your tier goes live as soon as the payment is verified or approved by the developer. Upgrading to a higher tier starts a new active period; buying the same tier adds to your current one.",
+  "Riwayat order": "Order history",
+  "Memuat order…": "Loading orders…",
+  "1 bulan": "1 month",
+  "1 tahun": "1 year",
+  "QRIS otomatis": "Automatic QRIS",
+  "QRIS manual": "Manual QRIS",
+  "Scan QR, dicek otomatis sama gateway": "Scan the QR, checked automatically by the gateway",
+  "Scan QRIS developer + upload bukti": "Scan the developer's QRIS + upload proof",
+  "Transfer manual + upload bukti": "Manual transfer + upload proof",
+  "Tier kamu sekarang:": "Your current tier:",
+  "· aktif sampai": "· active until",
+  "· permanen.": "· permanent.",
+  "/ 30 hari": "/ 30 days",
+  "Kamu udah di paket paling tinggi.": "You're already on the highest plan.",
+  "Lagi maintenance": "Under maintenance",
+  "Nomornya belum diatur developer": "The developer hasn't set up this number yet",
+  "Nggak ada paket yang bisa dibeli.": "There are no plans you can buy.",
+  "Lagi bikin order…": "Creating your order…",
+  "Bayar": "Pay",
+  "Metode": "Method",
+  "Lagi bikin QRIS…": "Creating the QRIS…",
+  "Scan pakai aplikasi e-wallet / m-banking yang support QRIS.": "Scan it with any e-wallet / mobile banking app that supports QRIS.",
+  "Scan pakai aplikasi e-wallet / m-banking yang support QRIS. Total udah termasuk biaya gateway.": "Scan it with any e-wallet / mobile banking app that supports QRIS. The total already includes the gateway fee.",
+  "Tier langsung aktif otomatis begitu pembayaran terverifikasi.": "Your tier turns on automatically once the payment is verified.",
+  "Habis bayar, developer bakal cek pembayarannya di dashboard gateway, terus aktifin tier kamu.": "After you pay, the developer checks the payment in the gateway dashboard and then turns on your tier.",
+  "Aku udah bayar — cek status": "I've paid — check status",
+  "Scan QRIS di atas, terus": "Scan the QRIS above, then",
+  "a.n.": "holder:",
+  "Upload bukti pembayaran": "Upload payment proof",
+  "Tap buat pilih screenshot bukti transfer (JPG/PNG, maks 2 MB setelah dikompres)": "Tap to pick a screenshot of your transfer (JPG/PNG, max 2 MB after compression)",
+  "Kirim bukti ke developer": "Send proof to the developer",
+  "Lagi proses gambar…": "Processing image…",
+  "Preview bukti": "Proof preview",
+  "· tap buat ganti": "· tap to change",
+  "Lagi ngirim bukti…": "Sending proof…",
+  "✅ Bukti terkirim. Bukti udah kesimpan dan masuk ke panel developer. Tier aktif begitu developer approve.": "✅ Proof sent. It's saved and already in the developer's panel. Your tier goes live once the developer approves it.",
+  "Mau konfirmasi langsung? Chat developer aja (lampirin screenshot yang sama):": "Want to confirm right away? Just message the developer (attach the same screenshot):",
+  "Kirim via WhatsApp": "Send via WhatsApp",
+  "Kirim via Telegram": "Send via Telegram",
+  "File-nya harus gambar.": "The file has to be an image.",
+  "Gambarnya nggak kebaca. Coba screenshot JPG/PNG.": "Couldn't read that image. Try a JPG/PNG screenshot.",
+  "Gambarnya kegedean. Crop dulu screenshot-nya, terus coba lagi.": "That image is too big. Crop the screenshot first, then try again.",
+  "✅ Lunas. Tier kamu udah aktif.": "✅ Paid. Your tier is active.",
+  "⏳ Bukti udah terkirim — nunggu approval developer.": "⏳ Proof sent — waiting for the developer's approval.",
+  "Lihat QR / ganti metode": "View QR / change method",
+  "Bayar sekarang": "Pay now",
+  "Belum ada order.": "No orders yet.",
+  "Data billing belum bisa dimuat. Coba refresh halamannya.": "Couldn't load your billing data. Try refreshing the page.",
+  "Upload file apa aja — foto, video, audio, dokumen, arsip — terus dapetin link publik di domain ini buat dibagiin atau dipakai di endpoint yang butuh": "Upload any file — photos, videos, audio, documents, archives — and get a public link on this domain to share or to use with endpoints that need a",
+  ". Foto, video, audio, PDF, dan teks bisa langsung dibuka di browser; file lain otomatis ke-download.": ". Photos, videos, audio, PDFs and text open right in the browser; other files download automatically.",
+  "Pilih atau tarik file ke sini": "Pick a file or drag it here",
+  "Foto, video, audio, dokumen, file apa aja · maks": "Photos, videos, audio, documents, any file · max",
+  "Simpan selama": "Keep it for",
+  "Masa simpan": "Storage time",
+  "Permanen": "Permanent",
+  "1 jam": "1 hour",
+  "Ganti file": "Change file",
+  "Maks 30 upload per jam per akun.": "Up to 30 uploads per hour per account.",
+  "Berhasil di-upload": "Uploaded!",
+  "Link file": "File link",
+  "Buka": "Open",
+  "Upload terakhir": "Recent uploads",
+  "Bersihin daftar": "Clear list",
+  "Daftar ini cuma kesimpan di browser ini. Hapus daftar nggak bakal ngehapus file-nya.": "This list is only saved in this browser. Clearing it doesn't delete the files.",
+  "File-nya kosong.": "That file is empty.",
+  "Koneksi putus pas lagi upload. Coba lagi ya.": "The connection dropped while uploading. Please try again.",
+  "Lagi diproses…": "Processing…",
+  "Upload gagal.": "Upload failed.",
+  "Penyimpanan file besar nggak bisa dihubungi dari browser ini.": "The large-file storage can't be reached from this browser.",
+  "Penyimpanan nolak file ini.": "The storage rejected this file.",
+  "Upload ke penyimpanan gagal. Coba lagi.": "Upload to storage failed. Please try again.",
+  "Upload berhasil.": "Upload complete.",
+  "permanen": "permanent",
+  "Tampilan 3D sabit. Geser buat muter, cubit atau scroll buat zoom, dua jari buat geser.": "3D view of the scythe. Drag to rotate, pinch or scroll to zoom, two fingers to pan.",
+  "Balik ke dashboard Yannz API": "Back to the Yannz API dashboard",
+  "Sabit tulang, baja hitam, dan cahaya merah darah": "Bone scythe, black steel and blood-red light",
+  "menempa…": "forging…",
+  "Kontrol": "Controls",
+  "Serangan": "Attacks",
+  "Kendalikan": "Take control",
+  "Layar penuh": "Fullscreen",
+  "Keluar layar penuh": "Exit fullscreen",
+  "Keluar": "Exit",
+  "Tombol 1": "Key 1",
+  "Tombol 2": "Key 2",
+  "Tombol 3": "Key 3",
+  "Spasi": "Space",
+  "Tebasan": "Slash",
+  "Hantaman": "Slam",
+  "Putaran": "Spin",
+  "Kombo": "Combo",
+  "Seret jari muterin titik merah di gagang buat ngayunin sabit. Ayun cepat buat tebasan, hantam ke tanah buat ledakan, ketuk 2× buat Putaran.": "Drag your finger around the red dot on the handle to swing the scythe. Swing fast to slash, slam the ground for a blast, double-tap for a Spin.",
+  "Sudut kamera": "Camera angle",
+  "Seluruh senjata": "Whole weapon",
+  "Bilah & kepala": "Blade & head",
+  "Depan": "Front",
+  "Belakang": "Back",
+  "Kiri": "Left",
+  "Kanan": "Right",
+  "¾ depan": "¾ front",
+  "¾ belakang": "¾ back",
+  "Opsi tampilan": "Display options",
+  "Suara": "Sound",
+  "Putar otomatis": "Auto-rotate",
+  "Cahaya merah": "Red glow",
+  "Kain bergoyang": "Swaying cloth",
+  "Aura gelap": "Dark aura",
+  "Pose miring": "Tilted pose",
+  "Geser buat muter, cubit buat zoom": "Drag to rotate, pinch to zoom",
+  "Joystick gerak": "Movement joystick",
+  "Naik": "Up",
+  "Turun": "Down",
+  "Menempa sabit…": "Forging the scythe…",
+  "Three.js gagal dimuat. Cek koneksi internet, terus refresh halamannya.": "Three.js didn't load. Check your internet connection, then refresh the page.",
+  "WebGL nggak aktif di perangkat atau browser ini, jadi model 3D-nya nggak bisa ditampilin.": "WebGL isn't available on this device or browser, so the 3D model can't be shown.",
+  "TERBELAH!": "SLICED!",
+  "Terbelah": "Sliced",
+  "Posisi sabit di-reset": "Scythe position reset",
+  "Joystick kiri: terbang. ▲▼: naik/turun. Usap cepat: tebas ke arah usapan. Putar jari melingkar: sabit muter bebas. Seret pelan: puter sabit. Ketuk 2×: reset. Dua jari: puter kamera & zoom.": "Left joystick: fly. ▲▼: up/down. Quick swipe: slash in that direction. Circle your finger: the scythe spins freely. Slow drag: turn the scythe. Double-tap: reset. Two fingers: turn the camera & zoom.",
+  "segitiga": "triangles",
+  "Musik website": "Website music",
+  "Diputar terus (loop)": "Playing on loop",
+  "Volume musik": "Music volume",
+  "Atur volume": "Adjust volume",
+  "Lagu website": "Website song",
+  "Lagunya nggak bisa diputar": "The song can't be played",
+  "Lagunya lagi nggak bisa diputar": "The song can't be played right now",
+  "Nyalain suara": "Unmute",
+  "Matiin suara": "Mute",
+  "Buka live chat": "Open live chat",
+  "lagi nyambung…": "connecting…",
+  "Tutup live chat": "Close live chat",
+  "Tulis pesan…": "Write a message…",
+  "Pesan": "Message",
+  "Kirim": "Send",
+  "Hapus pesan": "Delete message",
+  "Hapus pesan ini?": "Delete this message?",
+  "Live chat belum aktif.": "Live chat isn't on yet.",
+  "Chat gagal dimuat.": "Couldn't load the chat.",
+  "Belum ada pesan. Sapa yang lain dulu! 👋": "No messages yet. Say hi to everyone! 👋",
+  "Koneksi chat putus, lagi nyoba lagi…": "Chat connection lost, retrying…",
+  "Pesan gagal dikirim.": "Couldn't send your message.",
+  "Pesan gagal dikirim. Coba lagi ya.": "Couldn't send your message. Please try again.",
+  "Pilih": "Choose",
+  "Tutup": "Close",
+  "Cari…": "Search…",
+  "Cari pilihan": "Search options",
+  "Nggak ada yang cocok.": "No matches.",
+  "Jalanin endpoint langsung dari browser. Kalau nggak pakai key, Sandbox pakai sesi login dan kuota harian akunmu.": "Run endpoints right from your browser. Without a key, the Sandbox uses your login session and your account's daily quota.",
+  "Lihat katalog →": "See the catalog →",
+  "Pilih endpoint": "Choose an endpoint",
+  "Lagi dimuat…": "Loading…",
+  "Autentikasi": "Authentication",
+  "lagi ngecek…": "checking…",
+  "API key (opsional kalau udah login)": "API key (optional if you're logged in)",
+  "Kosongin aja = pakai sesi login": "Leave empty = use your login session",
+  "Lihat key": "Show key",
+  "Lihat": "Show",
+  "Sembunyiin": "Hide",
+  "Lagi ngecek sesi…": "Checking your session…",
+  "Buat integrasi di luar browser, kirim header": "For integrations outside the browser, send the header",
+  "(custom key juga bisa). Jangan taruh key di URL.": "(custom keys work too). Don't put your key in the URL.",
+  "Parameter": "Parameters",
+  "Salin URL": "Copy URL",
+  "Salin cURL": "Copy cURL",
+  "Kirim request": "Send request",
+  "Hasil": "Result",
+  "belum ada request": "no request yet",
+  "Pilih endpoint, isi parameternya, terus klik “Kirim request”.": "Pick an endpoint, fill in the parameters, then hit “Send request”.",
+  "Isi parameternya, terus klik “Kirim request”.": "Fill in the parameters, then hit “Send request”.",
+  "Nunggu respons…": "Waiting for the response…",
+  "Salin hasil": "Copy result",
+  "butuh login / key": "login / key needed",
+  "Belum login. Masukin API key, atau": "Not logged in yet. Enter an API key, or",
+  "login": "log in",
+  "buat pakai kuota FREE 100 request/hari.": "to use the FREE quota of 100 requests/day.",
+  "Tulis teksnya": "Type your text",
+  "Misal: 12.30": "e.g. 12.30",
+  "URL gambar (opsional)": "Image URL (optional)",
+  "(opsional)": "(optional)",
+  "aktif": "active",
+  "nonaktif": "inactive",
+  "terkunci": "locked",
+  "Endpoint ini nggak butuh parameter.": "This endpoint doesn't need any parameters.",
+  "Belum ada endpoint.": "No endpoints yet.",
+  "Katalog lagi nggak bisa dibuka.": "The catalog isn't available right now.",
+  "Request-nya gagal.": "Request failed.",
+  "Upgrade paket di halaman Pricing buat buka endpoint ini.": "Upgrade your plan on the Pricing page to unlock this endpoint.",
+  "Login dulu atau masukin API key.": "Log in first or enter an API key.",
+  "Bikin key baru di halaman API Keys.": "Create a new key on the API Keys page.",
+  "Cek lagi API key kamu.": "Double-check your API key.",
+  "Ukuran file maksimal 8 MB.": "Files can be 8 MB at most.",
+  "Tanpa WM": "No WM",
+  "Pakai WM": "With WM",
+  "Video nggak bisa diputar di browser. Jadi ditampilin JSON-nya aja.": "This video can't be played in the browser, so here's the JSON instead.",
+  "Gambar nggak bisa dimuat. Jadi ditampilin JSON-nya aja.": "The images couldn't be loaded, so here's the JSON instead.",
+  "Lihat JSON": "View JSON",
+  "Sembunyiin JSON": "Hide JSON",
+  "Buka / download": "Open / download",
+  "Musik": "Music",
+  "Katalog endpoint": "Endpoint catalog",
+  "Cari endpoint, cek tier yang dibutuhin, terus langsung coba di Sandbox pakai sesi login atau API key kamu.": "Search for an endpoint, check which tier it needs, then try it right away in the Sandbox with your login session or API key.",
+  "endpoint tersedia": "endpoints available",
+  "Cari nama, deskripsi, atau path…": "Search by name, description or path…",
+  "Cari endpoint": "Search endpoints",
+  "Buka semua": "Open all",
+  "Tutup semua": "Close all",
+  "Lagi muat katalog…": "Loading the catalog…",
+  "Coba →": "Try it →",
+  "Coba kata kunci lain.": "Try a different keyword.",
+  "Katalog lagi nggak bisa dibuka. Coba muat ulang halamannya.": "The catalog isn't available right now. Try reloading the page.",
+  "Kontak": "Contact",
+  "Saluran WA": "WA Channel",
+  "Bikin key baru": "Create a new key",
+  "Jenis key": "Key type",
+  "Acak otomatis": "Random (auto-generated)",
+  "Isi API key": "Your API key",
+  "misal Yannz2z": "e.g. Yannz2z",
+  "6–64 karakter: huruf, angka,": "6–64 characters: letters, numbers,",
+  "atau": "or",
+  ". Harus unik. Key pendek lebih gampang ditebak — makin panjang makin aman.": ". Must be unique. Short keys are easier to guess — the longer, the safer.",
+  "Nama (label)": "Name (label)",
+  "misal server-produksi": "e.g. production-server",
+  "Bikin API key": "Create API key",
+  "Key cuma tampil utuh sekali setelah dibikin (server cuma nyimpen hash-nya). Simpan di password manager atau secret server; jangan taruh di frontend publik.": "Your key is shown in full only once, right after it's created (the server only keeps its hash). Keep it in a password manager or a server secret; never put it in a public frontend.",
+  "Key kamu": "Your keys",
+  "Lagi muat key…": "Loading keys…",
+  "Cara pakainya": "How to use it",
+  "Bisa juga pakai header": "You can also use the",
+  ". Key yang udah dicabut langsung ditolak dengan": "header. Revoked keys get rejected right away with",
+  "nggak dapat custom API key. Kamu tetap bisa pakai 100 request/hari lewat": "doesn't come with a custom API key. You can still use 100 requests/day through the",
+  "kalau udah login, atau": "while logged in, or",
+  "buat bikin key.": "to create keys.",
+  "Cabut": "Revoke",
+  "Belum ada key.": "No keys yet.",
+  "Key private dari developer": "Private keys from the developer",
+  "Key ini cuma berlaku buat akun kamu (dicek pas kamu login). Nilai key-nya dikasih langsung sama developer.": "These keys only work for your account (checked when you log in). The developer gives you the key value directly.",
+  "tanpa batas": "no limit",
+  "Custom key harus 6–64 karakter: huruf, angka, _ atau -.": "A custom key needs 6–64 characters: letters, numbers, _ or -.",
+  "Lagi bikin key…": "Creating your key…",
+  "Salin sekarang — key ini cuma ditampilin sekali.": "Copy it now — this key is only shown once.",
+  "Salin key": "Copy key",
+  "API kamu.": "Your API.",
+  "Satu tempat, rapi.": "One clean hub.",
+  "Jelajahi endpoint, pantau gateway, dan langsung coba di playground interaktif, semuanya dari satu workspace. Tampilannya tetap brutalist, tapi info-infonya udah ditata rapi dan siap dipakai beneran.": "Explore endpoints, keep an eye on the gateway, and jump straight into the interactive playground, all from one workspace. It keeps the brutalist look, but everything is neatly organized and ready for real use.",
+  "Buka Playground": "Open Playground",
+  "Baca dokumentasi": "Read the docs",
+  "Upgrade paket": "Upgrade plan",
+  "Paket": "Plan",
+  "Lagi memuat akun…": "Loading account…",
+  "Request hari ini": "Requests today",
+  "Reset jam 00:00 UTC": "Resets at 00:00 UTC",
+  "Kelola key": "Manage keys",
+  "Lagi ngecek…": "Checking…",
+  "Semua yang kamu butuhin, tanpa ribet.": "Everything you need, without the noise.",
+  "Dibangun di atas core API yang udah ada. Halaman ini sengaja dibikin modular, jadi produk, autentikasi, analitik, atau fitur akun baru gampang ditambah nanti.": "Built on the existing API core. This page is modular on purpose, so new products, authentication, analytics or account features are easy to add later.",
+  "Playground interaktif": "Interactive playground",
+  "Coba modul yang ada langsung dari browser, dari nyari endpoint sampai request-nya jalan, cepet.": "Try the available modules right in your browser and go from finding an endpoint to a working request, fast.",
+  "Konsol API": "API console",
+  "Lihat katalog route dan cek semua API-nya di tampilan dokumentasi yang rapi.": "Browse the route catalog and check out every API in a clean documentation view.",
+  "Buka konsol API": "Open API console",
+  "Gateway live": "Live gateway",
+  "Jumlah request, total endpoint, dan info runtime diambil langsung dari statistik server.": "Request counts, endpoint totals and runtime info come straight from the server stats.",
+  "Lihat pemakaian": "View usage",
+  "Modular dari awal": "Modular by design",
+  "Route plugin berdiri sendiri, jadi tampilannya gampang dikembangin tanpa ngubah struktur backend.": "Plugin routes stay independent, so the interface can keep evolving without touching the backend structure.",
+  "Lihat katalog route": "View route catalog",
+  "Endpoint terakhir dibuka": "Recently opened endpoints",
+  "Lagi memuat…": "Loading…",
+  "Belum ada endpoint yang kamu buka": "You haven't opened any endpoints yet",
+  "1 endpoint terakhir yang kamu buka": "1 recently opened endpoint",
+  "Endpoint yang kamu buka nanti muncul di sini. Coba dulu di": "Endpoints you open will show up here. Give one a try in the",
+  "Tampilan API gateway yang fokus, dengan backend modular, alur kerja developer yang rapi, dan desain yang siap tumbuh bareng project-nya.": "A focused API gateway interface with a modular backend, a clean developer workflow, and a design that grows with the project.",
+  ". Hak cipta dilindungi.": ". All rights reserved.",
+  "Dokumentasi": "Documentation",
+  "Lagi buka workspace": "Opening workspace",
+  "Nyiapin tampilan": "Preparing interface",
+  "Lagi nyiapin dashboard...": "Getting the dashboard ready...",
+  "Masang workspace...": "Setting up the workspace...",
+  "Sinkron gateway": "Syncing gateway",
+  "Baca status layanan...": "Reading live service status...",
+  "Bentar lagi": "Almost there",
+  "Workspace siap.": "Workspace is ready.",
+  "Developer · tanpa batas": "Developer · unlimited",
+  "Perpanjang": "Renew",
+  "Paket berbayar tertinggi": "Highest paid plan",
+  "Tanpa batas · reset jam 00:00 UTC": "Unlimited · resets at 00:00 UTC",
+  "Kuota habis · reset jam 00:00 UTC": "Quota used up · resets at 00:00 UTC",
+  "FREE: belum bisa bikin custom key · pakai": "FREE: no custom keys · use the",
+  "dengan login kamu": "with your login",
+  "Data akun lagi nggak tersedia": "Account data unavailable",
+  "Koneksi putus — muat ulang halaman": "Connection lost — reload the page",
+  "Data pemakaian lagi nggak tersedia": "Usage data unavailable",
+  "Terganggu": "Degraded",
+  "Koneksi kamu putus — muat ulang halaman": "Your connection dropped — reload the page",
+  "Gagal memuat — muat ulang halaman": "Couldn't load — reload the page",
+  "Data gateway lagi nggak tersedia": "Gateway data unavailable",
+  "Pilih paket yang pas buat kamu.": "Pick the plan that fits you.",
+  "Kuota dihitung per hari (reset jam 00:00 UTC), dan cuma request yang berhasil yang dihitung. Harga final dipastiin server pas order dibuat.": "Quota is counted per day (resets at 00:00 UTC), and only successful requests count. The final price is set by the server when your order is created.",
+  "Lagi memuat paket…": "Loading plans…",
+  "DEVELOPER itu peran khusus buat operasional, jadi nggak dijual.": "DEVELOPER is an operations-only role, so it's not for sale.",
+  "Custom API key tanpa batas": "Unlimited custom API keys",
+  "Nggak bisa bikin custom API key (pakai Sandbox lewat login)": "No custom API keys (use the Sandbox with your login)",
+  "Endpoint tier FREE": "FREE tier endpoints",
+  "Semua endpoint yang aktif": "All active endpoints",
+  "Paket kamu sekarang": "Your current plan",
+  "Login gratis": "Sign in for free",
+  "Login dulu buat upgrade": "Sign in to upgrade",
+  "Udah termasuk": "Already included",
+  "Paket aktif": "Active plan",
+  "Daftar paket lagi nggak bisa dimuat. Coba lagi nanti ya.": "Plans can't be loaded right now. Please try again later.",
+  "Info Maintenance": "Maintenance info",
+  "Website lagi maintenance": "The website is under maintenance",
+  "Kami lagi benerin website-nya. Tunggu bentar sampai maintenance selesai, terus muat ulang halaman ini": "We're fixing up the website. Hang tight until maintenance is done, then reload this page",
+  "Coba lagi": "Try again",
+  "Masuk sebagai developer": "Sign in as developer",
+  "Masuk — Yannz API": "Sign in — Yannz API",
+  "Bikin cepet.": "Build fast.",
+  "Rilis rapi.": "Ship clean.",
+  "Workspace simpel buat jelajahi endpoint, tes integrasi, dan ngubah ide jadi kode yang jalan, tanpa ribet.": "A focused workspace for exploring endpoints, testing integrations, and turning ideas into working code, without the usual clutter.",
+  "MODULAR · CEPAT · SIAP": "MODULAR · FAST · READY",
+  "Akses akun": "Account access",
+  "Sesi aman": "Secure session",
+  "Pilih masuk atau daftar": "Sign in or sign up",
+  "Masuk": "Sign in",
+  "Daftar": "Sign up",
+  "Selamat datang lagi.": "Welcome back.",
+  "Masuk pakai email & sandi, atau lanjut pakai Google.": "Sign in with your email & password, or continue with Google.",
+  "Sandi": "Password",
+  "Sandi kamu": "Your password",
+  "Tampilkan sandi": "Show password",
+  "Sembunyikan sandi": "Hide password",
+  "Lupa sandi?": "Forgot password?",
+  "Nama kamu": "Your name",
+  "Ulangi sandi": "Repeat password",
+  "Ketik ulang sandi": "Type your password again",
+  "Bikin akun": "Create account",
+  "Kode 6 digit udah dikirim ke": "We sent a 6-digit code to",
+  ". Cek folder spam juga ya.": ". Check your spam folder too.",
+  "Kode verifikasi": "Verification code",
+  "Verifikasi & masuk": "Verify & sign in",
+  "← Balik": "← Back",
+  "Kirim ulang kode": "Resend code",
+  "Email akun": "Account email",
+  "Kirim kode": "Send code",
+  "← Balik ke halaman masuk": "← Back to sign in",
+  "Masukin kode dari email": "Enter the code we emailed to",
+  "dan sandi baru kamu.": "and your new password.",
+  "Kode reset": "Reset code",
+  "Simpan sandi baru": "Save new password",
+  "← Ganti email": "← Change email",
+  "Lanjut pakai Google": "Continue with Google",
+  "Selesain verifikasi Cloudflare di atas dulu buat lanjut pakai Google.": "Finish the Cloudflare check above to continue with Google.",
+  "Sandi kamu di-hash di server (scrypt), dan sesi disimpan di cookie HttpOnly yang aman.": "Your password is hashed on the server (scrypt), and your session lives in a secure HttpOnly cookie.",
+  "Sistem login: siap": "Authentication layer: ready",
+  "Dokumentasi API": "API documentation",
+  "Lagi nyiapin workspace kamu": "Preparing your workspace",
+  "Ngecek sesi": "Verifying session",
+  "Nyiapin koneksi aman...": "Initializing secure connection...",
+  "Ngecek akun": "Verifying account",
+  "Cek sesi aman...": "Checking secure session...",
+  "Memuat workspace": "Loading workspace",
+  "Masang modul API...": "Mounting API modules...",
+  "Hampir selesai": "Finalizing",
+  "Login Google dibatalin.": "Google sign-in was cancelled.",
+  "Login Google gagal. Cek konfigurasi Google OAuth.": "Google sign-in failed. Check the Google OAuth setup.",
+  "Akun ini lagi dibatasi. Hubungi developer ya.": "This account is restricted right now. Please contact the developer.",
+  "Sesi kamu nggak valid. Login lagi ya.": "Your session isn't valid anymore. Please sign in again.",
+  "Website lagi maintenance. Selama maintenance, cuma developer yang bisa masuk.": "The website is under maintenance. Only developers can sign in until it's done.",
+  "Login developer. Selama maintenance, cuma akun developer yang bisa masuk.": "Developer sign-in. During maintenance, only developer accounts can sign in.",
+  "Selesain verifikasi keamanan Cloudflare dulu, terus coba masuk lagi.": "Finish the Cloudflare security check first, then try signing in again.",
+  "Google nggak ngirim credential.": "Google didn't return a credential.",
+  "Selesain verifikasi Cloudflare dulu, terus klik Google lagi.": "Finish the Cloudflare check first, then click Google again.",
+  "Login Google gagal.": "Google sign-in failed.",
+  "Selesain verifikasi Cloudflare dulu ya.": "Please finish the Cloudflare check first.",
+  "Google Sign-In nggak bisa dimuat. Pakai tombol di atas aja.": "Google Sign-In couldn't load. Use the button above instead.",
+  "Google OAuth belum di-setting di server.": "Google OAuth isn't set up on the server yet.",
+  "Bikin akun.": "Create an account.",
+  "Daftar gratis cukup pakai nama, email, dan sandi. Nanti kami kirim kode verifikasi ke email kamu.": "Sign up for free with just your name, email and password. We'll send a verification code to your email.",
+  "Cek email kamu.": "Check your email.",
+  "Satu langkah lagi: masukin kode verifikasi dari YannApi.": "One more step: enter the verification code from YannApi.",
+  "Masukin email akun kamu. Nanti kami kirim kode reset dari YannApi.": "Enter your account email and we'll send you a reset code from YannApi.",
+  "Bikin sandi baru.": "Create a new password.",
+  "Kodenya berlaku 15 menit dan cuma bisa dipakai sekali.": "The code is valid for 15 minutes and works only once.",
+  "Verifikasi Cloudflare gagal dimuat. Muat ulang halaman, terus coba lagi.": "The Cloudflare check couldn't load. Reload the page, then try again.",
+  "Tunggu verifikasi keamanan Cloudflare selesai dulu, terus coba lagi. (TURNSTILE_REQUIRED)": "Wait for the Cloudflare security check to finish, then try again. (TURNSTILE_REQUIRED)",
+  "Koneksinya bermasalah. Coba lagi ya.": "Connection problem. Please try again.",
+  "Masukin email yang valid ya.": "Please enter a valid email.",
+  "Masukin sandi kamu.": "Please enter your password.",
+  "Email kamu belum diverifikasi. Masukin kodenya, atau klik \"Kirim ulang kode\".": "Your email isn't verified yet. Enter the code, or click \"Resend code\".",
+  "Nama minimal 2 karakter ya.": "Your name needs at least 2 characters.",
+  "Sandi minimal 8 karakter, dan harus ada huruf sama angkanya.": "Your password needs at least 8 characters, with both letters and numbers.",
+  "Kodenya harus 6 angka.": "The code must be 6 digits.",
+  "Server & Pembayaran": "Server & Payments",
+  "Lagi muat status…": "Loading status…",
+  "Cari email / nama / ID (misal 12345678)": "Search email / name / ID (e.g. 12345678)",
+  "Cari user": "Search users",
+  "Semua tier": "All tiers",
+  "Semua status": "All statuses",
+  "Cari": "Search",
+  "Reset sandi user": "Reset a user's password",
+  "ID (misal 12345678) atau email user": "ID (e.g. 12345678) or user email",
+  "ID atau email user": "User ID or email",
+  "sandi baru (kosongin = dibikin otomatis)": "new password (leave empty = auto-generated)",
+  "Reset sandi": "Reset password",
+  "Semua aktivitas di web: login & event akun, panggilan API, sama kunjungan halaman.": "All activity on the site: sign-ins & account events, API calls, and page visits.",
+  "Filter email / nama user": "Filter by user email / name",
+  "Filter user": "Filter users",
+  "Jenis aktivitas": "Activity type",
+  "Semua": "All",
+  "Akun (login, key, pembayaran…)": "Account (sign-ins, keys, payments…)",
+  "Panggilan API": "API calls",
+  "Kunjungan halaman": "Page visits",
+  "Muat": "Load",
+  "live (10 detik)": "live (10 sec)",
+  "Nama key": "Key name",
+  "Bot WhatsApp": "WhatsApp bot",
+  "Custom key (opsional)": "Custom key (optional)",
+  "kosongin = dibikin otomatis": "leave empty = auto-generated",
+  "6–64 karakter: huruf, angka, _ atau -": "6–64 characters: letters, numbers, _ or -",
+  "Tier key": "Key tier",
+  "Masa aktif": "Valid for",
+  "12 jam": "12 hours",
+  "24 jam / 1 hari": "24 hours / 1 day",
+  "Custom (hari)": "Custom (days)",
+  "Tanpa batas": "No limit",
+  "hari (maks 1000)": "days (max 1000)",
+  "Pemilik key": "Key owner",
+  "Public — semua user boleh pakai (nggak terikat email)": "Public — any user can use it (not tied to an email)",
+  "semua user boleh pakai (nggak terikat email)": "any user can use it (not tied to an email)",
+  "Private — cuma user/email yang dikasih akses": "Private — only users/emails given access",
+  "cuma user/email yang dikasih akses": "only users/emails given access",
+  "Developer — cuma developer (developer key)": "Developer — developer only (developer key)",
+  "cuma developer (developer key)": "developer only (developer key)",
+  "Akses private — satu email / ID per baris": "Private access — one email / ID per line",
+  "Bikin key": "Create key",
+  ": siapa pun yang punya key bisa pakai.": ": anyone who has the key can use it.",
+  ": server ngecek key dan akun yang lagi login — user lain ditolak walaupun tahu key-nya.": ": the server checks the key and the signed-in account — other users are rejected even if they know the key.",
+  ": cuma akun developer. Key cuma bisa akses endpoint sampai tier-nya dan punya kuota harian sendiri. Custom key berlaku buat semua jenis dan nggak boleh sama dengan key lain.": ": developer account only. A key can only reach endpoints up to its tier and has its own daily quota. Custom keys work for every type and can't match another key.",
+  "Cari email, nama key, awalan — atau tempel API key lengkap": "Search email, key name, prefix — or paste a full API key",
+  "Cari API key": "Search API keys",
+  "Filter jenis key": "Filter by key type",
+  "Semua jenis": "All types",
+  "Key user": "User keys",
+  "Filter status key": "Filter by key status",
+  "Nilai key lengkap nggak pernah disimpan (cuma hash SHA-256), jadi nggak bisa ditampilin lagi — developer juga nggak bisa. Tempel key lengkap di pencarian buat nemuin pemiliknya.": "Full key values are never stored (only a SHA-256 hash), so they can't be shown again — not even to the developer. Paste a full key into the search to find its owner.",
+  "Nonaktifkan": "Disable",
+  "matiin key sementara (bisa diaktifin lagi);": "turns the key off for now (you can enable it again);",
+  "bikin nilai key baru dan key lama langsung nggak berlaku;": "makes a new key value and the old key stops working right away;",
+  "matiin key permanen tapi catatannya tetap disimpan;": "turns the key off for good but keeps its record;",
+  "Hapus": "Delete",
+  "ngehapus key (riwayat pemakaiannya tetap ada).": "deletes the key (its usage history stays).",
+  "Tambah endpoint": "Add an endpoint",
+  "Nama endpoint": "Endpoint name",
+  "/api/kategori/nama": "/api/category/name",
+  "/api/kategori/nama — huruf kecil, angka, tanda -": "/api/category/name — lowercase letters, numbers, dashes",
+  "Script (.js) — upload file atau tempel kodenya": "Script (.js) — upload a file or paste the code",
+  "Maks 200 KB. File langsung di-commit ke folder": "Max 200 KB. The file is committed straight to the folder",
+  "Maks 200 KB. File langsung di-commit ke folder plugin/.": "Max 200 KB. The file is committed straight to the plugin/ folder.",
+  "Deskripsi": "Description",
+  "Endpoint ini buat apa": "What this endpoint does",
+  "Tier minimum": "Minimum tier",
+  "Tambah & deploy": "Add & deploy",
+  "Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Script jalan di server, jadi cuma upload kode yang kamu percaya.": "The script is committed to GitHub, Vercel redeploys automatically (±20–60 seconds), then the endpoint goes live. Scripts run on the server, so only upload code you trust.",
+  "Tes endpoint theresav": "Test theresav endpoints",
+  "Ngetes endpoint AI/Downloader/Maker/Image ke theresav dari server. Pakai kuota theresav kamu.": "Tests the AI/Downloader/Maker/Image endpoints against theresav from the server. Uses your theresav quota.",
+  "Filter status pembayaran": "Filter by payment status",
+  "semua": "all",
+  "Kalau ON, seluruh website masuk mode maintenance: Home, Login, Register, Profile, Dashboard, API dan halaman user lain nampilin info maintenance; login Google, login email + sandi, dan daftar ditolak (dicek di server). Cuma kamu (developer) yang tetap bisa masuk lewat": "When it's ON, the whole site goes into maintenance mode: Home, Login, Register, Profile, Dashboard, API and other user pages show the maintenance notice; Google sign-in, email + password sign-in and sign-up are rejected (checked on the server). Only you (the developer) can still get in, via",
+  "dan ngatur website.": "and manage the site.",
+  "Pesan maintenance": "Maintenance message",
+  "Simpan": "Save",
+  "Rekening pembayaran manual": "Manual payment accounts",
+  "Nomor yang muncul ke pembeli buat DANA / GoPay. Kosongin aja kalau mau nyembunyiin metodenya. QRIS manual pakai gambar": "The numbers buyers see for DANA / GoPay. Leave one empty to hide that method. Manual QRIS uses the image",
+  "Nomor DANA": "DANA number",
+  "Nama akun DANA": "DANA account name",
+  "Nomor GoPay": "GoPay number",
+  "Nama akun GoPay": "GoPay account name",
+  "Simpan rekening": "Save accounts",
+  "Jaga-jaga kalau website atau database bermasalah. Simpan file backup di tempat aman dan jangan dibagiin ke siapa pun, isinya data akun.": "Just in case the website or database runs into trouble. Keep backup files somewhere safe and don't share them with anyone — they contain account data.",
+  "Semua tabel & data (": "All tables & data (",
+  "). Ini yang dipakai buat balikin database: jalanin dulu semua": "). This is what you use to restore the database: first run all",
+  ", terus jalanin file ini di SQL Editor Neon.": ", then run this file in Neon's SQL Editor.",
+  "Backup file web": "Web files backup",
+  "Semua kode website (": "All the website code (",
+  ", diambil dari repo GitHub). Kalau web-nya rusak, tinggal upload/deploy ulang isi zip ini.": ", pulled from the GitHub repo). If the site breaks, just re-upload/redeploy what's in this zip.",
+  "Data yang sama kayak backup database, tapi dalam bentuk JSON. Gampang dibuka & dibaca (misal buat cek data user atau pembayaran), tapi bukan buat restore.": "The same data as the database backup, but as JSON. Easy to open & read (e.g. to check user or payment data), but not for restoring.",
+  "Unduh .sql": "Download .sql",
+  "Unduh .zip": "Download .zip",
+  "Unduh .json": "Download .json",
+  "Kirim ke Gmail": "Send to Gmail",
+  "Ketiga file di atas dikirim jadi lampiran ke email developer.": "All three files above are sent as attachments to the developer's email.",
+  "Kirim backup ke Gmail sekarang": "Send backup to Gmail now",
+  "Filter action, misal user_ban": "Filter by action, e.g. user_ban",
+  "Nama key (kosongin = nggak diubah)": "Key name (empty = unchanged)",
+  "— jangan ubah masa aktif —": "— don't change validity —",
+  "hari": "days",
+  "— jangan ubah tier —": "— don't change tier —",
+  "Ikut tier akun pemilik": "Follow the owner's account tier",
+  "Perpanjangan dihitung dari masa aktif sekarang (atau dari sekarang kalau udah habis).": "Extensions count from the current expiry (or from now if it already ran out).",
+  "Batal": "Cancel",
+  "Key baru": "New key",
+  "Key cuma ditampilin sekali ini. Key lama udah nggak berlaku.": "This key is only shown this once. The old key no longer works.",
+  "Akses key private": "Private key access",
+  "Tambah / reset akses": "Add / reset access",
+  "email atau ID user, satu per baris": "user email or ID, one per line",
+  "Tambah": "Add",
+  "Reset akses (ganti semua)": "Reset access (replace all)",
+  "Hijau = udah diisi, putih = kosong. Nilainya nggak pernah ditampilin.": "Green = set, white = empty. Values are never shown.",
+  "Pembayaran": "Payments",
+  "Manual (QRIS, DANA, GoPay + bukti):": "Manual (QRIS, DANA, GoPay + proof):",
+  "Gateway aktif. Settlement otomatis: mati — tier diaktifin lewat Approve di tab Payments.": "Gateway is on. Automatic settlement: off — tiers are activated via Approve in the Payments tab.",
+  "Gateway aktif. Settlement otomatis: udah dikonfigurasi.": "Gateway is on. Automatic settlement: configured.",
+  "Gateway lagi maintenance: pembeli cuma bisa bayar manual terus upload bukti. Buat nyalain lagi, isi PAYMENT_GATEWAY=on (plus PAKASIR_PROJECT dan PAKASIR_API_KEY) di Vercel.": "The gateway is under maintenance: buyers can only pay manually and upload proof. To turn it back on, set PAYMENT_GATEWAY=on (plus PAKASIR_PROJECT and PAKASIR_API_KEY) in Vercel.",
+  "Email (verifikasi & reset sandi)": "Email (verification & password reset)",
+  "belum diatur": "not set up",
+  "Pengirim:": "Sender:",
+  "Kode dikirim atas nama YannApi.": "Codes are sent as YannApi.",
+  "Tanpa provider email, daftar pakai email & lupa sandi bakal dijawab EMAIL_NOT_CONFIGURED. Isi EMAIL_FROM + SMTP_* atau RESEND_API_KEY.": "Without an email provider, email sign-up & forgot password answer EMAIL_NOT_CONFIGURED. Set EMAIL_FROM + SMTP_* or RESEND_API_KEY.",
+  "Konfirmasi pembayaran": "Payment confirmation",
+  "Bukti masuk ke tab Payments": "Proof goes to the Payments tab",
+  "Tombol WhatsApp:": "WhatsApp button:",
+  "nomor kosong": "no number",
+  "Tombol Telegram:": "Telegram button:",
+  "link kosong": "no link",
+  "Habis upload bukti, pembeli bisa langsung chat kamu lewat WhatsApp (OWNER_WA / link WhatsApp di settings.js, pesan detail order udah keisi) atau Telegram (link Telegram di settings.js). Nggak ada pesan yang dikirim otomatis.": "After uploading proof, buyers can chat you right away on WhatsApp (OWNER_WA / the WhatsApp link in settings.js, with the order details pre-filled) or Telegram (the Telegram link in settings.js). No messages are sent automatically.",
+  "Metadata tanpa handler:": "Metadata without a handler:",
+  "Requests hari ini": "Requests today",
+  "API key aktif": "Active API keys",
+  "Endpoint aktif": "Active endpoints",
+  "Endpoint terkunci": "Locked endpoints",
+  "Hari ini": "Today",
+  "Aksi": "Actions",
+  "Nggak ada user yang cocok.": "No matching users.",
+  "email terverifikasi": "email verified",
+  "email belum diverifikasi": "email not verified",
+  "Alasan:": "Reason:",
+  "Nggak ada masa berlaku": "No expiry",
+  "Kuota hari ini:": "Today's quota:",
+  "Akun developer (OWNER_EMAIL) nggak bisa diban, diubah tier-nya, atau dihapus dari panel.": "The developer account (OWNER_EMAIL) can't be banned, have its tier changed, or be deleted from the panel.",
+  "hari (kosongin = permanen)": "days (empty = permanent)",
+  "Hapus user": "Delete user",
+  "Pemakaian 14 hari terakhir": "Usage over the last 14 days",
+  "Belum ada.": "Nothing yet.",
+  "Terakhir dipakai": "Last used",
+  "Nggak ada key.": "No keys.",
+  "Kode": "Code",
+  "Jumlah": "Amount",
+  "Alasan ban (wajib diisi):": "Ban reason (required):",
+  "Unban user ini?": "Unban this user?",
+  "Approve user ini?": "Approve this user?",
+  "Cabut API key ini? Aplikasi user bakal langsung ditolak.": "Revoke this API key? The user's apps will be rejected right away.",
+  "Email-nya nggak cocok. Dibatalin.": "The email doesn't match. Cancelled.",
+  "key user": "user key",
+  "Isi minimal 1 email / ID user buat key private.": "Add at least 1 user email / ID for a private key.",
+  "Key udah dibuat": "Key created",
+  "Key cuma ditampilin sekali ini. Simpan sekarang ya.": "This key is only shown this once. Save it now.",
+  "Aktifkan": "Enable",
+  "Akses": "Access",
+  "Developer key \"Yannz2z\" udah dibuat.": "Developer key \"Yannz2z\" created.",
+  "Key \"Yannz2z\" kamu sekarang jadi developer key.": "Your \"Yannz2z\" key is now a developer key.",
+  "⚠ \"Yannz2z\" udah dipakai key user lain — bikin developer key pakai custom key yang beda.": "⚠ \"Yannz2z\" is already used by another user's key — create a developer key with a different custom key.",
+  "⚠ Jalanin migration 011 dulu buat developer key / public / private.": "⚠ Run migration 011 first for developer / public / private keys.",
+  "Pemilik": "Owner",
+  "Dibuat / terakhir dipakai": "Created / last used",
+  "cocok persis": "exact match",
+  "akses DEVELOPER": "DEVELOPER access",
+  "tier ikut akun": "tier follows the account",
+  "Semua user": "All users",
+  "Cuma developer": "Developer only",
+  "belum ada akses": "no access yet",
+  "belum pernah dipakai": "never used",
+  "Nggak ada API key yang cocok.": "No matching API keys.",
+  "Belum ada user yang dikasih akses — key ini nggak bisa dipakai siapa pun.": "No users have access yet — nobody can use this key.",
+  "Isi email / ID user dulu.": "Enter a user email / ID first.",
+  "Reset akses? Semua akses lama dihapus terus diganti sama daftar ini.": "Reset access? All existing access gets removed and replaced with this list.",
+  "Akses direset.": "Access reset.",
+  "Akses udah ditambah.": "Access added.",
+  "Hapus akses user ini?": "Remove this user's access?",
+  "Tes semua endpoint theresav ke server upstream sekarang? Ini bakal pakai kuota theresav kamu.": "Test all theresav endpoints against the upstream server now? This uses your theresav quota.",
+  "Lagi ngetes…": "Testing…",
+  "Lagi ngetes… bisa 1–2 menit.": "Testing… this can take 1–2 minutes.",
+  "tes manual": "manual test",
+  "butuh link/foto asli — tes di Sandbox": "needs a real link/photo — test it in Sandbox",
+  "THERESAV_API_KEY belum diatur": "THERESAV_API_KEY isn't set",
+  "nunggu deploy": "waiting for deploy",
+  "Label endpoint": "Endpoint label",
+  "Tanpa label": "No label",
+  "Script maksimal 200 KB ya.": "Scripts can be 200 KB max.",
+  "Lagi commit…": "Committing…",
+  "Endpoint udah disimpan.": "Endpoint saved.",
+  "Jumlah / metode": "Amount / method",
+  "Lihat bukti (URL)": "View proof (URL)",
+  "(link dari user — cek dulu sebelum approve)": "(link from the user — check it before approving)",
+  "Nggak ada pembayaran.": "No payments.",
+  "Bukti pembayaran manual muncul di tab Payments. Habis upload, pembeli dikasih tombol chat WhatsApp ke kamu buat konfirmasi.": "Manual payment proofs show up in the Payments tab. After uploading, buyers get a WhatsApp chat button to you for confirmation.",
+  "Bukti pembayaran manual muncul di tab Payments. Habis upload, pembeli dikasih tombol chat WhatsApp dan Telegram ke kamu buat konfirmasi.": "Manual payment proofs show up in the Payments tab. After uploading, buyers get WhatsApp and Telegram chat buttons to you for confirmation.",
+  "disembunyikan": "hidden",
+  "Nyalain Maintenance Info Website? Seluruh website ditutup buat semua user kecuali developer, dan user nggak bisa login.": "Turn on Maintenance Info Website? The whole site closes for every user except the developer, and users can't sign in.",
+  "Matiin maintenance? Website balik normal.": "Turn off maintenance? The site goes back to normal.",
+  "Sandi ini cuma ditampilin sekali. Kirim ke user lewat jalur yang aman, terus minta dia ganti di Profile.": "This password is only shown once. Send it to the user through a safe channel and ask them to change it in Profile.",
+  "akun": "account",
+  "halaman": "page",
+  "Waktu": "Time",
+  "Jenis": "Type",
+  "Apa": "What",
+  "Belum ada aktivitas.": "No activity yet.",
+  "Pelaku": "Actor",
+  "Nggak ada log.": "No logs.",
+  "✅ Email aktif, backup dikirim ke": "✅ Email is on, backups go to",
+  "⚠️ Email belum aktif: isi": "⚠️ Email isn't on yet: set",
+  "(Gmail App Password) atau": "(Gmail App Password) or",
+  "di Vercel.": "in Vercel.",
+  "⚠️ Isi": "⚠️ Set",
+  "✅ Backup otomatis tiap hari jam 02.00 WIB nyala": "✅ Automatic daily backup at 02:00 WIB is on",
+  "⚠️ Backup otomatis harian belum nyala: isi": "⚠️ Automatic daily backup isn't on yet: set",
+  "(teks acak bebas) di Vercel terus redeploy.": "(any random text) in Vercel, then redeploy.",
+  "✅ File web diambil dari GitHub": "✅ Web files are pulled from GitHub",
+  "⚠️ Backup file web butuh": "⚠️ The web files backup needs",
+  "kalau repo": "if the repo",
+  "private.": "is private.",
+  "Lagi dibuat…": "Generating…",
+  "Lagi bikin backup & ngirim email… (bisa sampai semenit)": "Making the backup & sending the email… (can take up to a minute)",
+  "Permintaan dari origin lain ditolak.": "Requests from other origins are blocked.",
+  "Login dulu ya.": "Please log in first.",
+  "Akun nggak ketemu. Login lagi ya.": "Account not found. Please log in again.",
+  "Akun kamu lagi nggak aktif.": "Your account isn't active right now.",
+  "Cuma developer yang bisa akses ini.": "Only the developer can access this.",
+  "Datanya nggak ketemu.": "Data not found.",
+  "Upload-nya nggak ketemu.": "Upload not found.",
+  "Link file-nya nggak valid.": "The file link isn't valid.",
+  "Upload-nya nggak lengkap atau nggak sesuai. Coba upload ulang ya.": "The upload is incomplete or doesn't match. Please try uploading again.",
+  "Penyimpanan belum siap. Jalankan dulu migrasi 012, 013 dan 014 di Neon.": "Storage isn't ready yet. Run migrations 012, 013 and 014 on Neon first.",
+  "Upload gagal. Coba lagi ya.": "Upload failed. Please try again.",
+  "Pilih dulu file yang mau di-upload.": "Pick a file to upload first.",
+  "Riwayat endpoint lagi nggak bisa dimuat.": "Endpoint history can't be loaded right now.",
+  "Foto maksimal 512 KB.": "Photos can be up to 512 KB.",
+  "Fotonya harus gambar JPG, PNG atau WebP.": "The photo must be a JPG, PNG or WebP image.",
+  "Foto profil butuh migration 010_user_avatars.sql dulu.": "Profile photos need migration 010_user_avatars.sql first.",
+  "Foto profilnya nggak ada.": "There's no profile photo.",
+  "Isi dulu nama akunnya.": "Fill in the account name first.",
+  "Nama akun 2–24 karakter: huruf, angka, spasi, titik, _ atau -. Nama kayak \"Owner\"/\"Admin\" nggak boleh dipakai.": "Account names are 2–24 characters: letters, numbers, spaces, dots, _ or -. Names like \"Owner\"/\"Admin\" aren't allowed.",
+  "Fitur ini butuh migration 009_key_tiers_profile_chat.sql dulu.": "This feature needs migration 009_key_tiers_profile_chat.sql first.",
+  "Akun nggak ketemu.": "Account not found.",
+  "Sandi website udah dibuat. Sekarang kamu juga bisa login pakai email + sandi ini (login Google tetap bisa dipakai).": "Website password created. You can now also log in with your email + this password (Google login still works).",
+  "Kebanyakan salah masukin sandi. Coba lagi 15 menit lagi ya.": "Too many wrong password attempts. Try again in 15 minutes.",
+  "Sandi yang sekarang salah.": "Your current password is wrong.",
+  "Sandi baru harus beda dari sandi lama.": "The new password must be different from the old one.",
+  "Sandi berhasil diganti. Perangkat lain udah otomatis logout.": "Password changed. Your other devices have been logged out.",
+  "Kebanyakan nyoba custom key. Coba lagi 1 jam lagi ya.": "Too many custom key attempts. Try again in an hour.",
+  "Salin key-nya sekarang, key lengkapnya cuma ditampilkan sekali.": "Copy your key now, the full key is only shown once.",
+  "API key nggak ketemu atau udah dicabut.": "API key not found or already revoked.",
+  "Paket yang dipilih nggak valid.": "The selected plan isn't valid.",
+  "Idempotency key ini udah dipakai buat paket lain.": "This idempotency key was already used for a different plan.",
+  "Payment gateway lagi maintenance. Bayar manual aja lewat QRIS, DANA atau GoPay, terus upload buktinya.": "The payment gateway is under maintenance. Pay manually via QRIS, DANA or GoPay, then upload the proof.",
+  "Order nggak ketemu atau udah kedaluwarsa.": "Order not found or already expired.",
+  "Pembayaran otomatis belum diatur. Pakai pembayaran manual dulu ya.": "Automatic payment isn't set up yet. Please use manual payment for now.",
+  "Gateway pembayaran lagi nggak bisa memproses transaksi.": "The payment gateway can't process transactions right now.",
+  "Status tetap pending sampai pembayaran diverifikasi server.": "The status stays pending until the server verifies the payment.",
+  "QRIS buat order ini belum dibuat.": "The QRIS for this order hasn't been created yet.",
+  "Metode manual nggak valid. Pilih QRIS, DANA atau GOPAY.": "That manual method isn't valid. Pick QRIS, DANA or GOPAY.",
+  "Gambar bukti maksimal 2 MB.": "The proof image can be up to 2 MB.",
+  "Buktinya harus gambar JPG, PNG atau WebP.": "The proof must be a JPG, PNG or WebP image.",
+  "Upload gambar bukti pembayarannya (atau kirim URL HTTPS buktinya).": "Upload an image of your payment proof (or send an HTTPS link to it).",
+  "Bukti pembayaran buat order ini udah dikirim dan lagi nunggu approval developer.": "Payment proof for this order was already sent and is waiting for the developer's approval.",
+  "Bukti udah diterima. Tinggal nunggu approval developer.": "Proof received. Now it's just waiting for the developer's approval.",
+  "User nggak ketemu.": "User not found.",
+  "Ini nggak bisa dilakukan ke akun developer.": "This can't be done to the developer account.",
+  "Dibatasi developer": "Restricted by the developer",
+  "User pending nggak ketemu.": "Pending user not found.",
+  "Tier nggak valid. DEVELOPER (OWNER) cuma ditentukan lewat OWNER_EMAIL.": "Invalid tier. DEVELOPER (OWNER) is only set through OWNER_EMAIL.",
+  "Durasi harus 1–3650 hari, atau kosongin aja (permanen).": "Duration must be 1–3650 days, or leave it empty (permanent).",
+  "Isi ID atau email user-nya.": "Fill in the user's ID or email.",
+  "User dengan ID/email itu nggak ketemu.": "No user found with that ID/email.",
+  "Sandi developer gantinya lewat halaman Profile.": "The developer password is changed on the Profile page.",
+  "Sandi udah direset. User-nya udah dikeluarin dari semua perangkat.": "Password reset. The user has been logged out of all devices.",
+  "Live chat butuh migration 009_key_tiers_profile_chat.sql dulu.": "Live chat needs migration 009_key_tiers_profile_chat.sql first.",
+  "Pesan harus 1–500 karakter.": "Messages must be 1–500 characters.",
+  "Pelan-pelan — maksimal 15 pesan per menit.": "Slow down — max 15 messages per minute.",
+  "Pesannya nggak ketemu.": "Message not found.",
+  "User dengan email/ID itu nggak ketemu.": "No user found with that email/ID.",
+  "Jenis key harus Public, Private atau Developer.": "Key type must be Public, Private or Developer.",
+  "Key private butuh minimal 1 user/email yang dikasih akses.": "A private key needs at least 1 user/email with access.",
+  "API key nggak ketemu.": "API key not found.",
+  "Developer key selalu pakai akses DEVELOPER, jadi tier-nya nggak bisa diubah.": "The developer key always uses DEVELOPER access, so its tier can't be changed.",
+  "Key public/private harus punya tier sendiri.": "Public/private keys need their own tier.",
+  "Belum ada yang diubah: ganti nama, masa aktif atau tier dulu.": "Nothing changed yet: change the name, validity or tier first.",
+  "API key nggak ketemu atau udah dicabut (key yang udah dicabut nggak bisa diubah).": "API key not found or already revoked (revoked keys can't be changed).",
+  "Key yang udah dicabut nggak bisa diaktifkan lagi.": "A revoked key can't be activated again.",
+  "Key yang udah dicabut nggak bisa di-reset. Bikin key baru aja.": "A revoked key can't be reset. Just create a new key.",
+  "Key lama udah nggak berlaku. Simpan key baru ini — cuma ditampilkan sekali.": "The old key no longer works. Save this new key — it is only shown once.",
+  "Daftar akses cuma buat key private.": "Access lists are only for private keys.",
+  "Isi minimal 1 user/email.": "Fill in at least 1 user/email.",
+  "User itu nggak ada di daftar akses.": "That user isn't on the access list.",
+  "Developer key nggak bisa dicabut: pakai Nonaktifkan atau Reset aja.": "The developer key can't be revoked: use Disable or Reset instead.",
+  "API key ini udah dicabut.": "This API key has been revoked.",
+  "Isi dulu THERESAV_API_KEY (atau salah satu key server lain) di Vercel, terus redeploy sebelum ngetes.": "Set THERESAV_API_KEY (or one of the other server keys) on Vercel first, then redeploy before testing.",
+  "Ada pengujian lain yang lagi jalan. Tunggu sampai selesai ya.": "Another test is already running. Please wait until it finishes.",
+  "gagal": "failed",
+  "Belum ada endpoint yang dipilih.": "No endpoints selected yet.",
+  "Data endpoint nggak valid.": "The endpoint data isn't valid.",
+  "Tier minimum nggak valid.": "The minimum tier isn't valid.",
+  "Path endpoint ini udah terdaftar.": "This endpoint path is already registered.",
+  "Metadata udah tersimpan, tapi belum ada plugin handler buat path ini. Endpoint-nya belum bisa dipanggil sampai plugin di-deploy.": "Metadata saved, but there's no plugin handler for this path yet. The endpoint can't be called until the plugin is deployed.",
+  "Nama wajib diisi dan path harus kayak /api/kategori/nama (huruf kecil, angka, tanda -).": "Name is required and the path must look like /api/category/name (lowercase letters, numbers, dashes).",
+  "Upload plugin belum aktif: set GITHUB_TOKEN (dan GITHUB_REPO kalau repo-nya beda) di Environment Variables Vercel, terus redeploy.": "Plugin upload isn't active yet: set GITHUB_TOKEN (and GITHUB_REPO if it's a different repo) in Vercel's Environment Variables, then redeploy.",
+  "Jalankan migrasi 015_endpoint_badges.sql dulu di Neon.": "Run migration 015_endpoint_badges.sql on Neon first.",
+  "Endpoint nggak ketemu.": "Endpoint not found.",
+  "Endpoint ini punya plugin aktif. Nonaktifkan atau kunci aja, jangan hapus metadata-nya.": "This endpoint has an active plugin. Disable or lock it instead of deleting its metadata.",
+  "Pembayaran ini nggak ada gambar buktinya.": "This payment doesn't have a proof image.",
+  "Pembayaran ini udah nggak pending atau udah diproses.": "This payment isn't pending anymore or was already processed.",
+  "Website lagi maintenance. Tunggu bentar sampai selesai ya.": "The website is under maintenance. Hang tight until it's done.",
+  "Nomor harus 8–16 digit.": "Numbers must be 8–16 digits.",
+  "Backup-nya kegedean buat diunduh langsung. Pakai tombol \"Kirim ke Gmail\" aja.": "The backup is too big to download directly. Use the \"Send to Gmail\" button instead.",
+  "Backup gagal dibuat. Coba lagi bentar.": "The backup couldn't be created. Try again in a bit.",
+  "Backup file web gagal dibuat.": "The web files backup couldn't be created.",
+  "Set CRON_SECRET di Vercel buat backup otomatis harian.": "Set CRON_SECRET on Vercel for automatic daily backups.",
+  "Payload transaksi nggak valid.": "The transaction payload isn't valid.",
+  "Order atau nominalnya nggak cocok.": "The order or amount doesn't match.",
+  "Order ini udah nggak pending.": "This order isn't pending anymore.",
+  "Transaksi belum diverifikasi provider.": "The provider hasn't verified the transaction yet.",
+  "Layanan data lagi nggak tersedia. Coba lagi bentar ya.": "The data service isn't available right now. Try again in a bit.",
+  "Ada masalah di server. Coba lagi bentar ya.": "Something went wrong on the server. Try again in a bit.",
+  "Google OAuth belum diatur. Isi GOOGLE_CLIENT_ID dan AUTH_SECRET di environment variables.": "Google OAuth isn't set up yet. Fill in GOOGLE_CLIENT_ID and AUTH_SECRET in the environment variables.",
+  "Layanan akun lagi nggak tersedia. Coba lagi bentar ya.": "The account service isn't available right now. Try again in a bit.",
+  "Kebanyakan request dari IP kamu. Coba lagi nanti ya.": "Too many requests from your IP. Try again later.",
+  "Kebanyakan percobaan login. Coba lagi nanti ya.": "Too many login attempts. Try again later.",
+  "Lagunya lagi nggak bisa dimuat.": "The song can't be loaded right now.",
+  "Kebanyakan API key salah dari jaringan ini. Coba lagi 15 menit lagi ya.": "Too many wrong API keys from this network. Try again in 15 minutes.",
+  "API key-nya nggak valid.": "The API key isn't valid.",
+  "API key ini lagi dinonaktifkan developer.": "This API key has been disabled by the developer.",
+  "Masa aktif API key ini udah habis. Minta developer buat perpanjang ya.": "This API key has expired. Ask the developer to extend it.",
+  "Yahaha mau ngambil key gwa ya 😹😝": "Hehe, trying to grab my key, huh? 😹😝",
+  "API key ini private: login dulu pakai akun yang dikasih akses sama developer.": "This API key is private: log in first with an account the developer gave access to.",
+  "API key ini private dan nggak dikasih buat akun kamu.": "This API key is private and wasn't shared with your account.",
+  "Login dulu, atau kirim API key lewat header Authorization: Bearer <key>.": "Log in first, or send an API key in the Authorization: Bearer <key> header.",
+  "Akses pakai sesi login cuma bisa dari halaman Yannz API. Buat integrasi, pakai API key.": "Access with a login session only works from Yannz API pages. For integrations, use an API key.",
+  "Sesi kamu udah nggak valid. Login lagi ya.": "Your session isn't valid anymore. Please log in again.",
+  "Registry endpoint belum tersedia.": "The endpoint registry isn't available yet.",
+  "Endpoint ini lagi dinonaktifkan.": "This endpoint is disabled right now.",
+  "Endpoint ini lagi dikunci developer.": "This endpoint is locked by the developer right now.",
+  "Jatah request harian kamu udah habis.": "You've used up your daily request quota.",
+  "API gateway lagi nggak tersedia.": "The API gateway isn't available right now.",
+  "Layanan sumbernya lagi bermasalah. Kuota nggak dipotong.": "The source service is having problems. Your quota wasn't charged.",
+  "Katalog lagi nggak tersedia.": "The catalog isn't available right now.",
+  "Origin ini nggak diizinkan.": "This origin isn't allowed.",
+  "Login Google belum diatur di server.": "Google login isn't set up on the server yet.",
+  "Credential Google nggak ketemu.": "Google credential not found.",
+  "Server nggak bisa nyambung ke Google buat verifikasi. Coba lagi ya.": "The server couldn't reach Google to verify. Please try again.",
+  "Login Google gagal. Credential-nya nggak valid atau udah kedaluwarsa.": "Google login failed. The credential is invalid or has expired.",
+  "Akun Google kamu harus punya email yang udah terverifikasi.": "Your Google account needs a verified email.",
+  "Akun ini lagi nggak aktif. Hubungi developer kalau menurut kamu ini salah.": "This account isn't active right now. Contact the developer if you think this is a mistake.",
+  "Sesi login gagal dibuat.": "The login session couldn't be created.",
+  "Google OAuth belum diatur di server.": "Google OAuth isn't set up on the server yet.",
+  "OAuth state nggak valid. Coba login lagi ya.": "The OAuth state isn't valid. Please try logging in again.",
+  "Google nggak ngirim id_token.": "Google didn't send an id_token.",
+  "Akun ini lagi dibatasi.": "This account is restricted right now.",
+  "Profil lagi nggak bisa dimuat.": "Your profile can't be loaded right now.",
+  "Logout belum kesimpan di server. Coba lagi ya.": "The logout wasn't saved on the server. Please try again.",
+  "Halaman utama gagal dimuat.": "The home page couldn't be loaded.",
+  "Dashboard gagal dimuat.": "The dashboard couldn't be loaded.",
+  "Playground gagal dimuat.": "The playground couldn't be loaded.",
+  "Dokumentasi API gagal dimuat.": "The API docs couldn't be loaded.",
+  "Statistik lagi nggak tersedia.": "Stats aren't available right now.",
+  "Body request-nya bukan JSON yang valid.": "The request body isn't valid JSON.",
+  "Request-nya kegedean.": "The request is too large.",
+  "Upload gambar (atau kasih URL)": "Upload an image (or give a URL)",
+  "Pilih file buat di-upload": "Choose a file to upload",
+  "File maksimal 8 MB.": "Max file size is 8 MB.",
+  "File-nya harus gambar (png/jpg/webp/gif/bmp).": "The file must be an image (png/jpg/webp/gif/bmp).",
+  "Gambar maksimal 4 MB.": "Images can be up to 4 MB.",
+  "Penyimpanan gambar belum siap (jalankan migrasi 012 dulu). Kuota nggak dipotong.": "Image storage isn't ready yet (run migration 012 first). Your quota wasn't charged.",
+  "Layanan sumbernya ngirim file kosong. Kuota nggak dipotong.": "The source service sent an empty file. Your quota wasn't charged.",
+  "File hasilnya kegedean buat dikirim. Kuota nggak dipotong.": "The result file is too big to send. Your quota wasn't charged.",
+  "Layanan sumbernya kelamaan jawab. Coba lagi ya. Kuota nggak dipotong.": "The source service took too long to answer. Please try again. Your quota wasn't charged.",
+  "Layanan sumbernya nggak bisa dihubungi. Coba lagi ya. Kuota nggak dipotong.": "The source service can't be reached. Please try again. Your quota wasn't charged.",
+  "Layanan sumbernya lagi bermasalah.": "The source service is having problems.",
+  "file kosong": "empty file",
+  "nggak bisa dihubungi": "unreachable",
+  "respons bukan JSON/media": "response isn't JSON/media",
+  "URL file ini nggak diizinkan.": "This file URL isn't allowed.",
+  "File nggak bisa diambil dari URL itu.": "Couldn't fetch the file from that URL.",
+  "Kebanyakan redirect.": "Too many redirects.",
+  "Endpoint ini belum aktif (THERESAV_API_KEY belum diatur). Kuota nggak dipotong.": "This endpoint isn't active yet (THERESAV_API_KEY isn't set). Your quota wasn't charged.",
+  "Layanan AI-nya kelamaan jawab. Coba lagi ya. Kuota nggak dipotong.": "The AI service took too long to answer. Please try again. Your quota wasn't charged.",
+  "Layanan AI-nya nggak bisa dihubungi. Coba lagi ya. Kuota nggak dipotong.": "The AI service can't be reached. Please try again. Your quota wasn't charged.",
+  "Layanan AI-nya lagi bermasalah.": "The AI service is having problems.",
+  "Database belum diatur. Tambahin DATABASE_URL di environment server.": "The database isn't set up yet. Add DATABASE_URL to the server environment.",
+  "Operasi database gagal.": "Database operation failed.",
+  "Tier ini belum kebagian jatah API key.": "This tier doesn't include any API keys yet.",
+  "Custom key ini udah dipakai. Pilih value lain ya.": "This custom key is already taken. Please pick another value.",
+  "Permintaan key ini udah diproses. Muat ulang daftar key-nya; secret cuma ditampilkan pas pertama dibuat.": "This key request was already processed. Reload the key list; the secret is only shown when it is first created.",
+  "Jatah API key buat tier kamu udah penuh.": "You've reached the API key limit for your tier.",
+  "Fitur ini butuh migration 009_key_tiers_profile_chat.sql. Jalankan dulu di database.": "This feature needs migration 009_key_tiers_profile_chat.sql. Run it on the database first.",
+  "Fitur ini butuh migration 011_public_ids_key_access.sql. Jalankan dulu di database.": "This feature needs migration 011_public_ids_key_access.sql. Run it on the database first.",
+  "Masa aktif nggak valid: pilih 12 jam, 1/3/7/14/30 hari, custom 1–1000 hari, atau tanpa batas.": "Invalid validity: choose 12 hours, 1/3/7/14/30 days, custom 1–1000 days, or unlimited.",
+  "Custom key ini udah dipakai key lain. Pakai yang lain ya.": "This custom key is already used by another key. Please use a different one.",
+  "Jenis key harus public, private atau developer.": "Key type must be public, private or developer.",
+  "Tier key harus FREE, SULTAN, SEPUH atau DEWA.": "Key tier must be FREE, SULTAN, SEPUH or DEWA.",
+  "Masa aktif maksimal 1000 hari.": "Validity can be at most 1000 days.",
+  "Developer key udah ada. Pakai Reset/Regenerate buat ganti nilainya.": "A developer key already exists. Use Reset/Regenerate to change its value.",
+  "Tier key nggak valid.": "The key tier isn't valid.",
+  "Perpanjangan maksimal 1000 hari.": "Extensions can be at most 1000 days.",
+  "GitHub lagi nggak bisa dihubungi. Coba lagi bentar.": "GitHub can't be reached right now. Try again in a bit.",
+  "Repo/branch GitHub nggak ketemu. Cek GITHUB_REPO dan GITHUB_BRANCH.": "GitHub repo/branch not found. Check GITHUB_REPO and GITHUB_BRANCH.",
+  "Repo-nya private, jadi isi dulu GITHUB_TOKEN (izin Contents: read) di Environment Variables Vercel.": "The repo is private, so set GITHUB_TOKEN (Contents: read permission) in Vercel's Environment Variables first.",
+  "GITHUB_TOKEN ditolak GitHub. Cek tokennya masih aktif dan punya akses ke repo ini.": "GitHub rejected GITHUB_TOKEN. Check that the token is still active and has access to this repo.",
+  "Gagal ngunduh file web dari GitHub.": "Couldn't download the web files from GitHub.",
+  "OWNER_EMAIL belum diisi di Environment Variables.": "OWNER_EMAIL isn't set in the Environment Variables yet.",
+  "Email belum aktif: isi EMAIL_FROM + SMTP (Gmail App Password) atau RESEND_API_KEY di Vercel.": "Email isn't active yet: set EMAIL_FROM + SMTP (Gmail App Password) or RESEND_API_KEY on Vercel.",
+  "File web": "Web files",
+  "Gagal dibuat.": "Couldn't be created.",
+  "Email belum diatur.": "Email isn't set up yet.",
+  "Email gagal dikirim.": "The email couldn't be sent.",
+  "Script .js wajib diisi.": "A .js script is required.",
+  "Script maksimal 200 KB.": "Scripts can be up to 200 KB.",
+  "Script harus meng-export handler: module.exports = async (req, res) => { … } atau module.exports = { run(req, res) { … } }.": "The script must export a handler: module.exports = async (req, res) => { … } or module.exports = { run(req, res) { … } }.",
+  "Nggak bisa nyambung ke GitHub. Coba lagi ya.": "Couldn't connect to GitHub. Please try again.",
+  "GITHUB_TOKEN ditolak GitHub. Cek token-nya masih berlaku dan punya izin Contents: read and write di repo ini.": "GitHub rejected GITHUB_TOKEN. Check that the token is still valid and has Contents: read and write permission on this repo.",
+  "File plugin buat path ini udah ada di repo.": "A plugin file for this path already exists in the repo.",
+  "Metode pembayaran ini nggak didukung.": "This payment method isn't supported.",
+  "Nominalnya belum nyampe minimum metode pembayaran ini.": "The amount is below this payment method's minimum.",
+  "Payment gateway belum diatur.": "The payment gateway isn't set up yet.",
+  "Sandi harus ada huruf dan angkanya.": "Passwords need both letters and numbers.",
+  "Selesaikan verifikasi keamanan (Cloudflare) dulu.": "Complete the security check (Cloudflare) first.",
+  "Verifikasi keamanan gagal atau udah kedaluwarsa. Coba lagi ya.": "The security check failed or expired. Please try again.",
+  "Verifikasi keamanan lagi nggak bisa dihubungi. Coba lagi bentar ya.": "The security check can't be reached right now. Try again in a bit.",
+  "Identitas Google-nya nggak lengkap.": "The Google identity is incomplete.",
+  "Kalau email itu terdaftar, kodenya udah dikirim. Cek inbox atau folder spam ya.": "If that email is registered, the code is on its way. Check your inbox or spam folder.",
+  "Nama harus 2–80 karakter.": "Name must be 2–80 characters.",
+  "Format email-nya nggak valid.": "That email format isn't valid.",
+  "Daftar pakai email belum bisa. Pakai login Google aja ya.": "Signing up with email isn't available yet. Just use Google login.",
+  "Email ini udah terdaftar. Login aja, atau pakai Lupa sandi.": "This email is already registered. Just log in, or use Forgot password.",
+  "Akun udah dibuat, tapi email verifikasinya gagal dikirim. Coba \"Kirim ulang kode\" ya.": "Account created, but the verification email couldn't be sent. Try \"Resend code\".",
+  "Pengiriman email belum diatur.": "Email sending isn't set up yet.",
+  "Email gagal dikirim. Coba lagi bentar ya.": "The email couldn't be sent. Try again in a bit.",
+  "Kodenya salah atau udah kedaluwarsa. Minta kode baru aja kalau perlu.": "The code is wrong or expired. Just request a new one if needed.",
+  "Akun ini lagi nggak aktif.": "This account isn't active right now.",
+  "Email atau sandi salah.": "Wrong email or password.",
+  "Kebanyakan percobaan gagal. Coba lagi 15 menit lagi, atau reset sandi kamu.": "Too many failed attempts. Try again in 15 minutes, or reset your password.",
+  "Email kamu belum diverifikasi. Masukin kode yang dikirim ke email kamu.": "Your email isn't verified yet. Enter the code we sent to your email.",
+  "Reset sandi lewat email belum diatur. Hubungi developer ya.": "Password reset by email isn't set up yet. Please contact the developer.",
+  "Sandi udah diganti, tapi akun ini lagi nggak aktif.": "Password changed, but this account isn't active right now.",
+  "Sandi udah diganti. Semua perangkat lain udah otomatis logout.": "Password changed. All your other devices have been logged out."
+ },
+ "patterns": [
+  [
+   "^(.+) · aktif sampai (.+)$",
+   "$1 · active until $2"
+  ],
+  [
+   "^Google \\+ Email & sandi$",
+   "Google + Email & password"
+  ],
+  [
+   "^Nama akun sekarang: (.+)$",
+   "Your account name is now: $1"
+  ],
+  [
+   "^(\\d+) hari$",
+   "$1 days"
+  ],
+  [
+   "^(\\d+) bulan$",
+   "$1 months"
+  ],
+  [
+   "^(\\d+) jam$",
+   "$1 hours"
+  ],
+  [
+   "^([A-Z]+) · perpanjang$",
+   "$1 · extend"
+  ],
+  [
+   "^([\\d.]+) req/hari · key tanpa batas$",
+   "$1 req/day · unlimited keys"
+  ],
+  [
+   "^([\\d.]+) req/hari · (\\d+) API key$",
+   "$1 req/day · $2 API keys"
+  ],
+  [
+   "^([A-Z]+) · (\\d+) hari · (.+)$",
+   "$1 · $2 days · {{$3}}"
+  ],
+  [
+   "^([A-Z]+) · (\\d+) hari$",
+   "$1 · $2 days"
+  ],
+  [
+   "^Aktif sampai ±(.+) kalau dibayar hari ini \\(ditambahin ke masa aktif sekarang\\)\\.$",
+   "Active until about $1 if you pay today (added to your current period)."
+  ],
+  [
+   "^Aktif sampai ±(.+) kalau dibayar hari ini\\.$",
+   "Active until about $1 if you pay today."
+  ],
+  [
+   "^Durasinya harus (\\d+)–(\\d+) hari\\.$",
+   "The duration has to be $1–$2 days."
+  ],
+  [
+   "^Order (\\S+) udah dibuat\\.$",
+   "Order $1 created."
+  ],
+  [
+   "^Order berlaku sampai (.+)\\.$",
+   "This order is valid until $1."
+  ],
+  [
+   "^QRIS pembayaran (\\S+)$",
+   "Payment QRIS for $1"
+  ],
+  [
+   "^Berlaku sampai (.+)$",
+   "Valid until $1"
+  ],
+  [
+   "^isi nominal (Rp[\\d.]+) persis$",
+   "enter exactly $1"
+  ],
+  [
+   "^ke (DANA|GoPay):$",
+   "to $1:"
+  ],
+  [
+   "^· (\\d+) hari · (Rp[\\d.]+)$",
+   "· $1 days · $2"
+  ],
+  [
+   "^bayar: (.+)$",
+   "payment: $1"
+  ],
+  [
+   "^Dibuat ([^·]+) · berlaku sampai ([^·]+) · lunas ([^·]+)$",
+   "Created $1 · valid until $2 · paid $3"
+  ],
+  [
+   "^Dibuat ([^·]+) · berlaku sampai ([^·]+)$",
+   "Created $1 · valid until $2"
+  ],
+  [
+   "^Dibuat ([^·]+) · lunas ([^·]+)$",
+   "Created $1 · paid $2"
+  ],
+  [
+   "^Dibuat ([^·]+)$",
+   "Created $1"
+  ],
+  [
+   "^Maks (\\d+) upload per jam\\.$",
+   "Up to $1 uploads per hour."
+  ],
+  [
+   "^Maks (\\d+) upload per jam · penyimpanan akun (.+) dari (.+)\\.$",
+   "Up to $1 uploads per hour · account storage $2 of $3."
+  ],
+  [
+   "^Maks (\\d+) upload per jam · penyimpanan akun (.+)\\.$",
+   "Up to $1 uploads per hour · account storage $2."
+  ],
+  [
+   "^File-nya kegedean \\((.+)\\)\\. Maks (.+)\\.$",
+   "That file is too big ($1). The max is $2."
+  ],
+  [
+   "^Lagi upload (\\d+)%$",
+   "Uploading $1%"
+  ],
+  [
+   "^File maks (.+)\\.$",
+   "The max file size is $1."
+  ],
+  [
+   "^Penyimpanan nolak file ini: (.+)$",
+   "The storage rejected this file: $1"
+  ],
+  [
+   "^Upload file besar lagi nggak bisa dari browser ini\\. Untuk sementara maks (.+) dulu\\.$",
+   "Large uploads don't work from this browser right now. For now the max is $1."
+  ],
+  [
+   "^Untuk sekarang file maks (.+)\\.$",
+   "For now the max file size is $1."
+  ],
+  [
+   "^kedaluwarsa (.+)$",
+   "expires $1"
+  ],
+  [
+   "^Model gagal dibuat di perangkat ini: (.+)$",
+   "The model couldn't be built on this device: $1"
+  ],
+  [
+   "^(\\d+) mesh$",
+   "$1 meshes"
+  ],
+  [
+   "^Jeda lagu: (.+)$",
+   "Pause song: {{$1}}"
+  ],
+  [
+   "^Putar lagu: (.+)$",
+   "Play song: {{$1}}"
+  ],
+  [
+   "^(\\d+) online · kamu: (.+)$",
+   "$1 online · you: $2"
+  ],
+  [
+   "^sesi (\\S+)$",
+   "$1 session"
+  ],
+  [
+   "^Login sebagai (\\S+) · tier (\\S+) · kuota tanpa batas\\.$",
+   "Logged in as $1 · tier $2 · unlimited quota."
+  ],
+  [
+   "^Login sebagai (\\S+) · tier (\\S+) · ([\\d.,]+) / ([\\d.,]+) kepakai hari ini \\(sisa ([\\d.,]+)\\)\\.$",
+   "Logged in as $1 · tier $2 · $3 / $4 used today ($5 left)."
+  ],
+  [
+   "^Isi (\\S+) di sini$",
+   "Enter $1 here"
+  ],
+  [
+   "^Kuota reset lagi (.+)\\.$",
+   "Your quota resets on $1."
+  ],
+  [
+   "^Parameter wajib belum diisi: (.+)\\.$",
+   "Required parameters are still empty: $1."
+  ],
+  [
+   "^Koneksi putus: (.*)$",
+   "Connection lost: $1"
+  ],
+  [
+   "^([\\d.,]+) ms · sisa kuota (\\S+)$",
+   "$1 ms · $2 quota left"
+  ],
+  [
+   "^Hasil (\\d+)$",
+   "Result $1"
+  ],
+  [
+   "^Request-nya gagal\\. \\((.+)\\)$",
+   "Request failed. ($1)"
+  ],
+  [
+   "^Tier (\\S+) · (\\d+) key aktif \\(maks (\\d+)\\)\\.$",
+   "Tier $1 · active keys: $2 (max $3)."
+  ],
+  [
+   "^Tier (\\S+) · (\\d+) key aktif \\(tanpa batas\\)\\.$",
+   "Tier $1 · active keys: $2 (no limit)."
+  ],
+  [
+   "^Batas key tier (\\S+) udah penuh\\. Cabut key lama atau$",
+   "You've hit the key limit for tier $1. Revoke an old key or"
+  ],
+  [
+   "^aktif sampai (.+)$",
+   "active until $1"
+  ],
+  [
+   "^Dibuat (.+) · Terakhir dipakai (.+) · Dicabut (.+)$",
+   "Created $1 · Last used $2 · Revoked $3"
+  ],
+  [
+   "^Dibuat (.+) · Terakhir dipakai (.+)$",
+   "Created $1 · Last used $2"
+  ],
+  [
+   "^Cabut key \"(.*)\"\\? Aplikasi yang pakai key ini bakal langsung ditolak\\.$",
+   "Revoke key \"$1\"? Apps using this key will be rejected right away."
+  ],
+  [
+   "^(\\d+) endpoint terakhir yang kamu buka$",
+   "$1 recently opened endpoints"
+  ],
+  [
+   "^Aktif sampai (.+) ·$",
+   "Active until $1 ·"
+  ],
+  [
+   "^Sisa ([\\d.,]+) · reset jam 00:00 UTC$",
+   "$1 left · resets at 00:00 UTC"
+  ],
+  [
+   "^([\\d.,]+) endpoint siap dipakai$",
+   "$1 endpoints loaded"
+  ],
+  [
+   "^Server/database lagi bermasalah \\((\\d+)\\)$",
+   "Server/database problem ($1)"
+  ],
+  [
+   "^Maks\\. ([\\d.,]+) custom API key$",
+   "Up to $1 custom API keys"
+  ],
+  [
+   "^Upgrade ke (.+)$",
+   "Upgrade to $1"
+  ],
+  [
+   "^([\\d.,]+) request/hari$",
+   "$1 requests/day"
+  ],
+  [
+   "^Masuk — (.+)$",
+   "Sign in — $1"
+  ],
+  [
+   "^Kirim ulang \\((\\d+)s\\)$",
+   "Resend ($1s)"
+  ],
+  [
+   "^([A-Z0-9_]+) \\(opsional\\)$",
+   "$1 (optional)"
+  ],
+  [
+   "^Yang kurang: (.+)$",
+   "Missing: $1"
+  ],
+  [
+   "^([\\d.]+|∞) req · ([\\d.]+|∞) key$",
+   "$1 req · $2 keys"
+  ],
+  [
+   "^· dibuat (\\d.+)$",
+   "· created $1"
+  ],
+  [
+   "^Tier (\\S+) udah kedaluwarsa (\\d.+)$",
+   "Tier $1 expired $2"
+  ],
+  [
+   "^Aktif sampai (\\d.+)$",
+   "Active until $1"
+  ],
+  [
+   "^(\\S+) / (\\S+) · sisa (\\S+)$",
+   "$1 / $2 · $3 left"
+  ],
+  [
+   "^API keys \\((\\S+) aktif / batas (\\S+)\\)$",
+   "API keys ($1 active / limit $2)"
+  ],
+  [
+   "^Ganti tier user jadi (\\S+) selama (\\d+) hari\\?$",
+   "Change this user's tier to $1 for $2 days?"
+  ],
+  [
+   "^Ganti tier user jadi (\\S+) \\(permanen\\)\\?$",
+   "Change this user's tier to $1 (permanent)?"
+  ],
+  [
+   "^Hapus permanen user ini plus key, order, dan pembayarannya\\? Ketik email user buat konfirmasi: (.+)$",
+   "Permanently delete this user along with their keys, orders and payments?\nType the user's email to confirm:\n$1"
+  ],
+  [
+   "^kedaluwarsa (\\d.+)$",
+   "expired $1"
+  ],
+  [
+   "^aktif sampai (\\d.+)$",
+   "active until $1"
+  ],
+  [
+   "^\\((\\d+) jam lagi\\)$",
+   "($1 hours left)"
+  ],
+  [
+   "^\\((\\d+) hari lagi\\)$",
+   "($1 days left)"
+  ],
+  [
+   "^Bikin key (\\S+) tier (\\S+), masa aktif (.+) \\(semua user\\)\\?$",
+   "Create a $1 key, tier $2, valid for {{$3}} (all users)?"
+  ],
+  [
+   "^Bikin key (\\S+) tier (\\S+), masa aktif (.+) \\(akses: (.+)\\)\\?$",
+   "Create a $1 key, tier $2, valid for {{$3}} (access: $4)?"
+  ],
+  [
+   "^Bikin key Developer, masa aktif (.+) \\(cuma developer\\)\\?$",
+   "Create a Developer key, valid for {{$1}} (developer only)?"
+  ],
+  [
+   "^Key (\\S+) udah dibuat$",
+   "$1 key created"
+  ],
+  [
+   "^akses: (.+)$",
+   "access: $1"
+  ],
+  [
+   "^(\\S+) key aktif dari (\\S+) total\\.$",
+   "$1 active keys out of $2 total."
+  ],
+  [
+   "^dicabut (\\d.+)$",
+   "revoked $1"
+  ],
+  [
+   "^dipakai (\\d.+)$",
+   "used $1"
+  ],
+  [
+   "^Nonaktifkan key (.+)\\? Key bakal ditolak sampai diaktifin lagi\\.$",
+   "Disable key $1? It'll be rejected until you enable it again."
+  ],
+  [
+   "^Reset key (.+) Key lama langsung nggak berlaku\\. Isi custom key baru, atau kosongin biar dibikin otomatis:$",
+   "Reset key $1\n\nThe old key stops working right away. Enter a new custom key, or leave it empty to auto-generate one:"
+  ],
+  [
+   "^Cabut key (.+)\\? Key-nya langsung berhenti jalan\\.$",
+   "Revoke key $1? It stops working right away."
+  ],
+  [
+   "^Hapus permanen key (.+)\\? Key-nya langsung berhenti jalan dan nggak bisa dibalikin\\.$",
+   "Permanently delete key $1? It stops working right away and can't be restored."
+  ],
+  [
+   "^tes manual: (\\d+)$",
+   "manual test: $1"
+  ],
+  [
+   "^belum diatur: (\\d+)$",
+   "not set up: $1"
+  ],
+  [
+   "^Nonaktifkan (\\d+) endpoint yang error$",
+   "Disable $1 failing endpoints"
+  ],
+  [
+   "^Nonaktifkan (\\d+) endpoint yang error\\? Nanti bisa diaktifin lagi dari daftar di bawah\\.$",
+   "Disable $1 failing endpoints? You can enable them again later from the list below."
+  ],
+  [
+   "^(\\d+) endpoint udah dinonaktifin\\.$",
+   "$1 endpoints disabled."
+  ],
+  [
+   "^Ganti tier minimum jadi (\\S+)\\?$",
+   "Change the minimum tier to $1?"
+  ],
+  [
+   "^Kunci (\\S+)\\? Semua user selain developer bakal ditolak \\(ENDPOINT_LOCKED\\)\\.$",
+   "Lock $1? Everyone except the developer will be rejected (ENDPOINT_LOCKED)."
+  ],
+  [
+   "^Buka kunci (\\S+)\\?$",
+   "Unlock $1?"
+  ],
+  [
+   "^Nonaktifkan (/api/\\S+)\\?$",
+   "Disable $1?"
+  ],
+  [
+   "^Aktifkan (/api/\\S+)\\?$",
+   "Enable $1?"
+  ],
+  [
+   "^Hapus metadata (\\S+)\\?$",
+   "Delete the metadata for $1?"
+  ],
+  [
+   "^(.+) · ([\\d.]+) KB dimuat$",
+   "$1 · $2 KB loaded"
+  ],
+  [
+   "^Commit script ke plugin/ dan deploy (\\S+) \\(tier (\\S+)\\)\\?$",
+   "Commit the script to plugin/ and deploy $1 (tier $2)?"
+  ],
+  [
+   "^Rp(\\S+) · (\\S+) hari$",
+   "Rp$1 · $2 days"
+  ],
+  [
+   "^Bukti bayar (\\S+)$",
+   "Payment proof $1"
+  ],
+  [
+   "^dikirim ke (\\S+)$",
+   "sent to $1"
+  ],
+  [
+   "^Approve pembayaran (\\S+) \\((\\S+) (\\S+) hari, Rp(\\S+)\\) buat (\\S+) Ini pembayaran QRIS gateway: cek dulu di dashboard Pakasir\\.\\? Tier user bakal langsung naik\\. Pastiin dananya beneran udah masuk\\.$",
+   "Approve payment $1 ($2, $3 days, Rp$4) for $5?\nThis is a QRIS gateway payment: check the Pakasir dashboard first.\nThe user's tier goes up right away. Make sure the money has really arrived."
+  ],
+  [
+   "^Approve pembayaran (\\S+) \\((\\S+) (\\S+) hari, Rp(\\S+)\\) buat (\\S+)\\? Tier user bakal langsung naik\\. Pastiin dananya beneran udah masuk\\.$",
+   "Approve payment $1 ($2, $3 days, Rp$4) for $5?\nThe user's tier goes up right away. Make sure the money has really arrived."
+  ],
+  [
+   "^Tolak pembayaran (\\S+)\\?$",
+   "Reject payment $1?"
+  ],
+  [
+   "^Udah disimpan\\. DANA (aktif|disembunyikan), GoPay (aktif|disembunyikan)\\.$",
+   "Saved. DANA {{$1}}, GoPay {{$2}}."
+  ],
+  [
+   "^Udah disimpan: Maintenance Info Website (ON|OFF)\\.$",
+   "Saved: Maintenance Info Website $1."
+  ],
+  [
+   "^Reset sandi (.+)\\? User-nya bakal dikeluarin dari semua perangkat\\.$",
+   "Reset the password for $1? They'll be signed out of all devices."
+  ],
+  [
+   "^(\\d+) aktivitas terbaru · (\\S+) user aktif 5 menit terakhir\\.$",
+   "$1 latest activities · $2 users active in the last 5 minutes."
+  ],
+  [
+   "^(\\d+) aktivitas terbaru\\.$",
+   "$1 latest activities."
+  ],
+  [
+   "^Backup gagal \\((\\d+)\\)\\.$",
+   "Backup failed ($1)."
+  ],
+  [
+   "^(\\S+) udah diunduh\\.$",
+   "$1 downloaded."
+  ],
+  [
+   "^Terkirim ke (\\S+)\\.$",
+   "Sent to $1."
+  ],
+  [
+   "^(✅|⚠️) File web: (.+)$",
+   "$1 Web files: $2"
+  ],
+  [
+   "^Maksimal (\\d+) upload per jam\\. Coba lagi nanti ya\\.$",
+   "You can upload up to $1 files per hour. Try again later."
+  ],
+  [
+   "^File maksimal (\\d+) MB\\.$",
+   "Max file size is $1 MB."
+  ],
+  [
+   "^Penyimpanan akun kamu penuh \\(maks (\\d+) MB file aktif\\)\\. Tunggu file sementara kedaluwarsa dulu atau hubungi developer\\.$",
+   "Your account storage is full (max $1 MB of active files). Wait for temporary files to expire or contact the developer."
+  ],
+  [
+   "^Upload file besar belum aktif\\. Maksimal (\\d+) MB\\.$",
+   "Large file uploads aren't enabled yet. Max $1 MB."
+  ],
+  [
+   "^Upload file besar lagi dimatikan\\. Maksimal (\\d+) MB\\.$",
+   "Large file uploads are turned off right now. Max $1 MB."
+  ],
+  [
+   "^Durasi harus (\\d+)–(\\d+) hari\\.$",
+   "Duration must be $1–$2 days."
+  ],
+  [
+   "^Tier ([A-Z]+) kamu nggak ada masa berlakunya, jadi nggak perlu diperpanjang\\.$",
+   "Your $1 tier doesn't expire, so there's no need to extend it."
+  ],
+  [
+   "^Maksimal (\\d+) order pending\\. Selesaikan dulu atau tunggu order lama kedaluwarsa\\.$",
+   "You can have up to $1 pending orders. Finish one first or wait for old orders to expire."
+  ],
+  [
+   "^Nomor ([A-Z]+) belum diatur developer\\. Pilih metode lain ya\\.$",
+   "The developer hasn't set up a $1 number yet. Please pick another method."
+  ],
+  [
+   "^User nggak ketemu: (.+)$",
+   "User not found: $1"
+  ],
+  [
+   "^Script udah di-commit ke (.+)\\. Vercel bakal deploy ulang \\(biasanya 20–60 detik\\), habis itu endpoint-nya aktif\\.$",
+   "Script committed to $1. Vercel will redeploy (usually 20–60 seconds), then the endpoint goes live."
+  ],
+  [
+   "^Backup-nya ([\\d.]+) MB, kegedean buat diunduh langsung\\. Pakai tombol \"Kirim ke Gmail\" aja\\.$",
+   "The backup is $1 MB, too big to download directly. Use the \"Send to Gmail\" button instead."
+  ],
+  [
+   "^Endpoint ini butuh tier ([A-Z]+) atau lebih tinggi\\.$",
+   "This endpoint needs the $1 tier or higher."
+  ],
+  [
+   "^Upload file buat '(.+)'\\.$",
+   "Upload a file for '$1'."
+  ],
+  [
+   "^Parameter '(.+)' harus URL https, atau upload gambar\\.$",
+   "Parameter '$1' must be an https URL, or upload an image."
+  ],
+  [
+   "^Upload gambar atau isi '(.+)' \\(URL https\\)\\.$",
+   "Upload an image or fill in '$1' (https URL)."
+  ],
+  [
+   "^Parameter '(.+)' wajib diisi\\.$",
+   "Parameter '$1' is required."
+  ],
+  [
+   "^Parameter '(.+)' harus true atau false\\.$",
+   "Parameter '$1' must be true or false."
+  ],
+  [
+   "^Parameter '(.+)' harus salah satu dari: (.+)\\.$",
+   "Parameter '$1' must be one of: $2."
+  ],
+  [
+   "^Parameter '(.+)' harus URL https\\.$",
+   "Parameter '$1' must be an https URL."
+  ],
+  [
+   "^Sample file nggak bisa diambil: (.+)$",
+   "Couldn't fetch the sample file: {{$1}}"
+  ],
+  [
+   "^File nggak bisa diambil \\(HTTP (\\d+)\\)\\.$",
+   "Couldn't fetch the file (HTTP $1)."
+  ],
+  [
+   "^Awalan \"(.+)\" khusus buat key otomatis\\.$",
+   "The \"$1\" prefix is reserved for auto-generated keys."
+  ],
+  [
+   "^Script-nya nggak valid: (.+)$",
+   "The script isn't valid: $1"
+  ],
+  [
+   "^GitHub nolak commit-nya \\(HTTP (\\d+)\\)\\.$",
+   "GitHub rejected the commit (HTTP $1)."
+  ],
+  [
+   "^GitHub nolak permintaan backup \\(HTTP (\\d+)\\)\\.$",
+   "GitHub rejected the backup request (HTTP $1)."
+  ],
+  [
+   "^Gagal ngunduh file web dari GitHub \\(HTTP (\\d+)\\)\\.$",
+   "Couldn't download the web files from GitHub (HTTP $1)."
+  ],
+  [
+   "^Kebesaran buat lampiran email \\(([\\d.]+ MB)\\), unduh langsung dari Developer Panel\\.$",
+   "Too big for an email attachment ($1), download it directly from the Developer Panel."
+  ],
+  [
+   "^Semua backup gagal dibuat: (.+)$",
+   "All backups failed: $1"
+  ],
+  [
+   "^Sandi minimal (\\d+) karakter\\.$",
+   "Passwords must be at least $1 characters."
+  ],
+  [
+   "^Sandi maksimal (\\d+) karakter\\.$",
+   "Passwords can be at most $1 characters."
+  ],
+  [
+   "^Kode verifikasi udah dikirim ke (.+)\\.$",
+   "Verification code sent to $1."
+  ],
+  [
+   "^(.+) Kuota nggak dipotong\\.$",
+   "{{$1}} Your quota wasn't charged."
+  ],
+  [
+   "^Request gagal\\. \\(([A-Za-z0-9_]+)\\)$",
+   "Request failed. ($1)"
+  ],
+  [
+   "^Login Google gagal\\. \\(([A-Z0-9_]+)\\)$",
+   "Google sign-in failed. ($1)"
+  ],
+  [
+   "^Request gagal\\. \\(([A-Z0-9_]+)\\)$",
+   "Request failed. ($1)"
+  ],
+  [
+   "^(.+) \\(([A-Z][A-Z0-9_]*|\\d{3})\\)$",
+   "{{$1}} ($2)"
+  ],
+  [
+   "^Tier kamu \\(([A-Z]+)\\) udah lebih tinggi dari ([A-Z]+)\\.$",
+   "Your tier ($1) is already higher than $2."
+  ],
+  [
+   "^Endpoint ini belum aktif \\(([A-Z0-9_]+) belum diatur\\)\\. Kuota nggak dipotong\\.$",
+   "This endpoint isn't active yet ($1 isn't set). Your quota wasn't charged."
+  ],
+  [
+   "^(.+?) \\(([A-Z0-9_]+|\\d{3})\\)$",
+   "{{$1}} ($2)"
+  ]
+ ]
+}

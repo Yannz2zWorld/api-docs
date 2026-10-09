@@ -54,20 +54,27 @@
     return dictPromise;
   }
 
-  function english(text) {
+  function english(text, depth = 0) {
     const key = norm(text);
     if (!key || !dict) return null;
     const hit = dict.exact.get(key);
     if (hit != null) return hit;
+    if (depth > 3) return null;
     for (const [re, to] of dict.patterns) {
-      if (re.test(key)) {
-        // Captured parts may themselves be known phrases (e.g. a status word).
-        return key.replace(re, to).replace(/\{\{([^}]*)\}\}/g, (_, inner) => dict.exact.get(norm(inner)) ?? inner);
-      }
+      const m = key.match(re);
+      if (!m) continue;
+      // {{$1}}: a captured part that is itself known text (a status word, a server message, ...).
+      return to.replace(/\{\{\$(\d)\}\}|\$(\d)/g, (_, inner, plain) => {
+        const v = m[Number(inner || plain)] ?? '';
+        return inner ? english(v, depth + 1) ?? v : v;
+      });
     }
     return null;
   }
   const skipped = el => !el || !!el.closest?.(SKIP);
+  // A textarea's content is the visitor's, but its placeholder / title are page text.
+  const SKIP_ATTR = SKIP.replace('textarea,', '');
+  const attrSkipped = el => !el || !!el.closest?.(SKIP_ATTR);
 
   function textNode(node) {
     const cur = node.nodeValue;
@@ -102,12 +109,14 @@
     if (!rootNode) return;
     if (rootNode.nodeType === 3) { if (!skipped(rootNode.parentElement)) textNode(rootNode); return; }
     if (rootNode.nodeType !== 1 && rootNode.nodeType !== 9 && rootNode.nodeType !== 11) return;
-    if (rootNode.nodeType === 1 && skipped(rootNode)) return;
+    if (rootNode.nodeType === 1 && skipped(rootNode)) { if (rootNode.nodeName === 'TEXTAREA' && !attrSkipped(rootNode)) attrs(rootNode); return; }
     if (rootNode.nodeType === 1) attrs(rootNode);
     const tw = document.createTreeWalker(rootNode, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
       acceptNode: n => (n.nodeType === 1 && n.matches(SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
     });
     for (let n = tw.nextNode(); n; n = tw.nextNode()) { if (n.nodeType === 3) textNode(n); else attrs(n); }
+    rootNode.querySelectorAll?.('textarea').forEach(t => { if (!attrSkipped(t)) attrs(t); });
+    if (rootNode.nodeName === 'TEXTAREA' && !attrSkipped(rootNode)) attrs(rootNode);
   }
 
   let titleOriginal = null, titleShown = null;
@@ -126,7 +135,7 @@
       observer.disconnect();
       for (const m of list) {
         if (m.type === 'characterData') { if (!skipped(m.target.parentElement)) textNode(m.target); }
-        else if (m.type === 'attributes') { if (!skipped(m.target)) attrs(m.target); }
+        else if (m.type === 'attributes') { if (!attrSkipped(m.target)) attrs(m.target); }
         else m.addedNodes.forEach(walk);
       }
       title();
