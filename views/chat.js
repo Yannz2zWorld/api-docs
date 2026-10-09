@@ -54,7 +54,7 @@
   panel.setAttribute('aria-label', 'Live chat');
   const head = el('div', 'yc-head');
   const title = el('div');
-  const online = el('small', '', 'menghubungkan…');
+  const online = el('small', '', 'lagi nyambung…');
   title.append(el('b', '', 'Live Chat'), el('br'), online);
   const close = el('button', 'yc-x', '×');
   close.type = 'button';
@@ -87,9 +87,13 @@
     let av;
     if (m.avatar) { av = el('img', 'yc-av'); av.src = m.avatar; av.alt = ''; av.loading = 'lazy'; av.onerror = () => av.replaceWith(el('span', 'yc-av', (m.name || '?').charAt(0).toUpperCase())); }
     else av = el('span', 'yc-av', (m.name || '?').charAt(0).toUpperCase());
-    who.append(av, el('span', '', m.name));
+    const name = el('span', '', m.name);
+    name.setAttribute('data-no-i18n', '');
+    who.append(av, name);
     if (m.owner) who.append(el('span', 'yc-owner', 'DEVELOPER'));
-    box.append(who, el('div', 'yc-body', m.body), el('div', 'yc-time', timeOf(m.at)));
+    const body = el('div', 'yc-body', m.body);
+    body.setAttribute('data-no-i18n', '');
+    box.append(who, body, el('div', 'yc-time', timeOf(m.at)));
     if (m.mine || (me && me.owner)) {
       const del = el('button', 'yc-del', '✕');
       del.type = 'button';
@@ -114,13 +118,13 @@
       const r = await fetch('/api/chat' + (lastId ? '?after=' + lastId : ''), { credentials: 'same-origin', cache: 'no-store' });
       const d = await r.json().catch(() => ({}));
       if (r.status === 503 && d.error === 'MIGRATION_REQUIRED') { available = false; list.replaceChildren(el('p', 'yc-note', 'Live chat belum aktif.')); online.textContent = 'offline'; return; }
-      if (!r.ok) throw new Error(d.message || 'Gagal memuat chat.');
+      if (!r.ok) throw new Error(d.message || 'Chat gagal dimuat.');
       me = d.me;
       const stick = atBottom();
       const fresh = d.messages.filter(m => !seen.has(m.id));
       fresh.forEach(render);
       (d.deleted || []).forEach(remove);
-      if (!lastId && !d.messages.length) list.replaceChildren(el('p', 'yc-empty', 'Belum ada pesan. Sapa yang lain! 👋'));
+      if (!lastId && !d.messages.length) list.replaceChildren(el('p', 'yc-empty', 'Belum ada pesan. Sapa yang lain dulu! 👋'));
       if (d.messages.length) lastId = Math.max(lastId, ...d.messages.map(m => m.id));
       online.textContent = `${d.online} online · kamu: ${d.me.name}`;
       if (!open && lastPolled) { unread += fresh.filter(m => !m.mine).length; badge.textContent = unread > 99 ? '99+' : String(unread); badge.hidden = unread === 0; }
@@ -128,7 +132,7 @@
       lastPolled = true;
       err.textContent = '';
     } catch (e) {
-      if (open) err.textContent = 'Koneksi chat terputus, mencoba lagi…';
+      if (open) err.textContent = 'Koneksi chat putus, lagi nyoba lagi…';
     } finally {
       busy = false;
     }
@@ -168,7 +172,7 @@
       render(d.message);
       lastId = Math.max(lastId, d.message.id);
       list.scrollTop = list.scrollHeight;
-    } catch { err.textContent = 'Pesan gagal dikirim. Coba lagi.'; }
+    } catch { err.textContent = 'Pesan gagal dikirim. Coba lagi ya.'; }
     finally { send.disabled = false; input.focus(); }
   });
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });

@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/i18n.js"></script>
 <style>
   .pay-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
   .acct { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); margin: 10px 0; }
@@ -23,7 +24,7 @@
 </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing" aria-current="page">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing" aria-current="page">Billing</a><a href="/pricing">Pricing</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap">
   <h1>Billing &amp; Orders</h1>
   <p class="lead loading" id="current">Memuat akun…</p>
@@ -49,9 +50,9 @@
       <div class="step">
         <h3>Ringkasan</h3>
         <div class="summary-box" id="summary" aria-live="polite"></div>
-        <button id="order-btn" class="primary" type="button">Buat order &amp; bayar</button>
+        <button id="order-btn" class="primary" type="button">Bikin order &amp; bayar</button>
         <p id="notice" aria-live="polite"></p>
-        <p><small>Harga dihitung server dari harga per 30 hari. Order berlaku 2 jam. Tier aktif setelah pembayaran terverifikasi atau disetujui developer. Upgrade ke tier lebih tinggi memulai masa aktif baru; membeli tier yang sama memperpanjang masa aktif.</small></p>
+        <p><small>Harga dihitung server dari harga per 30 hari. Order berlaku 2 jam. Tier langsung aktif begitu pembayaran terverifikasi atau di-approve developer. Upgrade ke tier yang lebih tinggi bakal mulai masa aktif baru; beli tier yang sama bakal nambah masa aktif kamu.</small></p>
       </div>
     </div>
   </section>
@@ -71,7 +72,7 @@ const when = v => v ? new Date(v).toLocaleString('id-ID', { dateStyle: 'medium',
 const RANK = ['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'];
 const PRESETS = [[7, '7 hari'], [14, '14 hari'], [30, '1 bulan'], [90, '3 bulan'], [180, '6 bulan'], [365, '1 tahun']];
 const METHOD = {
-  QRIS_GATEWAY: { name: 'QRIS otomatis', hint: 'Scan QR, diverifikasi gateway' },
+  QRIS_GATEWAY: { name: 'QRIS otomatis', hint: 'Scan QR, dicek otomatis sama gateway' },
   QRIS: { name: 'QRIS manual', hint: 'Scan QRIS developer + upload bukti' },
   DANA: { name: 'DANA', hint: 'Transfer manual + upload bukti' },
   GOPAY: { name: 'GoPay', hint: 'Transfer manual + upload bukti' }
@@ -83,9 +84,9 @@ let orderKey = crypto.randomUUID();
 
 async function api(url, opts = {}) {
   const r = await fetch(url, { credentials: 'same-origin', ...opts });
-  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi kamu udah habis.'); }
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw Object.assign(Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status}${d.dbCode ? ' · ' + d.dbCode : ''})`), { code: d.error });
+  if (!r.ok) throw Object.assign(Error(`${d.message || 'Request gagal.'} (${d.error || r.status}${d.dbCode ? ' · ' + d.dbCode : ''})`), { code: d.error });
   return d;
 }
 const post = (url, body, headers = {}) => api(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
@@ -96,7 +97,7 @@ const days = () => picked('days') === 'custom' ? Number($('#custom-days').value)
 function renderPlans() {
   const mine = RANK.indexOf(account.tier);
   $('#current').classList.remove('loading');
-  $('#current').innerHTML = `Tier saat ini: <b>${esc(account.tier === 'OWNER' ? 'DEVELOPER' : account.tier)}</b>${account.tier === 'FREE' || account.tier === 'OWNER' ? '' : account.tierExpiresAt ? ` · aktif sampai <b>${when(account.tierExpiresAt)}</b>` : ' · permanen'}.`;
+  $('#current').innerHTML = `Tier kamu sekarang: <b>${esc(account.tier === 'OWNER' ? 'DEVELOPER' : account.tier)}</b>${account.tier === 'FREE' || account.tier === 'OWNER' ? '' : account.tierExpiresAt ? ` · aktif sampai <b>${when(account.tierExpiresAt)}</b>` : ' · permanen'}.`;
   const want = new URLSearchParams(location.search).get('tier');
   const cards = tiers.filter(t => t.purchasable).map(t => {
     const r = RANK.indexOf(t.name);
@@ -113,14 +114,14 @@ function renderPlans() {
   const enabled = [...document.querySelectorAll('input[name=tier]:not([disabled])')];
   const first = enabled.find(i => i.value === want) || enabled[0];
   if (first) first.checked = true;
-  else { $('#order-btn').disabled = true; $('#notice').textContent = 'Kamu sudah berada di paket tertinggi.'; }
+  else { $('#order-btn').disabled = true; $('#notice').textContent = 'Kamu udah di paket paling tinggi.'; }
 
   $('#durations').innerHTML = PRESETS.map(([d, label]) => `<label><input type="radio" name="days" value="${d}"${d === ctx.duration.default ? ' checked' : ''}> ${label}</label>`).join('') + '<label><input type="radio" name="days" value="custom"> Custom</label>';
   $('#custom-days').min = ctx.duration.min; $('#custom-days').max = ctx.duration.max;
 
   $('#methods').innerHTML = Object.entries(METHOD).map(([key, m]) => {
     const info = ctx.methods[key];
-    const why = info.available ? m.hint : key === 'QRIS_GATEWAY' ? 'Sedang maintenance' : 'Nomor belum diatur developer';
+    const why = info.available ? m.hint : key === 'QRIS_GATEWAY' ? 'Lagi maintenance' : 'Nomornya belum diatur developer';
     return `<label class="choice"${info.available ? '' : ' style="opacity:.45;cursor:not-allowed"'}><input type="radio" name="method" value="${key}"${info.available ? '' : ' disabled'}><b>${m.name}</b><small>${esc(why)}</small></label>`;
   }).join('');
   const firstMethod = document.querySelector('input[name=method]:not([disabled])');
@@ -132,21 +133,21 @@ function updateSummary() {
   $('#custom-row').hidden = picked('days') !== 'custom';
   const tier = picked('tier'), d = days(), m = picked('method');
   const okDays = Number.isInteger(d) && d >= ctx.duration.min && d <= ctx.duration.max;
-  if (!tier) { $('#summary').innerHTML = '<span class="muted">Tidak ada paket yang bisa dibeli.</span>'; return; }
+  if (!tier) { $('#summary').innerHTML = '<span class="muted">Nggak ada paket yang bisa dibeli.</span>'; return; }
   $('#summary').innerHTML = okDays
-    ? `<span>${esc(tier)} · ${d} hari · ${esc(METHOD[m]?.name || '—')}</span><span class="total">${rp(priceFor(tier, d))}</span><small>Aktif sampai ±${when(Date.now() + d * 864e5)} jika dibayar hari ini${tier === account.tier && account.tierExpiresAt ? ' (ditambahkan ke masa aktif sekarang)' : ''}.</small>`
-    : `<span class="error">Durasi harus ${ctx.duration.min}–${ctx.duration.max} hari.</span>`;
+    ? `<span>${esc(tier)} · ${d} hari · ${esc(METHOD[m]?.name || '—')}</span><span class="total">${rp(priceFor(tier, d))}</span><small>Aktif sampai ±${when(Date.now() + d * 864e5)} kalau dibayar hari ini${tier === account.tier && account.tierExpiresAt ? ' (ditambahin ke masa aktif sekarang)' : ''}.</small>`
+    : `<span class="error">Durasinya harus ${ctx.duration.min}–${ctx.duration.max} hari.</span>`;
   $('#order-btn').disabled = !okDays || !m;
 }
 $('#new-order').addEventListener('change', updateSummary);
 $('#custom-days').addEventListener('input', updateSummary);
 
 $('#order-btn').addEventListener('click', async () => {
-  const btn = $('#order-btn'); btn.disabled = true; $('#notice').textContent = 'Membuat order…';
+  const btn = $('#order-btn'); btn.disabled = true; $('#notice').textContent = 'Lagi bikin order…';
   try {
     const d = await post('/api/orders', { tier: picked('tier'), duration_days: days() }, { 'Idempotency-Key': orderKey });
     orderKey = crypto.randomUUID();
-    $('#notice').textContent = `Order ${d.order.order_code} dibuat.`;
+    $('#notice').textContent = `Order ${d.order.order_code} udah dibuat.`;
     await loadOrders();
     openCheckout(ctx.orders.find(o => o.id === d.order.id) || d.order, picked('method'));
   } catch (e) { $('#notice').textContent = e.message; }
@@ -158,7 +159,7 @@ function openCheckout(order, method) {
   const box = $('#checkout');
   box.hidden = false;
   const options = Object.keys(METHOD).filter(k => ctx.methods[k].available);
-  box.innerHTML = `<div class="pay-head"><h2>Bayar ${esc(order.order_code)}</h2><span class="chip pending">${esc(order.tier)} · ${Number(order.duration_days || 30)} hari</span></div>
+  box.innerHTML = `<div class="pay-head"><h2>Bayar <span data-no-i18n>${esc(order.order_code)}</span></h2><span class="chip pending">${esc(order.tier)} · ${Number(order.duration_days || 30)} hari</span></div>
     <p class="total" style="font:700 30px 'Space Grotesk',sans-serif;margin:4px 0">${rp(order.amount)}</p>
     <p><small>Order berlaku sampai ${when(order.expires_at)}.</small></p>
     <div class="seg" role="radiogroup" aria-label="Metode">${options.map(k => `<label><input type="radio" name="co-method" value="${k}"${k === method ? ' checked' : ''}> ${METHOD[k].name}</label>`).join('')}</div>
@@ -171,50 +172,50 @@ function openCheckout(order, method) {
 function renderMethod(order, method) {
   const body = $('#co-body');
   if (method === 'QRIS_GATEWAY') {
-    body.innerHTML = '<p class="loading">Membuat QRIS…</p>';
+    body.innerHTML = '<p class="loading">Lagi bikin QRIS…</p>';
     post(`/api/orders/${encodeURIComponent(order.id)}/pakasir`, { method: 'qris' }).then(d => {
       const total = d.gateway?.total_payment || order.amount;
       body.innerHTML = `<div class="qr-box"><img src="/api/orders/${encodeURIComponent(order.id)}/qr.svg?t=${Date.now()}" alt="QRIS pembayaran ${esc(order.order_code)}" width="280" height="280"><b>${rp(total)}</b><small>${d.gateway?.expired_at ? 'Berlaku sampai ' + when(d.gateway.expired_at) : ''}</small></div>
-        <p>Scan dengan aplikasi e-wallet / m-banking yang mendukung QRIS. ${Number(total) !== Number(order.amount) ? 'Total sudah termasuk biaya gateway.' : ''}</p>
-        <p class="notice">${ctx.methods.QRIS_GATEWAY.autoVerified ? 'Tier aktif otomatis setelah pembayaran terverifikasi.' : 'Setelah bayar, developer memverifikasi pembayaran di dashboard gateway lalu mengaktifkan tier kamu.'}</p>
-        <div class="links"><button type="button" class="ghost" id="co-refresh">Saya sudah bayar — cek status</button></div>`;
+        <p>Scan pakai aplikasi e-wallet / m-banking yang support QRIS. ${Number(total) !== Number(order.amount) ? 'Total udah termasuk biaya gateway.' : ''}</p>
+        <p class="notice">${ctx.methods.QRIS_GATEWAY.autoVerified ? 'Tier langsung aktif otomatis begitu pembayaran terverifikasi.' : 'Habis bayar, developer bakal cek pembayarannya di dashboard gateway, terus aktifin tier kamu.'}</p>
+        <div class="links"><button type="button" class="ghost" id="co-refresh">Aku udah bayar — cek status</button></div>`;
       $('#co-refresh').onclick = () => loadOrders();
     }).catch(e => { body.innerHTML = `<p class="error">${esc(e.message)}</p>`; });
     return;
   }
   let instructions = '';
   if (method === 'QRIS') {
-    instructions = `<img class="qris-static" src="${esc(ctx.methods.QRIS.image)}" alt="QRIS Yannz2z"><p>Scan QRIS di atas lalu <b>masukkan nominal ${rp(order.amount)}</b> tepat.</p>`;
+    instructions = `<img class="qris-static" src="${esc(ctx.methods.QRIS.image)}" alt="QRIS Yannz2z"><p>Scan QRIS di atas, terus <b>isi nominal ${rp(order.amount)} persis</b>.</p>`;
   } else {
     const acct = ctx.methods[method].account;
     instructions = `<p>Transfer <b>${rp(order.amount)}</b> ke ${METHOD[method].name}:</p>
-      <div class="acct"><code id="acct-number">${esc(acct.number)}</code>${acct.name ? `<span class="muted">a.n. ${esc(acct.name)}</span>` : ''}<button type="button" class="sm ghost" id="copy-number">Salin</button></div>`;
+      <div class="acct"><code id="acct-number">${esc(acct.number)}</code>${acct.name ? `<span class="muted">a.n. <span data-no-i18n>${esc(acct.name)}</span></span>` : ''}<button type="button" class="sm ghost" id="copy-number">Salin</button></div>`;
   }
   body.innerHTML = `${instructions}
     <h3>Upload bukti pembayaran</h3>
     <input type="file" id="proof" accept="image/*" hidden>
-    <label class="dropzone" id="drop" for="proof"><span id="drop-text">Tap untuk pilih screenshot bukti transfer (JPG/PNG, maks 2 MB setelah dikompres)</span></label>
+    <label class="dropzone" id="drop" for="proof"><span id="drop-text">Tap buat pilih screenshot bukti transfer (JPG/PNG, maks 2 MB setelah dikompres)</span></label>
     <button type="button" class="primary" id="send-proof" disabled>Kirim bukti ke developer</button>
     <div id="proof-msg" aria-live="polite"></div>`;
   $('#copy-number')?.addEventListener('click', e => navigator.clipboard.writeText($('#acct-number').textContent).then(() => { e.target.textContent = 'Tersalin ✓'; }));
   let dataUrl = null;
   $('#proof').addEventListener('change', async e => {
     const file = e.target.files[0]; if (!file) return;
-    $('#drop').innerHTML = '<span class="loading">Memproses gambar…</span>';
+    $('#drop').innerHTML = '<span class="loading">Lagi proses gambar…</span>';
     try {
       dataUrl = await compress(file);
-      $('#drop').innerHTML = `<img src="${dataUrl}" alt="Pratinjau bukti"><small>${esc(file.name)} · tap untuk ganti</small>`;
+      $('#drop').innerHTML = `<img src="${dataUrl}" alt="Preview bukti"><small><span data-no-i18n>${esc(file.name)}</span> · tap buat ganti</small>`;
       $('#send-proof').disabled = false;
     } catch (err) { $('#drop').innerHTML = `<span class="error">${esc(err.message)}</span>`; dataUrl = null; $('#send-proof').disabled = true; }
   });
   $('#send-proof').addEventListener('click', async e => {
     if (!dataUrl) return;
-    e.target.disabled = true; $('#proof-msg').innerHTML = '<p class="loading">Mengirim bukti…</p>';
+    e.target.disabled = true; $('#proof-msg').innerHTML = '<p class="loading">Lagi ngirim bukti…</p>';
     try {
       const d = await post(`/api/orders/${encodeURIComponent(order.id)}/manual`, { method, proof_image: dataUrl });
-      const told = 'Bukti tersimpan dan sudah masuk ke panel developer.';
-      $('#co-body').innerHTML = `<div class="notice">✅ Bukti terkirim. ${told} Tier aktif setelah developer menyetujui.</div>
-        <p>Mau konfirmasi langsung? Kirim pesan ke developer (lampirkan screenshot yang sama):</p>
+      const told = 'Bukti udah kesimpan dan masuk ke panel developer.';
+      $('#co-body').innerHTML = `<div class="notice">✅ Bukti terkirim. ${told} Tier aktif begitu developer approve.</div>
+        <p>Mau konfirmasi langsung? Chat developer aja (lampirin screenshot yang sama):</p>
         <div class="links">${d.links?.whatsapp ? `<a class="btn primary" href="${esc(d.links.whatsapp)}" target="_blank" rel="noopener noreferrer">Kirim via WhatsApp</a>` : ''}${d.links?.telegram ? `<a class="btn" href="${esc(d.links.telegram)}" target="_blank" rel="noopener noreferrer">Kirim via Telegram</a>` : ''}</div>`;
       loadOrders();
     } catch (err) { $('#proof-msg').innerHTML = `<p class="error">${esc(err.message)}</p>`; e.target.disabled = false; }
@@ -223,9 +224,9 @@ function renderMethod(order, method) {
 
 // Screenshots are re-encoded as JPEG (max 1600 px) so uploads stay small on mobile data.
 async function compress(file) {
-  if (!file.type.startsWith('image/')) throw Error('File harus gambar.');
+  if (!file.type.startsWith('image/')) throw Error('File-nya harus gambar.');
   const img = await new Promise((resolve, reject) => {
-    const el = new Image(); el.onload = () => resolve(el); el.onerror = () => reject(Error('Gambar tidak bisa dibaca. Coba screenshot JPG/PNG.'));
+    const el = new Image(); el.onload = () => resolve(el); el.onerror = () => reject(Error('Gambarnya nggak kebaca. Coba screenshot JPG/PNG.'));
     el.src = URL.createObjectURL(file);
   });
   const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
@@ -237,14 +238,14 @@ async function compress(file) {
     const out = canvas.toDataURL('image/jpeg', q);
     if (out.length * 0.75 < 1.9 * 1024 * 1024) return out;
   }
-  throw Error('Gambar terlalu besar. Crop screenshot lalu coba lagi.');
+  throw Error('Gambarnya kegedean. Crop dulu screenshot-nya, terus coba lagi.');
 }
 
 // ---------------------------------------------------------------- history
 function orderState(o) {
-  if (o.status === 'paid') return '<p class="notice">✅ Lunas. Tier sudah aktif.</p>';
+  if (o.status === 'paid') return '<p class="notice">✅ Lunas. Tier kamu udah aktif.</p>';
   if (o.status !== 'pending') return `<p><small>Order ${esc(o.status)}.</small></p>`;
-  if (o.provider === 'manual' && o.payment_status === 'pending') return '<p><small>⏳ Bukti terkirim — menunggu approval developer.</small></p>';
+  if (o.provider === 'manual' && o.payment_status === 'pending') return '<p><small>⏳ Bukti udah terkirim — nunggu approval developer.</small></p>';
   return `<div class="row"><button type="button" class="primary sm" data-pay="${esc(o.id)}">${o.provider === 'pakasir' ? 'Lihat QR / ganti metode' : 'Bayar sekarang'}</button></div>`;
 }
 
@@ -269,7 +270,7 @@ $('#orders').addEventListener('click', e => {
   try {
     const [dash, t] = await Promise.all([api('/api/dashboard'), api('/api/tiers'), loadOrders()]);
     account = dash.user; tiers = t.tiers;
-    if (!ctx) { $('#current').textContent = 'Data billing belum bisa dimuat. Coba muat ulang halaman.'; $('#order-btn').disabled = true; return; }
+    if (!ctx) { $('#current').textContent = 'Data billing belum bisa dimuat. Coba refresh halamannya.'; $('#order-btn').disabled = true; return; }
     renderPlans();
   } catch (e) { $('#current').textContent = e.message; }
 })();
