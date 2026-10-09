@@ -32,10 +32,10 @@ const inMonitor = async p => { status.reset(); return (await app.request('GET', 
 const errorsFor = async p => (await o('GET', '/owner/api/errors')).json.errors.filter(e => e.path === p);
 
 it('an upstream "plan quota" error hides the endpoint everywhere and shows why in the Error tab', async () => {
-  const P = '/api/ai/chatgpt';
+  const P = '/api/ai/publicai';
   assert.ok(await inCatalog(P));
   reply = () => ({ status: 403, json: { status: false, error: "You've reached your plan quota. Your credits will renew with your plan — top up a credit pack to continue now." } });
-  const r = await call(`${P}?prompt=hi`);
+  const r = await call(`${P}?text=hi`);
   assert.ok(r.status >= 500, r.text);
   // The caller never sees the upstream's plan message; it only goes to the Error tab.
   assert.deepEqual([r.status, r.json.error], [503, 'ENDPOINT_UNAVAILABLE']);
@@ -43,7 +43,7 @@ it('an upstream "plan quota" error hides the endpoint everywhere and shows why i
 
   assert.equal(await inCatalog(P), false, 'gone from API Docs / Playground');
   assert.equal(await inMonitor(P), false, 'gone from the status monitor');
-  const again = await call(`${P}?prompt=hi`);
+  const again = await call(`${P}?text=hi`);
   assert.deepEqual([again.status, again.json.error], [404, 'ENDPOINT_UNAVAILABLE']);
 
   const errs = await errorsFor(P);
@@ -51,7 +51,7 @@ it('an upstream "plan quota" error hides the endpoint everywhere and shows why i
   assert.match(errs[0].message, /plan quota/);
   assert.deepEqual([errs[0].source, errs[0].hidden, errs[0].auto_disabled, errs[0].endpoint_status], ['live', true, true, 'disabled']);
   // Where it happens and why, in short (both languages).
-  assert.equal(errs[0].where, 'Server sumber: api.theresav.eu (/api/ai/chatgpt)');
+  assert.equal(errs[0].where, 'Server sumber: api.theresav.eu (/api/ai/publicai)');
   assert.match(errs[0].why, /Kuota\/plan akun kita di server api\.theresav\.eu habis/);
   assert.match(errs[0].whyEn, /quota\/plan on the server api\.theresav\.eu is used up/);
   const list = await o('GET', '/owner/api/errors');
@@ -65,7 +65,7 @@ it('an upstream "plan quota" error hides the endpoint everywhere and shows why i
 });
 
 it('an open "hidden" error keeps the endpoint hidden even if the endpoints table was not updated', async () => {
-  const P = '/api/ai/copilot';
+  const P = '/api/ai/turboseek';
   await h.db().query("INSERT INTO endpoint_errors (path, fingerprint, status, code, message, source, hidden) VALUES ($1, 'manual-test', 502, 'UPSTREAM_FAILED', 'API Error (403): plan quota', 'live', true)", [P]);
   const svc = require('../../services/errorLogService');
   svc.resetHidden();   // the list is cached for 15 s; this row was written straight to the database
@@ -73,7 +73,7 @@ it('an open "hidden" error keeps the endpoint hidden even if the endpoints table
     assert.equal((await h.db().query('SELECT status FROM endpoints WHERE path=$1', [P])).rows[0].status, 'active');
     assert.equal(await inCatalog(P), false);
     assert.equal(await inMonitor(P), false);
-    const r = await call(`${P}?prompt=hi`);
+    const r = await call(`${P}?text=hi`);
     assert.deepEqual([r.status, r.json.error], [404, 'ENDPOINT_UNAVAILABLE']);
     assert.ok(!/plan|quota/i.test(r.text));
   } finally { await h.db().query("DELETE FROM endpoint_errors WHERE fingerprint='manual-test'"); svc.resetHidden(); }
@@ -81,14 +81,14 @@ it('an open "hidden" error keeps the endpoint hidden even if the endpoints table
 });
 
 it('the hidden endpoint keeps being checked and comes back by itself once it works', async () => {
-  const P = '/api/ai/chatgpt';
+  const P = '/api/ai/publicai';
   reply = () => ({ status: 200, json: { status: true, result: 'ok' } });
   for (let i = 0; i < 30; i++) {
     const r = await app.request('POST', '/api/endpoints/autocheck', { headers: { 'x-yannz-client': 'web' } });
     if (!r.json.checked.length || r.json.checked.some(x => x.path === P)) break;
   }
   assert.equal(await inCatalog(P), true, 'shown again');
-  assert.equal((await call(`${P}?prompt=hi`)).status, 200);
+  assert.equal((await call(`${P}?text=hi`)).status, 200);
   const errs = await errorsFor(P);
   assert.ok(errs[0].resolved_at, 'marked as fixed');
   assert.equal(errs[0].auto_disabled, false);
@@ -116,16 +116,16 @@ it('failed automatic checks are logged too; a missing server key hides the endpo
   assert.match(svc.explain({ path: '/api/ai/bard', status: 503, code: 'UPSTREAM_NOT_CONFIGURED' }).why, /Key TERMAI_API_KEY belum diisi di Vercel/);
   assert.match(svc.explain({ path: '/api/ai/hyperai', status: 504, code: 'TIMEOUT', message: 'timeout' }).why, /Server api\.clutch\.web\.id kelamaan jawab/);
   assert.equal(svc.explain({ path: '/api/tools/ping', status: 503, code: 'GATEWAY_UNAVAILABLE' }).where, 'Website kita (Vercel)');
-  reply = u => (u.pathname === '/api/ai/claude' ? { status: 402, json: { status: false, message: 'Payment Required: insufficient balance' } } : { status: 200, json: { status: true, result: 'ok' } });
+  reply = u => (u.pathname === '/api/ai/bypassai' ? { status: 402, json: { status: false, message: 'Payment Required: insufficient balance' } } : { status: 200, json: { status: true, result: 'ok' } });
   await h.db().query("UPDATE endpoint_checks SET checked_at = now() - interval '7 hours'");
   for (let i = 0; i < 30; i++) { const r = await app.request('POST', '/api/endpoints/autocheck', { headers: { 'x-yannz-client': 'web' } }); if (!r.json.checked.length) break; }
-  const errs = await errorsFor('/api/ai/claude');
+  const errs = await errorsFor('/api/ai/bypassai');
   assert.equal(errs[0]?.source, 'check', JSON.stringify(errs));
-  assert.equal(await inCatalog('/api/ai/claude'), false);
+  assert.equal(await inCatalog('/api/ai/bypassai'), false);
 });
 
 it('the developer can show an endpoint again, delete an error and clear the fixed ones', async () => {
-  const P = '/api/ai/claude';
+  const P = '/api/ai/bypassai';
   assert.equal((await app.request('POST', '/owner/api/errors/show', { cookie: user, headers: { origin: app.origin }, body: { path: P } })).status, 403);
   assert.equal((await o('POST', '/owner/api/errors/show', { path: P })).status, 200);
   assert.equal(await inCatalog(P), true);

@@ -18,7 +18,7 @@ before(async () => {
   if (h.skip) return;
   global.fetch = async (url, opts = {}) => {
     const u = new URL(String(url));
-    if (u.hostname === 'api.theresav.eu' || u.hostname === 'api.clutch.web.id' || u.hostname === 'api.termai.cc') {
+    if (['api.theresav.eu', 'api.clutch.web.id', 'api.termai.cc', 'api.dongtube.id'].includes(u.hostname)) {
       seen.push({ host: u.hostname, path: u.pathname, query: Object.fromEntries(u.searchParams) });
       const r = reply(u);
       if (r.delay) await new Promise(res => setTimeout(res, r.delay));
@@ -37,7 +37,7 @@ before(async () => {
   const realLookup = dns.promises.lookup;
   dns.promises.lookup = async (host, o) => (host === 'apiz2z.web.id' ? [{ address: '93.184.216.34', family: 4 }] : realLookup(host, o));
   await h.setupDatabase();
-  app = await h.startApp({ THERESAV_API_KEY: 'k', CLUTCH_API_KEY: 'c', TERMAI_API_KEY: 't', CRON_SECRET: 'cron-xyz', PUBLIC_BASE_URL: 'https://apiz2z.web.id' });
+  app = await h.startApp({ THERESAV_API_KEY: 'k', CLUTCH_API_KEY: 'c', TERMAI_API_KEY: 't', DONGTUBE_API_KEY: 'd', CRON_SECRET: 'cron-xyz', PUBLIC_BASE_URL: 'https://apiz2z.web.id' });
   user = await app.login('status@example.test');
   owner = await app.login(h.OWNER_EMAIL);
   status = require('../../services/endpointStatusService');   // after startApp: lib/db uses the test shim
@@ -51,7 +51,8 @@ const autocheck = () => app.request('POST', '/api/endpoints/autocheck', { header
 
 it('is public and lists every endpoint; not checked yet = pending (no made-up 200s)', async () => {
   const d = await get();
-  const total = (await h.db().query('SELECT count(*)::int AS n FROM endpoints')).rows[0].n;
+  // Backup-only endpoints (plugin/dongtube.js) are not listed on their own.
+  const total = (await h.db().query("SELECT count(*)::int AS n FROM endpoints WHERE path NOT LIKE '/api/dongtube/%'")).rows[0].n;
   assert.equal(d.endpoints.length, total);
   assert.equal(d.summary.total, total);
   const ping = find(d, '/api/tools/ping');
@@ -60,7 +61,7 @@ it('is public and lists every endpoint; not checked yet = pending (no made-up 20
 
 it('automatic check: checks a few old ones at a time, never the same twice, until every endpoint has a code', async () => {
   assert.equal((await app.request('POST', '/api/endpoints/autocheck')).status, 403, 'only from the website');
-  reply = u => (u.pathname === '/api/ai/claude' ? { status: 200, json: { status: false, error: 'server lagi sibuk' } }
+  reply = u => (u.pathname === '/api/ai/claude' || u.pathname === '/ai/claude' ? { status: 200, json: { status: false, error: 'server lagi sibuk' } }
     : u.pathname === '/ai/hyperai' ? { status: 503, json: { status: false, message: 'down' } }
     : u.pathname === '/api/download/reddit' ? { status: 400, json: { status: false, message: 'url is required' } }
     : { status: 200, json: { status: true, result: 'ok' } });
@@ -69,7 +70,7 @@ it('automatic check: checks a few old ones at a time, never the same twice, unti
   const pa = a.json.checked.map(x => x.path), pb = b.json.checked.map(x => x.path);
   assert.equal(pa.length, 6);
   assert.deepEqual(pa.filter(p => pb.includes(p)), []);
-  for (let i = 0; i < 30; i++) { const r = await autocheck(); assert.equal(r.status, 200, r.text); if (!r.json.checked.length) break; }
+  for (let i = 0; i < 100; i++) { const r = await autocheck(); assert.equal(r.status, 200, r.text); if (!r.json.checked.length) break; }
   const d = await get();
   assert.equal(d.summary.pending, 0, JSON.stringify(d.endpoints.filter(e => e.state === 'pending').map(e => e.path)));
   // Works = 200 green; upstream answered with an error body = 502; upstream down = its code.
@@ -94,7 +95,7 @@ it('a failed endpoint is checked again after 30 minutes, a working one after 6 h
   const r = await autocheck();
   const paths = r.json.checked.map(x => x.path);
   assert.ok(paths.includes('/api/ai/claude') || paths.includes('/api/ai/hyperai'), JSON.stringify(paths));
-  for (const p of paths) assert.ok(['/api/ai/claude', '/api/ai/hyperai'].includes(p), `${p} was OK and is not due yet`);
+  for (const p of paths) assert.ok(['/api/ai/claude', '/api/dongtube/ai/claude', '/api/ai/hyperai'].includes(p), `${p} was OK and is not due yet`);
 });
 
 it('Refresh (force) really checks everything again, signed-in only, at most every 5 minutes', async () => {
@@ -106,9 +107,9 @@ it('Refresh (force) really checks everything again, signed-in only, at most ever
   await h.db().query("UPDATE endpoint_checks SET checked_at = now() - interval '6 minutes'");
   seen = [];
   const done = new Set();
-  for (let i = 0; i < 30; i++) { const r = await force(user); assert.equal(r.status, 200, r.text); if (!r.json.checked.length) break; r.json.checked.forEach(x => done.add(x.path)); }
-  const total = (await get()).summary.total;
-  assert.equal(done.size, total, 'every endpoint was checked again');
+  for (let i = 0; i < 100; i++) { const r = await force(user); assert.equal(r.status, 200, r.text); if (!r.json.checked.length) break; r.json.checked.forEach(x => done.add(x.path)); }
+  const total = (await h.db().query('SELECT count(*)::int AS n FROM endpoints')).rows[0].n;
+  assert.equal(done.size, total, 'every endpoint was checked again (backup-only ones too)');
   assert.ok(seen.length > 50, `the upstreams were really called (${seen.length} calls)`);
 });
 
@@ -137,12 +138,12 @@ it('timeouts and unreachable servers get 504 / 503', async () => {
 it('real calls count too; the caller\'s own mistakes (400/401/403) are skipped', async () => {
   assert.equal((await app.request('GET', '/api/tools/ping', app.asBrowser(user))).status, 200);
   assert.equal(find(await get(), '/api/tools/ping').source, 'live');
-  await h.db().query("UPDATE endpoint_checks SET checked_at = now() WHERE path='/api/ai/chatgpt'");
-  assert.equal((await app.request('GET', '/api/ai/chatgpt', app.asBrowser(user))).status, 400);
-  assert.equal(find(await get(), '/api/ai/chatgpt').source, 'check');
+  await h.db().query("UPDATE endpoint_checks SET checked_at = now() WHERE path='/api/ai/gemini'");
+  assert.equal((await app.request('GET', '/api/ai/gemini', app.asBrowser(user))).status, 400);
+  assert.equal(find(await get(), '/api/ai/gemini').source, 'check');
   reply = () => ({ status: 500, json: { status: false, error: 'boom' } });
-  const r = await app.request('GET', '/api/ai/chatgpt?prompt=hi', app.asBrowser(user));
-  const chat = find(await get(), '/api/ai/chatgpt');
+  const r = await app.request('GET', '/api/ai/gemini?prompt=hi', app.asBrowser(user));
+  const chat = find(await get(), '/api/ai/gemini');   // (not in a failover group: its own result shows)
   assert.deepEqual([chat.state, chat.code, chat.source], ['down', r.status, 'live']);
 });
 

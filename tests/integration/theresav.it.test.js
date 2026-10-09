@@ -81,7 +81,7 @@ it('validation: required parameters, choices (case-insensitive) and booleans are
 it('upstream failures are refunded: status:false → 502, upstream validation → 400', async () => {
   const before = await usedToday();
   reply = () => ({ status: 200, json: { status: false, error: 'API Error (500): boom' } });
-  const r = await call('/api/ai/claude?text=hai');
+  const r = await call('/api/ai/bypassai?text=hai');   // (no failover backups)
   assert.deepEqual([r.status, r.json.error], [502, 'UPSTREAM_FAILED']);
   reply = () => ({ status: 400, json: { status: false, error: 'Validation failed', details: { genre: {} } } });
   const v = await call('/api/ai/talefy?text=hai&genre=horror');

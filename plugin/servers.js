@@ -12,7 +12,7 @@
 //   - clutch /tools/osin             -> lookup identitas dari nomor HP (potensi doxxing).
 //   - clutch /imagecreator/iqc, termai /api/chat/logic-bell, termai voice-covers -> bentuk
 //     parameter tidak jelas dari sumber; dilewati agar tidak jadi endpoint error.
-//   - dongtube & pitucode -> tidak ada endpoint aman yang terpakai.
+//   - pitucode -> tidak ada endpoint aman yang terpakai. Dongtube ada di plugin/dongtube.js.
 const { makeEndpoint } = require('../lib/apiproxy');
 const { checkSampleImage } = require('../lib/theresav');
 // Sample photo for the automatic endpoint check (the real request uses the user's own photo).
