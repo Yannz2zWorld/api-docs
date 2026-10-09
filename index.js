@@ -222,6 +222,11 @@ app.get('/assets/aura-intro.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'aura-intro.js'));
 });
+// Sample photo the automatic endpoint checks send to photo endpoints (OCR, Remini, Sketch, ...).
+app.get('/assets/check-sample.png', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.type('image/png').sendFile(path.join(__dirname, 'views', 'assets', 'check-sample.png'));
+});
 app.get('/assets/scythe-mark.webp', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400');
   res.type('image/webp').sendFile(path.join(__dirname, 'views', 'assets', 'scythe-mark.webp'));
@@ -438,6 +443,9 @@ app.get('/favicon.ico', (req, res) => {
 
 const loadedPluginPaths = new Set();
 app.locals.loadedPluginPaths = loadedPluginPaths;
+// path -> run(), so the endpoint checker (services/endpointCheckService.js) can test local plugins.
+const pluginRuns = new Map();
+app.locals.pluginRuns = pluginRuns;
 
 function gatewayFail(res, status, error, message, extra = {}) {
   return res.status(status).json({ success: false, error, message, ...extra });
@@ -595,6 +603,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
           app.get(cleanPath, apiGateway(cleanPath, run));
           if (route.upload) { uploadPaths.add(cleanPath); app.post(cleanPath, apiGateway(cleanPath, run)); }
           loadedPluginPaths.add(cleanPath);
+          pluginRuns.set(cleanPath, run);
           registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
           if (!rawEndpoints[category]) rawEndpoints[category] = [];
