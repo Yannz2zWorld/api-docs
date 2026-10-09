@@ -32,7 +32,7 @@
 </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><a href="/owner" aria-current="page">Developer</a><div data-lang-switch></div></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">API Docs</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><a href="/owner" aria-current="page">Developer</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap wide">
   <span class="kicker">Developer only</span>
   <h1>Developer Console</h1>
@@ -492,7 +492,7 @@ $('#selftest-btn').addEventListener('click', async () => {
       `<table><tr><th>Endpoint</th><th>Hasil</th><th>Detail</th></tr>${d.results.map(r => { const c = ic[r.result] || [r.result, '']; return `<tr>
         <td data-no-i18n><b>${esc(r.name)}</b><br><small>${esc(r.category)} · ${esc(r.path)}</small></td>
         <td>${chip(c[0], c[1])}${r.endpointStatus === 'disabled' ? ' ' + chip('nonaktif', 'warn') : ''}</td>
-        <td><small${r.result === 'error' ? ' data-no-i18n' : ''}>${r.result === 'ok' ? (r.ms || '') + ' ms' : r.result === 'manual' ? 'butuh link/foto asli — tes di Sandbox' : r.result === 'error' ? esc(String(r.error || '').slice(0, 120)) + (r.status ? ` (${r.status})` : '') : 'THERESAV_API_KEY belum diatur'}</small></td></tr>`; }).join('')}</table>`;
+        <td><small${r.result === 'error' ? ' data-no-i18n' : ''}>${r.result === 'ok' ? (r.ms || '') + ' ms' : r.result === 'manual' ? 'butuh link/foto asli — tes di API Docs' : r.result === 'error' ? esc(String(r.error || '').slice(0, 120)) + (r.status ? ` (${r.status})` : '') : 'THERESAV_API_KEY belum diatur'}</small></td></tr>`; }).join('')}</table>`;
     const df = $('#disable-failing');
     if (df) df.addEventListener('click', async () => {
       if (!ask(`Nonaktifkan ${errs.length} endpoint yang error? Nanti bisa diaktifin lagi dari daftar di bawah.`)) return;

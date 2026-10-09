@@ -14,7 +14,7 @@
 <style>h1{max-width:820px}</style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing" aria-current="page">Pricing</a><div data-lang-switch></div></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">API Docs</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing" aria-current="page">Pricing</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap wide">
   <h1>Pilih paket yang pas buat kamu.</h1>
   <p class="lead">Kuota dihitung per hari (reset jam 00:00 UTC), dan cuma request yang berhasil yang dihitung. Harga final dipastiin server pas order dibuat.</p>
@@ -39,7 +39,7 @@ async function render() {
     const mine = me ? RANK.indexOf(me.tier) : -1;
     $('#grid').innerHTML = tiers.tiers.filter(t => t.name !== 'OWNER').map(t => {
       const current = me && me.tier === t.name;
-      const keys = t.apiKeys === null ? 'Custom API key tanpa batas' : t.apiKeys === 0 ? 'Nggak bisa bikin custom API key (pakai Sandbox lewat login)' : `Maks. ${num(t.apiKeys)} custom API key`;
+      const keys = t.apiKeys === null ? 'Custom API key tanpa batas' : t.apiKeys === 0 ? 'Nggak bisa bikin custom API key (pakai API Docs lewat login)' : `Maks. ${num(t.apiKeys)} custom API key`;
       const access = t.name === 'FREE' ? 'Endpoint tier FREE' : 'Semua endpoint yang aktif';
       let action;
       if (current) action = me.tierExpiresAt ? `<a class="btn" href="/billing?tier=${esc(t.name)}">Perpanjang</a>` : '<button class="btn" disabled>Paket kamu sekarang</button>';

@@ -13,7 +13,7 @@
 <script src="/assets/i18n.js"></script>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys" aria-current="page">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><div data-lang-switch></div></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">API Docs</a><a href="/keys" aria-current="page">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap">
   <h1>API Keys</h1>
   <p class="lead loading" id="summary">Lagi dimuat…</p>
@@ -73,7 +73,7 @@ async function load() {
     const full = d.limit !== null && active >= d.limit;
     if ($('#create-btn')) $('#create-btn').disabled = full;
     if (d.limit === 0) {
-      $('#create-panel').innerHTML = `<h2>Custom API key</h2><div class="notice">Tier <b>FREE</b> nggak dapat custom API key. Kamu tetap bisa pakai 100 request/hari lewat <a href="/api/playground">Playground</a> atau <a href="/api">Sandbox</a> kalau udah login, atau <a href="/pricing">upgrade</a> buat bikin key.</div>`;
+      $('#create-panel').innerHTML = `<h2>Custom API key</h2><div class="notice">Tier <b>FREE</b> nggak dapat custom API key. Kamu tetap bisa pakai 100 request/hari lewat <a href="/api/playground">Playground</a> atau <a href="/api">API Docs</a> kalau udah login, atau <a href="/pricing">upgrade</a> buat bikin key.</div>`;
     } else if (full) {
       $('#create-msg').innerHTML = `<p class="notice">Batas key tier ${esc(d.tier)} udah penuh. Cabut key lama atau <a href="/pricing">upgrade</a>.</p>`;
     }
