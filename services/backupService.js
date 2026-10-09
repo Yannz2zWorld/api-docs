@@ -5,7 +5,8 @@
 //   json      yannz-db-<date>.json     the same data as JSON: easy to open and read, not for restoring.
 //   web       yannz-web-<date>.zip     the website's source code (the GitHub repo: GITHUB_TOKEN,
 //                                      GITHUB_REPO, GITHUB_BRANCH as for the plugin upload).
-// sendToOwner() emails all three as attachments to OWNER_EMAIL through services/emailService.js.
+// sendToOwner() emails all three as attachments to BACKUP_EMAIL (default: OWNER_EMAIL) through
+// services/emailService.js.
 // API keys are only ever stored as hashes, so no backup contains a usable key; it does contain
 // password hashes and account data, so it is only for the developer.
 const zlib = require('zlib');
@@ -128,11 +129,14 @@ const EMAIL_LIMIT = 18 * 1024 * 1024;
 const ATTACH_PLAIN_LIMIT = 4 * 1024 * 1024;   // bigger files are attached gzipped (.gz)
 const mb = n => `${(n / 1024 / 1024).toFixed(2)} MB`;
 
-// Builds all three backups and emails them to OWNER_EMAIL. A part that fails (e.g. GitHub not set
+// Builds all three backups and emails them to backupRecipient(). A part that fails (e.g. GitHub not set
 // up) is reported in the email and the result instead of stopping the others.
+// Where backups go: BACKUP_EMAIL if set, else the developer's OWNER_EMAIL.
+const backupRecipient = () => String(process.env.BACKUP_EMAIL || process.env.OWNER_EMAIL || '').trim();
+
 async function sendToOwner({ reason = 'manual' } = {}) {
-  const to = String(process.env.OWNER_EMAIL || '').trim();
-  if (!to) throw webError(503, 'OWNER_EMAIL_MISSING', 'OWNER_EMAIL belum diisi di Environment Variables.');
+  const to = backupRecipient();
+  if (!to) throw webError(503, 'OWNER_EMAIL_MISSING', 'Isi BACKUP_EMAIL (atau OWNER_EMAIL) dulu di Environment Variables.');
   if (!emailService.isConfigured()) throw webError(503, 'EMAIL_NOT_CONFIGURED', 'Email belum aktif: isi EMAIL_FROM + SMTP (Gmail App Password) atau RESEND_API_KEY di Vercel.');
 
   const parts = [];
@@ -165,4 +169,4 @@ async function sendToOwner({ reason = 'manual' } = {}) {
   return { to, parts: parts.map(p => ({ label: p.label, filename: p.filename || null, size: p.content?.length || 0, attached: !!p.attached, error: p.error || null })) };
 }
 
-module.exports = { readDatabase, toSql, toJson, databaseBackup, jsonBackup, webZipUrl, webBackup, sendToOwner, gzip, EMAIL_LIMIT };
+module.exports = { backupRecipient, readDatabase, toSql, toJson, databaseBackup, jsonBackup, webZipUrl, webBackup, sendToOwner, gzip, EMAIL_LIMIT };

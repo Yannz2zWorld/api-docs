@@ -594,7 +594,7 @@ router.get('/owner/status', auth, owner, async (req, res) => {
     success: true,
     database,
     // Names and presence only; values are never returned.
-    config: Object.fromEntries(['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL', 'AUTH_SECRET', 'OWNER_EMAIL', 'CORS_ORIGINS', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAYMENT_GATEWAY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'EMAIL_FROM', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY', 'GITHUB_TOKEN', 'PUBLIC_BASE_URL', 'THERESAV_API_KEY', 'CLUTCH_API_KEY', 'TERMAI_API_KEY', 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL'].map(n => [n, configured(n)])),
+    config: Object.fromEntries(['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL', 'AUTH_SECRET', 'OWNER_EMAIL', 'CORS_ORIGINS', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAYMENT_GATEWAY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'EMAIL_FROM', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY', 'GITHUB_TOKEN', 'BACKUP_EMAIL', 'CRON_SECRET', 'PUBLIC_BASE_URL', 'THERESAV_API_KEY', 'CLUTCH_API_KEY', 'TERMAI_API_KEY', 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL'].map(n => [n, configured(n)])),
     authConfigured: missingAuthConfig().length === 0,
     payments: { pakasirConfigured: pakasir.isConfigured(), gateway: pakasir.isEnabled() ? 'on' : 'maintenance', automaticSettlement: pakasir.isVerificationConfigured() ? 'configured_not_verified' : 'disabled_fail_closed' },
     notifications: notifier.status(),
@@ -1305,7 +1305,7 @@ const backupFail = (res, e) => (e.status ? fail(res, e.status, e.code, e.message
 
 router.get('/owner/backup/status', auth, owner, (req, res) => res.json({
   success: true,
-  email: { configured: emailService.isConfigured(), to: process.env.OWNER_EMAIL ? process.env.OWNER_EMAIL.replace(/^(.{2}).*(@.*)$/, '$1***$2') : null },
+  email: { configured: emailService.isConfigured(), to: backups.backupRecipient() ? backups.backupRecipient().replace(/^(.{2}).*(@.*)$/, '$1***$2') : null },
   github: { token: !!process.env.GITHUB_TOKEN, repo: process.env.GITHUB_REPO || 'Yannz2zWorld/api-docs', branch: process.env.GITHUB_BRANCH || 'main' },
   daily: { enabled: !!process.env.CRON_SECRET }
 }));
