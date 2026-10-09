@@ -10,16 +10,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/i18n.js"></script>
 <style>h1{max-width:820px}</style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing" aria-current="page">Pricing</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing" aria-current="page">Pricing</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap wide">
-  <h1>Pilih paket sesuai kebutuhan.</h1>
-  <p class="lead">Kuota dihitung per hari (reset 00:00 UTC) dan hanya request yang berhasil yang dihitung. Harga final ditentukan server saat order dibuat.</p>
-  <div class="grid" id="grid" aria-live="polite"><p class="loading">Memuat paket…</p></div>
+  <h1>Pilih paket yang pas buat kamu.</h1>
+  <p class="lead">Kuota dihitung per hari (reset jam 00:00 UTC), dan cuma request yang berhasil yang dihitung. Harga final dipastiin server pas order dibuat.</p>
+  <div class="grid" id="grid" aria-live="polite"><p class="loading">Lagi memuat paket…</p></div>
   <p id="result" role="status"></p>
-  <small>DEVELOPER adalah peran operasional dan tidak dijual.</small>
+  <small>DEVELOPER itu peran khusus buat operasional, jadi nggak dijual.</small>
 </main>
 <script>
 const $ = s => document.querySelector(s);
@@ -38,17 +39,17 @@ async function render() {
     const mine = me ? RANK.indexOf(me.tier) : -1;
     $('#grid').innerHTML = tiers.tiers.filter(t => t.name !== 'OWNER').map(t => {
       const current = me && me.tier === t.name;
-      const keys = t.apiKeys === null ? 'Custom API key tanpa batas' : t.apiKeys === 0 ? 'Tanpa custom API key (pakai Sandbox dengan login)' : `Maksimal ${num(t.apiKeys)} custom API key`;
+      const keys = t.apiKeys === null ? 'Custom API key tanpa batas' : t.apiKeys === 0 ? 'Nggak bisa bikin custom API key (pakai Sandbox lewat login)' : `Maks. ${num(t.apiKeys)} custom API key`;
       const access = t.name === 'FREE' ? 'Endpoint tier FREE' : 'Semua endpoint yang aktif';
       let action;
-      if (current) action = me.tierExpiresAt ? `<a class="btn" href="/billing?tier=${esc(t.name)}">Perpanjang</a>` : '<button class="btn" disabled>Paket kamu saat ini</button>';
+      if (current) action = me.tierExpiresAt ? `<a class="btn" href="/billing?tier=${esc(t.name)}">Perpanjang</a>` : '<button class="btn" disabled>Paket kamu sekarang</button>';
       else if (!t.purchasable) action = me ? '' : '<a class="btn" href="/">Login gratis</a>';
-      else if (!me) action = `<a class="btn primary" href="/">Login untuk upgrade</a>`;
-      else if (RANK.indexOf(t.name) <= mine) action = '<button class="btn" disabled>Sudah termasuk</button>';
+      else if (!me) action = `<a class="btn primary" href="/">Login dulu buat upgrade</a>`;
+      else if (RANK.indexOf(t.name) <= mine) action = '<button class="btn" disabled>Udah termasuk</button>';
       else action = `<a class="btn primary" href="/billing?tier=${esc(t.name)}">Upgrade ke ${esc(t.name)}</a>`;
       return `<article class="card${current ? ' current' : ''}">${current ? '<span class="chip">Paket aktif</span>' : ''}<h2>${esc(t.name)}</h2><div class="price">Rp${num(t.price || 0)}${t.price ? '<small style="font-size:14px;color:var(--muted)"> / 30 hari</small>' : ''}</div><ul><li>${num(t.dailyLimit)} request/hari</li><li>${keys}</li><li>${access}</li></ul>${action}</article>`;
     }).join('');
-  } catch { $('#grid').innerHTML = '<p>Daftar paket sementara tidak tersedia.</p>'; }
+  } catch { $('#grid').innerHTML = '<p>Daftar paket lagi nggak bisa dimuat. Coba lagi nanti ya.</p>'; }
 }
 
 render();

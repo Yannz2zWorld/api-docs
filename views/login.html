@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b0b0c">
-  <title>Sign in — Yannz API</title>
+  <title>Masuk — Yannz API</title>
   <link rel="icon" id="favicon" type="image/png" href="/assets/favicon.png?v=2"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -120,6 +120,8 @@
     /* Google's button stays neutral (brand guideline); everything primary is crimson */
     .brand-mark,.submit{border-color:var(--edge)}.google{background:#f4f4f5;border-color:#f4f4f5;color:#0b0b0c}.google:hover{background:#e4e4e7;color:#0b0b0c}.google-icon{background:#f4f4f5;border-color:#0b0b0c;color:#0b0b0c}#google-fallback{color:#0b0b0c}
   </style>
+  <script src="/assets/i18n.js"></script>
+  <style>.visual-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:relative;z-index:3}</style>
   <link rel="preload" href="/assets/scythe.glb" as="fetch" type="model/gltf-binary" crossorigin>
   <style>.turnstile{margin:14px 0 2px;min-height:65px}.turnstile[hidden]{display:none}.oauth.ts-locked #google-oauth,.oauth.ts-locked #google-fallback{pointer-events:none;opacity:.4;filter:grayscale(1)}.ts-note{font:500 10px 'DM Mono',monospace;color:#a1a1aa;margin:8px 0 0;text-align:center}.ts-note[hidden]{display:none}</style>
   <!-- Hide the CSS fallback while the 3D scythe loads; scene3d.js brings it back if 3D fails. -->
@@ -133,25 +135,25 @@
 <div id="slash-intro" aria-hidden="true"></div>
 <div class="layout">
   <section class="visual">
-    <div class="brand"><span class="brand-mark"><i data-lucide="orbit"></i></span><span id="brand-name">Yannz API</span></div>
+    <div class="visual-top"><div class="brand"><span class="brand-mark"><i data-lucide="orbit"></i></span><span id="brand-name">Yannz API</span></div><div data-lang-switch></div></div>
     <div class="scene3d" data-scene3d="core" aria-hidden="true"></div>
     <div class="stage" aria-hidden="true"><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="orb"><div class="cube"><span class="face front"></span><span class="face back"></span><span class="face right"></span><span class="face left"></span><span class="face top"></span><span class="face bottom"></span></div></div><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="dot d4"></span></div>
     <div class="visual-copy">
       <span class="eyebrow"><i data-lucide="terminal"></i> Developer gateway</span>
-      <h1>Build fast.<br>Ship clean.</h1>
-      <p>A focused workspace for exploring endpoints, testing integrations, and moving from idea to implementation without the usual clutter.</p>
+      <h1>Bikin cepet.<br>Rilis rapi.</h1>
+      <p>Workspace simpel buat jelajahi endpoint, tes integrasi, dan ngubah ide jadi kode yang jalan, tanpa ribet.</p>
     </div>
-    <div class="visual-footer"><span>YANNZ / API PLATFORM</span><span>MODULAR · FAST · READY</span></div>
+    <div class="visual-footer"><span>YANNZ / API PLATFORM</span><span>MODULAR · CEPAT · SIAP</span></div>
   </section>
   <section class="login">
     <div class="panel">
-      <div class="panel-top"><span class="panel-label">Account access</span><span class="secure"><i data-lucide="shield-check"></i> Secure session</span></div>
+      <div class="panel-top"><span class="panel-label">Akses akun</span><span class="secure"><i data-lucide="shield-check"></i> Sesi aman</span></div>
       <div class="tabs" role="tablist" aria-label="Pilih masuk atau daftar">
         <button type="button" role="tab" data-tab="login" aria-selected="true">Masuk</button>
         <button type="button" role="tab" data-tab="register" aria-selected="false">Daftar</button>
       </div>
-      <h2 id="panel-title">Welcome back.</h2>
-      <p class="panel-sub" id="panel-sub">Masuk dengan email &amp; sandi, atau lanjutkan dengan Google.</p>
+      <h2 id="panel-title">Selamat datang lagi.</h2>
+      <p class="panel-sub" id="panel-sub">Masuk pakai email &amp; sandi, atau lanjut pakai Google.</p>
 
       <form class="view" id="view-login" data-view="login" novalidate>
         <div class="field"><label for="login-email">Email</label><div class="input-wrap"><i data-lucide="mail"></i><input id="login-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div></div>
@@ -165,24 +167,24 @@
         <div class="field"><label for="register-email">Email</label><div class="input-wrap"><i data-lucide="mail"></i><input id="register-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div></div>
         <div class="field"><label for="register-password">Sandi</label><div class="input-wrap"><i data-lucide="lock-keyhole"></i><input id="register-password" name="password" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter, huruf &amp; angka" required><button class="toggle-pass" type="button" data-toggle-pass aria-label="Tampilkan sandi"><i data-lucide="eye"></i></button></div></div>
         <div class="field"><label for="register-confirm">Ulangi sandi</label><div class="input-wrap"><i data-lucide="lock-keyhole"></i><input id="register-confirm" name="confirm" type="password" autocomplete="new-password" placeholder="Ketik ulang sandi" required><button class="toggle-pass" type="button" data-toggle-pass aria-label="Tampilkan sandi"><i data-lucide="eye"></i></button></div></div>
-        <button class="submit" type="submit"><span>Buat akun</span><i data-lucide="arrow-up-right"></i></button>
+        <button class="submit" type="submit"><span>Bikin akun</span><i data-lucide="arrow-up-right"></i></button>
       </form>
 
       <form class="view" id="view-verify" data-view="verify" novalidate hidden>
-        <p class="hint">Kode 6 digit dikirim ke <b class="target-email"></b>. Cek juga folder spam.</p>
+        <p class="hint">Kode 6 digit udah dikirim ke <b class="target-email" data-no-i18n></b>. Cek folder spam juga ya.</p>
         <div class="field"><label for="verify-code">Kode verifikasi</label><input class="code-input" id="verify-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" required></div>
         <button class="submit" type="submit"><span>Verifikasi &amp; masuk</span><i data-lucide="arrow-up-right"></i></button>
-        <div class="form-row"><button type="button" class="link" data-go="login">← Kembali</button><button type="button" class="link" data-resend="verify">Kirim ulang kode</button></div>
+        <div class="form-row"><button type="button" class="link" data-go="login">← Balik</button><button type="button" class="link" data-resend="verify">Kirim ulang kode</button></div>
       </form>
 
       <form class="view" id="view-forgot" data-view="forgot" novalidate hidden>
         <div class="field"><label for="forgot-email">Email akun</label><div class="input-wrap"><i data-lucide="mail"></i><input id="forgot-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div></div>
         <button class="submit" type="submit"><span>Kirim kode</span><i data-lucide="send"></i></button>
-        <div class="form-row"><button type="button" class="link" data-go="login">← Kembali ke masuk</button><span></span></div>
+        <div class="form-row"><button type="button" class="link" data-go="login">← Balik ke halaman masuk</button><span></span></div>
       </form>
 
       <form class="view" id="view-reset" data-view="reset" novalidate hidden>
-        <p class="hint">Masukkan kode dari email <b class="target-email"></b> dan sandi baru kamu.</p>
+        <p class="hint">Masukin kode dari email <b class="target-email" data-no-i18n></b> dan sandi baru kamu.</p>
         <div class="field"><label for="reset-code">Kode reset</label><input class="code-input" id="reset-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" required></div>
         <div class="field"><label for="reset-password">Sandi baru</label><div class="input-wrap"><i data-lucide="lock-keyhole"></i><input id="reset-password" name="password" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter, huruf &amp; angka" required><button class="toggle-pass" type="button" data-toggle-pass aria-label="Tampilkan sandi"><i data-lucide="eye"></i></button></div></div>
         <div class="field"><label for="reset-confirm">Ulangi sandi baru</label><div class="input-wrap"><i data-lucide="lock-keyhole"></i><input id="reset-confirm" name="confirm" type="password" autocomplete="new-password" placeholder="Ketik ulang sandi" required><button class="toggle-pass" type="button" data-toggle-pass aria-label="Tampilkan sandi"><i data-lucide="eye"></i></button></div></div>
@@ -196,19 +198,19 @@
       <div class="oauth" id="oauth-block">
         <div class="divider"><span>atau</span></div>
         <div id="google-oauth" aria-live="polite"></div>
-        <a class="google" id="google-fallback" href="/auth/google"><span class="google-icon">G</span><span>Continue with Google</span></a>
-        <p class="ts-note" id="ts-note" hidden>Selesaikan verifikasi Cloudflare di atas untuk lanjut dengan Google.</p>
+        <a class="google" id="google-fallback" href="/auth/google"><span class="google-icon">G</span><span>Lanjut pakai Google</span></a>
+        <p class="ts-note" id="ts-note" hidden>Selesain verifikasi Cloudflare di atas dulu buat lanjut pakai Google.</p>
         <div id="google-message" class="message" aria-live="polite"></div>
       </div>
-      <p class="oauth-note">Sandi di-hash di server (scrypt) dan sesi disimpan di cookie HttpOnly yang aman.</p>
-      <div class="meta"><span>Authentication layer: ready</span><a href="/api">API documentation</a></div>
+      <p class="oauth-note">Sandi kamu di-hash di server (scrypt), dan sesi disimpan di cookie HttpOnly yang aman.</p>
+      <div class="meta"><span>Sistem login: siap</span><a href="/api">Dokumentasi API</a></div>
     </div>
   </section>
 </div>
 <div class="loading" id="loading-screen" aria-hidden="true">
   <div class="load-card">
     <div class="load-scene"><div class="load-aura"></div><div class="load-mark"><img src="/assets/scythe-mark.webp" alt="" width="142" height="220"><span class="load-sheen"></span></div></div>
-    <h3>Preparing your workspace</h3><p id="loading-copy">Verifying session</p><div class="progress"><i></i></div><div class="status-line" id="status-line">Initializing secure context...</div>
+    <h3>Lagi nyiapin workspace kamu</h3><p id="loading-copy">Ngecek sesi</p><div class="progress"><i></i></div><div class="status-line" id="status-line">Nyiapin koneksi aman...</div>
   </div>
 </div>
 <script>
@@ -216,29 +218,29 @@
   const brandName=$('#brand-name');
   const message=$('#message');
   window.lucide?.createIcons();
-  fetch('/api/set').then(r=>r.json()).then(s=>{brandName.textContent=s.webName||'Yannz API';document.title='Sign in — '+(s.apiTitle||s.webName||'Yannz API');}).catch(()=>{});
+  fetch('/api/set').then(r=>r.json()).then(s=>{brandName.textContent=s.webName||'Yannz API';document.title='Masuk — '+(s.apiTitle||s.webName||'Yannz API');}).catch(()=>{});
   const oauthParam=new URLSearchParams(location.search).get('oauth');
-  if(oauthParam==='denied'){message.className='message';message.textContent='Google login dibatalkan.'}
-  if(oauthParam==='error'){message.className='message';message.textContent='Google login gagal. Periksa konfigurasi Google OAuth.'}
+  if(oauthParam==='denied'){message.className='message';message.textContent='Login Google dibatalin.'}
+  if(oauthParam==='error'){message.className='message';message.textContent='Login Google gagal. Cek konfigurasi Google OAuth.'}
   const authParam=new URLSearchParams(location.search).get('auth');
-  if(authParam==='restricted'){message.className='message';message.textContent='Akun ini sedang dibatasi. Hubungi developer.'}
-  if(authParam==='account_missing'){message.className='message';message.textContent='Sesi tidak valid. Silakan login lagi.'}
-  if(authParam==='maintenance'){message.className='message';message.textContent='Website sedang maintenance. Selama maintenance hanya developer yang bisa masuk.'}
-  if(/^\/(owner|developer)-login$/.test(location.pathname)&&!authParam){message.className='message';message.textContent='Login developer. Selama maintenance hanya akun developer yang bisa masuk.'}
-  if(authParam==='turnstile'){message.className='message';message.textContent='Selesaikan verifikasi keamanan Cloudflare dulu, lalu coba masuk lagi.'}
+  if(authParam==='restricted'){message.className='message';message.textContent='Akun ini lagi dibatasi. Hubungi developer ya.'}
+  if(authParam==='account_missing'){message.className='message';message.textContent='Sesi kamu nggak valid. Login lagi ya.'}
+  if(authParam==='maintenance'){message.className='message';message.textContent='Website lagi maintenance. Selama maintenance, cuma developer yang bisa masuk.'}
+  if(/^\/(owner|developer)-login$/.test(location.pathname)&&!authParam){message.className='message';message.textContent='Login developer. Selama maintenance, cuma akun developer yang bisa masuk.'}
+  if(authParam==='turnstile'){message.className='message';message.textContent='Selesain verifikasi keamanan Cloudflare dulu, terus coba masuk lagi.'}
 
 
   function showGoogleError(text){const el=$('#google-message');el.className='message';el.textContent=text;}
   function startGoogleLoading(){
     const screen=$('#loading-screen');screen.classList.add('show');screen.setAttribute('aria-hidden','false');
     const copy=$('#loading-copy');const status=$('#status-line');
-    const steps=[['Verifying account','Checking secure session...'],['Loading workspace','Mounting API modules...'],['Syncing gateway','Reading live service state...'],['Finalizing interface','Workspace is ready.']];
+    const steps=[['Ngecek akun','Cek sesi aman...'],['Memuat workspace','Masang modul API...'],['Sinkron gateway','Baca status layanan...'],['Hampir selesai','Workspace siap.']];
     steps.forEach((step,i)=>setTimeout(()=>{copy.textContent=step[0];status.textContent=step[1]},i*170));
   }
   async function handleGoogleCredential(response){
-    if(!response?.credential){showGoogleError('Google tidak mengembalikan credential.');return;}
+    if(!response?.credential){showGoogleError('Google nggak ngirim credential.');return;}
     // Google sign-in also needs the Cloudflare check (the server refuses it otherwise).
-    if(ts.enabled&&!ts.token){showGoogleError('Selesaikan verifikasi Cloudflare dulu, lalu klik Google lagi.');return;}
+    if(ts.enabled&&!ts.token){showGoogleError('Selesain verifikasi Cloudflare dulu, terus klik Google lagi.');return;}
     try{
       message.className='message';message.textContent='';
       const body={credential:response.credential};if(ts.enabled)body.turnstileToken=ts.token;
@@ -246,10 +248,10 @@
       try{r=await fetch('/auth/google/credential',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
       finally{if(ts.enabled)tsReset();}
       const data=await r.json().catch(()=>({}));
-      if(!r.ok) throw new Error((data.message||'Google login gagal.')+(data.error?` (${data.error})`:''));
+      if(!r.ok) throw new Error((data.message||'Login Google gagal.')+(data.error?` (${data.error})`:''));
       startGoogleLoading();
       setTimeout(()=>{location.href=data.redirect||'/home'},700);
-    }catch(err){showGoogleError(err.message||'Google login gagal.');}
+    }catch(err){showGoogleError(err.message||'Login Google gagal.');}
   }
   // The GSI script loads async; wait for it instead of failing on first paint.
   function waitForGis(timeoutMs){
@@ -257,7 +259,7 @@
       const started=Date.now();
       (function check(){
         if(window.google?.accounts?.id) return resolve(window.google.accounts.id);
-        if(Date.now()-started>timeoutMs) return reject(new Error('Google Sign-In tidak dapat dimuat. Gunakan tombol di atas.'));
+        if(Date.now()-started>timeoutMs) return reject(new Error('Google Sign-In nggak bisa dimuat. Pakai tombol di atas aja.'));
         setTimeout(check,100);
       })();
     });
@@ -266,7 +268,7 @@
   async function initGoogle(){
     try{
       const cfg=await authConfig;
-      if(!cfg.configured||!cfg.clientId) throw new Error('Google OAuth belum dikonfigurasi di server.');
+      if(!cfg.configured||!cfg.clientId) throw new Error('Google OAuth belum di-setting di server.');
       const gis=await waitForGis(8000);
       gis.initialize({client_id:cfg.clientId,callback:handleGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
       const host=$('#google-oauth');host.innerHTML='';
@@ -280,11 +282,11 @@
 
   // ---------------- email + password flows
   const TITLES={
-    login:['Welcome back.','Masuk dengan email & sandi, atau lanjutkan dengan Google.'],
-    register:['Buat akun.','Daftar gratis dengan nama, email, dan sandi. Kami kirim kode verifikasi ke email kamu.'],
-    verify:['Cek email kamu.','Satu langkah lagi: masukkan kode verifikasi dari YannApi.'],
-    forgot:['Lupa sandi?','Masukkan email akunmu. Kami kirim kode reset dari YannApi.'],
-    reset:['Buat sandi baru.','Kode berlaku 15 menit dan hanya bisa dipakai sekali.']
+    login:['Selamat datang lagi.','Masuk pakai email & sandi, atau lanjut pakai Google.'],
+    register:['Bikin akun.','Daftar gratis cukup pakai nama, email, dan sandi. Nanti kami kirim kode verifikasi ke email kamu.'],
+    verify:['Cek email kamu.','Satu langkah lagi: masukin kode verifikasi dari YannApi.'],
+    forgot:['Lupa sandi?','Masukin email akun kamu. Nanti kami kirim kode reset dari YannApi.'],
+    reset:['Bikin sandi baru.','Kodenya berlaku 15 menit dan cuma bisa dipakai sekali.']
   };
   let pendingEmail='';
   function say(text,ok){message.className='message'+(ok?' ok':'');message.textContent=text||'';}
@@ -310,7 +312,7 @@
   $('#google-fallback').addEventListener('click',e=>{
     if(!ts.enabled)return;
     e.preventDefault();
-    if(!ts.token)return showGoogleError('Selesaikan verifikasi Cloudflare dulu.');
+    if(!ts.token)return showGoogleError('Selesain verifikasi Cloudflare dulu ya.');
     location.href='/auth/google?ts='+encodeURIComponent(ts.token);
   });
   authConfig.then(cfg=>{
@@ -321,13 +323,13 @@
     s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;
     s.onload=()=>{ts.widget=window.turnstile.render(host,{sitekey:cfg.turnstileSiteKey,theme:'dark',size:'flexible',language:'id',
       callback:t=>{ts.token=t;tsLock();},'expired-callback':()=>{ts.token='';tsLock();},'error-callback':()=>{ts.token='';tsLock();}});};
-    s.onerror=()=>say('Verifikasi Cloudflare gagal dimuat. Muat ulang halaman, lalu coba lagi.');
+    s.onerror=()=>say('Verifikasi Cloudflare gagal dimuat. Muat ulang halaman, terus coba lagi.');
     document.head.appendChild(s);
   });
   async function post(path,body){
     const gated=ts.enabled&&GATED.includes(path);
     if(gated){
-      if(!ts.token)return {ok:false,status:400,data:{error:'TURNSTILE_REQUIRED',message:'Tunggu verifikasi keamanan Cloudflare selesai, lalu coba lagi.'}};
+      if(!ts.token)return {ok:false,status:400,data:{error:'TURNSTILE_REQUIRED',message:'Tunggu verifikasi keamanan Cloudflare selesai dulu, terus coba lagi.'}};
       body={...body,turnstileToken:ts.token};
     }
     try{
@@ -339,10 +341,10 @@
       if(gated)tsReset();
     }
   }
-  const errText=d=>(d.message||'Permintaan gagal.')+(d.error?` (${d.error})`:'');
+  const errText=d=>(d.message||'Request gagal.')+(d.error?` (${d.error})`:'');
   async function busy(form,fn){
     const btn=form.querySelector('.submit');btn.setAttribute('aria-busy','true');btn.disabled=true;
-    try{await fn();}catch{say('Koneksi bermasalah. Coba lagi.');}finally{btn.removeAttribute('aria-busy');btn.disabled=false;}
+    try{await fn();}catch{say('Koneksinya bermasalah. Coba lagi ya.');}finally{btn.removeAttribute('aria-busy');btn.disabled=false;}
   }
   function enter(data){startGoogleLoading();setTimeout(()=>{location.href=data.redirect||'/home'},700);}
   const strong=p=>p.length>=8&&/[A-Za-z]/.test(p)&&/[0-9]/.test(p);
@@ -356,32 +358,32 @@
   });
 
   $('#view-login').addEventListener('submit',e=>{e.preventDefault();const f=e.target;const email=f.email.value.trim(),password=f.password.value;
-    if(!validEmail(email))return say('Masukkan email yang valid.');if(!password)return say('Masukkan sandi.');
+    if(!validEmail(email))return say('Masukin email yang valid ya.');if(!password)return say('Masukin sandi kamu.');
     busy(f,async()=>{const r=await post('/auth/login',{email,password});
       if(r.ok)return enter(r.data);
-      if(r.data.error==='EMAIL_NOT_VERIFIED'){show('verify',{email});return say('Email belum diverifikasi. Masukkan kode, atau klik "Kirim ulang kode".');}
+      if(r.data.error==='EMAIL_NOT_VERIFIED'){show('verify',{email});return say('Email kamu belum diverifikasi. Masukin kodenya, atau klik "Kirim ulang kode".');}
       say(errText(r.data));});
   });
   $('#view-register').addEventListener('submit',e=>{e.preventDefault();const f=e.target;const name=f.name.value.trim(),email=f.email.value.trim(),password=f.password.value;
-    if(name.length<2)return say('Nama minimal 2 karakter.');if(!validEmail(email))return say('Masukkan email yang valid.');
-    if(!strong(password))return say('Sandi minimal 8 karakter dan berisi huruf serta angka.');if(password!==f.confirm.value)return say('Konfirmasi sandi tidak sama.');
+    if(name.length<2)return say('Nama minimal 2 karakter ya.');if(!validEmail(email))return say('Masukin email yang valid ya.');
+    if(!strong(password))return say('Sandi minimal 8 karakter, dan harus ada huruf sama angkanya.');if(password!==f.confirm.value)return say('Konfirmasi sandinya nggak sama.');
     busy(f,async()=>{const r=await post('/auth/register',{name,email,password});
       if(r.ok||r.data.verificationRequired){show('verify',{email,keepMessage:true});startCooldown('verify');return say(r.ok?r.data.message:errText(r.data),r.ok);}
       say(errText(r.data));});
   });
   $('#view-verify').addEventListener('submit',e=>{e.preventDefault();const f=e.target;const code=f.code.value.replace(/\D/g,'');
-    if(code.length!==6)return say('Kode terdiri dari 6 angka.');
+    if(code.length!==6)return say('Kodenya harus 6 angka.');
     busy(f,async()=>{const r=await post('/auth/email/verify',{email:pendingEmail,code});if(r.ok)return enter(r.data);say(errText(r.data));});
   });
   $('#view-forgot').addEventListener('submit',e=>{e.preventDefault();const f=e.target;const email=f.email.value.trim();
-    if(!validEmail(email))return say('Masukkan email yang valid.');
+    if(!validEmail(email))return say('Masukin email yang valid ya.');
     busy(f,async()=>{const r=await post('/auth/password/forgot',{email});
       if(r.ok){show('reset',{email,keepMessage:true});startCooldown('reset');return say(r.data.message,true);}
       say(errText(r.data));});
   });
   $('#view-reset').addEventListener('submit',e=>{e.preventDefault();const f=e.target;const code=f.code.value.replace(/\D/g,''),password=f.password.value;
-    if(code.length!==6)return say('Kode terdiri dari 6 angka.');if(!strong(password))return say('Sandi minimal 8 karakter dan berisi huruf serta angka.');
-    if(password!==f.confirm.value)return say('Konfirmasi sandi tidak sama.');
+    if(code.length!==6)return say('Kodenya harus 6 angka.');if(!strong(password))return say('Sandi minimal 8 karakter, dan harus ada huruf sama angkanya.');
+    if(password!==f.confirm.value)return say('Konfirmasi sandinya nggak sama.');
     busy(f,async()=>{const r=await post('/auth/password/reset',{email:pendingEmail,code,password});if(r.ok)return enter(r.data);say(errText(r.data));});
   });
 
@@ -395,7 +397,7 @@
   document.addEventListener('click',async e=>{
     const btn=e.target.closest('[data-resend]');if(!btn||btn.disabled)return;const kind=btn.dataset.resend;
     const r=await post(kind==='verify'?'/auth/email/resend':'/auth/password/forgot',{email:pendingEmail}).catch(()=>null);
-    if(!r)return say('Koneksi bermasalah. Coba lagi.');
+    if(!r)return say('Koneksinya bermasalah. Coba lagi ya.');
     say(r.ok?r.data.message:errText(r.data),r.ok);if(r.ok)startCooldown(kind);
   });
   document.querySelectorAll('.code-input').forEach(i=>i.addEventListener('input',()=>{i.value=i.value.replace(/\D/g,'').slice(0,6);}));
