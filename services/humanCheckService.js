@@ -1,11 +1,11 @@
 'use strict';
-// "Are you human?" check in front of the endpoint list, so a bot or scraper can't just download the
-// catalog (GET /api/endpoints, /api/endpoints/status) the way Cloudflare keeps bots off other sites.
-//
-// Who gets the list: signed-in visitors (sign-in already has its own check) and visitors holding a
-// pass cookie. Everyone else gets 403 HUMAN_CHECK_REQUIRED with a challenge; the page shows a small
-// check box (views/human-check.js, never a full-screen page), and a solved challenge
-// (POST /human-check) gives the pass for PASS_HOURS hours.
+// One "not a robot" check at the door, the way Cloudflare keeps bots off a site: the visitor passes
+// it once on the entry page (the sign-in page, a small box, never a full-screen page) and the pass
+// (a cookie, PASS_HOURS hours) covers everything after that:
+//   - signing in / registering / Google sign-in (no second check there),
+//   - the public pages (API Docs, Playground, Pricing, 3D): without a pass they send the visitor to
+//     the entry page first and back again once it's passed,
+//   - the endpoint list (GET /api/endpoints*): without a pass or a session, 403 for bots.
 //
 // The challenge is Cloudflare Turnstile when TURNSTILE_SITE_KEY / TURNSTILE_SECRET_KEY are set,
 // otherwise a proof-of-work puzzle the browser solves in a second or two (a plain HTTP client never
@@ -60,7 +60,12 @@ function pass(req) {
   const exp = Date.now() + PASS_HOURS * 3600000;
   return `${exp}.${mac(`${exp}.${uaHash(req)}`)}`;
 }
-function hasPass(req, cookies) {
+function cookiesOf(req) {
+  const out = {};
+  for (const part of String(req.headers.cookie || '').split(';')) { const i = part.indexOf('='); if (i > 0) out[part.slice(0, i).trim()] = part.slice(i + 1).trim(); }
+  return out;
+}
+function hasPass(req, cookies = cookiesOf(req)) {
   const v = String(cookies[COOKIE] || '');
   const i = v.indexOf('.');
   if (i < 0) return false;
@@ -77,4 +82,14 @@ function gate({ isSignedIn, cookies }) {
   };
 }
 
-module.exports = { COOKIE, PASS_HOURS, POW_BITS, enabled, challenge, solve, pass, hasPass, gate, leadingZeroBits };
+// The public pages: without a session or a pass, first the entry page (then back here).
+const GUARDED_PAGES = new Set(['/api', '/api/playground', '/pricing', '/3d', '/scythe']);
+function pageGate({ isSignedIn }) {
+  return (req, res, next) => {
+    if (req.method !== 'GET' || !GUARDED_PAGES.has(req.path) || !enabled() || isSignedIn(req) || hasPass(req)) return next();
+    res.set('Cache-Control', 'no-store');
+    return res.redirect(302, '/?next=' + encodeURIComponent(req.originalUrl));
+  };
+}
+
+module.exports = { COOKIE, PASS_HOURS, POW_BITS, GUARDED_PAGES, enabled, challenge, solve, pass, hasPass, gate, pageGate, leadingZeroBits };

@@ -117,8 +117,8 @@ function render() {
   $('#grid').innerHTML = folders.length ? folders.join('') : '<div class="empty"><b>Nggak ada yang cocok.</b><br>Coba kata kunci lain.</div>';
 }
 
-// The list is behind the "not a robot" box for visitors who aren't signed in (views/human-check.js).
-YannzHuman.json('/api/endpoints', document.querySelector('main')).then(d => {
+// The list needs the entry check (or a session); views/human-check.js sends the visitor back to the door if the pass ran out.
+YannzHuman.json('/api/endpoints').then(d => {
   catalog = d.endpoints || {};
   $('#api-counter').textContent = d.total ?? Object.values(catalog).flat().length;
   // ?cat=AI opens that folder (links from elsewhere).

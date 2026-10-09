@@ -359,10 +359,11 @@ app.use((req, res, next) => {
   next();
 });
 app.locals.issueSession = (...args) => issueSession(...args);
-// The endpoint list is for people, not scrapers (services/humanCheckService.js): signed-in visitors
-// or ones who passed the small "not a robot" box get it; bots get 403.
+// One "not a robot" check on the entry page covers the whole site (services/humanCheckService.js):
+// the endpoint list (bots get 403) and the public pages (sent to the entry page first).
 const humanCheck = require('./services/humanCheckService');
 app.use('/api/endpoints', humanCheck.gate({ isSignedIn: req => Boolean(currentUser(req)), cookies: parseCookies }));
+app.use(humanCheck.pageGate({ isSignedIn: req => Boolean(currentUser(req)) }));
 app.post('/human-check', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const origin = req.get('origin');
@@ -737,8 +738,11 @@ app.get('/health/database', async (req, res) => {
 
 app.get('/auth/config', (req, res) => {
   const turnstileSiteKey = turnstile.isEnabled() ? turnstile.siteKey() : null;
-  if (!GOOGLE_CLIENT_ID) return res.status(503).json({ configured: false, turnstileSiteKey });
-  res.json({ configured: true, clientId: GOOGLE_CLIENT_ID, turnstileSiteKey });
+  // The entry check: shown once on the sign-in page; its pass also covers sign-in itself.
+  const human = !humanCheck.enabled() ? { enabled: false } : humanCheck.hasPass(req) ? { enabled: true, passed: true } : { enabled: true, passed: false, check: humanCheck.challenge() };
+  res.set('Cache-Control', 'no-store');
+  if (!GOOGLE_CLIENT_ID) return res.status(503).json({ configured: false, turnstileSiteKey, human });
+  res.json({ configured: true, clientId: GOOGLE_CLIENT_ID, turnstileSiteKey, human });
 });
 
 function issueSession(res, sub, account, provider = 'google') {

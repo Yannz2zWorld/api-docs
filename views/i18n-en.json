@@ -1,7 +1,8 @@
 {
  "exact": {
   "Saya bukan robot": "I'm not a robot",
-  "Centang dulu buat lihat daftar endpoint.": "Tick the box to see the endpoint list.",
+  "Centang sekali buat masuk ke semua halaman.": "Tick once to get into every page.",
+  "Centang \"Saya bukan robot\" dulu ya.": "Tick \"I'm not a robot\" first.",
   "Berhasil. Kamu bukan robot.": "Done. You're not a robot.",
   "Verifikasinya gagal. Coba lagi ya.": "The check failed. Please try again.",
   "Verifikasinya gagal atau udah kedaluwarsa. Coba lagi ya.": "The check failed or expired. Please try again.",
@@ -394,7 +395,7 @@
   "Simpan sandi baru": "Save new password",
   "← Ganti email": "← Change email",
   "Lanjut pakai Google": "Continue with Google",
-  "Selesain verifikasi Cloudflare di atas dulu buat lanjut pakai Google.": "Finish the Cloudflare check above to continue with Google.",
+  "Selesain verifikasi di atas dulu buat lanjut pakai Google.": "Finish the check above to continue with Google.",
   "Sandi kamu di-hash di server (scrypt), dan sesi disimpan di cookie HttpOnly yang aman.": "Your password is hashed on the server (scrypt), and your session lives in a secure HttpOnly cookie.",
   "Sistem login: siap": "Authentication layer: ready",
   "Dokumentasi API": "API documentation",

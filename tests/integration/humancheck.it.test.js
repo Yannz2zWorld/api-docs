@@ -86,12 +86,44 @@ it('API calls are not affected, and HUMAN_CHECK=off turns the box off', async ()
   assert.equal((await app.request('GET', '/api/endpoints')).status, 200);
 });
 
-it('API Docs and Playground load the box script; it is small and not full screen', async () => {
+it('one check at the door covers every page: without it the public pages send you to the entry page first', async () => {
+  for (const page of ['/api', '/api/playground', '/pricing', '/3d']) {
+    const r = await app.request('GET', page + '?x=1');
+    assert.equal(r.status, 302, page);
+    assert.equal(r.headers.location, '/?next=' + encodeURIComponent(page + '?x=1'));
+  }
+  assert.equal((await app.request('GET', '/')).status, 200, 'the entry page itself is open');
+  assert.equal((await app.request('GET', '/api', { cookie: user })).status, 200, 'signed-in: straight in');
+  const { check } = (await app.request('GET', '/api/endpoints')).json;
+  const cookie = passCookie(await post({ salt: check.salt, nonce: solve(check) }));
+  for (const page of ['/api', '/api/playground', '/pricing']) assert.equal((await app.request('GET', page, { cookie })).status, 200, page);
+});
+
+it('the entry page gets the check from /auth/config; once passed, sign-in asks for nothing more', async () => {
+  const cfg = await app.request('GET', '/auth/config');
+  assert.equal(cfg.json.human.enabled, true);
+  assert.equal(cfg.json.human.passed, false);
+  assert.equal(cfg.json.human.check.mode, 'pow');
+  const cookie = passCookie(await post({ salt: cfg.json.human.check.salt, nonce: solve(cfg.json.human.check) }));
+  assert.equal((await app.request('GET', '/auth/config', { cookie })).json.human.passed, true);
+  // With Cloudflare keys set, sign-in normally wants its own Turnstile token; the pass is enough.
+  process.env.TURNSTILE_SITE_KEY = 'site-key'; process.env.TURNSTILE_SECRET_KEY = 'secret';
+  const login = body => app.request('POST', '/auth/login', { cookie: body.cookie, headers: { origin: app.origin }, body: { email: 'nobody@example.test', password: 'wrong-pass-1' } });
+  assert.equal((await login({})).json.error, 'TURNSTILE_REQUIRED', 'without the pass: still checked');
+  const passed = await login({ cookie });
+  assert.notEqual(passed.json.error, 'TURNSTILE_REQUIRED', 'with the pass: no second check');
+  const g = await app.request('GET', '/auth/google', { cookie });
+  assert.notEqual(g.headers.location, '/?auth=turnstile', 'Google sign-in too');
+});
+
+it('the box lives only on the entry page; it is small, never full screen', async () => {
   const fs = require('fs'), path = require('path');
+  const view = f => fs.readFileSync(path.join(__dirname, '..', '..', 'views', f), 'utf8');
+  assert.match(view('login.html'), /id="human-box"/);
+  assert.match(view('login.html'), /YannzHuman\.box\(/);
   for (const page of ['api.html', 'playground.html']) {
-    const html = fs.readFileSync(path.join(__dirname, '..', '..', 'views', page), 'utf8');
-    assert.match(html, /\/assets\/human-check\.js/);
-    assert.match(html, /YannzHuman\.json\('\/api\/endpoints'/);
+    assert.ok(!/YannzHuman\.box|human-box/.test(view(page)), page + ' has no box of its own');
+    assert.match(view(page), /YannzHuman\.json\('\/api\/endpoints'\)/);
   }
   const js = await app.request('GET', '/assets/human-check.js');
   assert.equal(js.status, 200);

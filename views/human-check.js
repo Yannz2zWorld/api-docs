@@ -1,6 +1,8 @@
-// "Not a robot" box (services/humanCheckService.js). YannzHuman.json(url, mount) fetches JSON; when
-// the server answers 403 HUMAN_CHECK_REQUIRED, a small check box (Cloudflare style, inside the page,
-// never full screen) appears in `mount`. Once it's passed the request is made again.
+// The one "not a robot" check at the door (services/humanCheckService.js).
+//   YannzHuman.box(mount, check): the small check box (Cloudflare style, inside the page, never full
+//     screen), shown on the entry page; resolves once it's passed. The pass covers the whole site.
+//   YannzHuman.json(url): fetch + JSON for the other pages; if the pass has run out meanwhile, back to
+//     the entry page (and here again afterwards), never a second box.
 //   - Turnstile mode: the real Cloudflare Turnstile widget.
 //   - Built-in mode: tick the box; the browser solves a small puzzle (a second or two), which a
 //     plain scraper never runs.
@@ -50,7 +52,7 @@
       box.className = 'hc-box';
       box.setAttribute('role', 'group');
       box.setAttribute('aria-label', 'Verifikasi keamanan');
-      box.innerHTML = `<button type="button" class="hc-tick" aria-label="Saya bukan robot"></button><div class="hc-text"><b>Saya bukan robot</b><small>Centang dulu buat lihat daftar endpoint.</small></div><div class="hc-brand">${shield}Yannz<br>Shield</div>`;
+      box.innerHTML = `<button type="button" class="hc-tick" aria-label="Saya bukan robot"></button><div class="hc-text"><b>Saya bukan robot</b><small>Centang sekali buat masuk ke semua halaman.</small></div><div class="hc-brand">${shield}Yannz<br>Shield</div>`;
       (mount || document.querySelector('main') || document.body).prepend(box);
       const tick = box.querySelector('.hc-tick'), note = box.querySelector('small');
       const done = () => { tick.dataset.state = 'ok'; tick.innerHTML = tickMark; note.className = ''; note.textContent = 'Berhasil. Kamu bukan robot.'; setTimeout(() => box.remove(), 1200); waiting = null; resolve(); };
@@ -79,15 +81,14 @@
     return waiting;
   }
 
-  // fetch + JSON that passes the check when asked and then asks again.
-  async function json(url, mount, opts = {}) {
-    for (let round = 0; round < 3; round++) {
-      const r = await fetch(url, { credentials: 'same-origin', ...opts });
-      const d = await r.json().catch(() => ({}));
-      if (r.status === 403 && d.error === 'HUMAN_CHECK_REQUIRED') { await showBox(mount, d.check); continue; }
-      return d;
+  async function json(url, opts = {}) {
+    const r = await fetch(url, { credentials: 'same-origin', ...opts });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 403 && d.error === 'HUMAN_CHECK_REQUIRED') {
+      location.href = '/?next=' + encodeURIComponent(location.pathname + location.search);
+      return new Promise(() => {});
     }
-    throw new Error('HUMAN_CHECK_REQUIRED');
+    return d;
   }
-  window.YannzHuman = { json };
+  window.YannzHuman = { box: showBox, json };
 })();

@@ -121,6 +121,7 @@
     .brand-mark,.submit{border-color:var(--edge)}.google{background:#f4f4f5;border-color:#f4f4f5;color:#0b0b0c}.google:hover{background:#e4e4e7;color:#0b0b0c}.google-icon{background:#f4f4f5;border-color:#0b0b0c;color:#0b0b0c}#google-fallback{color:#0b0b0c}
   </style>
   <script src="/assets/i18n.js"></script>
+  <script src="/assets/human-check.js"></script>
   <style>.visual-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:relative;z-index:3}</style>
   <link rel="preload" href="/assets/scythe.glb" as="fetch" type="model/gltf-binary" crossorigin>
   <style>.turnstile{margin:14px 0 2px;min-height:65px}.turnstile[hidden]{display:none}.oauth.ts-locked #google-oauth,.oauth.ts-locked #google-fallback{pointer-events:none;opacity:.4;filter:grayscale(1)}.ts-note{font:500 10px 'DM Mono',monospace;color:#a1a1aa;margin:8px 0 0;text-align:center}.ts-note[hidden]{display:none}</style>
@@ -154,6 +155,7 @@
       </div>
       <h2 id="panel-title">Selamat datang lagi.</h2>
       <p class="panel-sub" id="panel-sub">Masuk pakai email &amp; sandi, atau lanjut pakai Google.</p>
+      <div id="human-box"></div>
 
       <form class="view" id="view-login" data-view="login" novalidate>
         <div class="field"><label for="login-email">Email</label><div class="input-wrap"><i data-lucide="mail"></i><input id="login-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div></div>
@@ -199,7 +201,7 @@
         <div class="divider"><span>atau</span></div>
         <div id="google-oauth" aria-live="polite"></div>
         <a class="google" id="google-fallback" href="/auth/google"><span class="google-icon">G</span><span>Lanjut pakai Google</span></a>
-        <p class="ts-note" id="ts-note" hidden>Selesain verifikasi Cloudflare di atas dulu buat lanjut pakai Google.</p>
+        <p class="ts-note" id="ts-note" hidden>Selesain verifikasi di atas dulu buat lanjut pakai Google.</p>
         <div id="google-message" class="message" aria-live="polite"></div>
       </div>
       <p class="oauth-note">Sandi kamu di-hash di server (scrypt), dan sesi disimpan di cookie HttpOnly yang aman.</p>
@@ -306,16 +308,29 @@
   // ---------------- Cloudflare Turnstile (only when the server has keys configured)
   const GATED=['/auth/login','/auth/register','/auth/email/verify','/auth/email/resend','/auth/password/forgot','/auth/password/reset'];
   const ts={enabled:false,widget:null,token:''};
+  // The one entry check (services/humanCheckService.js): passed here once, it covers sign-in and every page.
+  const human={enabled:false,passed:true};
   // Until the check passes, the Google button and link are locked.
-  function tsLock(){const locked=ts.enabled&&!ts.token;$('#oauth-block').classList.toggle('ts-locked',locked);$('#ts-note').hidden=!locked;}
+  function tsLock(){const locked=(ts.enabled&&!ts.token)||(human.enabled&&!human.passed);$('#oauth-block').classList.toggle('ts-locked',locked);$('#ts-note').hidden=!locked;}
   function tsReset(){ts.token='';tsLock();try{window.turnstile.reset(ts.widget);}catch{}}
   $('#google-fallback').addEventListener('click',e=>{
+    if(human.enabled&&!human.passed){e.preventDefault();return showGoogleError('Centang "Saya bukan robot" dulu ya.');}
     if(!ts.enabled)return;
     e.preventDefault();
     if(!ts.token)return showGoogleError('Selesain verifikasi Cloudflare dulu ya.');
     location.href='/auth/google?ts='+encodeURIComponent(ts.token);
   });
   authConfig.then(cfg=>{
+    if(cfg.human&&cfg.human.enabled){
+      human.enabled=true;human.passed=Boolean(cfg.human.passed);tsLock();
+      if(!human.passed)YannzHuman.box($('#human-box'),cfg.human.check).then(()=>{
+        human.passed=true;tsLock();say('');
+        // Came here from another page (API Docs, Playground, ...): back there now.
+        const next=new URLSearchParams(location.search).get('next');
+        if(next&&/^\/(?!\/)/.test(next))location.href=next;
+      });
+      return;   // the entry check covers sign-in too: no second Cloudflare box
+    }
     if(!cfg.turnstileSiteKey)return;
     ts.enabled=true;tsLock();
     const host=$('#cf-turnstile');host.hidden=false;
@@ -327,6 +342,7 @@
     document.head.appendChild(s);
   });
   async function post(path,body){
+    if(human.enabled&&!human.passed&&GATED.includes(path))return {ok:false,status:400,data:{error:'HUMAN_CHECK_REQUIRED',message:'Centang "Saya bukan robot" dulu ya.'}};
     const gated=ts.enabled&&GATED.includes(path);
     if(gated){
       if(!ts.token)return {ok:false,status:400,data:{error:'TURNSTILE_REQUIRED',message:'Tunggu verifikasi keamanan Cloudflare selesai dulu, terus coba lagi.'}};

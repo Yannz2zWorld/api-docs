@@ -224,8 +224,8 @@ $('#params-form').addEventListener('input', updateActiveUrlString);
 $('#params-form').addEventListener('change', e => { if (e.target.dataset.file) { const n = document.getElementById('file-note-' + e.target.dataset.file); if (n) n.textContent = e.target.files?.[0] ? e.target.files[0].name : ''; } updateActiveUrlString(); });
 $('#params-form').addEventListener('submit', e => { e.preventDefault(); executeApiSandbox(); });
 
-// The list is behind the "not a robot" box for visitors who aren't signed in (views/human-check.js).
-YannzHuman.json('/api/endpoints', document.querySelector('main')).then(d => {
+// The list needs the entry check (or a session); views/human-check.js sends the visitor back to the door if the pass ran out.
+YannzHuman.json('/api/endpoints').then(d => {
   allEndpoints = d.endpoints || {};
   const entries = Object.entries(allEndpoints);
   $('#endpoint-select').innerHTML = entries.map(([cat, items]) => `<optgroup label="${esc(cat)}" data-no-i18n>${items.map(api => { const p = api.cleanPath || api.path.split('?')[0]; return `<option value="${esc(p)}" data-no-i18n>${esc(api.name)} — ${esc(p)}</option>`; }).join('')}</optgroup>`).join('');
