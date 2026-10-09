@@ -36,7 +36,7 @@ const SPECS = [
 
   // ---------------------------------------------------------------- Clutch · Downloader
   { server: 'clutch', category: 'Downloader', name: 'YouTube Downloader', desc: 'Unduh video YouTube.', path: '/api/download/youtube', sample: { url: 'https://youtube.com/shorts/5fs0aY9jYes', type: 'video', quality: '360p' }, upstream: '/download/youtube',
-    params: [{ name: 'url', required: true, type: 'url', placeholder: 'https://youtu.be/...' }, { name: 'type', required: false, default: 'video' }, { name: 'quality', required: false, default: '360p' }] },
+    params: [{ name: 'url', required: true, type: 'url', placeholder: 'https://youtu.be/...' }, { name: 'type', required: false, default: 'video' }, { name: 'quality', required: false, default: '360p', options: ['144p', '240p', '360p', '480p', '720p', '1080p'] }] },
 
   // ---------------------------------------------------------------- Clutch · Search
   { server: 'clutch', category: 'Search', name: 'NPM Search', desc: 'Cari paket di npm.', path: '/api/search/npm', upstream: '/search/npm', params: text('q'), sample: { q: 'express' } },
