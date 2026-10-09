@@ -13,6 +13,15 @@
   let lang = 'id';
   try { lang = localStorage.getItem(KEY) === 'en' ? 'en' : 'id'; } catch {}
 
+  // Dates the pages format as Indonesian ('id-ID') come out in English while English is chosen.
+  for (const fn of ['toLocaleString', 'toLocaleDateString', 'toLocaleTimeString']) {
+    const orig = Date.prototype[fn];
+    Date.prototype[fn] = function (locale, ...rest) {
+      if (lang === 'en' && (locale === 'id-ID' || locale === 'id')) locale = 'en-GB';
+      return orig.call(this, locale, ...rest);
+    };
+  }
+
   let dict = null;          // { exact: Map, patterns: [[RegExp, string]] }
   let dictPromise = null;
   const original = new WeakMap();    // text node -> Indonesian text
