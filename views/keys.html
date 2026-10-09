@@ -10,74 +10,76 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/i18n.js"></script>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys" aria-current="page">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">Sandbox</a><a href="/keys" aria-current="page">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap">
   <h1>API Keys</h1>
-  <p class="lead loading" id="summary">Memuat…</p>
+  <p class="lead loading" id="summary">Lagi dimuat…</p>
 
   <section class="panel" id="create-panel">
-    <h2>Buat key baru</h2>
+    <h2>Bikin key baru</h2>
     <div class="seg" role="radiogroup" aria-label="Jenis key">
       <label><input type="radio" name="kind" value="custom" checked> Custom key</label>
       <label><input type="radio" name="kind" value="auto"> Acak otomatis</label>
     </div>
     <div class="field" id="custom-field">
       <label for="custom-key">Isi API key</label>
-      <input id="custom-key" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="mis. Yannz2z" aria-describedby="custom-hint">
-      <small id="custom-hint">6–64 karakter: huruf, angka, <code>_</code> atau <code>-</code>. Harus unik. Key pendek lebih mudah ditebak — makin panjang makin aman.</small>
+      <input id="custom-key" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="misal Yannz2z" aria-describedby="custom-hint">
+      <small id="custom-hint">6–64 karakter: huruf, angka, <code>_</code> atau <code>-</code>. Harus unik. Key pendek lebih gampang ditebak — makin panjang makin aman.</small>
     </div>
     <div class="field">
       <label for="name">Nama (label)</label>
-      <input id="name" maxlength="80" placeholder="mis. server-produksi">
+      <input id="name" maxlength="80" placeholder="misal server-produksi">
     </div>
-    <button id="create-btn" class="primary" type="button">Buat API key</button>
+    <button id="create-btn" class="primary" type="button">Bikin API key</button>
     <div id="create-msg" aria-live="polite"></div>
-    <p><small>Key hanya tampil penuh satu kali setelah dibuat (server menyimpan hash-nya saja). Simpan di password manager atau secret server; jangan taruh di frontend publik.</small></p>
+    <p><small>Key cuma tampil utuh sekali setelah dibikin (server cuma nyimpen hash-nya). Simpan di password manager atau secret server; jangan taruh di frontend publik.</small></p>
   </section>
 
   <section class="panel">
     <h2>Key kamu</h2>
-    <div id="list" aria-live="polite"><p class="loading">Memuat key…</p></div>
+    <div id="list" aria-live="polite"><p class="loading">Lagi muat key…</p></div>
     <div id="shared"></div>
   </section>
 
   <section class="panel">
-    <h2>Cara pakai</h2>
+    <h2>Cara pakainya</h2>
     <pre id="curl-example">curl -H "Authorization: Bearer YOUR_API_KEY" \
   "https://apiz2z.vercel.app/api/tools/ping"</pre>
-    <p><small>Header <code>x-api-key</code> juga didukung. Key yang dicabut langsung ditolak dengan <code>API_KEY_REVOKED</code>.</small></p>
+    <p><small>Bisa juga pakai header <code>x-api-key</code>. Key yang udah dicabut langsung ditolak dengan <code>API_KEY_REVOKED</code>.</small></p>
   </section>
 </main>
 <script>
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const t = s => (window.YannzI18n ? window.YannzI18n.t(s) : s);   // for confirm() / alert(), which are not page text
 const when = v => v ? new Date(v).toLocaleString('id-ID') : '—';
 async function call(url, opts = {}) {
   const r = await fetch(url, { credentials: 'same-origin', ...opts });
-  if (r.status === 401) { location.replace('/'); throw Error('Sesi berakhir.'); }
+  if (r.status === 401) { location.replace('/'); throw Error('Sesi kamu udah habis.'); }
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw Error(`${d.message || 'Permintaan gagal.'} (${d.error || r.status})`);
+  if (!r.ok) throw Error(`${d.message || 'Request-nya gagal.'} (${d.error || r.status})`);
   return d;
 }
 async function load() {
   try {
     const d = await call('/api/keys');
     const active = d.keys.filter(k => k.status === 'active').length;
-    const cap = d.limit === null ? 'tanpa batas' : d.limit;
+    const cap = d.limit === null ? 'tanpa batas' : 'maks ' + d.limit;
     $('#summary').classList.remove('loading');
-    $('#summary').textContent = `Tier ${d.tier === 'OWNER' ? 'DEVELOPER' : d.tier} · ${active} key aktif dari ${cap}.`;
+    $('#summary').textContent = `Tier ${d.tier === 'OWNER' ? 'DEVELOPER' : d.tier} · ${active} key aktif (${cap}).`;
     const full = d.limit !== null && active >= d.limit;
     if ($('#create-btn')) $('#create-btn').disabled = full;
     if (d.limit === 0) {
-      $('#create-panel').innerHTML = `<h2>Custom API key</h2><div class="notice">Tier <b>FREE</b> tidak mendapat custom API key. Kamu tetap bisa memakai 100 request/hari lewat <a href="/api/playground">Playground</a><a href="/api">Sandbox</a> dengan login, atau <a href="/pricing">upgrade</a> untuk membuat key.</div>`;
+      $('#create-panel').innerHTML = `<h2>Custom API key</h2><div class="notice">Tier <b>FREE</b> nggak dapat custom API key. Kamu tetap bisa pakai 100 request/hari lewat <a href="/api/playground">Playground</a> atau <a href="/api">Sandbox</a> kalau udah login, atau <a href="/pricing">upgrade</a> buat bikin key.</div>`;
     } else if (full) {
-      $('#create-msg').innerHTML = `<p class="notice">Batas key tier ${esc(d.tier)} tercapai. Cabut key lama atau <a href="/pricing">upgrade</a>.</p>`;
+      $('#create-msg').innerHTML = `<p class="notice">Batas key tier ${esc(d.tier)} udah penuh. Cabut key lama atau <a href="/pricing">upgrade</a>.</p>`;
     }
-    $('#list').innerHTML = d.keys.length ? '<ul class="list">' + d.keys.map(k => `<li><div><b>${esc(k.name)}</b> <span class="chip ${esc(k.status)}">${esc(k.status)}</span><br><code>${esc(k.key_prefix)}••••••</code>${k.custom ? ' <span class="chip">custom</span>' : ''}${k.tier ? ` <span class="chip pending">tier ${esc(k.tier)}</span>` : ''}${k.expires_at ? (Date.parse(k.expires_at) <= Date.now() ? ` <span class="chip expired">kedaluwarsa ${when(k.expires_at)}</span>` : ` <span class="chip">aktif s/d ${when(k.expires_at)}</span>`) : ''}<br><small>Dibuat ${when(k.created_at)} · Terakhir dipakai ${when(k.last_used_at)}${k.revoked_at ? ' · Dicabut ' + when(k.revoked_at) : ''}</small></div>${k.status === 'active' ? `<div><button class="danger" type="button" data-revoke="${esc(k.id)}" data-name="${esc(k.name)}">Cabut</button></div>` : ''}</li>`).join('') + '</ul>' : '<p>Belum ada key.</p>';
+    $('#list').innerHTML = d.keys.length ? '<ul class="list">' + d.keys.map(k => `<li><div><b data-no-i18n>${esc(k.name)}</b> <span class="chip ${esc(k.status)}">${esc(k.status)}</span><br><code>${esc(k.key_prefix)}••••••</code>${k.custom ? ' <span class="chip">custom</span>' : ''}${k.tier ? ` <span class="chip pending">tier ${esc(k.tier)}</span>` : ''}${k.expires_at ? (Date.parse(k.expires_at) <= Date.now() ? ` <span class="chip expired">kedaluwarsa ${when(k.expires_at)}</span>` : ` <span class="chip">aktif sampai ${when(k.expires_at)}</span>`) : ''}<br><small>Dibuat ${when(k.created_at)} · Terakhir dipakai ${when(k.last_used_at)}${k.revoked_at ? ' · Dicabut ' + when(k.revoked_at) : ''}</small></div>${k.status === 'active' ? `<div><button class="danger" type="button" data-revoke="${esc(k.id)}" data-name="${esc(k.name)}">Cabut</button></div>` : ''}</li>`).join('') + '</ul>' : '<p>Belum ada key.</p>';
     // Private keys the owner gave this account: usable only while signed in to this account.
-    $('#shared').innerHTML = (d.shared || []).length ? '<h3 style="margin-top:22px">Key private dari developer</h3><p class="muted"><small>Key ini hanya berlaku untuk akun kamu (dicek saat kamu login). Nilai key-nya diberikan langsung oleh developer.</small></p><ul class="list">' + d.shared.map(k => `<li><div><b>${esc(k.name)}</b> <span class="chip ${esc(k.status)}">${esc(k.status === 'disabled' ? 'nonaktif' : k.status)}</span> <span class="chip">private</span><br><code>${esc(k.key_prefix)}••••••</code>${k.tier ? ` <span class="chip pending">tier ${esc(k.tier)}</span>` : ''}${k.expires_at ? ` <span class="chip">aktif s/d ${when(k.expires_at)}</span>` : ' <span class="chip">tanpa batas</span>'}</div></li>`).join('') + '</ul>' : '';
+    $('#shared').innerHTML = (d.shared || []).length ? '<h3 style="margin-top:22px">Key private dari developer</h3><p class="muted"><small>Key ini cuma berlaku buat akun kamu (dicek pas kamu login). Nilai key-nya dikasih langsung sama developer.</small></p><ul class="list">' + d.shared.map(k => `<li><div><b data-no-i18n>${esc(k.name)}</b> <span class="chip ${esc(k.status)}">${esc(k.status === 'disabled' ? 'nonaktif' : k.status)}</span> <span class="chip">private</span><br><code>${esc(k.key_prefix)}••••••</code>${k.tier ? ` <span class="chip pending">tier ${esc(k.tier)}</span>` : ''}${k.expires_at ? ` <span class="chip">aktif sampai ${when(k.expires_at)}</span>` : ' <span class="chip">tanpa batas</span>'}</div></li>`).join('') + '</ul>' : '';
   } catch (e) { $('#list').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
 }
 $('#create-panel').addEventListener('click', async e => {
@@ -85,10 +87,10 @@ $('#create-panel').addEventListener('click', async e => {
   const custom = document.querySelector('input[name=kind]:checked').value === 'custom';
   const value = $('#custom-key').value.trim();
   if (custom && !/^[A-Za-z0-9_-]{6,64}$/.test(value)) { $('#create-msg').innerHTML = '<p class="error">Custom key harus 6–64 karakter: huruf, angka, _ atau -.</p>'; $('#custom-key').focus(); return; }
-  const btn = e.target; btn.disabled = true; $('#create-msg').textContent = 'Membuat key…';
+  const btn = e.target; btn.disabled = true; $('#create-msg').textContent = 'Lagi bikin key…';
   try {
     const d = await call('/api/keys', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ name: $('#name').value || (custom ? value.slice(0, 3) + '…' : ''), ...(custom ? { custom_key: value } : {}) }) });
-    $('#create-msg').innerHTML = '<p><b>Salin sekarang — ini satu-satunya kali key ditampilkan.</b></p><div class="secret" id="once"></div><button type="button" class="ghost" id="copy">Salin key</button>';
+    $('#create-msg').innerHTML = '<p><b>Salin sekarang — key ini cuma ditampilin sekali.</b></p><div class="secret" id="once" data-no-i18n></div><button type="button" class="ghost" id="copy">Salin key</button>';
     $('#once').textContent = d.key;
     $('#copy').onclick = () => navigator.clipboard.writeText(d.key).then(() => { $('#copy').textContent = 'Tersalin ✓'; });
     $('#name').value = ''; $('#custom-key').value = '';
@@ -100,8 +102,8 @@ $('#create-panel').addEventListener('change', e => {
 });
 $('#list').addEventListener('click', async e => {
   const id = e.target.dataset.revoke; if (!id) return;
-  if (!confirm(`Cabut key "${e.target.dataset.name}"? Aplikasi yang memakai key ini akan langsung ditolak.`)) return;
-  try { await call(`/api/keys/${encodeURIComponent(id)}/revoke`, { method: 'POST' }); load(); } catch (err) { alert(err.message); }
+  if (!confirm(t(`Cabut key "${e.target.dataset.name}"? Aplikasi yang pakai key ini bakal langsung ditolak.`))) return;
+  try { await call(`/api/keys/${encodeURIComponent(id)}/revoke`, { method: 'POST' }); load(); } catch (err) { alert(t(err.message)); }
 });
 // The example uses the domain this page was opened on (the site can run on several domains).
 $('#curl-example').textContent = `curl -H "Authorization: Bearer YOUR_API_KEY" \\\n  "${location.origin}/api/tools/ping"`;

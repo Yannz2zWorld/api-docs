@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/i18n.js"></script>
 <style>
   .hero-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
   .counter { font: 700 13px "DM Mono", monospace; color: var(--muted); }
@@ -46,15 +47,15 @@
 </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span><span id="web-title">Yannz API</span></a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground" aria-current="page">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a></nav></div></header>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span><span id="web-title">Yannz API</span></a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground" aria-current="page">Playground</a><a href="/api">Sandbox</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><div data-lang-switch></div></nav></div></header>
 <main class="wrap wide">
   <div class="hero-row">
     <div>
       <span class="kicker">Katalog endpoint</span>
       <h1>API Playground</h1>
-      <p class="lead">Cari endpoint, lihat tier yang dibutuhkan, lalu coba langsung di Sandbox dengan sesi login atau API key kamu.</p>
+      <p class="lead">Cari endpoint, cek tier yang dibutuhin, terus langsung coba di Sandbox pakai sesi login atau API key kamu.</p>
     </div>
-    <p class="counter" aria-live="polite"><b id="api-counter">—</b> endpoint</p>
+    <p class="counter" aria-live="polite"><b id="api-counter">—</b> endpoint tersedia</p>
   </div>
 
   <div class="toolbar">
@@ -62,7 +63,7 @@
     <div class="folder-tools"><button type="button" id="open-all">Buka semua</button><button type="button" id="close-all">Tutup semua</button></div>
   </div>
 
-  <div class="folders" id="grid" aria-live="polite"><p class="loading">Memuat katalog…</p></div>
+  <div class="folders" id="grid" aria-live="polite"><p class="loading">Lagi muat katalog…</p></div>
 </main>
 <footer class="site-foot"><div class="inner">
   <span>© <span id="year"></span> <span id="creator">Yannz2z</span> · Yannz API</span>
@@ -99,8 +100,8 @@ function render() {
       const tier = (t => (t === 'OWNER' ? 'DEVELOPER' : t))(api.access?.minimum_tier || 'FREE');
       const state = api.access?.status && api.access.status !== 'active' ? ['nonaktif', 'bad'] : api.access?.locked ? ['terkunci', 'warn'] : null;
       rows.push(`<div class="ep">
-        <h2>${esc(api.name)} <span class="chip">GET</span><span class="chip">${esc(tier)}</span>${state ? `<span class="chip ${state[1]}">${state[0]}</span>` : ''}${epBadge(api.access?.badge)}</h2>
-        <p>${esc(api.desc)}</p>
+        <h2><span data-no-i18n>${esc(api.name)}</span> <span class="chip">GET</span><span class="chip">${esc(tier)}</span>${state ? `<span class="chip ${state[1]}">${state[0]}</span>` : ''}${epBadge(api.access?.badge)}</h2>
+        <p data-no-i18n>${esc(api.desc)}</p>
         <code title="${esc(path)}">${esc(path)}</code>
         <a class="btn primary" href="/api?endpoint=${encodeURIComponent(path)}">Coba →</a>
       </div>`);
@@ -108,11 +109,11 @@ function render() {
     if (!rows.length) continue;
     const open = q ? true : openState.has(cat);
     folders.push(`<details class="folder" data-cat="${esc(cat)}"${open ? ' open' : ''}>
-      <summary>${FOLDER}<span class="folder-name">${esc(cat)}</span><span class="folder-count">(${q ? rows.length + '/' : ''}${items.length})</span>${CHEV}</summary>
+      <summary>${FOLDER}<span class="folder-name" data-no-i18n>${esc(cat)}</span><span class="folder-count">(${q ? rows.length + '/' : ''}${items.length})</span>${CHEV}</summary>
       <div class="folder-body">${rows.join('')}</div>
     </details>`);
   }
-  $('#grid').innerHTML = folders.length ? folders.join('') : '<div class="empty"><b>Tidak ada yang cocok.</b><br>Coba kata kunci lain.</div>';
+  $('#grid').innerHTML = folders.length ? folders.join('') : '<div class="empty"><b>Nggak ada yang cocok.</b><br>Coba kata kunci lain.</div>';
 }
 
 fetch('/api/endpoints').then(r => r.json()).then(d => {
@@ -122,7 +123,7 @@ fetch('/api/endpoints').then(r => r.json()).then(d => {
   const want = new URLSearchParams(location.search).get('cat');
   if (want) Object.keys(catalog).filter(c => c.toLowerCase() === want.toLowerCase()).forEach(c => openState.add(c));
   render();
-}).catch(() => { $('#grid').innerHTML = '<p class="error">Katalog sementara tidak tersedia. Coba muat ulang.</p>'; });
+}).catch(() => { $('#grid').innerHTML = '<p class="error">Katalog lagi nggak bisa dibuka. Coba muat ulang halamannya.</p>'; });
 
 $('#grid').addEventListener('toggle', e => {
   const d = e.target.closest('details.folder');
