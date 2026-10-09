@@ -359,6 +359,24 @@ app.use((req, res, next) => {
   next();
 });
 app.locals.issueSession = (...args) => issueSession(...args);
+// The endpoint list is for people, not scrapers (services/humanCheckService.js): signed-in visitors
+// or ones who passed the small "not a robot" box get it; bots get 403.
+const humanCheck = require('./services/humanCheckService');
+app.use('/api/endpoints', humanCheck.gate({ isSignedIn: req => Boolean(currentUser(req)), cookies: parseCookies }));
+app.post('/human-check', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const origin = req.get('origin');
+  if (origin && origin !== `${req.protocol}://${req.get('host')}`) return res.status(403).json({ success: false, error: 'CSRF_BLOCKED', message: 'Origin ini nggak diizinkan.' });
+  if (!humanCheck.enabled()) return res.json({ success: true });
+  const r = await humanCheck.solve(req);
+  if (!r.ok) return res.status(r.status || 403).json({ success: false, error: r.error, message: r.message, check: humanCheck.challenge() });
+  setCookie(res, humanCheck.COOKIE, humanCheck.pass(req), humanCheck.PASS_HOURS * 3600);
+  return res.json({ success: true });
+});
+app.get('/assets/human-check.js', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'human-check.js'));
+});
 app.use(platformRouter);
 app.use(require('./routes/auth')({ issueSession }));
 

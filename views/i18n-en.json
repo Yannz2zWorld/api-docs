@@ -1,5 +1,12 @@
 {
  "exact": {
+  "Saya bukan robot": "I'm not a robot",
+  "Centang dulu buat lihat daftar endpoint.": "Tick the box to see the endpoint list.",
+  "Berhasil. Kamu bukan robot.": "Done. You're not a robot.",
+  "Verifikasinya gagal. Coba lagi ya.": "The check failed. Please try again.",
+  "Verifikasinya gagal atau udah kedaluwarsa. Coba lagi ya.": "The check failed or expired. Please try again.",
+  "Verifikasi keamanan": "Security check",
+  "Buktikan dulu kamu bukan robot.": "Show you're not a robot first.",
   "— pilih —": "— choose —",
   "— bawaan —": "— default —",
   "Navigasi utama": "Main navigation",
