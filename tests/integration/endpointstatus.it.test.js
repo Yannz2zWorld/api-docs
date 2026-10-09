@@ -41,6 +41,8 @@ before(async () => {
   user = await app.login('status@example.test');
   owner = await app.login(h.OWNER_EMAIL);
   status = require('../../services/endpointStatusService');   // after startApp: lib/db uses the test shim
+  // These tests check everything at once; Dongtube's per-minute budget is tested in dongtube.it.test.js.
+  require('../../lib/apiproxy').SERVERS.dongtube.perMinute = 0;
 });
 after(async () => { global.fetch = realFetch; if (h.skip) return; await app?.close(); await h.teardownDatabase(); });
 beforeEach(() => { status?.reset(); seen = []; reply = () => ({ status: 200, json: { status: true, result: 'ok' } }); });

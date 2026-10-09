@@ -107,3 +107,48 @@ it('without the Dongtube key its backups are skipped instead of tried', async ()
   assert.equal(r.status >= 500, true);
   assert.ok(calls.every(c => c.host === 'api.clutch.web.id'));
 });
+
+it('automatic checks use at most half of Dongtube\'s 60/minute; a 429 from Dongtube is "check later", not broken', async () => {
+  process.env.DONGTUBE_API_KEY = 'dkey';
+  const ap = require('../../lib/apiproxy');
+  ap._resetLimits();
+  const entry = ap.registry().find(e => e.path === '/api/news/cnn');
+  for (let i = 0; i < 30; i++) assert.equal((await ap.probe(entry)).result, 'ok');
+  calls = [];
+  assert.deepEqual(await ap.probe(entry), { result: 'deferred' }, 'the other half is left for real callers');
+  assert.equal(calls.length, 0);
+  // Real calls are never held back by it.
+  assert.equal((await get('/api/news/cnn')).status, 200);
+  ap._resetLimits();
+  reply = () => ({ status: 429, json: { status: false, error: 'Terlalu banyak permintaan (rate limit: 60 req/menit).' } });
+  assert.deepEqual(await ap.probe(entry), { result: 'deferred' });
+  ap._resetLimits();
+});
+
+it('an endpoint whose automatic check fails twice in a row is hidden, and comes back when it passes', async () => {
+  process.env.DONGTUBE_API_KEY = 'dkey';
+  require('../../lib/apiproxy')._resetLimits();
+  const P = '/api/canvas/ttqc';
+  const owner = await app.login(h.OWNER_EMAIL);
+  const check = async () => {
+    // Only this endpoint is due.
+    await h.db().query('INSERT INTO endpoint_checks (path) SELECT path FROM endpoints ON CONFLICT (path) DO NOTHING');
+    await h.db().query("UPDATE endpoint_checks SET checked_at = now(), claimed_at = NULL WHERE path <> $1", [P]);
+    await h.db().query("UPDATE endpoint_checks SET checked_at = now() - interval '7 hours', claimed_at = NULL WHERE path = $1", [P]);
+    const r = await app.request('POST', '/api/endpoints/autocheck', { headers: { 'x-yannz-client': 'web' } });
+    assert.ok(r.json.checked.some(x => x.path === P), JSON.stringify(r.json));
+    require('../../services/errorLogService').resetHidden();
+  };
+  const inCatalog = async () => Object.values(await catalog()).flat().some(e => e.cleanPath === P);
+  await h.db().query('INSERT INTO endpoint_checks (path, ok, status, checked_at) VALUES ($1, true, 200, now()) ON CONFLICT (path) DO UPDATE SET ok = true, status = 200', [P]);   // it worked last time
+  reply = u => (u.pathname === '/canvas/ttqc' ? { status: 200, json: { status: false, error: 'Request failed with status code 404' } } : { status: 200, json: { status: true } });
+  await check();
+  assert.equal(await inCatalog(), true, 'one failed check: still listed');
+  await check();
+  assert.equal(await inCatalog(), false, 'failed twice: hidden');
+  const errs = (await app.request('GET', '/owner/api/errors', { cookie: owner })).json.errors.filter(e => e.path === P && !e.resolved_at);
+  assert.ok(errs.some(e => e.hidden), 'the Error tab says why');
+  reply = () => ({ status: 200, json: { status: true, data: 'png' } });
+  await check();
+  assert.equal(await inCatalog(), true, 'works again: back by itself');
+});

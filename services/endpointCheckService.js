@@ -6,6 +6,9 @@
 // Results are stored in endpoint_checks with the HTTP code: 200 when it works, else the error code.
 // checkStale() picks the endpoints whose last check is old (OK after 6 hours, failures after 30
 // minutes), claims them so two visitors never check the same one at once, and checks a few.
+// An endpoint whose check fails twice in a row is hidden until a check passes again. A check put off
+// because of a server's per-minute limit ("deferred", lib/apiproxy.js) is not a result: it is done
+// later.
 const { query } = require('../lib/db');
 const theresav = require('../lib/theresav');
 const apiproxy = require('../lib/apiproxy');
@@ -79,8 +82,15 @@ async function probeOne(item, timeoutMs) {
 }
 
 async function save(results) {
-  const rows = results.filter(r => r.result !== 'manual');
+  const rows = results.filter(r => r.result !== 'manual' && r.result !== 'deferred');
   if (!rows.length) return;
+  // Failed last time too: broken, not a hiccup.
+  let failedBefore = new Set();
+  const failing = rows.filter(r => r.result !== 'ok').map(r => r.path);
+  if (failing.length) {
+    try { failedBefore = new Set((await query('SELECT path FROM endpoint_checks WHERE path = ANY($1::text[]) AND checked_at IS NOT NULL AND NOT ok', [failing])).map(r => r.path)); }
+    catch (e) { if (!missing(e)) throw e; }
+  }
   try {
     await query(`INSERT INTO endpoint_checks (path, status, ok, ms, error, kind, checked_at, claimed_at)
                  SELECT p, s, o, m, e, k, now(), NULL FROM unnest($1::text[], $2::int[], $3::bool[], $4::int[], $5::text[], $6::text[]) AS t(p, s, o, m, e, k)
@@ -94,7 +104,7 @@ async function save(results) {
     if (r.result === 'ok') await errorLog.resolved(r.path);
     else await errorLog.record({ path: r.path, status: codeOf(r), upstreamStatus: r.status || null,
       code: r.result === 'not_configured' ? 'UPSTREAM_NOT_CONFIGURED' : r.timeout ? 'TIMEOUT' : 'CHECK_FAILED',
-      message: r.result === 'not_configured' ? 'Key server API-nya belum diisi di Vercel.' : r.error || null, source: 'check' });
+      message: r.result === 'not_configured' ? 'Key server API-nya belum diisi di Vercel.' : r.error || null, source: 'check', hide: failedBefore.has(r.path) });
   }
   require('./endpointStatusService').reset();
 }
@@ -111,7 +121,7 @@ async function checkAll(app, { only = null, timeoutMs = theresav.UPSTREAM_TIMEOU
   const items = [...checkable(app).values()].filter(i => !only || only.has(i.path));
   const out = await runAll(items, timeoutMs);
   await save(out);
-  return out.map(r => ({ ...r, code: codeOf(r) }));
+  return out.filter(r => r.result !== 'deferred').map(r => ({ ...r, code: codeOf(r) }));
 }
 
 // Automatic check: up to `limit` endpoints whose last check is old, oldest first. The pick and the
@@ -143,7 +153,7 @@ async function checkStale(app, limit = 6, { okAfterMs = OK_STALE_MS, failAfterMs
   if (!mine.length) return [];
   const out = await runAll(mine, AUTO_TIMEOUT_MS, mine.length);
   await save(out);
-  return out.map(r => ({ path: r.path, code: codeOf(r), ms: r.ms ?? null }));
+  return out.filter(r => r.result !== 'deferred').map(r => ({ path: r.path, code: codeOf(r), ms: r.ms ?? null }));
 }
 
 // "Refresh" on the dashboard: check everything again, except what was checked in the last 5 minutes.
