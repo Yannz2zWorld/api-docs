@@ -167,7 +167,7 @@ it('the daily cron needs the CRON_SECRET bearer token', async () => {
 
 it('vercel.json schedules the daily backup', () => {
   const v = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'vercel.json'), 'utf8'));
-  assert.deepEqual(v.crons, [{ path: '/cron/backup', schedule: '0 19 * * *' }]);
+  assert.deepEqual(v.crons.find(c => c.path === '/cron/backup'), { path: '/cron/backup', schedule: '0 19 * * *' });
 });
 
 it('BACKUP_EMAIL sends the backups to another address than the developer login', async () => {

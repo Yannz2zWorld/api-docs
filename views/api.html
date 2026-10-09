@@ -25,6 +25,13 @@
   .key-wrap button:hover { transform: translateY(-50%); box-shadow: none; }
   .params { display: grid; gap: 12px; }
   .url-box { display: grid; gap: 10px; }
+  .code-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .code-tabs button { padding: 7px 14px; border-radius: 999px; font: 600 12px "DM Mono", monospace; }
+  .code-tabs button[aria-selected=true] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .code-box { position: relative; }
+  .code-box pre { margin: 0; padding: 16px 16px 16px 16px; padding-right: 96px; min-height: 120px; max-height: 420px; overflow: auto; white-space: pre; font: 12.5px/1.6 "DM Mono", monospace; background: #070708; border: 2px solid var(--edge-soft); border-radius: 12px; }
+  .code-copy { position: absolute; top: 10px; right: 10px; }
+  .code-note { margin: 10px 0 0; font-size: 12px; }
   .url-box pre { white-space: pre-wrap; overflow-wrap: anywhere; }
   .run { width: 100%; padding: 15px; font-size: 13px; }
   .console .term { background: #070708; border: 2px solid var(--edge-soft); border-radius: 12px; overflow: hidden; }
@@ -90,9 +97,18 @@
         <div class="panel-head"><h2>Request</h2><span class="chip">GET</span></div>
         <div class="url-box">
           <pre id="active-request-url">—</pre>
-          <div class="row"><button type="button" class="sm ghost" id="copy-url" data-idle="Salin URL">Salin URL</button><button type="button" class="sm ghost" id="copy-curl" data-idle="Salin cURL">Salin cURL</button></div>
+          <div class="row"><button type="button" class="sm ghost" id="copy-url" data-idle="Salin URL">Salin URL</button></div>
         </div>
         <button type="button" class="primary run" id="execute-btn" style="margin-top:16px">Kirim request</button>
+      </section>
+
+      <section class="panel" id="code-panel">
+        <div class="panel-head"><h2>Contoh kode</h2><span class="chip">siap copas</span></div>
+        <div class="code-tabs" role="tablist" aria-label="Bahasa">
+          <button type="button" role="tab" data-lang="curl" aria-selected="true">cURL</button><button type="button" role="tab" data-lang="node" aria-selected="false">Node.js</button><button type="button" role="tab" data-lang="python" aria-selected="false">Python</button><button type="button" role="tab" data-lang="php" aria-selected="false">PHP</button>
+        </div>
+        <div class="code-box"><pre id="code-snippet" data-no-i18n>—</pre><button type="button" class="sm ghost code-copy" id="copy-code" data-idle="Salin kode">Salin kode</button></div>
+        <p class="muted code-note">Ganti <code>YOUR_API_KEY</code> sama key kamu dari halaman API Keys, dan <code>VALUE</code> sama isi parameternya.</p>
       </section>
     </div>
 
@@ -192,6 +208,7 @@ function updateActiveUrlString() {
   const fileParam = (selectedApi.params || []).find(p => p.type === 'file');
   const prefix = fileParam ? 'POST (upload file) ' : '';
   $('#active-request-url').textContent = prefix + location.origin + requestPath();
+  if (typeof renderSnippet === 'function') renderSnippet();
 }
 $('#params-form').addEventListener('input', updateActiveUrlString);
 $('#params-form').addEventListener('change', e => { if (e.target.dataset.file) { const n = document.getElementById('file-note-' + e.target.dataset.file); if (n) n.textContent = e.target.files?.[0] ? e.target.files[0].name : ''; } updateActiveUrlString(); });
@@ -401,14 +418,69 @@ function showJsonMedia(data) {
 // data-idle keeps the Indonesian label, so the translator still knows the restored text.
 const flash = (btn, text) => { const old = btn.dataset.idle || btn.textContent; btn.textContent = text; setTimeout(() => { btn.textContent = old; }, 1400); };
 $('#copy-url').addEventListener('click', e => navigator.clipboard.writeText($('#active-request-url').textContent).then(() => flash(e.target, 'Tersalin ✓')));
-$('#copy-curl').addEventListener('click', e => {
-  const fileParam = (selectedApi?.params || []).find(p => p.type === 'file');
-  const url = location.origin + requestPath();
-  const cmd = fileParam
-    ? `curl -X POST -H "Authorization: Bearer YOUR_API_KEY" --data-binary "@file.jpg" -H "Content-Type: image/jpeg" "${url}"`
-    : `curl -H "Authorization: Bearer YOUR_API_KEY" "${url}"`;
-  navigator.clipboard.writeText(cmd).then(() => flash(e.target, 'Tersalin ✓'));
+// ---------------------------------------------------------------- code snippets
+// cURL / Node.js / Python / PHP for the selected endpoint, with the parameters filled in so far
+// (empty ones show VALUE). A file endpoint is a POST with the file as the request body.
+let codeLang = 'curl';
+try { codeLang = localStorage.getItem('yannz-code-lang') || 'curl'; } catch {}
+const shq = v => `'${String(v).replace(/'/g, `'\\''`)}'`;            // shell
+const jsq = v => `'${String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n')}'`;   // JS / Python / PHP single quotes
+const phq = v => `'${String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+function snippetParts() {
+  const path = selectedApi.cleanPath || selectedApi.path.split('?')[0];
+  const params = paramsOf(selectedApi).filter(p => p.type !== 'file').map(p => {
+    const v = document.getElementById('param-input-' + p.name)?.value.trim();
+    return [p.name, v || (p.required ? 'VALUE' : '')];
+  }).filter(([, v]) => v);
+  const fileParam = paramsOf(selectedApi).find(p => p.type === 'file');
+  const chosen = fileParam ? document.getElementById('param-input-' + fileParam.name)?.files?.[0] : null;
+  const file = fileParam ? { name: chosen?.name || 'file.jpg', type: chosen?.type || 'image/jpeg' } : null;
+  const key = $('#sandbox-apikey-input')?.value.trim() || 'YOUR_API_KEY';
+  return { url: location.origin + path, params, file, key };
+}
+const SNIPPETS = {
+  curl({ url, params, file, key }) {
+    if (file) {
+      const qs = params.length ? '?' + new URLSearchParams(params) : '';
+      return `curl -X POST ${shq(url + qs)} \\\n  -H ${shq('Authorization: Bearer ' + key)} \\\n  -H ${shq('Content-Type: ' + file.type)} \\\n  --data-binary ${shq('@' + file.name)}`;
+    }
+    return [`curl -G ${shq(url)}`, `  -H ${shq('Authorization: Bearer ' + key)}`, ...params.map(([k, v]) => `  --data-urlencode ${shq(k + '=' + v)}`)].join(' \\\n');
+  },
+  node({ url, params, file, key }) {
+    const p = params.length ? `  params: {\n${params.map(([k, v]) => `    ${jsq(k)}: ${jsq(v)},`).join('\n')}\n  },\n` : '';
+    if (file) {
+      return `const fs = require('fs');\nconst axios = require('axios');\n\naxios.post(${jsq(url)}, fs.readFileSync(${jsq(file.name)}), {\n${p}  headers: {\n    Authorization: ${jsq('Bearer ' + key)},\n    'Content-Type': ${jsq(file.type)},\n  },\n  responseType: 'json',\n})\n  .then(res => console.log(res.data))\n  .catch(err => console.error(err.response?.data || err.message));`;
+    }
+    return `const axios = require('axios');\n\naxios.get(${jsq(url)}, {\n${p}  headers: { Authorization: ${jsq('Bearer ' + key)} },\n})\n  .then(res => console.log(res.data))\n  .catch(err => console.error(err.response?.data || err.message));`;
+  },
+  python({ url, params, file, key }) {
+    const p = `params = {\n${params.map(([k, v]) => `    ${jsq(k)}: ${jsq(v)},`).join('\n')}${params.length ? '\n' : ''}}`;
+    if (file) {
+      return `import requests\n\nurl = ${jsq(url)}\n${p}\nheaders = {\n    'Authorization': ${jsq('Bearer ' + key)},\n    'Content-Type': ${jsq(file.type)},\n}\n\nwith open(${jsq(file.name)}, 'rb') as f:\n    response = requests.post(url, params=params, headers=headers, data=f)\n\nprint(response.status_code)\nprint(response.json())`;
+    }
+    return `import requests\n\nurl = ${jsq(url)}\n${p}\nheaders = {'Authorization': ${jsq('Bearer ' + key)}}\n\nresponse = requests.get(url, params=params, headers=headers)\nprint(response.status_code)\nprint(response.json())`;
+  },
+  php({ url, params, file, key }) {
+    const p = `$params = [\n${params.map(([k, v]) => `    ${phq(k)} => ${phq(v)},`).join('\n')}${params.length ? '\n' : ''}];`;
+    const head = `<?php\n\n$url = ${phq(url)};\n${p}\n\n$ch = curl_init($url . ($params ? '?' . http_build_query($params) : ''));\n`;
+    const body = file
+      ? `curl_setopt_array($ch, [\n    CURLOPT_RETURNTRANSFER => true,\n    CURLOPT_POST => true,\n    CURLOPT_POSTFIELDS => file_get_contents(${phq(file.name)}),\n    CURLOPT_HTTPHEADER => [\n        ${phq('Authorization: Bearer ' + key)},\n        ${phq('Content-Type: ' + file.type)},\n    ],\n]);\n`
+      : `curl_setopt_array($ch, [\n    CURLOPT_RETURNTRANSFER => true,\n    CURLOPT_HTTPHEADER => [${phq('Authorization: Bearer ' + key)}],\n]);\n`;
+    return head + body + `\n$response = curl_exec($ch);\n$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);\ncurl_close($ch);\n\necho $status . PHP_EOL;\nprint_r(json_decode($response, true));`;
+  }
+};
+function renderSnippet() {
+  document.querySelectorAll('.code-tabs [data-lang]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.lang === codeLang)));
+  $('#code-snippet').textContent = selectedApi ? SNIPPETS[codeLang](snippetParts()) : '—';
+}
+document.querySelector('.code-tabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-lang]'); if (!b) return;
+  codeLang = b.dataset.lang;
+  try { localStorage.setItem('yannz-code-lang', codeLang); } catch {}
+  renderSnippet();
 });
+$('#copy-code').addEventListener('click', e => navigator.clipboard.writeText($('#code-snippet').textContent).then(() => flash(e.target, 'Tersalin ✓')));
+$('#sandbox-apikey-input')?.addEventListener('input', renderSnippet);
 $('#copy-output').addEventListener('click', e => {
   const text = $('#output-error').hidden ? $('#sandbox-output-text').textContent : $('#output-error').textContent + '\n\n' + $('#sandbox-output-text').textContent;
   navigator.clipboard.writeText(text).then(() => flash(e.target, 'Tersalin ✓'));

@@ -16,6 +16,10 @@
     {
       "path": "/cron/backup",
       "schedule": "0 19 * * *"
+    },
+    {
+      "path": "/cron/endpoint-check",
+      "schedule": "0 18 * * *"
     }
   ]
 }

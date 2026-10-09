@@ -22,36 +22,66 @@
     };
   }
 
-  let dict = null;          // { exact: Map, patterns: [[RegExp, string]] }
-  let dictPromise = null;
   const original = new WeakMap();    // text node -> Indonesian text
   const shown = new WeakMap();       // text node -> text we put there
   const attrOriginal = new WeakMap(); // element -> { attr: Indonesian }
   const norm = s => s.replace(/\s+/g, ' ').trim();
+  let dict = null;          // { exact: Map, patterns: [[RegExp, string]] }
+  let applied = false;
+
+  // The dictionary is kept in this browser, so after the first page English shows up right away;
+  // each page still checks the server for a newer one (cheap: answered with 304 when unchanged)
+  // and re-translates if it changed. A failed download is retried instead of leaving the page in
+  // Indonesian.
+  const DICT_KEY = 'yannz-i18n-en';
+  function build(d) {
+    const exact = new Map();
+    for (const [k, v] of Object.entries(d.exact || {})) exact.set(norm(k), v);
+    const patterns = [];
+    for (const [re, to] of d.patterns || []) { try { patterns.push([new RegExp(re), to]); } catch {} }
+    return { exact, patterns };
+  }
+  let cachedText = null;
+  try { cachedText = localStorage.getItem(DICT_KEY); if (cachedText) dict = build(JSON.parse(cachedText)); } catch { dict = null; cachedText = null; }
 
   // Hide the page for a moment while the English dictionary loads, so Indonesian doesn't flash.
   const root = document.documentElement;
   const hideStyle = document.createElement('style');
   hideStyle.textContent = 'html.i18n-pending body{visibility:hidden}';
   document.head.append(hideStyle);
-  if (lang === 'en') { root.classList.add('i18n-pending'); setTimeout(() => root.classList.remove('i18n-pending'), 1500); }
+  if (lang === 'en' && !dict) { root.classList.add('i18n-pending'); setTimeout(() => root.classList.remove('i18n-pending'), 2500); }
 
-  function loadDict() {
-    if (dict) return Promise.resolve(dict);
-    if (!dictPromise) {
-      dictPromise = fetch('/assets/i18n-en.json?v=1', { credentials: 'same-origin' })
-        .then(r => (r.ok ? r.json() : { exact: {}, patterns: [] }))
-        .catch(() => ({ exact: {}, patterns: [] }))
-        .then(d => {
-          const exact = new Map();
-          for (const [k, v] of Object.entries(d.exact || {})) exact.set(norm(k), v);
-          const patterns = [];
-          for (const [re, to] of d.patterns || []) { try { patterns.push([new RegExp(re), to]); } catch {} }
-          dict = { exact, patterns };
-          return dict;
-        });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  async function download() {
+    for (const delay of [0, 700, 2000, 5000]) {
+      if (delay) await wait(delay);
+      try {
+        const r = await fetch('/assets/i18n-en.json', { credentials: 'same-origin', cache: 'no-cache' });
+        if (!r.ok) continue;
+        const text = await r.text();
+        const d = JSON.parse(text);
+        if (!d || typeof d.exact !== 'object') continue;
+        return text;
+      } catch {}
     }
-    return dictPromise;
+    return null;
+  }
+  // Resolves once a dictionary is usable (cached or downloaded). Fresh copies replace the cached one.
+  let fresh = null;
+  function loadDict() {
+    if (!fresh) {
+      fresh = download().then(text => {
+        if (text && text !== cachedText) {
+          cachedText = text;
+          dict = build(JSON.parse(text));
+          try { localStorage.setItem(DICT_KEY, text); } catch {}
+          if (applied && lang === 'en') apply();
+        }
+        if (!text) fresh = null;   // try again on the next language switch / page
+        return dict;
+      });
+    }
+    return dict ? Promise.resolve(dict) : fresh;
   }
 
   function english(text, depth = 0) {
@@ -162,6 +192,9 @@
   async function apply() {
     root.lang = lang;
     if (lang === 'en') await loadDict();
+    // Still no dictionary after the retries (offline?): try again in a bit.
+    if (lang === 'en' && !dict) setTimeout(() => { if (!dict) loadDict(); }, 10000);
+    applied = true;
     if (observer) observer.disconnect();
     walk(document.body);
     title();
