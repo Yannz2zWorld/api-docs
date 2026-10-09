@@ -97,6 +97,33 @@ it('a failed endpoint is checked again after 30 minutes, a working one after 6 h
   for (const p of paths) assert.ok(['/api/ai/claude', '/api/ai/hyperai'].includes(p), `${p} was OK and is not due yet`);
 });
 
+it('Refresh (force) really checks everything again, signed-in only, at most every 5 minutes', async () => {
+  const force = cookie => app.request('POST', '/api/endpoints/autocheck', { cookie, headers: { 'x-yannz-client': 'web', origin: app.origin }, body: { force: true } });
+  assert.equal((await force()).status, 401);
+  // Everything was just checked: nothing to do yet.
+  await h.db().query('UPDATE endpoint_checks SET checked_at = now()');
+  assert.deepEqual((await force(user)).json.checked, []);
+  await h.db().query("UPDATE endpoint_checks SET checked_at = now() - interval '6 minutes'");
+  seen = [];
+  const done = new Set();
+  for (let i = 0; i < 30; i++) { const r = await force(user); assert.equal(r.status, 200, r.text); if (!r.json.checked.length) break; r.json.checked.forEach(x => done.add(x.path)); }
+  const total = (await get()).summary.total;
+  assert.equal(done.size, total, 'every endpoint was checked again');
+  assert.ok(seen.length > 50, `the upstreams were really called (${seen.length} calls)`);
+});
+
+it('leftover rows of removed plugins (the old CDN upload endpoint) are not endpoints', async () => {
+  await h.db().query("INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES('Upload File (CDN)','/api/tools/upload','old','GET','FREE',false,'active','upload') ON CONFLICT (path) DO NOTHING");
+  try {
+    const d = await get();
+    assert.equal(find(d, '/api/tools/upload'), undefined);
+    assert.equal(d.summary.total, d.endpoints.length);
+  } finally { await h.db().query("DELETE FROM endpoints WHERE path='/api/tools/upload'"); }
+  // Migration 018 removes that row from existing databases.
+  const sql = fs.readFileSync(path.join(__dirname, '..', '..', 'migrations', '018_remove_cdn_endpoint.sql'), 'utf8');
+  assert.match(sql, /DELETE FROM endpoints WHERE path = '\/api\/tools\/upload'/);
+});
+
 it('timeouts and unreachable servers get 504 / 503', async () => {
   const svc = require('../../services/endpointCheckService');
   assert.equal(svc.codeOf({ result: 'error', status: 0, timeout: true }), 504);
@@ -146,6 +173,8 @@ it('the dashboard loads the monitor (codes + meanings) and API Docs has cURL / N
   const js = await app.request('GET', '/assets/endpoint-monitor.js');
   assert.equal(js.status, 200);
   assert.match(js.text, /\/api\/endpoints\/autocheck/);
+  assert.match(js.text, /The server took too long to respond/);
+  assert.ok(!/Another server took too long/.test(js.text));
   for (const t of ['Metode request tidak didukung', 'Request terlalu lama', 'Ukuran data terlalu besar', 'Format data tidak didukung', 'Data tidak dapat diproses', 'Terlalu banyak request', 'Terjadi kesalahan pada server', 'Fitur belum didukung', 'Server menerima respons tidak valid', 'Server sedang tidak tersedia', 'Server lain terlalu lama merespons']) assert.ok(js.text.includes(t), t);
   const img = await app.request('GET', '/assets/check-sample.png');
   assert.deepEqual([img.status, img.headers['content-type']], [200, 'image/png']);

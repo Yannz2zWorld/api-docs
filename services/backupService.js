@@ -125,7 +125,7 @@ async function webBackup() {
 }
 
 // Gmail takes up to 25 MB per email, and attachments grow by a third when encoded.
-const EMAIL_LIMIT = 18 * 1024 * 1024;
+const EMAIL_LIMIT = 15 * 1024 * 1024;
 const ATTACH_PLAIN_LIMIT = 4 * 1024 * 1024;   // bigger files are attached gzipped (.gz)
 const mb = n => `${(n / 1024 / 1024).toFixed(2)} MB`;
 
@@ -143,12 +143,17 @@ async function sendToOwner({ reason = 'manual' } = {}) {
   let db = null;
   try { db = await readDatabase(); } catch { db = null; }
   const fromDb = make => async () => { if (!db) throw new Error('db'); return make(db); };
-  for (const [label, make] of [['Database (.sql)', fromDb(databaseBackup)], ['Database (JSON)', fromDb(jsonBackup)], ['File web', webBackup]]) {
+  for (const [label, make] of [['Database (.sql)', fromDb(databaseBackup)], ['Database (JSON)', fromDb(jsonBackup)]]) {
     try { parts.push({ label, ...(await make()) }); } catch (e) { parts.push({ label, error: e.status ? e.message : 'Gagal dibuat.' }); }
   }
+  // Web files go as a link, not an attachment: Gmail refuses any email whose attachment contains
+  // .js files, even inside a zip, and the website is mostly .js.
+  const { repo, branch } = github();
+  const site = (process.env.PUBLIC_BASE_URL || 'https://apiz2z.web.id').replace(/\/+$/, '');
+  parts.push({ label: 'File web', link: `${site}/owner/backup/web`, note: `Unduh lewat link (Gmail nggak ngizinin file .js di lampiran): ${site}/owner/backup/web — atau langsung dari GitHub: https://github.com/${repo}/archive/refs/heads/${branch}.zip` });
   let total = 0;
   for (const p of parts) {
-    if (p.error) continue;
+    if (p.error || p.link) continue;
     p.content = p.raw;
     if (!p.zipped && p.raw.length > ATTACH_PLAIN_LIMIT) { p.content = await gzip(p.raw, { level: 9 }); p.filename += '.gz'; p.contentType = 'application/gzip'; }
     if (total + p.content.length > EMAIL_LIMIT) { p.error = `Kebesaran buat lampiran email (${mb(p.content.length)}), unduh langsung dari Developer Panel.`; continue; }
@@ -159,14 +164,14 @@ async function sendToOwner({ reason = 'manual' } = {}) {
   if (!attached.length) throw webError(502, 'BACKUP_FAILED', 'Semua backup gagal dibuat: ' + parts.map(p => `${p.label}: ${p.error}`).join(' · '));
 
   const when = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'full', timeStyle: 'short' });
-  const lines = parts.map(p => (p.attached ? `✔ ${p.label}: ${p.filename} (${mb(p.content.length)}${p.rows != null ? `, ${p.tables} tabel, ${p.rows} baris` : ''})` : `✘ ${p.label}: ${p.error}`));
+  const lines = parts.map(p => (p.attached ? `✔ ${p.label}: ${p.filename} (${mb(p.content.length)}${p.rows != null ? `, ${p.tables} tabel, ${p.rows} baris` : ''})` : p.link ? `↗ ${p.label}: ${p.note}` : `✘ ${p.label}: ${p.error}`));
   const text = [`Halo! Ini backup Yannz API ${reason === 'cron' ? 'otomatis harian' : 'yang kamu minta dari Developer Panel'}.`, `Dibuat: ${when} WIB`, '', ...lines, '',
-    'Cara balikin database kalau ada apa-apa:', '1. Bikin database baru (mis. project Neon baru), jalankan semua migrations/*.sql dari zip file web.', '2. Jalankan isi yannz-db-*.sql (kalau .sql.gz, ekstrak dulu) di SQL Editor Neon.', '3. Ganti DATABASE_URL di Vercel ke database baru, lalu redeploy.', '',
+    'Cara balikin database kalau ada apa-apa:', '1. Bikin database baru (mis. project Neon baru), jalankan semua migrations/*.sql dari file web (link di atas).', '2. Jalankan isi yannz-db-*.sql (kalau .sql.gz, ekstrak dulu) di SQL Editor Neon.', '3. Ganti DATABASE_URL di Vercel ke database baru, lalu redeploy.', '',
     'Simpan email ini baik-baik dan jangan diteruskan ke siapa pun: isinya data akun.', '— YannApi'].join('\n');
   const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;line-height:1.55;color:#111">${text.split('\n').map(l => (l ? esc(l) : '&nbsp;')).join('<br>')}</div>`;
   await emailService.sendMail({ to, subject: `Backup Yannz API — ${today()}`, text, html, attachments: attached.map(p => ({ filename: p.filename, content: p.content, contentType: p.contentType })) });
-  return { to, parts: parts.map(p => ({ label: p.label, filename: p.filename || null, size: p.content?.length || 0, attached: !!p.attached, error: p.error || null })) };
+  return { to, parts: parts.map(p => ({ label: p.label, filename: p.filename || null, size: p.content?.length || 0, attached: !!p.attached, link: p.link || null, error: p.error || null })) };
 }
 
 module.exports = { backupRecipient, readDatabase, toSql, toJson, databaseBackup, jsonBackup, webZipUrl, webBackup, sendToOwner, gzip, EMAIL_LIMIT };

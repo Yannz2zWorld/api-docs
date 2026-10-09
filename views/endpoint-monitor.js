@@ -8,7 +8,7 @@
   const body = box.querySelector('.epm-body');
   const clock = box.querySelector('.epm-clock');
   const sum = document.querySelector('.epm-summary') || document.createElement('span');
-  const STEP_MS = 280, MAX_LINES = 80, REFRESH_MS = 30000, BUSY_REFRESH_MS = 12000;
+  const STEP_MS = 280, MAX_LINES = 200, REFRESH_MS = 30000, BUSY_REFRESH_MS = 12000;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const en = () => window.YannzI18n?.lang === 'en';
 
@@ -29,7 +29,7 @@
     501: ['Not Implemented', 'Fitur belum didukung', 'Feature not supported yet'],
     502: ['Bad Gateway', 'Server menerima respons tidak valid', 'The server got an invalid response'],
     503: ['Service Unavailable', 'Server sedang tidak tersedia', 'The server is unavailable right now'],
-    504: ['Gateway Timeout', 'Server lain terlalu lama merespons', 'Another server took too long to respond']
+    504: ['Gateway Timeout', 'Server lain terlalu lama merespons', 'The server took too long to respond']
   };
   const describe = code => {
     const c = CODES[code] || (code >= 500 ? [`Error`, 'Terjadi kesalahan pada server', 'Something went wrong on the server'] : ['Error', 'Request gagal', 'Request failed']);
@@ -40,10 +40,25 @@
   tick(); setInterval(tick, 1000);
 
   const el = (cls, text, data) => { const d = document.createElement('div'); d.className = cls; if (data) d.setAttribute('data-no-i18n', ''); d.textContent = text; return d; };
+  // Follows new lines only while the visitor is at the bottom; scrolled up to read, it stays put and
+  // a "↓ Terbaru" button jumps back down.
+  const jump = box.querySelector('.epm-jump');
+  let follow = true;
+  const atBottom = () => body.scrollHeight - body.scrollTop - body.clientHeight < 24;
+  let selfScroll = false;   // our own scrolling doesn't count as the visitor's
+  const toBottom = () => { selfScroll = true; body.scrollTop = body.scrollHeight; requestAnimationFrame(() => { selfScroll = false; }); };
+  body.addEventListener('scroll', () => { if (selfScroll) return; follow = atBottom(); if (jump) jump.hidden = follow; }, { passive: true });
+  jump?.addEventListener('click', () => { follow = true; jump.hidden = true; toBottom(); });
   function push(node) {
+    const keep = follow;
     body.append(node);
-    while (body.children.length > MAX_LINES) body.firstChild.remove();
-    body.scrollTop = body.scrollHeight;
+    while (body.children.length > MAX_LINES) {
+      const h = body.firstChild.offsetHeight;
+      body.firstChild.remove();
+      if (!keep) { selfScroll = true; body.scrollTop = Math.max(0, body.scrollTop - h); requestAnimationFrame(() => { selfScroll = false; }); }   // removing old lines must not move what's being read
+    }
+    if (keep) toBottom();
+    else if (jump) jump.hidden = false;
   }
   function line(ep, prefix = '→') {
     const d = document.createElement('div');
@@ -79,7 +94,7 @@
 
   async function load() {
     try {
-      const r = await fetch('/api/endpoints/status', { credentials: 'same-origin' });
+      const r = await fetch('/api/endpoints/status', { credentials: 'same-origin', cache: 'no-store' });
       const d = await r.json();
       return r.ok && d.success ? d : null;
     } catch { return null; }
@@ -104,6 +119,7 @@
   let timer = null;
   async function run() {
     clearTimeout(timer);
+    if (refreshing) return;
     const d = await load();
     if (!d) {
       push(el('epm-sys epm-err', en() ? "Couldn't load endpoint status. Trying again in a moment…" : 'Status endpoint lagi nggak bisa dimuat. Dicoba lagi bentar…', true));
@@ -128,6 +144,42 @@
     };
     step();
   }
-  document.addEventListener('visibilitychange', () => { if (document.hidden) clearTimeout(timer); else run(); });
+  // Refresh: really checks every endpoint again on the server (except the ones checked in the last
+  // 5 minutes), a few at a time, printing each result as it comes back.
+  const refresh = box.querySelector('.epm-refresh');
+  let refreshing = false;
+  refresh?.addEventListener('click', async () => {
+    if (refreshing) return;
+    refreshing = true;
+    clearTimeout(timer);
+    refresh.disabled = true;
+    refresh.classList.add('spin');
+    follow = true; if (jump) jump.hidden = true; toBottom();
+    push(el('epm-cmd', '$ yannz check --all', true));
+    let done = 0, ok = 0, failed = 0, stop = null;
+    while (checking) await new Promise(r => setTimeout(r, 300));
+    checking = true;
+    try {
+      for (let round = 0; round < 40; round++) {
+        sum.textContent = en() ? `Checking again… ${done} done` : `Lagi ngecek ulang… ${done} selesai`;
+        const r = await fetch('/api/endpoints/autocheck', { method: 'POST', credentials: 'same-origin', headers: { 'X-Yannz-Client': 'web', 'Content-Type': 'application/json' }, body: JSON.stringify({ force: true }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) { stop = d.message || `HTTP ${r.status}`; break; }
+        const list = d.checked || [];
+        if (!list.length) break;
+        list.forEach(ep => { done++; if (ep.code === 200) ok++; else failed++; push(line(ep, '✓')); });
+      }
+    } catch { stop = en() ? 'Connection lost.' : 'Koneksi putus.'; } finally { checking = false; }
+    push(el(stop ? 'epm-sys epm-err' : 'epm-ready', stop
+      ? (en() ? `Check stopped: ${stop}` : `Cek ulang berhenti: ${stop}`)
+      : done ? (en() ? `$ checked ${done} endpoints: ${ok} × 200 OK, ${failed} error` : `$ selesai ngecek ${done} endpoint: ${ok} × 200 OK, ${failed} error`)
+        : (en() ? '$ everything was checked in the last 5 minutes' : '$ semua udah dicek 5 menit terakhir'), true));
+    refresh.disabled = false;
+    refresh.classList.remove('spin');
+    refreshing = false;
+    run();
+  });
+
+  document.addEventListener('visibilitychange', () => { if (document.hidden) clearTimeout(timer); else if (!refreshing) run(); });
   run();
 })();

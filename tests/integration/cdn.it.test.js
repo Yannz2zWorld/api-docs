@@ -150,3 +150,25 @@ it('without Cloudflare R2, large files go to catbox (200 MB); CDN_CATBOX=off fal
     assert.equal(reg.status, 503);
   } finally { delete process.env.CDN_CATBOX; }
 });
+
+it('the developer manages CDN files in the Developer Panel (the CDN is not an API endpoint)', async () => {
+  const ownerCookie = await app.login(h.OWNER_EMAIL);
+  const userCookie = await app.login('cdn-panel@example.test');
+  const up = await app.request('POST', '/cdn/upload?name=panel.png', { cookie: userCookie, rawBody: PNG, headers: { 'content-type': 'image/png', origin: app.origin } });
+  assert.equal(up.status, 200, up.text);
+  const id = up.json.result.url.split('/').pop();
+  assert.equal((await app.request('GET', '/owner/cdn', { cookie: userCookie })).status, 403);
+  const list = await app.request('GET', '/owner/cdn?q=panel', { cookie: ownerCookie });
+  assert.equal(list.status, 200, list.text);
+  const f = list.json.files.find(x => x.id === id);
+  assert.ok(f, JSON.stringify(list.json));
+  assert.equal(f.owner_email, 'cdn-panel@example.test');
+  assert.match(f.url, new RegExp(`/cdn/${id.replace('.', '\\.')}$`));
+  assert.ok(list.json.totals.files >= 1);
+  assert.equal((await app.request('DELETE', `/owner/cdn/${id}`, { cookie: userCookie, headers: { origin: app.origin } })).status, 403);
+  const del = await app.request('DELETE', `/owner/cdn/${id}`, { cookie: ownerCookie, headers: { origin: app.origin } });
+  assert.equal(del.status, 200, del.text);
+  assert.equal((await app.request('GET', `/cdn/${id}`)).status, 404);
+  const cat = Object.values((await app.request('GET', '/api/endpoints')).json.endpoints).flat();
+  assert.ok(!cat.some(e => /upload|cdn/i.test(e.cleanPath)), 'no CDN endpoint in the API catalog');
+});
