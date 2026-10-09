@@ -5,6 +5,7 @@ const { makeEndpoint } = require('../lib/theresav');
 const link = (example) => [{ name: 'url', required: true, max: 2048, aliases: ['link'], placeholder: example }];
 
 // Self-test samples: only endpoints with a known-good public link, so a failure means it is down.
+// The rest are checked by asking the upstream with no link (see probe() in lib/theresav.js).
 const DL_SAMPLES = {
   '/api/download/instagram': { url: 'https://www.instagram.com/reel/C0000000000/' },
   '/api/download/pinterest': { url: 'https://pin.it/51U4S7Rau' },
@@ -14,7 +15,9 @@ const DL_SAMPLES = {
   '/api/download/capcut': { url: 'https://www.capcut.com/template-detail/7663607379359010068' },
   '/api/download/stickerly': { url: 'https://sticker.ly/s/41M302' },
   '/api/download/telestick': { url: 'https://t.me/addstickers/RandomStv1_by_fStikBot' },
-  '/api/download/play': { query: 'jj epep' }
+  '/api/download/play': { query: 'jj epep' },
+  '/api/download/aio': { url: 'https://youtube.com/shorts/5fs0aY9jYes' },
+  '/api/download/spotify': { url: 'https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT' }
 };
 
 const ENDPOINTS = [

@@ -26,10 +26,11 @@ before(async () => {
       return new Response(JSON.stringify(r.json), { status: r.status, headers: { 'content-type': 'application/json' } });
     }
     if (u.startsWith('https://img.example.test/')) return new Response(Buffer.from('PNGDATA'), { status: 200, headers: { 'content-type': 'image/png' } });
+    if (u === 'https://apiz2z.web.id/assets/check-sample.png') return new Response(Buffer.from('PNGDATA'), { status: 200, headers: { 'content-type': 'image/png' } });
     return realFetch(url, opts);
   };
   // img.example.test resolves to a public address; everything else uses the real resolver.
-  dns.promises.lookup = async (host, o) => (host === 'img.example.test' ? [{ address: '93.184.216.34', family: 4 }] : realLookup(host, o));
+  dns.promises.lookup = async (host, o) => (host === 'img.example.test' || host === 'apiz2z.web.id' ? [{ address: '93.184.216.34', family: 4 }] : realLookup(host, o));
   await h.setupDatabase();
   app = await h.startApp({ THERESAV_API_KEY: KEY });
   user = await app.login('ai@example.test');
@@ -188,12 +189,14 @@ it('developer self-test: probes sampled endpoints, marks the rest manual, and di
   const r = await o('POST', '/owner/api/selftest', {});
   assert.equal(r.status, 200, r.text);
   assert.ok(r.json.summary.ok >= 28, JSON.stringify(r.json.summary));
-  assert.ok(r.json.summary.manual >= 20, 'url/photo endpoints need a real input → manual');
+  assert.equal(r.json.summary.manual, undefined, 'every endpoint is checked: with a sample, or by asking the upstream with no input');
   const claude = r.json.results.find(x => x.path === '/api/ai/claude');
   assert.equal(claude.result, 'error');
   assert.match(claude.error, /quota habis/);
+  // Photo endpoints are run with the sample photo the site serves (/assets/check-sample.png).
   const lumi = r.json.results.find(x => x.path === '/api/image/lumiart');
-  assert.equal(lumi.result, 'manual');
+  assert.equal(lumi.result, 'ok', JSON.stringify(lumi));
+  assert.ok(calls.some(c => c.url.pathname === '/api/image/lumiart' && c.form?.get('image')));
 
   // disable the failing one; the gateway then refuses it
   const dis = await o('POST', '/owner/api/endpoints/bulk-status', { ids: [claude.id], status: 'disabled' });
