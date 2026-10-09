@@ -28,10 +28,11 @@ function isPlanError({ status, upstreamStatus, code, message }) {
 const clip = (v, n) => (v == null ? null : String(v).replace(/[\u0000-\u001f]/g, ' ').slice(0, n));
 
 
-async function record({ path, status = null, upstreamStatus = null, code = null, message = null, source = 'live' }) {
+// hide: hide it whatever the error is (an endpoint whose automatic check failed twice in a row).
+async function record({ path, status = null, upstreamStatus = null, code = null, message = null, source = 'live', hide: hideAnyway = false }) {
   if (!path) return;
   if (message) message = String(message).replace(ownNote, '').trim() || null;
-  const hide = isPlanError({ status, upstreamStatus, code, message });
+  const hide = hideAnyway || isPlanError({ status, upstreamStatus, code, message });
   const msg = clip(message, 600);
   // Same endpoint + same code + same message (numbers stripped) = same row.
   const fingerprint = crypto.createHash('sha1').update(`${status}|${code}|${String(msg || '').replace(/\d+/g, '#').slice(0, 200)}`).digest('hex').slice(0, 20);
