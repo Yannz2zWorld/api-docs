@@ -4,8 +4,8 @@
 //   - automatic checks / self-test (endpoint_checks, see services/endpointCheckService.js), and
 //   - real calls through the gateway (activity_log, last 24 hours).
 // Calls rejected for the caller's own reasons (bad/missing parameter, no key, wrong tier: 400, 401,
-// 403, 422) say nothing about the endpoint and are skipped. A disabled endpoint is 503. One that
-// hasn't been checked yet is 'pending' until the automatic check reaches it.
+// 403, 422) say nothing about the endpoint and are skipped. Disabled / hidden endpoints aren't listed.
+// One that hasn't been checked yet is 'pending' until the automatic check reaches it.
 const { query } = require('../lib/db');
 
 const CLIENT_SIDE = [400, 401, 403, 422];
@@ -29,9 +29,9 @@ async function list(loaded = null) {
   ]);
   const live = new Map(traffic.map(r => [r.path, { code: norm(r.status), ms: r.duration_ms, at: new Date(r.created_at), source: 'live' }]));
   const checked = new Map(checks.map(r => [r.path, { code: r.status ? norm(r.status) : 503, ms: r.ms, at: new Date(r.checked_at), source: 'check' }]));
-  const out = endpoints.filter(e => !loaded || loaded.has(e.path)).map(e => {
+  // Disabled endpoints (by the developer, or hidden automatically after a plan/quota error) are not shown.
+  const out = endpoints.filter(e => (!loaded || loaded.has(e.path)) && (!e.status || e.status === 'active')).map(e => {
     const base = { path: e.path, method: (e.method || 'GET').toUpperCase() };
-    if (e.status && e.status !== 'active') return { ...base, state: 'down', code: 503, ms: null, at: null, source: 'off' };
     const a = live.get(e.path), b = checked.get(e.path);
     const pick = a && b ? (a.at >= b.at ? a : b) : a || b;
     if (!pick) return { ...base, state: 'pending', code: null, ms: null, at: null, source: null };

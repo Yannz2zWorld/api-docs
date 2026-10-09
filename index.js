@@ -17,6 +17,7 @@ const apiKeyService = require('./services/apiKeyService');
 const usageService = require('./services/usageService');
 const turnstile = require('./services/turnstileService');
 const activity = require('./services/activityService');
+const errorLog = require('./services/errorLogService');
 const maintenance = require('./services/maintenanceService');
 const { canAccess, getTier } = require('./services/tierService');
 const auditService = require('./services/auditService');
@@ -566,6 +567,14 @@ function apiGateway(cleanPath, run) {
         tasks.push((identity.keyScoped ? usageService.refundKey : usageService.refund)({ userId: identity.userId, keyId: identity.keyId, endpointId: endpoint.id, usageDate: quota.usageDate })
           .catch(e => console.error('Quota refund failed:', { code: e?.code || null })));
       }
+      // Server-side failures go to the Developer Panel's "Error" tab (services/errorLogService.js);
+      // a plan / quota / key problem from the upstream hides the endpoint until it works again.
+      if (res.statusCode >= 500) {
+        let body = null;
+        try { const chunk = args[0]; if (chunk && (typeof chunk === 'string' || Buffer.isBuffer(chunk)) && chunk.length < 20000) body = JSON.parse(String(chunk)); } catch {}
+        tasks.push(errorLog.record({ path: cleanPath, status: res.statusCode, code: body?.error || null, message: body?.message || body?.error || null, source: 'live' })
+          .catch(e => console.error('Error log failed:', { code: e?.code || null })));
+      }
       Promise.allSettled(tasks).finally(() => end.apply(this, args));
       return this;
     };
@@ -639,7 +648,7 @@ const sortedEndpoints = Object.keys(rawEndpoints)
   }, {});
 
 app.get('/api/endpoints', async (req, res) => {
-  try { const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description,badge FROM endpoints').catch(e=>{if(e.code!=='42703')throw e;return query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints');})]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.map(item=>({...item,access:meta[item.cleanPath]||null}))])); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
+  try { const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description,badge FROM endpoints').catch(e=>{if(e.code!=='42703')throw e;return query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints');})]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const visible=item=>{const m=meta[item.cleanPath];return !m||!m.status||m.status==='active';};/* disabled or auto-hidden endpoints (see services/errorLogService.js) are not listed */ const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.filter(visible).map(item=>({...item,access:meta[item.cleanPath]||null}))]).filter(([,items])=>items.length)); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
   catch { return res.status(503).json({success:false,error:'ENDPOINTS_UNAVAILABLE',message:'Katalog lagi nggak tersedia.'}); }
 });
 

@@ -929,9 +929,37 @@
   "Cuma bisa dari website.": "Only from the website.",
   "Daftar file CDN lagi nggak bisa dimuat.": "Couldn't load the CDN file list.",
   "ID file nggak valid.": "Invalid file ID.",
-  "File-nya nggak ketemu.": "File not found."
+  "File-nya nggak ketemu.": "File not found.",
+  "Semua error endpoint, dari request asli maupun cek otomatis. Kalau server sumbernya bilang limit plan, kuota/kredit habis, atau key ditolak, endpoint-nya otomatis disembunyikan dari API Docs, Playground, dan status endpoint. Endpoint itu tetap dicek, dan begitu jalan lagi bakal muncul lagi sendiri.": "Every endpoint error, from real requests and automatic checks. When the upstream server says plan limit, quota/credits used up or key refused, the endpoint is hidden automatically from API Docs, Playground and the endpoint status. It keeps being checked, and shows up again by itself once it works.",
+  "Muat ulang": "Reload",
+  "Hapus yang udah beres": "Clear resolved",
+  "Pesan error": "Error message",
+  "Dari": "From",
+  "Kejadian": "Times",
+  "Terakhir": "Last seen",
+  "udah jalan lagi": "working again",
+  "disembunyikan otomatis": "hidden automatically",
+  "masih tampil": "still visible",
+  "cek otomatis": "automatic check",
+  "request asli": "real request",
+  "Tampilkan lagi": "Show again",
+  "Belum ada error. Aman 👍": "No errors yet. All good 👍",
+  "Disembunyikan otomatis": "Hidden automatically",
+  "Path endpoint nggak valid.": "Invalid endpoint path.",
+  "Endpoint-nya nggak ketemu.": "Endpoint not found.",
+  "ID nggak valid.": "Invalid ID.",
+  "Error-nya nggak ketemu.": "Error not found.",
+  "Key server API-nya belum diisi di Vercel.": "The API server key isn't set in Vercel yet."
  },
  "patterns": [
+  [
+   "^Tampilkan lagi (\\S+)\\? Kalau server sumbernya masih nolak, nanti disembunyikan lagi otomatis\\.$",
+   "Show $1 again? If the upstream server still refuses, it will be hidden again automatically."
+  ],
+  [
+   "^(\\d+) error belum beres · (\\d+) endpoint disembunyikan otomatis$",
+   "$1 open errors · $2 endpoints hidden automatically"
+  ],
   [
    "^Hapus file \"(.+)\"\\? Link-nya bakal nggak bisa dibuka lagi\\.$",
    "Delete the file \"$1\"? Its link will stop working."
