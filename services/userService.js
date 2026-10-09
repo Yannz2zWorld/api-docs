@@ -123,7 +123,7 @@ async function upsertGoogleUser(profile) {
   const picture = String(profile.picture || '').trim();
 
   if (!googleId || !email) {
-    const error = new Error('Identitas Google tidak lengkap.');
+    const error = new Error('Identitas Google-nya nggak lengkap.');
     error.code = 'INVALID_GOOGLE_PROFILE';
     throw error;
   }

@@ -42,7 +42,7 @@ function validateCode(code) {
   try {
     vm.compileFunction(code, ['exports', 'require', 'module', '__filename', '__dirname'], { filename: 'uploaded-plugin.js' });
   } catch (e) {
-    throw new PluginError(400, 'SCRIPT_SYNTAX', `Script tidak valid: ${String(e.message).slice(0, 200)}`);
+    throw new PluginError(400, 'SCRIPT_SYNTAX', `Script-nya nggak valid: ${String(e.message).slice(0, 200)}`);
   }
   if (!/\bmodule\.exports\b|\bexports\.\w+/.test(code)) {
     throw new PluginError(400, 'SCRIPT_NO_EXPORT', 'Script harus meng-export handler: module.exports = async (req, res) => { … } atau module.exports = { run(req, res) { … } }.');
@@ -92,17 +92,17 @@ async function gh(method, url, body) {
     try { json = await r.json(); } catch { /* empty body */ }
     return { status: r.status, json };
   } catch (e) {
-    throw new PluginError(502, 'GITHUB_UNREACHABLE', 'Tidak bisa menghubungi GitHub. Coba lagi.');
+    throw new PluginError(502, 'GITHUB_UNREACHABLE', 'Nggak bisa nyambung ke GitHub. Coba lagi ya.');
   } finally {
     clearTimeout(timer);
   }
 }
 
 function githubFailure(status) {
-  if (status === 401 || status === 403) return new PluginError(502, 'GITHUB_AUTH', 'GITHUB_TOKEN ditolak GitHub. Pastikan token masih berlaku dan punya izin Contents: read and write di repo ini.');
-  if (status === 404) return new PluginError(502, 'GITHUB_REPO_NOT_FOUND', 'Repo/branch GitHub tidak ditemukan. Cek GITHUB_REPO dan GITHUB_BRANCH.');
-  if (status === 409 || status === 422) return new PluginError(409, 'PLUGIN_FILE_EXISTS', 'File plugin untuk path ini sudah ada di repo.');
-  return new PluginError(502, 'GITHUB_ERROR', `GitHub menolak commit (HTTP ${status}).`);
+  if (status === 401 || status === 403) return new PluginError(502, 'GITHUB_AUTH', 'GITHUB_TOKEN ditolak GitHub. Cek token-nya masih berlaku dan punya izin Contents: read and write di repo ini.');
+  if (status === 404) return new PluginError(502, 'GITHUB_REPO_NOT_FOUND', 'Repo/branch GitHub nggak ketemu. Cek GITHUB_REPO dan GITHUB_BRANCH.');
+  if (status === 409 || status === 422) return new PluginError(409, 'PLUGIN_FILE_EXISTS', 'File plugin buat path ini udah ada di repo.');
+  return new PluginError(502, 'GITHUB_ERROR', `GitHub nolak commit-nya (HTTP ${status}).`);
 }
 
 const contentsUrl = (repo, file) => `/repos/${repo}/contents/${file.split('/').map(encodeURIComponent).join('/')}`;
@@ -111,9 +111,9 @@ const contentsUrl = (repo, file) => `/repos/${repo}/contents/${file.split('/').m
 // existing blob sha, so an existing plugin file is never replaced from here.
 async function commitPlugin({ file, content, message }) {
   const { repo, branch } = config();
-  if (!isConfigured()) throw new PluginError(503, 'GITHUB_NOT_CONFIGURED', 'Upload plugin belum aktif: set GITHUB_TOKEN (dan GITHUB_REPO jika repo berbeda) di Environment Variables Vercel, lalu redeploy.');
+  if (!isConfigured()) throw new PluginError(503, 'GITHUB_NOT_CONFIGURED', 'Upload plugin belum aktif: set GITHUB_TOKEN (dan GITHUB_REPO kalau repo-nya beda) di Environment Variables Vercel, terus redeploy.');
   const existing = await gh('GET', `${contentsUrl(repo, file)}?ref=${encodeURIComponent(branch)}`);
-  if (existing.status === 200) throw new PluginError(409, 'PLUGIN_FILE_EXISTS', 'File plugin untuk path ini sudah ada di repo.');
+  if (existing.status === 200) throw new PluginError(409, 'PLUGIN_FILE_EXISTS', 'File plugin buat path ini udah ada di repo.');
   if (existing.status !== 404) throw githubFailure(existing.status);
   const r = await gh('PUT', contentsUrl(repo, file), { message, content: Buffer.from(content, 'utf8').toString('base64'), branch });
   if (r.status !== 201 && r.status !== 200) throw githubFailure(r.status);

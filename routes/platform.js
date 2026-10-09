@@ -41,17 +41,17 @@ const finite = v => (Number.isFinite(v) ? v : null);
 // (not sent on cross-site POST), and this also rejects cross-site Origin / Sec-Fetch-Site.
 function sameOrigin(req, res, next) {
   const origin = req.get('origin');
-  if (origin && origin !== `${req.protocol}://${req.get('host')}`) return fail(res, 403, 'CSRF_BLOCKED', 'Permintaan lintas-origin ditolak.');
-  if (req.get('sec-fetch-site') === 'cross-site') return fail(res, 403, 'CSRF_BLOCKED', 'Permintaan lintas-origin ditolak.');
+  if (origin && origin !== `${req.protocol}://${req.get('host')}`) return fail(res, 403, 'CSRF_BLOCKED', 'Permintaan dari origin lain ditolak.');
+  if (req.get('sec-fetch-site') === 'cross-site') return fail(res, 403, 'CSRF_BLOCKED', 'Permintaan dari origin lain ditolak.');
   next();
 }
 
 async function loadAccount(req) {
   const session = req.app.locals.getSession(req);
-  if (!session) return { error: [401, 'AUTH_REQUIRED', 'Silakan login.'] };
+  if (!session) return { error: [401, 'AUTH_REQUIRED', 'Login dulu ya.'] };
   const user = await users.getUserForSession(session);
-  if (!user) return { error: [401, 'AUTH_REQUIRED', 'Akun tidak ditemukan. Silakan login lagi.'] };
-  if (user.status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun tidak aktif.'] };
+  if (!user) return { error: [401, 'AUTH_REQUIRED', 'Akun nggak ketemu. Login lagi ya.'] };
+  if (user.status !== 'active') return { error: [403, 'ACCOUNT_RESTRICTED', 'Akun kamu lagi nggak aktif.'] };
   return { user };
 }
 
@@ -74,13 +74,13 @@ function pageAuth(req, res, next) {
 
 // Owner is decided only by OWNER_EMAIL (mapUser), never by users.tier.
 function owner(req, res, next) {
-  if (!req.account?.isOwner) return fail(res, 403, 'OWNER_REQUIRED', 'Akses developer diperlukan.');
+  if (!req.account?.isOwner) return fail(res, 403, 'OWNER_REQUIRED', 'Cuma developer yang bisa akses ini.');
   next();
 }
 
 function validId(...names) {
   return (req, res, next) => {
-    for (const n of names) if (!UUID_RE.test(String(req.params[n] || ''))) return fail(res, 404, 'NOT_FOUND', 'Data tidak ditemukan.');
+    for (const n of names) if (!UUID_RE.test(String(req.params[n] || ''))) return fail(res, 404, 'NOT_FOUND', 'Datanya nggak ketemu.');
     next();
   };
 }
@@ -111,7 +111,7 @@ function uploadSlot(req, res) {
   const recent = (cdnUploads.get(req.account.id) || []).filter(t => now - t < 3600 * 1000);
   if (recent.length >= CDN_UPLOADS_PER_HOUR && !req.account.isOwner) {
     res.set('Retry-After', String(Math.ceil((recent[0] + 3600 * 1000 - now) / 1000)));
-    fail(res, 429, 'UPLOAD_LIMIT', `Maksimal ${CDN_UPLOADS_PER_HOUR} upload per jam. Coba lagi nanti.`);
+    fail(res, 429, 'UPLOAD_LIMIT', `Maksimal ${CDN_UPLOADS_PER_HOUR} upload per jam. Coba lagi nanti ya.`);
     return null;
   }
   return () => {
@@ -124,16 +124,16 @@ const ttlOf = v => Math.max(0, Math.min(24 * 365, Number(v) || 0));
 const mb = n => Math.round(n / 1048576);
 function cdnFail(res, e) {
   if (e.code === 'FILE_TOO_LARGE') return fail(res, 413, 'FILE_TOO_LARGE', `File maksimal ${mb(cdn.largeEnabled() || cdn.catboxEnabled() ? cdn.MAX_LARGE_BYTES : cdn.MAX_BYTES)} MB.`);
-  if (e.code === 'NO_FILE') return fail(res, 400, 'NO_FILE', 'File kosong.');
-  if (e.code === 'ACCOUNT_STORAGE_FULL') return fail(res, 413, 'ACCOUNT_STORAGE_FULL', `Penyimpanan akun penuh (maks ${mb(e.limit)} MB file aktif). Tunggu file sementara kedaluwarsa atau hubungi developer.`);
+  if (e.code === 'NO_FILE') return fail(res, 400, 'NO_FILE', 'File-nya kosong.');
+  if (e.code === 'ACCOUNT_STORAGE_FULL') return fail(res, 413, 'ACCOUNT_STORAGE_FULL', `Penyimpanan akun kamu penuh (maks ${mb(e.limit)} MB file aktif). Tunggu file sementara kedaluwarsa dulu atau hubungi developer.`);
   if (e.code === 'R2_NOT_CONFIGURED') return fail(res, 503, 'LARGE_UPLOAD_UNAVAILABLE', `Upload file besar belum aktif. Maksimal ${mb(cdn.MAX_BYTES)} MB.`);
-  if (e.code === 'NOT_FOUND') return fail(res, 404, 'NOT_FOUND', 'Upload tidak ditemukan.');
-  if (e.code === 'INVALID_URL') return fail(res, 400, 'INVALID_URL', 'Link file tidak valid.');
-  if (e.code === 'CATBOX_DISABLED') return fail(res, 503, 'LARGE_UPLOAD_UNAVAILABLE', `Upload file besar sedang dimatikan. Maksimal ${mb(cdn.MAX_BYTES)} MB.`);
-  if (['UPLOAD_MISSING', 'UPLOAD_SIZE_MISMATCH', 'UPLOAD_TYPE_MISMATCH'].includes(e.code)) return fail(res, 400, e.code, 'Upload tidak lengkap atau tidak sesuai. Coba upload ulang.');
-  if (migrationMissing(e) || e.code === 'DATABASE_NOT_CONFIGURED' || e.isDatabaseError) return fail(res, 503, 'CDN_UNAVAILABLE', 'Penyimpanan belum siap. Jalankan migrasi 012, 013 dan 014 di Neon.');
+  if (e.code === 'NOT_FOUND') return fail(res, 404, 'NOT_FOUND', 'Upload-nya nggak ketemu.');
+  if (e.code === 'INVALID_URL') return fail(res, 400, 'INVALID_URL', 'Link file-nya nggak valid.');
+  if (e.code === 'CATBOX_DISABLED') return fail(res, 503, 'LARGE_UPLOAD_UNAVAILABLE', `Upload file besar lagi dimatikan. Maksimal ${mb(cdn.MAX_BYTES)} MB.`);
+  if (['UPLOAD_MISSING', 'UPLOAD_SIZE_MISMATCH', 'UPLOAD_TYPE_MISMATCH'].includes(e.code)) return fail(res, 400, e.code, 'Upload-nya nggak lengkap atau nggak sesuai. Coba upload ulang ya.');
+  if (migrationMissing(e) || e.code === 'DATABASE_NOT_CONFIGURED' || e.isDatabaseError) return fail(res, 503, 'CDN_UNAVAILABLE', 'Penyimpanan belum siap. Jalankan dulu migrasi 012, 013 dan 014 di Neon.');
   console.error('CDN upload failed:', { code: e?.code || null });
-  return fail(res, 502, 'CDN_FAILED', 'Upload gagal. Coba lagi.');
+  return fail(res, 502, 'CDN_FAILED', 'Upload gagal. Coba lagi ya.');
 }
 const resultJson = (req, f) => ({ status: true, result: { url: cdn.absoluteUrl(req, f.id), id: f.id, name: f.name, mime: f.mime, size: f.size, preview: f.inline, expiresAt: f.expiresAt } });
 
@@ -148,7 +148,7 @@ router.get('/cdn/upload/config', auth, async (req, res) => {
 
 router.post('/cdn/upload', sameOrigin, auth, async (req, res) => {
   const buf = Buffer.isBuffer(req.body) && req.body.length ? req.body : null;
-  if (!buf) return fail(res, 400, 'NO_FILE', 'Pilih file yang mau diunggah.');
+  if (!buf) return fail(res, 400, 'NO_FILE', 'Pilih dulu file yang mau di-upload.');
   const take = uploadSlot(req, res);
   if (!take) return;
   try {
@@ -232,7 +232,7 @@ const avatarUrl = (userId, version) => (version ? `/api/avatar/${userId}?v=${ver
 
 router.put('/api/profile/avatar', sameOrigin, auth, async (req, res) => {
   const img = parseAvatarImage(req.body?.image);
-  if (img.error) return fail(res, 400, img.error, img.error === 'IMAGE_TOO_LARGE' ? 'Foto maksimal 512 KB.' : 'Foto harus berupa gambar JPG, PNG atau WebP.');
+  if (img.error) return fail(res, 400, img.error, img.error === 'IMAGE_TOO_LARGE' ? 'Foto maksimal 512 KB.' : 'Fotonya harus gambar JPG, PNG atau WebP.');
   try {
     const [row] = await query(
       `INSERT INTO user_avatars(user_id,mime,size_bytes,data,updated_at) VALUES($1,$2,$3,decode($4,'base64'),now())
@@ -243,7 +243,7 @@ router.put('/api/profile/avatar', sameOrigin, auth, async (req, res) => {
     await audit.writeAudit({ actorUserId: req.account.id, action: 'avatar_update', targetType: 'user', targetId: req.account.id, metadata: { mime: img.mime, size: img.size }, ipAddress: ip(req) }).catch(() => {});
     res.json({ success: true, avatarUrl: avatarUrl(req.account.id, String(row.v)) });
   } catch (e) {
-    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Foto profil butuh migration 010_user_avatars.sql.');
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Foto profil butuh migration 010_user_avatars.sql dulu.');
     throw e;
   }
 });
@@ -268,7 +268,7 @@ router.get('/api/avatar/:id', auth, validId('id'), async (req, res) => {
   } catch (e) {
     if (!migrationMissing(e)) throw e;
   }
-  if (!row) return fail(res, 404, 'NOT_FOUND', 'Foto profil tidak ada.');
+  if (!row) return fail(res, 404, 'NOT_FOUND', 'Foto profilnya nggak ada.');
   res.set({ 'Content-Type': row.mime, 'Cache-Control': 'private, max-age=86400', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox" });
   res.send(Buffer.from(row.b64, 'base64'));
 });
@@ -288,12 +288,12 @@ router.get('/api/profile', auth, async (req, res) => {
 // Account name for the live chat / profile. Empty = back to the name derived from the email.
 router.patch('/api/profile', sameOrigin, auth, async (req, res) => {
   const raw = typeof req.body?.displayName === 'string' ? req.body.displayName.trim().replace(/\s+/g, ' ') : null;
-  if (raw === null) return fail(res, 400, 'INVALID_NAME', 'Isi nama akun.');
-  if (raw && (!NAME_RE.test(raw) || RESERVED_NAMES.test(raw))) return fail(res, 400, 'INVALID_NAME', 'Nama akun 2–24 karakter: huruf, angka, spasi, titik, _ atau -. Nama seperti "Owner"/"Admin" tidak boleh dipakai.');
+  if (raw === null) return fail(res, 400, 'INVALID_NAME', 'Isi dulu nama akunnya.');
+  if (raw && (!NAME_RE.test(raw) || RESERVED_NAMES.test(raw))) return fail(res, 400, 'INVALID_NAME', 'Nama akun 2–24 karakter: huruf, angka, spasi, titik, _ atau -. Nama kayak "Owner"/"Admin" nggak boleh dipakai.');
   try {
     await query('UPDATE users SET display_name=$2,updated_at=now() WHERE id=$1', [req.account.id, raw || null]);
   } catch (e) {
-    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Fitur ini butuh migration 009_key_tiers_profile_chat.sql.');
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Fitur ini butuh migration 009_key_tiers_profile_chat.sql dulu.');
     throw e;
   }
   res.json({ success: true, accountName: raw || users.defaultAccountName(req.account.email) });
@@ -306,7 +306,7 @@ router.post('/api/profile/password', sameOrigin, auth, async (req, res) => {
   const current = typeof req.body?.current === 'string' ? req.body.current : '';
   const next = typeof req.body?.password === 'string' ? req.body.password : '';
   const acc = await users.findAuthByEmail(req.account.email);
-  if (!acc) return fail(res, 404, 'USER_NOT_FOUND', 'Akun tidak ditemukan.');
+  if (!acc) return fail(res, 404, 'USER_NOT_FOUND', 'Akun nggak ketemu.');
   if (!acc.password_hash) {
     const weak = passwords.passwordProblem(next);
     if (weak) return fail(res, 400, 'WEAK_PASSWORD', weak);
@@ -314,27 +314,27 @@ router.post('/api/profile/password', sameOrigin, auth, async (req, res) => {
     await audit.writeAudit({ actorUserId: acc.id, action: 'password_create', targetType: 'user', targetId: acc.id, ipAddress: ip(req) }).catch(() => {});
     const session = req.app.locals.getSession(req) || {};
     req.app.locals.issueSession(res, session.sub || acc.id, { id: acc.id, email: acc.email, name: acc.name, picture: acc.picture || '', sessionVersion: Number(created?.session_version || 0) }, session.provider || 'google');
-    return res.json({ success: true, created: true, message: 'Sandi website dibuat. Sekarang kamu juga bisa login pakai email + sandi ini (sandi Google tidak berubah).' });
+    return res.json({ success: true, created: true, message: 'Sandi website udah dibuat. Sekarang kamu juga bisa login pakai email + sandi ini (login Google tetap bisa dipakai).' });
   }
-  if (acc.locked_until && new Date(acc.locked_until) > new Date()) return fail(res, 429, 'TOO_MANY_ATTEMPTS', 'Terlalu banyak percobaan sandi salah. Coba lagi dalam 15 menit.');
+  if (acc.locked_until && new Date(acc.locked_until) > new Date()) return fail(res, 429, 'TOO_MANY_ATTEMPTS', 'Kebanyakan salah masukin sandi. Coba lagi 15 menit lagi ya.');
   if (!current || current.length > 128 || !(await passwords.verifyPassword(current, acc.password_hash))) {
     await users.recordFailedLogin(acc.id);
     await audit.writeAudit({ actorUserId: acc.id, action: 'password_change_failed', targetType: 'user', targetId: acc.id, ipAddress: ip(req) }).catch(() => {});
-    return fail(res, 400, 'WRONG_PASSWORD', 'Sandi saat ini salah.');
+    return fail(res, 400, 'WRONG_PASSWORD', 'Sandi yang sekarang salah.');
   }
   const weak = passwords.passwordProblem(next);
   if (weak) return fail(res, 400, 'WEAK_PASSWORD', weak);
-  if (current === next) return fail(res, 400, 'SAME_PASSWORD', 'Sandi baru harus berbeda dari sandi lama.');
+  if (current === next) return fail(res, 400, 'SAME_PASSWORD', 'Sandi baru harus beda dari sandi lama.');
   const updated = await users.setPassword(acc.id, await passwords.hashPassword(next));
   await audit.writeAudit({ actorUserId: acc.id, action: 'password_change', targetType: 'user', targetId: acc.id, ipAddress: ip(req) }).catch(() => {});
   // setPassword bumped the session version: re-issue this browser's cookie so it stays signed in.
   const session = req.app.locals.getSession(req) || {};
   req.app.locals.issueSession(res, session.sub || acc.id, { id: acc.id, email: acc.email, name: acc.name, picture: acc.picture || '', sessionVersion: Number(updated?.session_version || 0) }, session.provider || 'password');
-  res.json({ success: true, message: 'Sandi berhasil diganti. Sesi di perangkat lain sudah dikeluarkan.' });
+  res.json({ success: true, message: 'Sandi berhasil diganti. Perangkat lain udah otomatis logout.' });
 });
 router.get('/billing', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'billing.html')));
 router.get('/owner', pageAuth, (req, res) => {
-  if (!req.account.isOwner) return res.status(403).send('Akses developer diperlukan.');
+  if (!req.account.isOwner) return res.status(403).send('Cuma developer yang bisa akses ini.');
   res.sendFile(path.join(VIEWS, 'owner.html'));
 });
 
@@ -365,12 +365,12 @@ router.post('/api/keys', sameOrigin, auth, async (req, res) => {
     const customValue = typeof req.body?.custom_key === 'string' ? req.body.custom_key : null;
     // Value-guessing via "already taken" answers: cap custom attempts per account per hour.
     if (customValue && (await query("SELECT count(*)::int AS n FROM audit_logs WHERE actor_user_id=$1 AND action='api_key_custom_attempt' AND created_at>now()-interval '1 hour'", [req.account.id]))[0].n >= 20) {
-      return fail(res, 429, 'TOO_MANY_ATTEMPTS', 'Terlalu banyak percobaan custom key. Coba lagi dalam 1 jam.');
+      return fail(res, 429, 'TOO_MANY_ATTEMPTS', 'Kebanyakan nyoba custom key. Coba lagi 1 jam lagi ya.');
     }
     if (customValue) await audit.writeAudit({ actorUserId: req.account.id, action: 'api_key_custom_attempt', targetType: 'api_key', ipAddress: ip(req) });
     const made = await keys.createKey(req.account, req.body?.name, String(req.get('Idempotency-Key') || '').slice(0, 100) || null, customValue);
     await audit.writeAudit({ actorUserId: req.account.id, action: 'api_key_create', targetType: 'api_key', targetId: made.record.id, ipAddress: ip(req) });
-    res.status(201).json({ success: true, key: made.key, record: made.record, warning: 'Salin key sekarang. Plaintext hanya ditampilkan satu kali.' });
+    res.status(201).json({ success: true, key: made.key, record: made.record, warning: 'Salin key-nya sekarang, key lengkapnya cuma ditampilkan sekali.' });
   } catch (e) {
     if (e.code === 'KEY_LIMIT' || e.code === 'KEYS_NOT_INCLUDED') return fail(res, 403, e.code, e.message);
     if (e.code === 'IDEMPOTENCY_REPLAY' || e.code === 'CUSTOM_KEY_TAKEN') return fail(res, 409, e.code, e.message);
@@ -381,7 +381,7 @@ router.post('/api/keys', sameOrigin, auth, async (req, res) => {
 
 async function revokeOwnKey(req, res) {
   const ok = await keys.revokeKey(req.account.id, req.params.id);
-  if (!ok) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan atau sudah dicabut.');
+  if (!ok) return fail(res, 404, 'KEY_NOT_FOUND', 'API key nggak ketemu atau udah dicabut.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'api_key_revoke', targetType: 'api_key', targetId: req.params.id, ipAddress: ip(req) });
   res.json({ success: true });
 }
@@ -391,7 +391,7 @@ router.post('/api/keys/:id/revoke', sameOrigin, auth, validId('id'), revokeOwnKe
 // ---------------------------------------------------------------- orders & payments (user)
 router.post('/api/orders', sameOrigin, auth, async (req, res) => {
   const tier = String(req.body?.tier || '').toUpperCase();
-  if (!tiers.purchasable.includes(tier)) return fail(res, 400, 'INVALID_TIER', 'Paket pembelian tidak valid.');
+  if (!tiers.purchasable.includes(tier)) return fail(res, 400, 'INVALID_TIER', 'Paket yang dipilih nggak valid.');
   const rawDays = req.body?.duration_days ?? tiers.DURATION.default;
   const days = Number(rawDays);
   if (!Number.isInteger(days) || days < tiers.DURATION.min || days > tiers.DURATION.max) {
@@ -399,16 +399,16 @@ router.post('/api/orders', sameOrigin, auth, async (req, res) => {
   }
   const current = tiers.getTier(req.account.tier).rank;
   const wanted = tiers.getTier(tier).rank;
-  if (wanted < current) return fail(res, 400, 'TIER_NOT_UPGRADE', `Tier kamu (${req.account.tier}) lebih tinggi dari ${tier}.`);
+  if (wanted < current) return fail(res, 400, 'TIER_NOT_UPGRADE', `Tier kamu (${req.account.tier}) udah lebih tinggi dari ${tier}.`);
   // Same tier = extension; only possible when the current tier actually expires.
-  if (wanted === current && !req.account.tierExpiresAt) return fail(res, 400, 'TIER_NOT_UPGRADE', `Tier ${tier} kamu tidak punya masa berlaku, jadi tidak perlu diperpanjang.`);
+  if (wanted === current && !req.account.tierExpiresAt) return fail(res, 400, 'TIER_NOT_UPGRADE', `Tier ${tier} kamu nggak ada masa berlakunya, jadi nggak perlu diperpanjang.`);
   await orderService.expirePendingOrdersSafe();
   const pending = (await query("SELECT count(*)::int AS n FROM orders WHERE user_id=$1 AND status='pending'", [req.account.id]))[0].n;
   const idem = String(req.get('Idempotency-Key') || '').slice(0, 100) || null;
   if (pending >= MAX_PENDING_ORDERS) {
     // Only a replay of an order that already exists is exempt; a fresh Idempotency-Key is not.
     const replay = idem && (await query('SELECT 1 FROM orders WHERE user_id=$1 AND idempotency_key=$2', [req.account.id, idem])).length > 0;
-    if (!replay) return fail(res, 429, 'TOO_MANY_PENDING_ORDERS', `Maksimal ${MAX_PENDING_ORDERS} order pending. Selesaikan atau tunggu order lama kedaluwarsa.`);
+    if (!replay) return fail(res, 429, 'TOO_MANY_PENDING_ORDERS', `Maksimal ${MAX_PENDING_ORDERS} order pending. Selesaikan dulu atau tunggu order lama kedaluwarsa.`);
   }
   // Amount always comes from the server-side tier table; any client-sent amount is ignored.
   const amount = tiers.priceFor(tier, days);
@@ -420,7 +420,7 @@ router.post('/api/orders', sameOrigin, auth, async (req, res) => {
      RETURNING id,order_code,tier,amount,status,created_at,expires_at,duration_days`,
     [req.account.id, code, tier, amount, idem, days]
   );
-  if (!rows.length) return fail(res, 409, 'IDEMPOTENCY_CONFLICT', 'Idempotency key sudah dipakai untuk paket yang berbeda.');
+  if (!rows.length) return fail(res, 409, 'IDEMPOTENCY_CONFLICT', 'Idempotency key ini udah dipakai buat paket lain.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'order_create', targetType: 'order', targetId: rows[0].id, metadata: { tier, amount, days }, ipAddress: ip(req) });
   res.status(201).json({ success: true, order: rows[0] });
 });
@@ -474,17 +474,17 @@ async function pendingOrderFor(req) {
 
 router.post('/api/orders/:id/pakasir', sameOrigin, auth, validId('id'), async (req, res) => {
   const method = String(req.body?.method || 'qris');
-  if (!pakasir.isEnabled()) return fail(res, 503, 'PAYMENT_GATEWAY_MAINTENANCE', 'Payment gateway sedang maintenance. Bayar manual lewat QRIS, DANA atau GoPay lalu upload bukti.');
+  if (!pakasir.isEnabled()) return fail(res, 503, 'PAYMENT_GATEWAY_MAINTENANCE', 'Payment gateway lagi maintenance. Bayar manual aja lewat QRIS, DANA atau GoPay, terus upload buktinya.');
   const order = await pendingOrderFor(req);
-  if (!order) return fail(res, 404, 'ORDER_NOT_FOUND', 'Order tidak ditemukan atau kedaluwarsa.');
+  if (!order) return fail(res, 404, 'ORDER_NOT_FOUND', 'Order nggak ketemu atau udah kedaluwarsa.');
   let data;
   try {
     data = await pakasir.createTransaction(order.order_code, method, order.amount);
   } catch (e) {
-    if (e.code === 'PAYMENT_NOT_CONFIGURED') return fail(res, 503, e.code, 'Pembayaran otomatis belum dikonfigurasi. Gunakan pembayaran manual.');
+    if (e.code === 'PAYMENT_NOT_CONFIGURED') return fail(res, 503, e.code, 'Pembayaran otomatis belum diatur. Pakai pembayaran manual dulu ya.');
     if (e.code === 'INVALID_PAYMENT_METHOD' || e.code === 'INVALID_PAYMENT_AMOUNT') return fail(res, 400, e.code, e.message);
     console.error('Pakasir create failed:', { status: e?.response?.status || null, code: e?.code || null });
-    return fail(res, 502, 'PAYMENT_PROVIDER_ERROR', 'Gateway pembayaran belum dapat memproses transaksi.');
+    return fail(res, 502, 'PAYMENT_PROVIDER_ERROR', 'Gateway pembayaran lagi nggak bisa memproses transaksi.');
   }
   const tx = data?.payment || data?.transaction || data?.data || data || {};
   const txnId = String(tx.txn_id || tx.transaction_id || order.order_code);
@@ -499,7 +499,7 @@ router.post('/api/orders/:id/pakasir', sameOrigin, auth, validId('id'), async (r
      RETURNING id,status,provider_reference,amount`,
     [order.id, req.account.id, method, txnId, ref, order.amount, gateway.payment_link && /^https:\/\//i.test(gateway.payment_link) ? gateway.payment_link : null, gateway.qr_string, gateway.va_number, gatewayExpires]
   ))[0];
-  res.status(201).json({ success: true, payment, gateway, note: 'Status tetap pending sampai pembayaran terverifikasi server.' });
+  res.status(201).json({ success: true, payment, gateway, note: 'Status tetap pending sampai pembayaran diverifikasi server.' });
 });
 
 // The gateway's QRIS payload rendered as a scannable image (never leaves our server).
@@ -510,7 +510,7 @@ router.get('/api/orders/:id/qr.svg', auth, validId('id'), async (req, res) => {
       ORDER BY p.created_at DESC LIMIT 1`,
     [req.params.id, req.account.id]
   ))[0];
-  if (!row) return fail(res, 404, 'QR_NOT_FOUND', 'QRIS untuk order ini belum dibuat.');
+  if (!row) return fail(res, 404, 'QR_NOT_FOUND', 'QRIS buat order ini belum dibuat.');
   const svg = await QRCode.toString(row.qr_string, { type: 'svg', margin: 2, errorCorrectionLevel: 'M', color: { dark: '#000000', light: '#ffffff' } });
   res.set('Content-Type', 'image/svg+xml');
   res.set('Cache-Control', 'private, no-store');
@@ -519,24 +519,24 @@ router.get('/api/orders/:id/qr.svg', auth, validId('id'), async (req, res) => {
 
 router.post('/api/orders/:id/manual', sameOrigin, auth, validId('id'), async (req, res) => {
   const method = String(req.body?.method || '').toUpperCase();
-  if (!MANUAL_METHODS.includes(method)) return fail(res, 400, 'INVALID_PAYMENT_METHOD', 'Metode manual tidak valid. Pilih QRIS, DANA atau GOPAY.');
-  if (method !== 'QRIS' && !(await paymentSettings())[method]) return fail(res, 400, 'PAYMENT_METHOD_UNAVAILABLE', `Nomor ${method} belum diatur developer. Pilih metode lain.`);
+  if (!MANUAL_METHODS.includes(method)) return fail(res, 400, 'INVALID_PAYMENT_METHOD', 'Metode manual nggak valid. Pilih QRIS, DANA atau GOPAY.');
+  if (method !== 'QRIS' && !(await paymentSettings())[method]) return fail(res, 400, 'PAYMENT_METHOD_UNAVAILABLE', `Nomor ${method} belum diatur developer. Pilih metode lain ya.`);
   // Proof: an uploaded image (billing page) or, for API clients, an HTTPS link.
   let image = null;
   let proofUrl = null;
   if (req.body?.proof_image !== undefined) {
     image = parseProofImage(req.body.proof_image);
     if (image.error === 'PROOF_TOO_LARGE') return fail(res, 413, image.error, 'Gambar bukti maksimal 2 MB.');
-    if (image.error) return fail(res, 400, image.error, 'Bukti harus gambar JPG, PNG atau WebP.');
+    if (image.error) return fail(res, 400, image.error, 'Buktinya harus gambar JPG, PNG atau WebP.');
   } else {
     const proof = String(req.body?.proof_url || '').trim();
     let url;
     try { url = new URL(proof); } catch {}
-    if (!url || url.protocol !== 'https:' || proof.length > 2048) return fail(res, 400, 'INVALID_PROOF_URL', 'Upload gambar bukti pembayaran (atau kirim URL HTTPS bukti).');
+    if (!url || url.protocol !== 'https:' || proof.length > 2048) return fail(res, 400, 'INVALID_PROOF_URL', 'Upload gambar bukti pembayarannya (atau kirim URL HTTPS buktinya).');
     proofUrl = url.href;
   }
   const order = await pendingOrderFor(req);
-  if (!order) return fail(res, 404, 'ORDER_NOT_FOUND', 'Order tidak ditemukan atau kedaluwarsa.');
+  if (!order) return fail(res, 404, 'ORDER_NOT_FOUND', 'Order nggak ketemu atau udah kedaluwarsa.');
   let payment;
   try {
     // payments_one_pending_manual_uidx (migration 005) makes "one pending proof per order" atomic;
@@ -556,7 +556,7 @@ router.post('/api/orders/:id/manual', sameOrigin, auth, validId('id'), async (re
   } catch (e) {
     if (e.code !== '23505') throw e;
   }
-  if (!payment) return fail(res, 409, 'PAYMENT_ALREADY_SUBMITTED', 'Bukti pembayaran untuk order ini sudah dikirim dan sedang menunggu approval developer.');
+  if (!payment) return fail(res, 409, 'PAYMENT_ALREADY_SUBMITTED', 'Bukti pembayaran buat order ini udah dikirim dan lagi nunggu approval developer.');
   const days = Number(order.duration_days || 30);
   await audit.writeAudit({ actorUserId: req.account.id, action: 'manual_payment_create', targetType: 'payment', targetId: payment.id, metadata: { method, amount: order.amount, days, upload: Boolean(image) }, ipAddress: ip(req) });
   // The proof is in the developer panel; the buyer can also confirm by chat (nothing is sent automatically).
@@ -565,7 +565,7 @@ router.post('/api/orders/:id/manual', sameOrigin, auth, validId('id'), async (re
     success: true,
     payment,
     status: 'PAYMENT_PENDING',
-    instructions: process.env.MANUAL_PAYMENT_INSTRUCTIONS || 'Bukti diterima. Status menunggu approval developer.',
+    instructions: process.env.MANUAL_PAYMENT_INSTRUCTIONS || 'Bukti udah diterima. Tinggal nunggu approval developer.',
     contact: settings.whatsappLink,
     notification: 'panel',
     links
@@ -629,7 +629,7 @@ router.get('/owner/users', auth, owner, async (req, res) => {
 
 router.get('/owner/users/:id', auth, owner, validId('id'), async (req, res) => {
   const u = (await query("SELECT id,google_id,email,name,picture,tier,status,created_at,updated_at,banned_at,ban_reason,email_verified,(password_hash IS NOT NULL) AS has_password,(to_jsonb(users.*) ->> 'tier_expires_at')::timestamptz AS tier_expires_at,(to_jsonb(users.*) ->> 'public_id') AS public_id FROM users WHERE id=$1", [req.params.id]))[0];
-  if (!u) return fail(res, 404, 'NOT_FOUND', 'User tidak ditemukan.');
+  if (!u) return fail(res, 404, 'NOT_FOUND', 'User nggak ketemu.');
   const mapped = users.mapUser(u);
   const [daily, apiKeys, orders] = await Promise.all([
     query("SELECT usage_date::text AS date,request_count AS used FROM daily_quota_counters WHERE user_id=$1 ORDER BY usage_date DESC LIMIT 14", [u.id]),
@@ -647,8 +647,8 @@ router.get('/owner/users/:id', auth, owner, validId('id'), async (req, res) => {
 
 async function protectedTarget(req) {
   const target = (await query('SELECT id,email FROM users WHERE id=$1', [req.params.id]))[0];
-  if (!target) return { error: [404, 'NOT_FOUND', 'User tidak ditemukan.'] };
-  if (target.id === req.account.id || users.isOwnerEmail(target.email)) return { error: [400, 'SELF_ACTION_BLOCKED', 'Tindakan ini tidak dapat dilakukan pada akun developer.'] };
+  if (!target) return { error: [404, 'NOT_FOUND', 'User nggak ketemu.'] };
+  if (target.id === req.account.id || users.isOwnerEmail(target.email)) return { error: [400, 'SELF_ACTION_BLOCKED', 'Ini nggak bisa dilakukan ke akun developer.'] };
   return { target };
 }
 
@@ -663,7 +663,7 @@ router.post('/owner/users/:id/ban', sameOrigin, auth, owner, validId('id'), asyn
 
 router.post('/owner/users/:id/approve', sameOrigin, auth, owner, validId('id'), async (req, res) => {
   const r = await query("UPDATE users SET status='active',updated_at=now() WHERE id=$1 AND status='pending' RETURNING id,status", [req.params.id]);
-  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'User pending tidak ditemukan.');
+  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'User pending nggak ketemu.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'user_approve', targetType: 'user', targetId: req.params.id, ipAddress: ip(req) });
   res.json({ success: true, user: r[0] });
 });
@@ -678,10 +678,10 @@ router.post('/owner/users/:id/unban', sameOrigin, auth, owner, validId('id'), as
 
 router.patch('/owner/users/:id/tier', sameOrigin, auth, owner, validId('id'), async (req, res) => {
   const tier = String(req.body?.tier || '').toUpperCase();
-  if (!['FREE', 'SULTAN', 'SEPUH', 'DEWA'].includes(tier)) return fail(res, 400, 'INVALID_TIER', 'Tier tidak valid. DEVELOPER (OWNER) hanya ditentukan oleh OWNER_EMAIL.');
+  if (!['FREE', 'SULTAN', 'SEPUH', 'DEWA'].includes(tier)) return fail(res, 400, 'INVALID_TIER', 'Tier nggak valid. DEVELOPER (OWNER) cuma ditentukan lewat OWNER_EMAIL.');
   // Optional duration: empty = no expiry. FREE never expires.
   const days = req.body?.days === undefined || req.body?.days === null || req.body?.days === '' ? null : Number(req.body.days);
-  if (days !== null && (!Number.isInteger(days) || days < 1 || days > 3650)) return fail(res, 400, 'INVALID_DURATION', 'Durasi harus 1–3650 hari atau kosong (permanen).');
+  if (days !== null && (!Number.isInteger(days) || days < 1 || days > 3650)) return fail(res, 400, 'INVALID_DURATION', 'Durasi harus 1–3650 hari, atau kosongin aja (permanen).');
   const t = await protectedTarget(req);
   if (t.error) return fail(res, ...t.error);
   const r = await query(
@@ -713,22 +713,22 @@ function generatedPassword() {
 }
 router.post('/owner/users/reset-password', sameOrigin, auth, owner, async (req, res) => {
   const who = typeof req.body?.user === 'string' ? req.body.user.trim().slice(0, 200) : '';
-  if (!who) return fail(res, 400, 'USER_REQUIRED', 'Isi ID atau email user.');
+  if (!who) return fail(res, 400, 'USER_REQUIRED', 'Isi ID atau email user-nya.');
   const target = await users.findByAnyId(who);
-  if (!target) return fail(res, 404, 'USER_NOT_FOUND', 'User dengan ID/email itu tidak ditemukan.');
-  if (target.id === req.account.id || users.isOwnerEmail(target.email)) return fail(res, 400, 'SELF_ACTION_BLOCKED', 'Sandi developer diganti lewat halaman Profile.');
+  if (!target) return fail(res, 404, 'USER_NOT_FOUND', 'User dengan ID/email itu nggak ketemu.');
+  if (target.id === req.account.id || users.isOwnerEmail(target.email)) return fail(res, 400, 'SELF_ACTION_BLOCKED', 'Sandi developer gantinya lewat halaman Profile.');
   const typed = typeof req.body?.password === 'string' ? req.body.password : '';
   const password = typed || generatedPassword();
   const weak = passwords.passwordProblem(password);
   if (weak) return fail(res, 400, 'WEAK_PASSWORD', weak);
   await users.setPassword(target.id, await passwords.hashPassword(password));
   await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_password_reset', targetType: 'user', targetId: target.id, metadata: { email: target.email, generated: !typed }, ipAddress: ip(req) });
-  res.json({ success: true, user: { id: target.id, email: target.email }, password: typed ? null : password, message: 'Sandi direset. User sudah dikeluarkan dari semua perangkat.' });
+  res.json({ success: true, user: { id: target.id, email: target.email }, password: typed ? null : password, message: 'Sandi udah direset. User-nya udah dikeluarin dari semua perangkat.' });
 });
 
 router.post('/owner/users/:id/keys/:keyId/revoke', sameOrigin, auth, owner, validId('id', 'keyId'), async (req, res) => {
   const ok = await keys.revokeKey(req.params.id, req.params.keyId);
-  if (!ok) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan atau sudah dicabut.');
+  if (!ok) return fail(res, 404, 'KEY_NOT_FOUND', 'API key nggak ketemu atau udah dicabut.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_revoke', targetType: 'api_key', targetId: req.params.keyId, metadata: { userId: req.params.id }, ipAddress: ip(req) });
   res.json({ success: true });
 });
@@ -743,7 +743,7 @@ function chatRow(row, me, avatars = new Map()) {
 }
 async function chatGuard(res, fn) {
   try { return await fn(); } catch (e) {
-    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Live chat butuh migration 009_key_tiers_profile_chat.sql.');
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Live chat butuh migration 009_key_tiers_profile_chat.sql dulu.');
     throw e;
   }
 }
@@ -779,9 +779,9 @@ router.post('/api/chat', sameOrigin, auth, (req, res) => chatGuard(res, async ()
 // The owner can remove any message; everyone can remove their own.
 router.delete('/api/chat/:id', sameOrigin, auth, (req, res) => chatGuard(res, async () => {
   const id = Number.parseInt(req.params.id, 10);
-  if (!Number.isFinite(id) || id < 1) return fail(res, 404, 'NOT_FOUND', 'Pesan tidak ditemukan.');
+  if (!Number.isFinite(id) || id < 1) return fail(res, 404, 'NOT_FOUND', 'Pesannya nggak ketemu.');
   const r = await query('UPDATE chat_messages SET deleted_at=now(),deleted_by=$2 WHERE id=$1 AND deleted_at IS NULL AND ($3::boolean OR user_id=$2) RETURNING id,user_id', [id, req.account.id, req.account.isOwner]);
-  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'Pesan tidak ditemukan.');
+  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'Pesannya nggak ketemu.');
   if (req.account.isOwner && r[0].user_id !== req.account.id) await audit.writeAudit({ actorUserId: req.account.id, action: 'chat_message_delete', targetType: 'user', targetId: r[0].user_id, metadata: { messageId: id }, ipAddress: ip(req) });
   res.json({ success: true });
 }));
@@ -841,7 +841,7 @@ router.post('/owner/keys', sameOrigin, auth, owner, async (req, res) => {
   let target = req.account;
   if (who) {
     const found = await users.findByAnyId(who);
-    if (!found) return fail(res, 404, 'USER_NOT_FOUND', 'User dengan email/ID itu tidak ditemukan.');
+    if (!found) return fail(res, 404, 'USER_NOT_FOUND', 'User dengan email/ID itu nggak ketemu.');
     target = found;
   }
   try {
@@ -869,8 +869,8 @@ async function issueManagedKey(req, res) {
   let accessUsers = [];
   if (kind === 'private') {
     const { found, missing } = await resolveUsers(b.access);
-    if (missing.length) return fail(res, 404, 'USER_NOT_FOUND', `User tidak ditemukan: ${missing.join(', ')}`, { missing });
-    if (!found.length) return fail(res, 400, 'ACCESS_REQUIRED', 'Key private butuh minimal 1 user/email yang diberi akses.');
+    if (missing.length) return fail(res, 404, 'USER_NOT_FOUND', `User nggak ketemu: ${missing.join(', ')}`, { missing });
+    if (!found.length) return fail(res, 400, 'ACCESS_REQUIRED', 'Key private butuh minimal 1 user/email yang dikasih akses.');
     accessUsers = found;
   }
   try {
@@ -890,7 +890,7 @@ async function issueManagedKey(req, res) {
 
 async function managedKey(req, res) {
   const key = await ownerKeyRow(req.params.keyId);
-  if (!key) { fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan.'); return null; }
+  if (!key) { fail(res, 404, 'KEY_NOT_FOUND', 'API key nggak ketemu.'); return null; }
   return key;
 }
 
@@ -902,16 +902,16 @@ router.patch('/owner/keys/:keyId', sameOrigin, auth, owner, validId('keyId'), as
   if (!current) return;
   try {
     if (typeof b.name === 'string' && b.name.trim()) change.name = b.name.trim().slice(0, 80);
-    if (b.tier !== undefined && b.tier !== '' && current.visibility === 'owner') return fail(res, 400, 'INVALID_TIER', 'Developer key selalu memakai akses DEVELOPER; tier-nya tidak bisa diubah.');
+    if (b.tier !== undefined && b.tier !== '' && current.visibility === 'owner') return fail(res, 400, 'INVALID_TIER', 'Developer key selalu pakai akses DEVELOPER, jadi tier-nya nggak bisa diubah.');
     if (String(b.tier || '').toUpperCase() === 'ACCOUNT' && current.visibility) return fail(res, 400, 'INVALID_TIER', 'Key public/private harus punya tier sendiri.');
     if (b.extend !== undefined) {
       const hours = keys.durationHours(b.extend, b.days);
       if (hours === null) change.permanent = true; else change.hours = hours;
     }
     if (b.tier !== undefined && b.tier !== '') change.tier = String(b.tier).toUpperCase();
-    if (!Object.keys(change).length) return fail(res, 400, 'NOTHING_TO_CHANGE', 'Ubah nama, masa aktif atau tier.');
+    if (!Object.keys(change).length) return fail(res, 400, 'NOTHING_TO_CHANGE', 'Belum ada yang diubah: ganti nama, masa aktif atau tier dulu.');
     const key = await keys.updateIssuedKey(req.params.keyId, change);
-    if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan atau sudah dicabut (key yang dicabut tidak bisa diubah).');
+    if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key nggak ketemu atau udah dicabut (key yang udah dicabut nggak bisa diubah).');
     await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_update', targetType: 'api_key', targetId: key.id, metadata: { ...change, expiresAt: key.expires_at, tier: key.tier }, ipAddress: ip(req) });
     res.json({ success: true, key });
   } catch (e) {
@@ -931,7 +931,7 @@ async function setKeyEnabled(req, res, enabled) {
   if (!key) return;
   try {
     const r = await keys.setKeyStatus(key.id, enabled ? 'active' : 'disabled');
-    if (!r) return fail(res, 409, 'KEY_REVOKED', 'Key yang sudah dicabut tidak bisa diaktifkan lagi.');
+    if (!r) return fail(res, 409, 'KEY_REVOKED', 'Key yang udah dicabut nggak bisa diaktifkan lagi.');
   } catch (e) { if (keyError(res, e)) return; throw e; }
   await audit.writeAudit({ actorUserId: req.account.id, action: enabled ? 'owner_api_key_enable' : 'owner_api_key_disable', targetType: 'api_key', targetId: key.id, metadata: { prefix: key.key_prefix, name: key.name, kind: key.visibility }, ipAddress: ip(req) });
   res.json({ success: true, status: enabled ? 'active' : 'disabled' });
@@ -945,9 +945,9 @@ router.post('/owner/keys/:keyId/regenerate', sameOrigin, auth, owner, validId('k
   if (!key) return;
   try {
     const made = await keys.regenerateKey(key.id, typeof req.body?.custom_key === 'string' ? req.body.custom_key.trim() : null);
-    if (!made) return fail(res, 409, 'KEY_REVOKED', 'Key yang sudah dicabut tidak bisa di-reset. Buat key baru.');
+    if (!made) return fail(res, 409, 'KEY_REVOKED', 'Key yang udah dicabut nggak bisa di-reset. Bikin key baru aja.');
     await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_regenerate', targetType: 'api_key', targetId: key.id, metadata: { kind: key.visibility, oldPrefix: key.key_prefix, newPrefix: made.record.key_prefix }, ipAddress: ip(req) });
-    res.json({ success: true, key: made.key, record: made.record, message: 'Key lama sudah tidak berlaku. Simpan key baru ini — hanya ditampilkan sekali.' });
+    res.json({ success: true, key: made.key, record: made.record, message: 'Key lama udah nggak berlaku. Simpan key baru ini — cuma ditampilkan sekali.' });
   } catch (e) {
     if (keyError(res, e)) return;
     throw e;
@@ -958,7 +958,7 @@ router.post('/owner/keys/:keyId/regenerate', sameOrigin, auth, owner, validId('k
 async function privateKey(req, res) {
   const key = await managedKey(req, res);
   if (!key) return null;
-  if (key.visibility !== 'private') { fail(res, 400, 'NOT_PRIVATE', 'Daftar akses hanya untuk key private.'); return null; }
+  if (key.visibility !== 'private') { fail(res, 400, 'NOT_PRIVATE', 'Daftar akses cuma buat key private.'); return null; }
   return key;
 }
 async function accessReply(res, key) {
@@ -973,7 +973,7 @@ async function changeAccess(req, res, mode) {
   const key = await privateKey(req, res);
   if (!key) return;
   const { found, missing } = await resolveUsers(req.body?.users ?? req.body?.user);
-  if (missing.length) return fail(res, 404, 'USER_NOT_FOUND', `User tidak ditemukan: ${missing.join(', ')}`, { missing });
+  if (missing.length) return fail(res, 404, 'USER_NOT_FOUND', `User nggak ketemu: ${missing.join(', ')}`, { missing });
   if (!found.length) return fail(res, 400, 'ACCESS_REQUIRED', 'Isi minimal 1 user/email.');
   try {
     if (mode === 'reset') await keys.setAccess(key.id, found.map(u => u.id), req.account.id);
@@ -987,24 +987,24 @@ router.put('/owner/keys/:keyId/access', sameOrigin, auth, owner, validId('keyId'
 router.delete('/owner/keys/:keyId/access/:userId', sameOrigin, auth, owner, validId('keyId', 'userId'), async (req, res) => {
   const key = await privateKey(req, res);
   if (!key) return;
-  if (!(await keys.removeAccess(key.id, req.params.userId))) return fail(res, 404, 'NOT_FOUND', 'User itu tidak ada di daftar akses.');
+  if (!(await keys.removeAccess(key.id, req.params.userId))) return fail(res, 404, 'NOT_FOUND', 'User itu nggak ada di daftar akses.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_access_remove', targetType: 'api_key', targetId: key.id, metadata: { userId: req.params.userId }, ipAddress: ip(req) });
   await accessReply(res, key);
 });
 
 router.post('/owner/keys/:keyId/revoke', sameOrigin, auth, owner, validId('keyId'), async (req, res) => {
   const key = await ownerKeyRow(req.params.keyId);
-  if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan.');
-  if (key.visibility === 'owner') return fail(res, 400, 'OWNER_KEY_KEEP', 'Developer key tidak dicabut: pakai Nonaktifkan atau Reset.');
+  if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key nggak ketemu.');
+  if (key.visibility === 'owner') return fail(res, 400, 'OWNER_KEY_KEEP', 'Developer key nggak bisa dicabut: pakai Nonaktifkan atau Reset aja.');
   const r = await query("UPDATE api_keys SET status='revoked',revoked_at=now() WHERE id=$1 AND status='active' RETURNING id", [key.id]);
-  if (!r.length) return fail(res, 409, 'KEY_ALREADY_REVOKED', 'API key ini sudah dicabut.');
+  if (!r.length) return fail(res, 409, 'KEY_ALREADY_REVOKED', 'API key ini udah dicabut.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_revoke', targetType: 'api_key', targetId: key.id, metadata: { userId: key.user_id, email: key.email, prefix: key.key_prefix, name: key.name }, ipAddress: ip(req) });
   res.json({ success: true });
 });
 
 router.delete('/owner/keys/:keyId', sameOrigin, auth, owner, validId('keyId'), async (req, res) => {
   const key = await ownerKeyRow(req.params.keyId);
-  if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key tidak ditemukan.');
+  if (!key) return fail(res, 404, 'KEY_NOT_FOUND', 'API key nggak ketemu.');
   // Usage history stays (api_usage.api_key_id is ON DELETE SET NULL); the key stops working at once.
   await query('DELETE FROM api_keys WHERE id=$1', [key.id]);
   await audit.writeAudit({ actorUserId: req.account.id, action: 'owner_api_key_delete', targetType: 'api_key', targetId: key.id, metadata: { userId: key.user_id, email: key.email, prefix: key.key_prefix, name: key.name, status: key.status }, ipAddress: ip(req) });
@@ -1030,8 +1030,8 @@ router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
 const selfTestLimiter = { running: false };
 router.post('/owner/api/selftest', sameOrigin, auth, owner, async (req, res) => {
   const anyServerKey = Object.values(apiproxy.SERVERS).some(s => process.env[s.keyEnv]);
-  if (!process.env.THERESAV_API_KEY && !anyServerKey) return fail(res, 503, 'UPSTREAM_NOT_CONFIGURED', 'Isi THERESAV_API_KEY (atau salah satu key server lain) di Vercel lalu redeploy sebelum menguji.');
-  if (selfTestLimiter.running) return fail(res, 409, 'SELFTEST_BUSY', 'Pengujian lain sedang berjalan. Tunggu sampai selesai.');
+  if (!process.env.THERESAV_API_KEY && !anyServerKey) return fail(res, 503, 'UPSTREAM_NOT_CONFIGURED', 'Isi dulu THERESAV_API_KEY (atau salah satu key server lain) di Vercel, terus redeploy sebelum ngetes.');
+  if (selfTestLimiter.running) return fail(res, 409, 'SELFTEST_BUSY', 'Ada pengujian lain yang lagi jalan. Tunggu sampai selesai ya.');
   selfTestLimiter.running = true;
   try {
     const loaded = req.app.locals.loadedPluginPaths || new Set();
@@ -1066,7 +1066,7 @@ router.post('/owner/api/selftest', sameOrigin, auth, owner, async (req, res) => 
 router.post('/owner/api/endpoints/bulk-status', sameOrigin, auth, owner, async (req, res) => {
   const status = req.body?.status === 'active' ? 'active' : 'disabled';
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(x => UUID_RE.test(String(x))).slice(0, 200) : [];
-  if (!ids.length) return fail(res, 400, 'NO_IDS', 'Tidak ada endpoint yang dipilih.');
+  if (!ids.length) return fail(res, 400, 'NO_IDS', 'Belum ada endpoint yang dipilih.');
   const r = await query('UPDATE endpoints SET status=$2,updated_at=now() WHERE id = ANY($1::uuid[]) RETURNING id', [ids, status]);
   await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_bulk_status', targetType: 'endpoint', metadata: { status, count: r.length }, ipAddress: ip(req) });
   res.json({ success: true, changed: r.length, status });
@@ -1077,17 +1077,17 @@ router.post('/owner/api/endpoints', sameOrigin, auth, owner, async (req, res) =>
   if (b.code !== undefined) return createPluginEndpoint(req, res);
   const method = String(b.method || 'GET').toUpperCase();
   if (typeof b.name !== 'string' || !b.name.trim() || typeof b.path !== 'string' || !/^\/[a-zA-Z0-9/_-]{1,200}$/.test(b.path) || !['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-    return fail(res, 400, 'INVALID_ENDPOINT', 'Data endpoint tidak valid.');
+    return fail(res, 400, 'INVALID_ENDPOINT', 'Data endpoint nggak valid.');
   }
-  if (b.minimum_tier !== undefined && !tiers.TIERS[b.minimum_tier]) return fail(res, 400, 'INVALID_TIER', 'Tier minimum tidak valid.');
+  if (b.minimum_tier !== undefined && !tiers.TIERS[b.minimum_tier]) return fail(res, 400, 'INVALID_TIER', 'Tier minimum nggak valid.');
   const r = await query(
     'INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,$6,$7,NULL) ON CONFLICT(path) DO NOTHING RETURNING *',
     [b.name.trim().slice(0, 100), b.path, String(b.description || '').slice(0, 500), method, b.minimum_tier || 'FREE', b.locked === true, b.status === 'disabled' ? 'disabled' : 'active']
   );
-  if (!r.length) return fail(res, 409, 'ENDPOINT_EXISTS', 'Path endpoint sudah terdaftar.');
+  if (!r.length) return fail(res, 409, 'ENDPOINT_EXISTS', 'Path endpoint ini udah terdaftar.');
   await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_create', targetType: 'endpoint', targetId: r[0].id, metadata: { path: b.path }, ipAddress: ip(req) });
   const endpoint = withHandler(req, r[0]);
-  res.status(201).json({ success: true, endpoint, warning: endpoint.handler_loaded ? null : 'Metadata tersimpan, tetapi belum ada plugin handler untuk path ini. Endpoint tidak bisa dipanggil sampai plugin di-deploy.' });
+  res.status(201).json({ success: true, endpoint, warning: endpoint.handler_loaded ? null : 'Metadata udah tersimpan, tapi belum ada plugin handler buat path ini. Endpoint-nya belum bisa dipanggil sampai plugin di-deploy.' });
 });
 
 // New endpoint with its script: 1 name, 2 /api/kategori/nama, 3 .js script, 4 description, 5 tier.
@@ -1097,9 +1097,9 @@ async function createPluginEndpoint(req, res) {
   const b = req.body || {};
   const name = typeof b.name === 'string' ? b.name.trim().slice(0, 100) : '';
   const target = pluginService.parsePath(b.path);
-  if (!name || !target) return fail(res, 400, 'INVALID_ENDPOINT', 'Nama wajib diisi dan path harus berbentuk /api/kategori/nama (huruf kecil, angka, tanda -).');
+  if (!name || !target) return fail(res, 400, 'INVALID_ENDPOINT', 'Nama wajib diisi dan path harus kayak /api/kategori/nama (huruf kecil, angka, tanda -).');
   const tier = b.minimum_tier === undefined ? 'FREE' : b.minimum_tier;
-  if (!tiers.TIERS[tier]) return fail(res, 400, 'INVALID_TIER', 'Tier minimum tidak valid.');
+  if (!tiers.TIERS[tier]) return fail(res, 400, 'INVALID_TIER', 'Tier minimum nggak valid.');
   const desc = String(b.description || '').trim().slice(0, 500) || name;   // the plugin loader skips plugins without desc
   try {
     pluginService.validateCode(b.code);
@@ -1107,13 +1107,13 @@ async function createPluginEndpoint(req, res) {
     if (e instanceof pluginService.PluginError) return fail(res, e.status, e.code, e.message);
     throw e;
   }
-  if (!pluginService.isConfigured()) return fail(res, 503, 'GITHUB_NOT_CONFIGURED', 'Upload plugin belum aktif: set GITHUB_TOKEN (dan GITHUB_REPO jika repo berbeda) di Environment Variables Vercel, lalu redeploy.');
+  if (!pluginService.isConfigured()) return fail(res, 503, 'GITHUB_NOT_CONFIGURED', 'Upload plugin belum aktif: set GITHUB_TOKEN (dan GITHUB_REPO kalau repo-nya beda) di Environment Variables Vercel, terus redeploy.');
 
   const r = await query(
     "INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,'GET',$4,false,'active',$5) ON CONFLICT(path) DO NOTHING RETURNING *",
     [name, b.path, desc, tier, target.plugin]
   );
-  if (!r.length) return fail(res, 409, 'ENDPOINT_EXISTS', 'Path endpoint sudah terdaftar.');
+  if (!r.length) return fail(res, 409, 'ENDPOINT_EXISTS', 'Path endpoint ini udah terdaftar.');
   let commit;
   try {
     commit = await pluginService.commitPlugin({
@@ -1131,7 +1131,7 @@ async function createPluginEndpoint(req, res) {
     success: true,
     endpoint: withHandler(req, r[0]),
     commit,
-    message: `Script di-commit ke ${commit.file}. Vercel akan deploy ulang (biasanya 20–60 detik); setelah itu endpoint aktif.`
+    message: `Script udah di-commit ke ${commit.file}. Vercel bakal deploy ulang (biasanya 20–60 detik), habis itu endpoint-nya aktif.`
   });
 }
 
@@ -1144,7 +1144,7 @@ router.patch('/owner/api/endpoints/:id', sameOrigin, auth, owner, validId('id'),
     || (b.locked !== undefined && typeof b.locked !== 'boolean')
     || (b.status !== undefined && !['active', 'disabled'].includes(b.status))
     || (b.badge !== undefined && b.badge !== null && b.badge !== '' && !ENDPOINT_BADGES.includes(b.badge));
-  if (bad) return fail(res, 400, 'INVALID_ENDPOINT', 'Data endpoint tidak valid.');
+  if (bad) return fail(res, 400, 'INVALID_ENDPOINT', 'Data endpoint nggak valid.');
   if (b.badge !== undefined) {   // label in the catalog: new / hot / recommend, or none
     try { await query('UPDATE endpoints SET badge=$2,updated_at=now() WHERE id=$1', [req.params.id, b.badge || null]); }
     catch (e) { if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Jalankan migrasi 015_endpoint_badges.sql dulu di Neon.'); throw e; }
@@ -1153,7 +1153,7 @@ router.patch('/owner/api/endpoints/:id', sameOrigin, auth, owner, validId('id'),
     'UPDATE endpoints SET name=COALESCE($2,name),description=COALESCE($3,description),minimum_tier=COALESCE($4,minimum_tier),locked=COALESCE($5,locked),status=COALESCE($6,status),updated_at=now() WHERE id=$1 RETURNING *',
     [req.params.id, b.name?.trim().slice(0, 100) ?? null, b.description?.slice(0, 500) ?? null, b.minimum_tier ?? null, b.locked ?? null, b.status ?? null]
   );
-  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'Endpoint tidak ditemukan.');
+  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'Endpoint nggak ketemu.');
   const changes = Object.fromEntries(['name', 'description', 'minimum_tier', 'locked', 'status', 'badge'].filter(k => b[k] !== undefined).map(k => [k, b[k]]));
   await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_update', targetType: 'endpoint', targetId: req.params.id, metadata: changes, ipAddress: ip(req) });
   res.json({ success: true, endpoint: withHandler(req, r[0]) });
@@ -1161,7 +1161,7 @@ router.patch('/owner/api/endpoints/:id', sameOrigin, auth, owner, validId('id'),
 
 async function setEndpointLock(req, res, locked) {
   const r = await query('UPDATE endpoints SET locked=$2,updated_at=now() WHERE id=$1 RETURNING id,path,locked', [req.params.id, locked]);
-  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'Endpoint tidak ditemukan.');
+  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'Endpoint nggak ketemu.');
   await audit.writeAudit({ actorUserId: req.account.id, action: locked ? 'endpoint_lock' : 'endpoint_unlock', targetType: 'endpoint', targetId: req.params.id, ipAddress: ip(req) });
   res.json({ success: true, endpoint: r[0] });
 }
@@ -1170,9 +1170,9 @@ router.post('/owner/api/endpoints/:id/unlock', sameOrigin, auth, owner, validId(
 
 router.delete('/owner/api/endpoints/:id', sameOrigin, auth, owner, validId('id'), async (req, res) => {
   const row = (await query('SELECT id,path FROM endpoints WHERE id=$1', [req.params.id]))[0];
-  if (!row) return fail(res, 404, 'NOT_FOUND', 'Endpoint tidak ditemukan.');
+  if (!row) return fail(res, 404, 'NOT_FOUND', 'Endpoint nggak ketemu.');
   // Deleting a live handler's metadata would make it 503 until the next cold start re-registers it.
-  if (withHandler(req, row).handler_loaded) return fail(res, 409, 'HANDLER_LOADED', 'Endpoint ini punya plugin aktif. Nonaktifkan atau kunci, jangan hapus metadata-nya.');
+  if (withHandler(req, row).handler_loaded) return fail(res, 409, 'HANDLER_LOADED', 'Endpoint ini punya plugin aktif. Nonaktifkan atau kunci aja, jangan hapus metadata-nya.');
   await query('DELETE FROM endpoints WHERE id=$1', [req.params.id]);
   await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_delete', targetType: 'endpoint', targetId: req.params.id, metadata: { path: row.path }, ipAddress: ip(req) });
   res.json({ success: true });
@@ -1198,7 +1198,7 @@ router.get('/owner/payments', auth, owner, async (req, res) => {
 // The uploaded proof image, owner only. Served as an inert image: no sniffing, no scripts.
 router.get('/owner/payments/:id/proof', auth, owner, validId('id'), async (req, res) => {
   const row = (await query("SELECT mime,encode(data,'base64') AS b64 FROM payment_proofs WHERE payment_id=$1", [req.params.id]))[0];
-  if (!row) return fail(res, 404, 'PROOF_NOT_FOUND', 'Pembayaran ini tidak punya gambar bukti.');
+  if (!row) return fail(res, 404, 'PROOF_NOT_FOUND', 'Pembayaran ini nggak ada gambar buktinya.');
   res.set('Content-Type', row.mime);
   res.set('Cache-Control', 'private, no-store');
   res.set('Content-Security-Policy', "default-src 'none'; sandbox");
@@ -1221,7 +1221,7 @@ async function settleManual(req, res, approve) {
        SELECT $3,$4,'payment',$1,jsonb_build_object('decision',$2,'provider',(SELECT provider FROM candidate),'tier',(SELECT tier FROM upd_u),'tier_expires_at',(SELECT tier_expires_at FROM upd_u)),$5::inet FROM upd_o RETURNING id`,
     [req.params.id, approve ? 'paid' : 'rejected', req.account.id, approve ? 'payment_approve' : 'payment_reject', ip(req)]
   );
-  if (!row.length) return fail(res, 409, 'PAYMENT_NOT_PENDING', 'Pembayaran tidak pending atau sudah diproses.');
+  if (!row.length) return fail(res, 409, 'PAYMENT_NOT_PENDING', 'Pembayaran ini udah nggak pending atau udah diproses.');
   res.json({ success: true, status: approve ? 'paid' : 'rejected' });
 }
 router.post('/owner/payments/:id/approve', sameOrigin, auth, owner, validId('id'), (req, res) => settleManual(req, res, true));
@@ -1240,7 +1240,7 @@ router.get('/owner/server', auth, owner, async (req, res) => {
 
 router.patch('/owner/server', sameOrigin, auth, owner, async (req, res) => {
   const enabled = req.body?.maintenance_enabled === true;
-  const message = String(req.body?.maintenance_message || '').trim().slice(0, 500) || 'Website sedang dalam maintenance. Silakan tunggu sampai maintenance selesai.';
+  const message = String(req.body?.maintenance_message || '').trim().slice(0, 500) || 'Website lagi maintenance. Tunggu bentar sampai selesai ya.';
   const r = await query(
     `INSERT INTO server_settings(id,maintenance_enabled,maintenance_message,updated_at,updated_by) VALUES(1,$1,$2,now(),$3)
      ON CONFLICT(id) DO UPDATE SET maintenance_enabled=EXCLUDED.maintenance_enabled,maintenance_message=EXCLUDED.maintenance_message,updated_at=now(),updated_by=EXCLUDED.updated_by RETURNING *`,
@@ -1350,7 +1350,7 @@ router.post('/owner/backup/email', auth, owner, async (req, res) => {
 // "Authorization: Bearer <CRON_SECRET>"; without CRON_SECRET set it does nothing.
 router.get('/cron/backup', async (req, res) => {
   const secret = process.env.CRON_SECRET || '';
-  if (!secret) return fail(res, 503, 'CRON_NOT_CONFIGURED', 'Set CRON_SECRET di Vercel untuk backup otomatis harian.');
+  if (!secret) return fail(res, 503, 'CRON_NOT_CONFIGURED', 'Set CRON_SECRET di Vercel buat backup otomatis harian.');
   const given = Buffer.from(String(req.headers.authorization || ''));
   const want = Buffer.from(`Bearer ${secret}`);
   if (given.length !== want.length || !crypto.timingSafeEqual(given, want)) return fail(res, 401, 'UNAUTHORIZED', 'Unauthorized.');
@@ -1373,19 +1373,19 @@ router.post('/webhooks/pakasir', async (req, res) => {
   const code = String(b.order_id || '');
   const amount = Number(b.amount);
   if (!code || !Number.isFinite(amount) || !process.env.PAKASIR_PROJECT || String(b.project || '') !== process.env.PAKASIR_PROJECT || String(b.status || '').toLowerCase() !== 'completed') {
-    return fail(res, 400, 'INVALID_PAYMENT', 'Payload transaksi tidak valid.');
+    return fail(res, 400, 'INVALID_PAYMENT', 'Payload transaksi nggak valid.');
   }
   const order = (await query('SELECT * FROM orders WHERE order_code=$1', [code]))[0];
-  if (!order || Number(order.amount) !== amount) return fail(res, 400, 'INVALID_PAYMENT', 'Order atau nominal tidak cocok.');
+  if (!order || Number(order.amount) !== amount) return fail(res, 400, 'INVALID_PAYMENT', 'Order atau nominalnya nggak cocok.');
   if (order.status === 'paid') return res.json({ success: true, processed: false, duplicate: true });
-  if (order.status !== 'pending') return fail(res, 409, 'ORDER_NOT_PENDING', 'Order tidak lagi pending.');
+  if (order.status !== 'pending') return fail(res, 409, 'ORDER_NOT_PENDING', 'Order ini udah nggak pending.');
   let verified = false;
   try {
     verified = await pakasir.verifyTransaction(code, amount);
   } catch (e) {
     console.error('Pakasir verification failed:', { status: e?.response?.status || null, code: e?.code || null });
   }
-  if (!verified) return fail(res, 202, 'PAYMENT_NOT_VERIFIED', 'Transaksi belum terverifikasi oleh provider.');
+  if (!verified) return fail(res, 202, 'PAYMENT_NOT_VERIFIED', 'Transaksi belum diverifikasi provider.');
   const tx = await query(
     `WITH upd_p AS (UPDATE payments SET status='paid',verified_at=now(),updated_at=now() WHERE id=(SELECT id FROM payments WHERE order_id=$1 AND provider='pakasir' AND status='pending' AND amount=$2 ORDER BY created_at DESC LIMIT 1) RETURNING id,order_id,user_id),
      upd_o AS (UPDATE orders SET status='paid',paid_at=now(),updated_at=now() WHERE id=$1 AND status='pending' AND amount=$2 AND EXISTS(SELECT 1 FROM upd_p) RETURNING user_id,tier,id,duration_days),
@@ -1406,16 +1406,16 @@ for (const layer of router.stack) {
 
 router.use((err, req, res, next) => {
   if (res.headersSent) return next(err);
-  if (err?.code === '22P02') return fail(res, 404, 'NOT_FOUND', 'Data tidak ditemukan.');
+  if (err?.code === '22P02') return fail(res, 404, 'NOT_FOUND', 'Datanya nggak ketemu.');
   if (err?.isDatabaseError) {
     const c = classifyDatabaseError(err);
     console.error('Platform route failed:', { path: req.path, error: c.error, code: c.code });
     // dbCode is the SQLSTATE (e.g. 23514), never the SQL text or parameters: it lets the
     // owner diagnose schema drift from a screenshot without access to server logs.
-    return fail(res, 503, c.error === 'DATABASE_SCHEMA_OUTDATED' ? c.error : 'DATABASE_UNAVAILABLE', 'Layanan data sementara tidak tersedia.', { dbCode: /^[0-9A-Z]{5}$/.test(c.code) ? c.code : null });
+    return fail(res, 503, c.error === 'DATABASE_SCHEMA_OUTDATED' ? c.error : 'DATABASE_UNAVAILABLE', 'Layanan data lagi nggak tersedia. Coba lagi bentar ya.', { dbCode: /^[0-9A-Z]{5}$/.test(c.code) ? c.code : null });
   }
   console.error('Platform route failed:', { path: req.path, name: err?.name || null, code: err?.code || null });
-  return fail(res, 500, 'INTERNAL_ERROR', 'Terjadi kesalahan server.');
+  return fail(res, 500, 'INTERNAL_ERROR', 'Ada masalah di server. Coba lagi bentar ya.');
 });
 
 module.exports = router;

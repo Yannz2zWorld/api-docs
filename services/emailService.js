@@ -26,19 +26,19 @@ const COPY = {
   verify: {
     subject: 'Kode verifikasi akun YannApi',
     title: 'Verifikasi email kamu',
-    body: 'Masukkan kode ini untuk mengaktifkan akun Yannz API kamu.'
+    body: 'Masukin kode ini buat ngaktifin akun Yannz API kamu.'
   },
   reset: {
     subject: 'Kode reset sandi YannApi',
     title: 'Reset sandi',
-    body: 'Masukkan kode ini untuk membuat sandi baru akun Yannz API kamu.'
+    body: 'Masukin kode ini buat bikin sandi baru akun Yannz API kamu.'
   }
 };
 
 function render(purpose, name, code, minutes) {
   const c = COPY[purpose];
   const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-  const text = `${c.title}\n\nHalo ${name || ''},\n${c.body}\n\nKode: ${code}\nBerlaku ${minutes} menit. Jika kamu tidak meminta kode ini, abaikan email ini; akunmu tetap aman.\n\n— YannApi`;
+  const text = `${c.title}\n\nHalo ${name || ''},\n${c.body}\n\nKode: ${code}\nBerlaku ${minutes} menit. Kalau kamu nggak minta kode ini, cuekin aja email ini; akun kamu tetap aman.\n\n— YannApi`;
   const html = `<!doctype html><html><body style="margin:0;background:#0b0b0c;font-family:Arial,Helvetica,sans-serif;color:#f4f4f5">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
 <table role="presentation" width="100%" style="max-width:480px;background:#141416;border:2px solid #d4d4d8;border-radius:12px" cellpadding="0" cellspacing="0"><tr><td style="padding:28px">
@@ -46,7 +46,7 @@ function render(purpose, name, code, minutes) {
 <h1 style="font-size:26px;margin:18px 0 8px;letter-spacing:-.03em">${esc(c.title)}</h1>
 <p style="color:#a1a1aa;margin:0 0 20px;line-height:1.55">Halo ${esc(name)},<br>${esc(c.body)}</p>
 <div style="background:#fafafa;color:#0b0b0c;border-radius:10px;padding:16px;text-align:center;font:700 32px/1 'Courier New',monospace;letter-spacing:10px">${esc(code)}</div>
-<p style="color:#a1a1aa;font-size:13px;line-height:1.55;margin:20px 0 0">Kode berlaku ${minutes} menit dan hanya bisa dipakai sekali. Jika kamu tidak meminta kode ini, abaikan email ini; akunmu tetap aman. Jangan bagikan kode ini ke siapa pun.</p>
+<p style="color:#a1a1aa;font-size:13px;line-height:1.55;margin:20px 0 0">Kode ini berlaku ${minutes} menit dan cuma bisa dipakai sekali. Kalau kamu nggak minta kode ini, cuekin aja email ini; akun kamu tetap aman. Jangan kasih kode ini ke siapa pun ya.</p>
 </td></tr></table></td></tr></table></body></html>`;
   return { subject: c.subject, text, html };
 }
@@ -80,7 +80,7 @@ async function sendViaSmtp(message) {
 
 async function sendCode({ to, name, code, purpose, minutes }) {
   const kind = provider();
-  if (!kind) throw Object.assign(new Error('Email belum dikonfigurasi.'), { code: 'EMAIL_NOT_CONFIGURED' });
+  if (!kind) throw Object.assign(new Error('Email belum diatur.'), { code: 'EMAIL_NOT_CONFIGURED' });
   const { subject, text, html } = render(purpose, name, code, minutes);
   const from = `${SENDER_NAME} <${process.env.EMAIL_FROM}>`;
   try {
@@ -97,7 +97,7 @@ async function sendCode({ to, name, code, purpose, minutes }) {
 // [{ filename, content: Buffer, contentType }].
 async function sendMail({ to, subject, text, html, attachments = [] }) {
   const kind = provider();
-  if (!kind) throw Object.assign(new Error('Email belum dikonfigurasi.'), { code: 'EMAIL_NOT_CONFIGURED' });
+  if (!kind) throw Object.assign(new Error('Email belum diatur.'), { code: 'EMAIL_NOT_CONFIGURED' });
   const from = `${SENDER_NAME} <${process.env.EMAIL_FROM}>`;
   try {
     if (kind === 'resend') {

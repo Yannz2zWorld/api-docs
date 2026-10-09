@@ -15,7 +15,7 @@ const INVALID_KEY_LIMIT = () => Number(process.env.INVALID_KEY_LIMIT_PER_15MIN) 
 
 function customKeyProblem(value) {
   if (!CUSTOM_KEY_RE.test(value)) return 'Custom key harus 6–64 karakter: huruf, angka, _ atau -.';
-  if (value.toLowerCase().startsWith(GENERATED_PREFIX)) return `Awalan "${GENERATED_PREFIX}" khusus untuk key otomatis.`;
+  if (value.toLowerCase().startsWith(GENERATED_PREFIX)) return `Awalan "${GENERATED_PREFIX}" khusus buat key otomatis.`;
   return null;
 }
 
@@ -27,7 +27,7 @@ function displayPrefix(plain, custom) {
 
 async function createKey(user, name, idempotencyKey = null, customValue = null) {
   const cap = getTier(user.tier).keys;
-  if (cap === 0) throw Object.assign(new Error('Tier ini belum mendapat kuota API key.'), { code: 'KEYS_NOT_INCLUDED' });
+  if (cap === 0) throw Object.assign(new Error('Tier ini belum kebagian jatah API key.'), { code: 'KEYS_NOT_INCLUDED' });
   const custom = customValue !== null && customValue !== undefined && customValue !== '';
   const plain = custom ? String(customValue) : GENERATED_PREFIX + crypto.randomBytes(32).toString('base64url');
   if (custom) {
@@ -54,18 +54,18 @@ async function createKey(user, name, idempotencyKey = null, customValue = null) 
     ]);
   } catch (e) {
     // api_keys_key_hash_uidx: this exact value is already some key (active or revoked).
-    if (e.code === '23505' && custom) throw Object.assign(new Error('Custom key ini sudah dipakai. Pilih value lain.'), { code: 'CUSTOM_KEY_TAKEN' });
+    if (e.code === '23505' && custom) throw Object.assign(new Error('Custom key ini udah dipakai. Pilih value lain ya.'), { code: 'CUSTOM_KEY_TAKEN' });
     throw e;
   }
   if (!saved.length) {
     if (idempotencyKey) {
       const prior = await query('SELECT id FROM api_keys WHERE user_id=$1 AND idempotency_key=$2', [user.id, idempotencyKey]);
-      if (prior.length) throw Object.assign(new Error('Permintaan key ini sudah diproses. Muat ulang daftar key; secret hanya ditampilkan saat pertama dibuat.'), { code: 'IDEMPOTENCY_REPLAY' });
+      if (prior.length) throw Object.assign(new Error('Permintaan key ini udah diproses. Muat ulang daftar key-nya; secret cuma ditampilkan pas pertama dibuat.'), { code: 'IDEMPOTENCY_REPLAY' });
     }
     if (custom && (await query('SELECT 1 FROM api_keys WHERE key_hash=$1', [digest(plain)])).length) {
-      throw Object.assign(new Error('Custom key ini sudah dipakai. Pilih value lain.'), { code: 'CUSTOM_KEY_TAKEN' });
+      throw Object.assign(new Error('Custom key ini udah dipakai. Pilih value lain ya.'), { code: 'CUSTOM_KEY_TAKEN' });
     }
-    throw Object.assign(new Error('Batas API key tier kamu tercapai.'), { code: 'KEY_LIMIT' });
+    throw Object.assign(new Error('Jatah API key buat tier kamu udah penuh.'), { code: 'KEY_LIMIT' });
   }
   return { key: plain, record: { custom, ...saved[0] } };
 }
@@ -86,13 +86,13 @@ function durationHours(duration, days) {
     const d = Number(days);
     if (Number.isInteger(d) && d >= 1 && d <= 1000) return d * 24;
   }
-  throw Object.assign(new Error('Masa aktif tidak valid: pilih 12 jam, 1/3/7/14/30 hari, custom 1–1000 hari, atau tanpa batas.'), { code: 'INVALID_DURATION' });
+  throw Object.assign(new Error('Masa aktif nggak valid: pilih 12 jam, 1/3/7/14/30 hari, custom 1–1000 hari, atau tanpa batas.'), { code: 'INVALID_DURATION' });
 }
 
 const KEY_VISIBILITY = ['public', 'private', 'owner'];
 const OWNER_KEY_DEFAULT = 'Yannz2z';
 const migration011 = () => Object.assign(new Error('Fitur ini butuh migration 011_public_ids_key_access.sql. Jalankan dulu di database.'), { code: 'MIGRATION_REQUIRED' });
-const taken = () => Object.assign(new Error('Custom key ini sudah dipakai key lain. Pakai key yang berbeda.'), { code: 'CUSTOM_KEY_TAKEN' });
+const taken = () => Object.assign(new Error('Custom key ini udah dipakai key lain. Pakai yang lain ya.'), { code: 'CUSTOM_KEY_TAKEN' });
 
 function newKeyValue(customValue) {
   const custom = customValue !== null && customValue !== undefined && customValue !== '';
@@ -131,7 +131,7 @@ async function issueKey({ issuerId, userId, name, customValue = null, tier, hour
     );
   } catch (e) {
     if (e.code === '42703' || e.code === '42P01') throw kind ? migration011() : migrationRequired();
-    if (e.code === '23505' && (e.cause?.constraint === 'api_keys_one_owner_key_uidx' || (visibility === 'owner' && (await query("SELECT 1 FROM api_keys WHERE visibility='owner'")).length))) throw Object.assign(new Error('Developer key sudah ada. Pakai Reset/Regenerate untuk mengganti nilainya.'), { code: 'OWNER_KEY_EXISTS' });
+    if (e.code === '23505' && (e.cause?.constraint === 'api_keys_one_owner_key_uidx' || (visibility === 'owner' && (await query("SELECT 1 FROM api_keys WHERE visibility='owner'")).length))) throw Object.assign(new Error('Developer key udah ada. Pakai Reset/Regenerate buat ganti nilainya.'), { code: 'OWNER_KEY_EXISTS' });
     if (e.code === '23505') throw taken();
     throw e;
   }
@@ -245,7 +245,7 @@ async function ensureOwnerKey(ownerUser) {
 // Renew: extend from the later of now and the current expiry; or make the key permanent;
 // or change its tier ("ACCOUNT" = follow the account tier again).
 async function updateIssuedKey(id, { hours, permanent, tier, name }) {
-  if (tier !== undefined && tier !== 'ACCOUNT' && !KEY_TIERS.includes(tier)) throw Object.assign(new Error('Tier key tidak valid.'), { code: 'INVALID_TIER' });
+  if (tier !== undefined && tier !== 'ACCOUNT' && !KEY_TIERS.includes(tier)) throw Object.assign(new Error('Tier key nggak valid.'), { code: 'INVALID_TIER' });
   if (hours !== undefined && !(Number.isInteger(hours) && hours >= 1 && hours <= MAX_KEY_HOURS)) throw Object.assign(new Error('Perpanjangan maksimal 1000 hari.'), { code: 'INVALID_DURATION' });
   try {
     const rows = await query(

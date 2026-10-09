@@ -21,10 +21,10 @@ async function verify(token, remoteIp) {
     const r = await fetch(VERIFY_URL, { method: 'POST', body: form, signal: controller.signal });
     const data = await r.json().catch(() => ({}));
     if (r.ok && data.success === true) return { ok: true };
-    return { ok: false, status: 403, error: 'TURNSTILE_FAILED', message: 'Verifikasi keamanan gagal atau kedaluwarsa. Coba lagi.' };
+    return { ok: false, status: 403, error: 'TURNSTILE_FAILED', message: 'Verifikasi keamanan gagal atau udah kedaluwarsa. Coba lagi ya.' };
   } catch {
     // Fail closed: without a verdict the request is refused.
-    return { ok: false, status: 503, error: 'TURNSTILE_UNAVAILABLE', message: 'Verifikasi keamanan sedang tidak bisa dihubungi. Coba lagi sebentar lagi.' };
+    return { ok: false, status: 503, error: 'TURNSTILE_UNAVAILABLE', message: 'Verifikasi keamanan lagi nggak bisa dihubungi. Coba lagi bentar ya.' };
   } finally {
     clearTimeout(timer);
   }

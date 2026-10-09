@@ -3,9 +3,9 @@ const axios=require('axios');
 const METHODS=['payment_link','qris','bri_va','bni_va','cimb_niaga_va','permata_va','maybank_va','bnc_va','artha_graha_va','sampoerna_va'];
 const MINIMUM={payment_link:500,qris:500,bri_va:10000,bni_va:10000,cimb_niaga_va:10000,permata_va:10000,maybank_va:10000,bnc_va:10000,artha_graha_va:10000,sampoerna_va:10000};
 async function createTransaction(orderCode,method,amount){
- if(!METHODS.includes(method))throw Object.assign(new Error('Metode pembayaran tidak didukung.'),{code:'INVALID_PAYMENT_METHOD'});
- if(!Number.isInteger(Number(amount))||Number(amount)<MINIMUM[method])throw Object.assign(new Error('Nominal tidak memenuhi minimum metode pembayaran.'),{code:'INVALID_PAYMENT_AMOUNT'});
- if(!process.env.PAKASIR_PROJECT||!process.env.PAKASIR_API_KEY)throw Object.assign(new Error('Payment gateway belum dikonfigurasi.'),{code:'PAYMENT_NOT_CONFIGURED'});
+ if(!METHODS.includes(method))throw Object.assign(new Error('Metode pembayaran ini nggak didukung.'),{code:'INVALID_PAYMENT_METHOD'});
+ if(!Number.isInteger(Number(amount))||Number(amount)<MINIMUM[method])throw Object.assign(new Error('Nominalnya belum nyampe minimum metode pembayaran ini.'),{code:'INVALID_PAYMENT_AMOUNT'});
+ if(!process.env.PAKASIR_PROJECT||!process.env.PAKASIR_API_KEY)throw Object.assign(new Error('Payment gateway belum diatur.'),{code:'PAYMENT_NOT_CONFIGURED'});
  const url=`https://app.pakasir.com/api/v2/create-transaction/${encodeURIComponent(process.env.PAKASIR_PROJECT)}/${encodeURIComponent(orderCode)}`;
  const {data}=await axios.post(url,{method,amount:Number(amount)},{headers:{'X-Api-Key':process.env.PAKASIR_API_KEY},timeout:15000});return data;
 }

@@ -6,7 +6,7 @@
 const { query } = require('../lib/db');
 
 const TTL_MS = 5000;
-const DEFAULT_MESSAGE = 'Website sedang dalam maintenance. Silakan tunggu sampai maintenance selesai.';
+const DEFAULT_MESSAGE = 'Website lagi maintenance. Tunggu bentar sampai selesai ya.';
 let cached = null;
 let cachedAt = 0;
 
