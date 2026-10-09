@@ -46,6 +46,7 @@
     <button role="tab" data-tab="server">Server &amp; Pembayaran</button>
     <button role="tab" data-tab="activity">Activity</button>
     <button role="tab" data-tab="audit">Audit</button>
+    <button role="tab" data-tab="cdn">CDN</button>
     <button role="tab" data-tab="backup">Backup</button>
   </nav>
 
@@ -156,6 +157,13 @@ module.exports = async (req, res) =&gt; {
     <p class="muted" id="notify-state"></p>
   </section>
 
+  <section class="panel" id="tab-cdn" hidden>
+    <h2>CDN</h2>
+    <p class="muted">CDN itu fitur upload file di menu (bukan endpoint API). Di sini kamu bisa lihat semua file yang diupload, salin link-nya, atau hapus.</p>
+    <form class="row" id="cdn-filter"><input name="q" placeholder="Cari nama file, ID, atau email pengunggah" aria-label="Cari file CDN" style="flex:1;min-width:220px"><button class="primary" type="submit">Cari</button><a class="btn" href="/upload">Upload file</a></form>
+    <div id="cdn-data">Memuat…</div>
+  </section>
+
   <section class="panel" id="tab-backup" hidden>
     <h2>Backup</h2>
     <p class="muted">Jaga-jaga kalau website atau database bermasalah. Simpan file backup di tempat aman dan jangan dibagiin ke siapa pun, isinya data akun.</p>
@@ -177,7 +185,7 @@ module.exports = async (req, res) =&gt; {
       </div>
     </div>
     <h3 style="margin-top:26px">Kirim ke Gmail</h3>
-    <p class="muted"><small>Ketiga file di atas dikirim jadi lampiran ke email developer.</small></p>
+    <p class="muted"><small>Backup database (.sql dan JSON) dikirim jadi lampiran ke email developer. File web dikirim berupa link, soalnya Gmail nolak lampiran yang isinya file .js.</small></p>
     <div id="backup-status" class="muted"><small>Lagi dimuat…</small></div>
     <div class="row" style="margin-top:10px"><button class="primary" type="button" id="backup-email">Kirim backup ke Gmail sekarang</button></div>
     <p id="backup-msg" aria-live="polite"></p>
@@ -661,6 +669,33 @@ loaders.audit = async () => {
 };
 $('#audit-load').addEventListener('click', () => loaders.audit());
 
+// ---------- CDN files
+const size = n => n == null ? '—' : n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`;
+loaders.cdn = async () => {
+  try {
+    const d = await api('/owner/cdn?q=' + encodeURIComponent($('#cdn-filter [name=q]').value.trim()));
+    $('#cdn-data').innerHTML = `<p class="muted">${tr(`${d.totals.files} file · total ${size(d.totals.bytes)}`)}</p>` + (d.files.length
+      ? `<table><tr><th>File</th><th>Tipe</th><th>Ukuran</th><th>Pengunggah</th><th>Diupload</th><th>Link</th><th></th></tr>${d.files.map(f => `<tr>
+          <td data-no-i18n><b>${esc(f.name || f.id)}</b><br><small class="muted">${esc(f.id)}</small></td>
+          <td data-no-i18n><small>${esc(f.mime)}</small></td>
+          <td>${size(f.size)}</td>
+          <td data-no-i18n><small>${esc(f.owner_email || '—')}</small></td>
+          <td><small>${when(f.created_at)}${f.expires_at ? `<br>${tr('hapus otomatis')} ${when(f.expires_at)}` : ''}</small></td>
+          <td><a class="btn sm" href="${esc(f.url)}" target="_blank" rel="noopener">${tr('Buka')}</a> <button type="button" class="sm" data-cdn-copy="${esc(f.url)}">${tr('Salin link')}</button></td>
+          <td><button type="button" class="sm danger" data-cdn-del="${esc(f.id)}" data-cdn-name="${esc(f.name || f.id)}">${tr('Hapus')}</button></td></tr>`).join('')}</table>`
+      : `<p>${tr('Belum ada file yang diupload.')}</p>`);
+  } catch (e) { fail('#cdn-data', e); }
+};
+$('#cdn-filter').addEventListener('submit', e => { e.preventDefault(); loaders.cdn(); });
+$('#cdn-data').addEventListener('click', async e => {
+  const copy = e.target.closest('[data-cdn-copy]');
+  if (copy) { navigator.clipboard.writeText(copy.dataset.cdnCopy).then(() => { copy.textContent = tr('Tersalin ✓'); setTimeout(() => { copy.textContent = tr('Salin link'); }, 1400); }); return; }
+  const del = e.target.closest('[data-cdn-del]');
+  if (!del) return;
+  if (!ask(tr(`Hapus file "${del.dataset.cdnName}"? Link-nya bakal nggak bisa dibuka lagi.`))) return;
+  try { await send(`/owner/cdn/${encodeURIComponent(del.dataset.cdnDel)}`, 'DELETE'); loaders.cdn(); } catch (err) { say(err.message); }
+});
+
 // ---------- backup
 loaders.backup = async () => {
   try {
@@ -696,7 +731,7 @@ $('#backup-email').addEventListener('click', async () => {
   btn.disabled = true; msg.textContent = 'Lagi bikin backup & ngirim email… (bisa sampai semenit)';
   try {
     const d = await send('/owner/backup/email');
-    msg.innerHTML = `<span class="ok">Terkirim ke ${esc(d.to)}.</span><ul class="backup-checks">${d.parts.map(p => `<li>${p.attached ? '✅' : '⚠️'} ${esc(p.label)}: ${p.attached ? `${esc(p.filename)} (${(p.size / 1048576).toFixed(2)} MB)` : esc(p.error)}</li>`).join('')}</ul>`;
+    msg.innerHTML = `<span class="ok">Terkirim ke ${esc(d.to)}.</span><ul class="backup-checks">${d.parts.map(p => `<li>${p.attached ? '✅' : p.link ? '🔗' : '⚠️'} ${esc(p.label)}: ${p.attached ? `${esc(p.filename)} (${(p.size / 1048576).toFixed(2)} MB)` : p.link ? tr('dikirim berupa link') : esc(p.error)}</li>`).join('')}</ul>`;
   } catch (e) { msg.innerHTML = `<span class="error">${esc(e.message)}</span>`; }
   finally { btn.disabled = false; }
 });

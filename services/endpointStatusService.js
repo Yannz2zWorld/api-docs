@@ -16,7 +16,9 @@ const missing = e => e && (e.code === '42P01' || e.code === '42703');
 const safe = p => p.catch(e => { if (missing(e)) return []; throw e; });
 const norm = code => (code >= 200 && code < 400 ? 200 : code);
 
-async function list() {
+// `loaded`: paths of the endpoints that really exist (loaded plugins); leftover rows of removed
+// plugins in the endpoints table (e.g. the old CDN upload endpoint) are not endpoints.
+async function list(loaded = null) {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache.value;
   const [endpoints, traffic, checks] = await Promise.all([
     query('SELECT path, method, status FROM endpoints ORDER BY path'),
@@ -27,7 +29,7 @@ async function list() {
   ]);
   const live = new Map(traffic.map(r => [r.path, { code: norm(r.status), ms: r.duration_ms, at: new Date(r.created_at), source: 'live' }]));
   const checked = new Map(checks.map(r => [r.path, { code: r.status ? norm(r.status) : 503, ms: r.ms, at: new Date(r.checked_at), source: 'check' }]));
-  const out = endpoints.map(e => {
+  const out = endpoints.filter(e => !loaded || loaded.has(e.path)).map(e => {
     const base = { path: e.path, method: (e.method || 'GET').toUpperCase() };
     if (e.status && e.status !== 'active') return { ...base, state: 'down', code: 503, ms: null, at: null, source: 'off' };
     const a = live.get(e.path), b = checked.get(e.path);

@@ -1058,8 +1058,8 @@ router.post('/owner/api/selftest', sameOrigin, auth, owner, async (req, res) => 
 // Public: the latest real status of every endpoint, for the ~/endpoints monitor on the dashboard.
 router.get('/api/endpoints/status', async (req, res) => {
   try {
-    const data = await endpointStatus.list();
-    res.set('Cache-Control', 'public, max-age=15');
+    const data = await endpointStatus.list(req.app.locals.loadedPluginPaths);
+    res.set('Cache-Control', 'no-store');   // right after a check the new codes must show
     return res.json({ success: true, ...data });
   } catch (e) {
     return fail(res, 503, 'STATUS_UNAVAILABLE', 'Status endpoint lagi nggak bisa dimuat.');
@@ -1068,10 +1068,17 @@ router.get('/api/endpoints/status', async (req, res) => {
 
 // Automatic check, asked for by the dashboard monitor: checks the few endpoints whose last check is
 // old (each endpoint at most once per 6 hours when OK, 30 minutes when failing, whoever asks).
+// With {"force": true} (the Refresh button, signed-in only) everything is checked again except what
+// was checked in the last 5 minutes.
 router.post('/api/endpoints/autocheck', async (req, res) => {
   if (req.get('x-yannz-client') !== 'web') return fail(res, 403, 'WEB_ONLY', 'Cuma bisa dari website.');
+  const force = req.body?.force === true;
+  let session = null;
+  try { session = req.app.locals.getSession(req); } catch {}
+  if (force && !session) return fail(res, 401, 'AUTH_REQUIRED', 'Login dulu buat ngecek ulang.');
   try {
-    const checked = await endpointChecks.checkStale(req.app, 6);
+    const f = endpointChecks.FORCE_AFTER_MS;
+    const checked = await endpointChecks.checkStale(req.app, 6, force ? { okAfterMs: f, failAfterMs: f } : undefined);
     return res.json({ success: true, checked });
   } catch (e) {
     console.error('Automatic endpoint check failed:', { code: e?.code || null });
@@ -1268,6 +1275,34 @@ async function settleManual(req, res, approve) {
 router.post('/owner/payments/:id/approve', sameOrigin, auth, owner, validId('id'), (req, res) => settleManual(req, res, true));
 router.post('/owner/payments/:id/reject', sameOrigin, auth, owner, validId('id'), (req, res) => settleManual(req, res, false));
 
+// ---------------------------------------------------------------- owner: CDN files
+// The CDN is the upload feature in the menu (/upload), not an API endpoint; the developer sees and
+// manages the uploaded files here.
+router.get('/owner/cdn', auth, owner, async (req, res) => {
+  const q = String(req.query.q || '').trim().slice(0, 100);
+  const sql = cols => `SELECT c.id, c.name, c.mime, c.size, c.created_at, c.expires_at, ${cols} u.email AS owner_email
+      FROM cdn_files c LEFT JOIN users u ON u.id = c.owner_id
+     WHERE ($1 = '' OR c.id ILIKE '%' || $1 || '%' OR c.name ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%')
+     ORDER BY c.created_at DESC LIMIT 200`;
+  try {
+    let rows;
+    try { rows = await query(sql('c.storage, c.ready,'), [q]); }
+    catch (e) { if (e.code !== '42703') throw e; rows = await query(sql(''), [q]); }
+    const totals = (await query('SELECT count(*)::int AS files, COALESCE(sum(size),0)::bigint AS bytes FROM cdn_files'))[0];
+    return res.json({ success: true, totals: { files: totals.files, bytes: Number(totals.bytes) }, files: rows.map(r => ({ ...r, url: cdn.absoluteUrl(req, r.id) })) });
+  } catch (e) {
+    if (migrationMissing(e)) return res.json({ success: true, totals: { files: 0, bytes: 0 }, files: [] });
+    return fail(res, 503, 'CDN_UNAVAILABLE', 'Daftar file CDN lagi nggak bisa dimuat.');
+  }
+});
+router.delete('/owner/cdn/:id', sameOrigin, auth, owner, async (req, res) => {
+  if (!cdn.isValidId(req.params.id)) return fail(res, 400, 'INVALID_ID', 'ID file nggak valid.');
+  const r = await query('DELETE FROM cdn_files WHERE id = $1 RETURNING id, name, size', [req.params.id]);
+  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'File-nya nggak ketemu.');
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'cdn_delete', targetType: 'cdn_file', targetId: r[0].id, metadata: { name: r[0].name, size: r[0].size }, ipAddress: ip(req) });
+  return res.json({ success: true, deleted: r[0].id });
+});
+
 // ---------------------------------------------------------------- owner: server, audit, backup
 router.get('/owner/server', auth, owner, async (req, res) => {
   const r = await query('SELECT to_jsonb(server_settings.*) AS s FROM server_settings WHERE id=1');
@@ -1342,7 +1377,9 @@ async function sendBackupFile(req, res, file) {
   if (file.raw.length > DOWNLOAD_LIMIT) return fail(res, 413, 'BACKUP_TOO_BIG', 'Backup-nya kegedean buat diunduh langsung. Pakai tombol "Kirim ke Gmail" aja.');
   return res.end(file.raw);
 }
-const backupFail = (res, e) => (e.status ? fail(res, e.status, e.code, e.message) : fail(res, 503, 'BACKUP_FAILED', 'Backup gagal dibuat. Coba lagi bentar.'));
+const backupFail = (res, e) => (e.status ? fail(res, e.status, e.code, e.message)
+  : e.code === 'EMAIL_SEND_FAILED' ? fail(res, 502, 'EMAIL_SEND_FAILED', `Backup-nya udah jadi, tapi email gagal dikirim: ${e.reason || 'server email nolak pesannya.'}`)
+  : fail(res, 503, 'BACKUP_FAILED', 'Backup gagal dibuat. Coba lagi bentar.'));
 
 router.get('/owner/backup/status', auth, owner, (req, res) => res.json({
   success: true,

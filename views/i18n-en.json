@@ -524,7 +524,6 @@
   "Unduh .zip": "Download .zip",
   "Unduh .json": "Download .json",
   "Kirim ke Gmail": "Send to Gmail",
-  "Ketiga file di atas dikirim jadi lampiran ke email developer.": "All three files above are sent as attachments to the developer's email.",
   "Kirim backup ke Gmail sekarang": "Send backup to Gmail now",
   "Filter action, misal user_ban": "Filter by action, e.g. user_ban",
   "Nama key (kosongin = nggak diubah)": "Key name (empty = unchanged)",
@@ -904,9 +903,51 @@
   "sama isi parameternya.": "with the parameter values.",
   "Semua endpoint dicek otomatis:": "Every endpoint is checked automatically:",
   "hijau artinya jalan, kode merah artinya lagi bermasalah (misal": "in green means it works, a red code means it's having trouble (e.g.",
-  "server lagi nggak tersedia). Kodenya diambil dari cek otomatis dan request asli 24 jam terakhir.": "the server is unavailable right now). Codes come from the automatic checks and real requests in the last 24 hours."
+  "server lagi nggak tersedia). Kodenya diambil dari cek otomatis dan request asli 24 jam terakhir.": "the server is unavailable right now). Codes come from the automatic checks and real requests in the last 24 hours.",
+  "Backup database (.sql dan JSON) dikirim jadi lampiran ke email developer. File web dikirim berupa link, soalnya Gmail nolak lampiran yang isinya file .js.": "The database backups (.sql and JSON) are sent as attachments to the developer's email. Web files are sent as a link, because Gmail refuses attachments that contain .js files.",
+  "dikirim berupa link": "sent as a link",
+  "Gmail nolak lampirannya (dianggap berbahaya).": "Gmail refused the attachments (flagged as unsafe).",
+  "Lampirannya kegedean buat Gmail.": "The attachments are too large for Gmail.",
+  "Login SMTP ditolak: cek SMTP_USER dan SMTP_PASS (Gmail App Password).": "SMTP login refused: check SMTP_USER and SMTP_PASS (Gmail App Password).",
+  "Server email kelamaan nggak nyahut.": "The email server took too long to respond.",
+  "Nggak bisa nyambung ke server email.": "Couldn't connect to the email server.",
+  "Server email nolak pesannya.": "The email server refused the message.",
+  "CDN itu fitur upload file di menu (bukan endpoint API). Di sini kamu bisa lihat semua file yang diupload, salin link-nya, atau hapus.": "The CDN is the file upload feature in the menu (not an API endpoint). Here you can see every uploaded file, copy its link or delete it.",
+  "Cari nama file, ID, atau email pengunggah": "Search by file name, ID or uploader email",
+  "Cari file CDN": "Search CDN files",
+  "Upload file": "Upload a file",
+  "Tipe": "Type",
+  "Ukuran": "Size",
+  "Pengunggah": "Uploader",
+  "Diupload": "Uploaded",
+  "hapus otomatis": "auto-deleted",
+  "Salin link": "Copy link",
+  "Belum ada file yang diupload.": "No files uploaded yet.",
+  "↓ Terbaru": "↓ Latest",
+  "Cek ulang semua endpoint sekarang": "Check every endpoint again now",
+  "Login dulu buat ngecek ulang.": "Log in first to check again.",
+  "Cuma bisa dari website.": "Only from the website.",
+  "Daftar file CDN lagi nggak bisa dimuat.": "Couldn't load the CDN file list.",
+  "ID file nggak valid.": "Invalid file ID.",
+  "File-nya nggak ketemu.": "File not found."
  },
  "patterns": [
+  [
+   "^Hapus file \"(.+)\"\\? Link-nya bakal nggak bisa dibuka lagi\\.$",
+   "Delete the file \"$1\"? Its link will stop working."
+  ],
+  [
+   "^(\\d+) file · total (.+)$",
+   "$1 files · $2 total"
+  ],
+  [
+   "^Server email nolak \\(kode (\\d+)\\)\\.$",
+   "The email server refused it (code $1)."
+  ],
+  [
+   "^Backup-nya udah jadi, tapi email gagal dikirim: (.+?)(?: \\(EMAIL_SEND_FAILED\\))?$",
+   "The backup is ready, but the email couldn't be sent: {{$1}}"
+  ],
   [
    "^Pilih endpoint: (.+)$",
    "Choose endpoint: $1"

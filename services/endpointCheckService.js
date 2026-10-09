@@ -107,7 +107,7 @@ async function checkAll(app, { only = null, timeoutMs = theresav.UPSTREAM_TIMEOU
 
 // Automatic check: up to `limit` endpoints whose last check is old, oldest first. The pick and the
 // claim are one statement with SKIP LOCKED, so visitors asking at the same time get different ones.
-async function checkStale(app, limit = 6) {
+async function checkStale(app, limit = 6, { okAfterMs = OK_STALE_MS, failAfterMs = FAIL_STALE_MS } = {}) {
   const items = checkable(app);
   if (!items.size) return [];
   let claimed;
@@ -125,7 +125,7 @@ async function checkStale(app, limit = 6) {
          LIMIT $2
          FOR UPDATE SKIP LOCKED)
       UPDATE endpoint_checks c SET claimed_at = now() FROM due WHERE c.path = due.path RETURNING c.path`,
-    [paths, limit, `${OK_STALE_MS / 1000} seconds`, `${FAIL_STALE_MS / 1000} seconds`])).map(r => r.path);
+    [paths, limit, `${Math.round(okAfterMs / 1000)} seconds`, `${Math.round(failAfterMs / 1000)} seconds`])).map(r => r.path);
   } catch (e) { if (missing(e)) return []; throw e; }
   const mine = claimed.map(p => items.get(p)).filter(Boolean);
   if (!mine.length) return [];
@@ -134,4 +134,7 @@ async function checkStale(app, limit = 6) {
   return out.map(r => ({ path: r.path, code: codeOf(r), ms: r.ms ?? null }));
 }
 
-module.exports = { checkAll, checkStale, codeOf, sampleImage, LOCAL_SAMPLES };
+// "Refresh" on the dashboard: check everything again, except what was checked in the last 5 minutes.
+const FORCE_AFTER_MS = 5 * 60 * 1000;
+
+module.exports = { checkAll, checkStale, codeOf, sampleImage, LOCAL_SAMPLES, FORCE_AFTER_MS };

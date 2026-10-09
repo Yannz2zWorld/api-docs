@@ -72,7 +72,7 @@ async function sendViaSmtp(message) {
       auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
       connectionTimeout: 10000,
       greetingTimeout: 10000,
-      socketTimeout: 15000
+      socketTimeout: 120000   // backups attach several MB
     });
   }
   await transporter.sendMail(message);
@@ -106,9 +106,21 @@ async function sendMail({ to, subject, text, html, attachments = [] }) {
       await sendViaSmtp({ from, to, subject, text, html, attachments: attachments.map(a => ({ filename: a.filename, content: a.content, contentType: a.contentType })) });
     }
   } catch (err) {
-    console.error('Email send failed:', { provider: kind, code: err?.code || null, status: err?.status || err?.responseCode || null });
-    throw Object.assign(new Error('Email gagal dikirim.'), { code: 'EMAIL_SEND_FAILED' });
+    const status = err?.status || err?.responseCode || null;
+    console.error('Email send failed:', { provider: kind, code: err?.code || null, status });
+    throw Object.assign(new Error('Email gagal dikirim.'), { code: 'EMAIL_SEND_FAILED', reason: reasonOf(err, status) });
   }
+}
+
+// Short, readable reason for the developer (never the address, the content or credentials).
+function reasonOf(err, status) {
+  const text = String(err?.response || err?.message || '');
+  if (/5\.7\.0|security issue|blocked/i.test(text)) return 'Gmail nolak lampirannya (dianggap berbahaya).';
+  if (/size|too large|5\.3\.4|552/i.test(text) || status === 552 || status === 413) return 'Lampirannya kegedean buat Gmail.';
+  if (/auth|535|534|Username and Password/i.test(text) || err?.code === 'EAUTH' || status === 535) return 'Login SMTP ditolak: cek SMTP_USER dan SMTP_PASS (Gmail App Password).';
+  if (/timeout|timed out/i.test(text) || err?.code === 'ETIMEDOUT' || err?.code === 'ESOCKET') return 'Server email kelamaan nggak nyahut.';
+  if (err?.code === 'ECONNECTION' || err?.code === 'EDNS') return 'Nggak bisa nyambung ke server email.';
+  return status ? `Server email nolak (kode ${status}).` : 'Server email nolak pesannya.';
 }
 
 module.exports = { sendCode, sendMail, isConfigured, status, SENDER_NAME };

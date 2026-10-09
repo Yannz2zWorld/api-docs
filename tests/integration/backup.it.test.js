@@ -122,7 +122,7 @@ it('web files backup redirects to the GitHub zip of the repo', async () => {
   assert.deepEqual([bad.status, bad.json.error], [503, 'GITHUB_AUTH']);
 });
 
-it('"Kirim ke Gmail" emails the three backups to OWNER_EMAIL', async () => {
+it('"Kirim ke Gmail" emails the database backups to OWNER_EMAIL; web files go as a link (Gmail refuses .js in attachments)', async () => {
   const st = await get('/owner/backup/status', owner);
   assert.deepEqual([st.json.email.configured, st.json.daily.enabled, st.json.github.token], [true, true, true]);
   assert.ok(!st.text.includes('gh-test-token') && !st.text.includes('cron-secret-123'));
@@ -133,20 +133,23 @@ it('"Kirim ke Gmail" emails the three backups to OWNER_EMAIL', async () => {
   const m = sent[0];
   assert.equal(m.to, h.OWNER_EMAIL);
   assert.match(m.subject, /^Backup Yannz API/);
-  assert.deepEqual(m.attachments.map(a => a.filename.replace(/\d{4}-\d{2}-\d{2}/, 'D')), ['yannz-db-D.sql', 'yannz-db-D.json', 'yannz-web-D.zip']);
+  assert.deepEqual(m.attachments.map(a => a.filename.replace(/\d{4}-\d{2}-\d{2}/, 'D')), ['yannz-db-D.sql', 'yannz-db-D.json']);
+  assert.ok(!m.attachments.some(a => /\.zip$/.test(a.filename)), 'no zip full of .js files');
+  assert.match(m.text, /File web: Unduh lewat link .*\/owner\/backup\/web/);
   assert.match(m.attachments[0].content.toString(), /INSERT INTO "users"/);
   assert.equal(JSON.parse(m.attachments[1].content.toString()).version, 2);
-  assert.deepEqual(m.attachments[2].content, ZIP);
-  assert.deepEqual(r.json.parts.map(p => p.attached), [true, true, true]);
+  assert.equal(gh.length, 0, 'GitHub is not even contacted for the email');
+  assert.deepEqual(r.json.parts.map(p => [p.attached, !!p.link]), [[true, false], [true, false], [false, true]]);
 });
 
-it('a failing part is reported in the email instead of stopping the others', async () => {
-  githubStatus = 404;
-  const r = await app.request('POST', '/owner/backup/email', { cookie: owner, headers: { origin: app.origin } });
-  assert.equal(r.status, 200, r.text);
-  assert.equal(sent[0].attachments.length, 2);
-  assert.match(sent[0].text, /✘ File web: Repo\/branch GitHub nggak ketemu/);
-  assert.deepEqual(r.json.parts.map(p => p.attached), [true, true, false]);
+it('when the email provider refuses, the developer sees why', async () => {
+  const realSend = emailService.sendMail;
+  emailService.sendMail = async () => { throw Object.assign(new Error('Email gagal dikirim.'), { code: 'EMAIL_SEND_FAILED', reason: 'Gmail nolak lampirannya (dianggap berbahaya).' }); };
+  try {
+    const r = await app.request('POST', '/owner/backup/email', { cookie: owner, headers: { origin: app.origin } });
+    assert.deepEqual([r.status, r.json.error], [502, 'EMAIL_SEND_FAILED']);
+    assert.match(r.json.message, /email gagal dikirim: Gmail nolak lampirannya/);
+  } finally { emailService.sendMail = realSend; }
 });
 
 it('the daily cron needs the CRON_SECRET bearer token', async () => {
