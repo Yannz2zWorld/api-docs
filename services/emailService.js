@@ -93,4 +93,22 @@ async function sendCode({ to, name, code, purpose, minutes }) {
   }
 }
 
-module.exports = { sendCode, isConfigured, status, SENDER_NAME };
+// Any other email from the site (e.g. backups for the developer), with optional attachments:
+// [{ filename, content: Buffer, contentType }].
+async function sendMail({ to, subject, text, html, attachments = [] }) {
+  const kind = provider();
+  if (!kind) throw Object.assign(new Error('Email belum dikonfigurasi.'), { code: 'EMAIL_NOT_CONFIGURED' });
+  const from = `${SENDER_NAME} <${process.env.EMAIL_FROM}>`;
+  try {
+    if (kind === 'resend') {
+      await sendViaResend({ from, to: [to], subject, text, html, attachments: attachments.map(a => ({ filename: a.filename, content: Buffer.from(a.content).toString('base64'), content_type: a.contentType })) });
+    } else {
+      await sendViaSmtp({ from, to, subject, text, html, attachments: attachments.map(a => ({ filename: a.filename, content: a.content, contentType: a.contentType })) });
+    }
+  } catch (err) {
+    console.error('Email send failed:', { provider: kind, code: err?.code || null, status: err?.status || err?.responseCode || null });
+    throw Object.assign(new Error('Email gagal dikirim.'), { code: 'EMAIL_SEND_FAILED' });
+  }
+}
+
+module.exports = { sendCode, sendMail, isConfigured, status, SENDER_NAME };

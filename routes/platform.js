@@ -20,6 +20,7 @@ const pluginService = require('../services/githubPluginService');
 const theresav = require('../lib/theresav');
 const apiproxy = require('../lib/apiproxy');
 const cdn = require('../services/cdnService');
+const backups = require('../services/backupService');
 
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
@@ -186,6 +187,27 @@ router.post('/cdn/upload/finish', sameOrigin, auth, async (req, res) => {
     const f = await cdn.finishLarge({ id: String(req.body?.id || ''), ownerId: req.account.id });
     return res.json(resultJson(req, f));
   } catch (e) { return cdnFail(res, e); }
+});
+
+// ---------------------------------------------------------------- last opened endpoints (dashboard)
+// The endpoints this account called most recently (Sandbox, Playground or its API keys), newest
+// first, from activity_log (migration 009). Endpoints since removed from the registry are skipped.
+router.get('/api/me/recent-endpoints', auth, async (req, res) => {
+  const limit = Math.max(1, Math.min(20, Number(req.query.limit) || 9));
+  const sql = cols => `SELECT l.path, max(l.created_at) AS last_at, count(*)::int AS calls, ${cols}
+      FROM activity_log l JOIN endpoints e ON e.path = l.path
+     WHERE l.user_id = $1 AND l.kind = 'api' AND l.created_at > now() - interval '90 days'
+     GROUP BY l.path, ${cols}
+     ORDER BY max(l.created_at) DESC LIMIT ${limit}`;
+  try {
+    let rows;
+    try { rows = await query(sql('e.name, e.minimum_tier, e.locked, e.status, e.badge'), [req.account.id]); }
+    catch (e) { if (e.code !== '42703') throw e; rows = await query(sql('e.name, e.minimum_tier, e.locked, e.status'), [req.account.id]); }   // before migration 015
+    return res.json({ success: true, endpoints: rows.map(r => ({ path: r.path, name: r.name, minimumTier: r.minimum_tier, locked: r.locked, status: r.status, badge: r.badge || null, lastAt: r.last_at, calls: r.calls })) });
+  } catch (e) {
+    if (migrationMissing(e)) return res.json({ success: true, endpoints: [] });
+    return fail(res, 503, 'RECENT_UNAVAILABLE', 'Riwayat endpoint lagi nggak bisa dimuat.');
+  }
 });
 
 // ---------------------------------------------------------------- profile
@@ -1113,20 +1135,26 @@ async function createPluginEndpoint(req, res) {
   });
 }
 
+const ENDPOINT_BADGES = ['new', 'hot', 'recommend'];
 router.patch('/owner/api/endpoints/:id', sameOrigin, auth, owner, validId('id'), async (req, res) => {
   const b = req.body || {};
   const bad = (b.name !== undefined && (typeof b.name !== 'string' || !b.name.trim()))
     || (b.description !== undefined && typeof b.description !== 'string')
     || (b.minimum_tier !== undefined && !tiers.TIERS[b.minimum_tier])
     || (b.locked !== undefined && typeof b.locked !== 'boolean')
-    || (b.status !== undefined && !['active', 'disabled'].includes(b.status));
+    || (b.status !== undefined && !['active', 'disabled'].includes(b.status))
+    || (b.badge !== undefined && b.badge !== null && b.badge !== '' && !ENDPOINT_BADGES.includes(b.badge));
   if (bad) return fail(res, 400, 'INVALID_ENDPOINT', 'Data endpoint tidak valid.');
+  if (b.badge !== undefined) {   // label in the catalog: new / hot / recommend, or none
+    try { await query('UPDATE endpoints SET badge=$2,updated_at=now() WHERE id=$1', [req.params.id, b.badge || null]); }
+    catch (e) { if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Jalankan migrasi 015_endpoint_badges.sql dulu di Neon.'); throw e; }
+  }
   const r = await query(
     'UPDATE endpoints SET name=COALESCE($2,name),description=COALESCE($3,description),minimum_tier=COALESCE($4,minimum_tier),locked=COALESCE($5,locked),status=COALESCE($6,status),updated_at=now() WHERE id=$1 RETURNING *',
     [req.params.id, b.name?.trim().slice(0, 100) ?? null, b.description?.slice(0, 500) ?? null, b.minimum_tier ?? null, b.locked ?? null, b.status ?? null]
   );
   if (!r.length) return fail(res, 404, 'NOT_FOUND', 'Endpoint tidak ditemukan.');
-  const changes = Object.fromEntries(['name', 'description', 'minimum_tier', 'locked', 'status'].filter(k => b[k] !== undefined).map(k => [k, b[k]]));
+  const changes = Object.fromEntries(['name', 'description', 'minimum_tier', 'locked', 'status', 'badge'].filter(k => b[k] !== undefined).map(k => [k, b[k]]));
   await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_update', targetType: 'endpoint', targetId: req.params.id, metadata: changes, ipAddress: ip(req) });
   res.json({ success: true, endpoint: withHandler(req, r[0]) });
 });
@@ -1256,16 +1284,84 @@ router.get('/owner/audit', auth, owner, async (req, res) => {
   res.json({ success: true, logs: await query("SELECT a.*,u.email AS actor_email FROM audit_logs a LEFT JOIN users u ON u.id=a.actor_user_id WHERE ($1='' OR a.action=$1) ORDER BY a.created_at DESC LIMIT 300", [action]) });
 });
 
-router.get('/owner/backup', auth, owner, async (req, res) => {
-  const names = ['users', 'api_keys', 'endpoints', 'orders', 'payments', 'audit_logs', 'server_settings'];
-  const backup = { generatedAt: new Date().toISOString(), version: 1, data: {} };
-  for (const table of names) {
-    backup.data[table] = await query(table === 'api_keys' ? 'SELECT id,user_id,name,key_hash,key_prefix,status,last_used_at,created_at,revoked_at FROM api_keys' : `SELECT * FROM ${table}`);
-  }
-  await audit.writeAudit({ actorUserId: req.account.id, action: 'backup_create', targetType: 'backup', ipAddress: ip(req) });
-  res.setHeader('Content-Disposition', `attachment; filename="yannz-api-backup-${new Date().toISOString().slice(0, 10)}.json"`);
+// Backups (services/backupService.js). Downloads go out gzip-encoded so the file the browser saves
+// is plain .sql / .json while the response stays under Vercel's 4.5 MB limit.
+const DOWNLOAD_LIMIT = 4.3 * 1024 * 1024;
+async function sendBackupFile(req, res, file) {
+  const body = await backups.gzip(file.raw, { level: 9 });
+  if (body.length > DOWNLOAD_LIMIT) return fail(res, 413, 'BACKUP_TOO_BIG', `Backup-nya ${(body.length / 1048576).toFixed(1)} MB, kegedean buat diunduh langsung. Pakai tombol "Kirim ke Gmail" aja.`);
+  res.setHeader('Content-Type', file.contentType);
+  res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
   res.setHeader('Cache-Control', 'no-store');
-  res.json(backup);
+  if (/\bgzip\b/.test(String(req.headers['accept-encoding'] || ''))) {
+    res.setHeader('Content-Encoding', 'gzip');
+    res.setHeader('Vary', 'Accept-Encoding');
+    return res.end(body);
+  }
+  if (file.raw.length > DOWNLOAD_LIMIT) return fail(res, 413, 'BACKUP_TOO_BIG', 'Backup-nya kegedean buat diunduh langsung. Pakai tombol "Kirim ke Gmail" aja.');
+  return res.end(file.raw);
+}
+const backupFail = (res, e) => (e.status ? fail(res, e.status, e.code, e.message) : fail(res, 503, 'BACKUP_FAILED', 'Backup gagal dibuat. Coba lagi bentar.'));
+
+router.get('/owner/backup/status', auth, owner, (req, res) => res.json({
+  success: true,
+  email: { configured: emailService.isConfigured(), to: process.env.OWNER_EMAIL ? process.env.OWNER_EMAIL.replace(/^(.{2}).*(@.*)$/, '$1***$2') : null },
+  github: { token: !!process.env.GITHUB_TOKEN, repo: process.env.GITHUB_REPO || 'Yannz2zWorld/api-docs', branch: process.env.GITHUB_BRANCH || 'main' },
+  daily: { enabled: !!process.env.CRON_SECRET }
+}));
+
+router.get(['/owner/backup', '/owner/backup/json'], auth, owner, async (req, res) => {
+  try {
+    const file = await backups.jsonBackup();
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'backup_create', targetType: 'backup', metadata: { kind: 'json' }, ipAddress: ip(req) });
+    return sendBackupFile(req, res, file);
+  } catch (e) { return backupFail(res, e); }
+});
+
+router.get('/owner/backup/database', auth, owner, async (req, res) => {
+  try {
+    const file = await backups.databaseBackup();
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'backup_create', targetType: 'backup', metadata: { kind: 'database' }, ipAddress: ip(req) });
+    return sendBackupFile(req, res, file);
+  } catch (e) { return backupFail(res, e); }
+});
+
+router.get('/owner/backup/web', auth, owner, async (req, res) => {
+  try {
+    const url = await backups.webZipUrl();
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'backup_create', targetType: 'backup', metadata: { kind: 'web' }, ipAddress: ip(req) });
+    res.setHeader('Cache-Control', 'no-store');
+    return res.redirect(302, url);
+  } catch (e) {
+    if (req.accepts(['html', 'json']) === 'html') return res.status(e.status || 503).type('text/plain; charset=utf-8').send(e.status ? e.message : 'Backup file web gagal dibuat.');
+    return backupFail(res, e);
+  }
+});
+
+router.post('/owner/backup/email', auth, owner, async (req, res) => {
+  try {
+    const result = await backups.sendToOwner({ reason: 'manual' });
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'backup_email', targetType: 'backup', metadata: { parts: result.parts.map(p => ({ label: p.label, attached: p.attached })) }, ipAddress: ip(req) });
+    return res.json({ success: true, ...result });
+  } catch (e) { return backupFail(res, e); }
+});
+
+// Daily automatic backup to the owner's Gmail (vercel.json "crons"). Vercel calls it with
+// "Authorization: Bearer <CRON_SECRET>"; without CRON_SECRET set it does nothing.
+router.get('/cron/backup', async (req, res) => {
+  const secret = process.env.CRON_SECRET || '';
+  if (!secret) return fail(res, 503, 'CRON_NOT_CONFIGURED', 'Set CRON_SECRET di Vercel untuk backup otomatis harian.');
+  const given = Buffer.from(String(req.headers.authorization || ''));
+  const want = Buffer.from(`Bearer ${secret}`);
+  if (given.length !== want.length || !crypto.timingSafeEqual(given, want)) return fail(res, 401, 'UNAUTHORIZED', 'Unauthorized.');
+  try {
+    const result = await backups.sendToOwner({ reason: 'cron' });
+    await audit.writeAudit({ actorUserId: null, action: 'backup_email', targetType: 'backup', metadata: { auto: true, parts: result.parts.map(p => ({ label: p.label, attached: p.attached })) }, ipAddress: ip(req) });
+    return res.json({ success: true, parts: result.parts });
+  } catch (e) {
+    console.error('Daily backup failed:', { code: e.code || null });
+    return backupFail(res, e);
+  }
 });
 
 // ---------------------------------------------------------------- Pakasir webhook

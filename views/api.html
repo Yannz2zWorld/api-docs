@@ -110,6 +110,7 @@
 </main>
 <script>
 const $ = s => document.querySelector(s);
+const epBadge = b => { const m = { new: ['🍃', 'New'], hot: ['🔥', 'Hot'], recommend: ['👍', 'Recommend'] }[b]; return m ? `<span class="ep-badge ep-badge--${b}"><span class="ep-badge-ic" aria-hidden="true">${m[0]}</span>${m[1]}</span>` : ''; };
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = n => Number(n || 0).toLocaleString('id-ID');
 let allEndpoints = {};
@@ -159,7 +160,7 @@ function selectEndpoint(api, category) {
   $('#active-api-desc').textContent = api.desc || '';
   const tier = (t => (t === 'OWNER' ? 'DEVELOPER' : t))(api.access?.minimum_tier || 'FREE');
   const state = api.access?.status && api.access.status !== 'active' ? ['nonaktif', 'bad'] : api.access?.locked ? ['terkunci', 'warn'] : ['aktif', 'ok'];
-  $('#active-api-chips').innerHTML = `<span class="chip">${esc(category)}</span><span class="chip">tier ${esc(tier)}</span><span class="chip ${state[1]}">${state[0]}</span>`;
+  $('#active-api-chips').innerHTML = `<span class="chip">${esc(category)}</span><span class="chip">tier ${esc(tier)}</span><span class="chip ${state[1]}">${state[0]}</span>${epBadge(api.access?.badge)}`;
   const params = paramsOf(api);
   $('#params-form').innerHTML = params.length
     ? params.map(p => p.type === 'file'

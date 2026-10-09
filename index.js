@@ -612,7 +612,7 @@ const sortedEndpoints = Object.keys(rawEndpoints)
   }, {});
 
 app.get('/api/endpoints', async (req, res) => {
-  try { const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints')]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.map(item=>({...item,access:meta[item.cleanPath]||null}))])); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
+  try { const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description,badge FROM endpoints').catch(e=>{if(e.code!=='42703')throw e;return query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints');})]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.map(item=>({...item,access:meta[item.cleanPath]||null}))])); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
   catch { return res.status(503).json({success:false,error:'ENDPOINTS_UNAVAILABLE',message:'Katalog sementara tidak tersedia.'}); }
 });
 

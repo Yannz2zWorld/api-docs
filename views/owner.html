@@ -22,6 +22,12 @@
   .ep-new .actions { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .ep-new .actions p { margin: 0; }
   @media (max-width: 720px) { .ep-new { grid-template-columns: 1fr; } }
+  .backup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 14px; }
+  .backup-card { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); }
+  .backup-card h3 { margin: 0; }
+  .backup-card p { flex: 1; margin: 0; }
+  .backup-checks { margin: 6px 0 0; padding-left: 0; list-style: none; display: grid; gap: 6px; }
+  #backup-msg .ok { color: var(--ok); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -39,7 +45,7 @@
     <button role="tab" data-tab="server">Server &amp; Pembayaran</button>
     <button role="tab" data-tab="activity">Activity</button>
     <button role="tab" data-tab="audit">Audit</button>
-    <a class="btn" href="/owner/backup">Backup JSON</a>
+    <button role="tab" data-tab="backup">Backup</button>
   </nav>
 
   <section class="panel" id="tab-status"><h2>System status</h2><div id="status-data"><p class="loading">Memuat status…</p></div></section>
@@ -147,6 +153,33 @@ module.exports = async (req, res) =&gt; {
     <div class="row" style="margin-top:10px"><button class="primary" id="save-pay" type="button">Simpan rekening</button></div>
     <p id="pay-msg" aria-live="polite"></p>
     <p class="muted" id="notify-state"></p>
+  </section>
+
+  <section class="panel" id="tab-backup" hidden>
+    <h2>Backup</h2>
+    <p class="muted">Jaga-jaga kalau website atau database bermasalah. Simpan file backup di tempat aman dan jangan dibagiin ke siapa pun, isinya data akun.</p>
+    <div class="backup-grid">
+      <div class="backup-card">
+        <h3>Backup database</h3>
+        <p class="muted"><small>File <code>.sql</code> berisi semua tabel &amp; data. Ini yang dipakai buat balikin database: jalankan dulu semua <code>migrations/*.sql</code>, terus jalankan file ini di SQL Editor Neon.</small></p>
+        <button class="primary" type="button" data-backup="database">Unduh .sql</button>
+      </div>
+      <div class="backup-card">
+        <h3>Backup file web</h3>
+        <p class="muted"><small>File <code>.zip</code> berisi semua kode website (diambil dari repo GitHub). Kalau web-nya rusak, tinggal upload/deploy ulang isi zip ini.</small></p>
+        <button class="primary" type="button" data-backup="web">Unduh .zip</button>
+      </div>
+      <div class="backup-card">
+        <h3>Backup JSON</h3>
+        <p class="muted"><small>Data yang sama kayak backup database, tapi dalam bentuk JSON. Gampang dibuka &amp; dibaca (misal buat cek data user atau pembayaran), tapi bukan buat restore.</small></p>
+        <button class="primary" type="button" data-backup="json">Unduh .json</button>
+      </div>
+    </div>
+    <h3 style="margin-top:26px">Kirim ke Gmail</h3>
+    <p class="muted"><small>Ketiga file di atas dikirim sebagai lampiran ke email developer.</small></p>
+    <div id="backup-status" class="muted"><small>Memuat…</small></div>
+    <div class="row" style="margin-top:10px"><button class="primary" type="button" id="backup-email">Kirim backup ke Gmail sekarang</button></div>
+    <p id="backup-msg" aria-live="polite"></p>
   </section>
 
   <section class="panel" id="tab-audit" hidden>
@@ -463,13 +496,19 @@ $('#selftest-btn').addEventListener('click', async () => {
   finally { btn.disabled = false; btn.textContent = 'Uji endpoint theresav'; }
 });
 
+// Catalog label: new (green), hot (red), recommend (yellow); the emoji is the same size as the text.
+function epBadge(b) {
+  const m = { new: ['🍃', 'New'], hot: ['🔥', 'Hot'], recommend: ['👍', 'Recommend'] }[b];
+  return m ? `<span class="ep-badge ep-badge--${b}"><span class="ep-badge-ic" aria-hidden="true">${m[0]}</span>${m[1]}</span>` : '';
+}
 loaders.endpoints = async () => {
   try {
     const d = await api('/owner/api/endpoints');
-    $('#endpoints-data').innerHTML = `<table><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Status</th><th>Aksi</th></tr>${d.endpoints.map(e => `<tr>
+    $('#endpoints-data').innerHTML = `<table><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Label</th><th>Status</th><th>Aksi</th></tr>${d.endpoints.map(e => `<tr>
       <td><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></td>
       <td>${e.handler_loaded ? chip('deployed', 'ok') : e.plugin ? chip('menunggu deploy', 'warn') : chip('metadata only', 'warn')}</td>
       <td><select data-ep-tier="${esc(e.id)}">${['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'].map(t => `<option value="${t}" ${t === e.minimum_tier ? 'selected' : ''}>${tierName(t)}</option>`).join('')}</select></td>
+      <td><select data-ep-badge="${esc(e.id)}" aria-label="Label endpoint">${[['', 'Tanpa label'], ['new', '🍃 New'], ['hot', '🔥 Hot'], ['recommend', '👍 Recommend']].map(([v, l]) => `<option value="${v}" ${v === (e.badge || '') ? 'selected' : ''}>${l}</option>`).join('')}</select> ${epBadge(e.badge)}</td>
       <td>${chip(e.status, e.status === 'active' ? 'ok' : 'bad')} ${e.locked ? chip('locked', 'bad') : chip('open', 'ok')}</td>
       <td><button class="sm" data-ep="${e.locked ? 'unlock' : 'lock'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.locked ? 'Unlock' : 'Lock'}</button>
           <button class="sm" data-ep="status" data-status="${e.status === 'active' ? 'disabled' : 'active'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.status === 'active' ? 'Disable' : 'Enable'}</button>
@@ -477,6 +516,11 @@ loaders.endpoints = async () => {
   } catch (e) { fail('#endpoints-data', e); }
 };
 $('#endpoints-data').addEventListener('change', async e => {
+  const badgeId = e.target.dataset.epBadge;
+  if (badgeId) {
+    try { await send(`/owner/api/endpoints/${badgeId}`, 'PATCH', { badge: e.target.value || null }); } catch (err) { alert(err.message); }
+    return loaders.endpoints();
+  }
   const id = e.target.dataset.epTier; if (!id) return;
   if (!confirm(`Ubah tier minimum menjadi ${e.target.value}?`)) return loaders.endpoints();
   try { await send(`/owner/api/endpoints/${id}`, 'PATCH', { minimum_tier: e.target.value }); } catch (err) { alert(err.message); }
@@ -609,6 +653,45 @@ loaders.audit = async () => {
   } catch (e) { fail('#audit-data', e); }
 };
 $('#audit-load').addEventListener('click', () => loaders.audit());
+
+// ---------- backup
+loaders.backup = async () => {
+  try {
+    const d = await api('/owner/backup/status');
+    const ok = (v, yes, no) => `<li>${v ? '✅' : '⚠️'} ${v ? yes : no}</li>`;
+    $('#backup-status').innerHTML = `<ul class="backup-checks">${[
+      ok(d.email.configured && d.email.to, `Email aktif, backup dikirim ke <b>${esc(d.email.to)}</b>`, d.email.to ? 'Email belum aktif: isi <code>EMAIL_FROM</code> + <code>SMTP_HOST/SMTP_USER/SMTP_PASS</code> (Gmail App Password) atau <code>RESEND_API_KEY</code> di Vercel.' : 'Isi <code>OWNER_EMAIL</code> di Vercel.'),
+      ok(d.daily.enabled, 'Backup otomatis tiap hari jam 02.00 WIB nyala', 'Backup otomatis harian belum nyala: isi <code>CRON_SECRET</code> (teks acak bebas) di Vercel lalu redeploy.'),
+      ok(d.github.token, `File web diambil dari GitHub <code>${esc(d.github.repo)}</code> (${esc(d.github.branch)})`, `Backup file web butuh <code>GITHUB_TOKEN</code> kalau repo <code>${esc(d.github.repo)}</code> private.`)
+    ].join('')}</ul>`;
+  } catch (e) { fail('#backup-status', e); }
+};
+document.querySelectorAll('[data-backup]').forEach(btn => btn.addEventListener('click', async () => {
+  const kind = btn.dataset.backup;
+  const msg = $('#backup-msg');
+  if (kind === 'web') { location.href = '/owner/backup/web'; return; }
+  btn.disabled = true; const label = btn.textContent; btn.textContent = 'Lagi dibuat…'; msg.textContent = '';
+  try {
+    const r = await fetch(`/owner/backup/${kind}`, { credentials: 'same-origin' });
+    if (!r.ok) { const d = await r.json().catch(() => ({})); throw Error(d.message || `Backup gagal (${r.status}).`); }
+    const name = (r.headers.get('content-disposition') || '').match(/filename="([^"]+)"/)?.[1] || `backup.${kind === 'json' ? 'json' : 'sql'}`;
+    const url = URL.createObjectURL(await r.blob());
+    const a = Object.assign(document.createElement('a'), { href: url, download: name });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    msg.innerHTML = `<span class="ok">${esc(name)} udah diunduh.</span>`;
+  } catch (e) { msg.innerHTML = `<span class="error">${esc(e.message)}</span>`; }
+  finally { btn.disabled = false; btn.textContent = label; }
+}));
+$('#backup-email').addEventListener('click', async () => {
+  const btn = $('#backup-email'), msg = $('#backup-msg');
+  btn.disabled = true; msg.textContent = 'Lagi bikin backup & ngirim email… (bisa sampai semenit)';
+  try {
+    const d = await send('/owner/backup/email');
+    msg.innerHTML = `<span class="ok">Terkirim ke ${esc(d.to)}.</span><ul class="backup-checks">${d.parts.map(p => `<li>${p.attached ? '✅' : '⚠️'} ${esc(p.label)}: ${p.attached ? `${esc(p.filename)} (${(p.size / 1048576).toFixed(2)} MB)` : esc(p.error)}</li>`).join('')}</ul>`;
+  } catch (e) { msg.innerHTML = `<span class="error">${esc(e.message)}</span>`; }
+  finally { btn.disabled = false; }
+});
 
 loaded.add('status');
 loaders.status();
