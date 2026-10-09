@@ -553,7 +553,7 @@ loaders.endpoints = async () => {
   try {
     const d = await api('/owner/api/endpoints');
     $('#endpoints-data').innerHTML = `<table><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Label</th><th>Status</th><th>Aksi</th></tr>${d.endpoints.map(e => `<tr>
-      <td data-no-i18n><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></td>
+      <td><span data-no-i18n><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></span>${e.backups?.length ? `<br><small class="muted">${tr('Cadangan')}: <span data-no-i18n>${e.backups.map(esc).join(', ')}</span></small>` : ''}${e.backup_for?.length ? `<br><small class="muted">${tr('Cadangan buat')}: <span data-no-i18n>${e.backup_for.map(esc).join(', ')}</span></small>` : ''}</td>
       <td>${e.handler_loaded ? chip('deployed', 'ok') : e.plugin ? chip('nunggu deploy', 'warn') : chip('metadata only', 'warn')}</td>
       <td><select data-ep-tier="${esc(e.id)}">${['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'].map(t => `<option value="${t}" ${t === e.minimum_tier ? 'selected' : ''}>${tierName(t)}</option>`).join('')}</select></td>
       <td><select data-ep-badge="${esc(e.id)}" aria-label="Label endpoint">${[['', 'Tanpa label'], ['new', '🍃 New'], ['hot', '🔥 Hot'], ['recommend', '👍 Recommend']].map(([v, l]) => `<option value="${v}" ${v === (e.badge || '') ? 'selected' : ''}>${l}</option>`).join('')}</select> ${epBadge(e.badge)}</td>

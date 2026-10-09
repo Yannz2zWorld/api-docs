@@ -44,6 +44,11 @@ async function record({ path, status = null, upstreamStatus = null, code = null,
   } catch (e) { if (!missing(e)) throw e; problem = { at: new Date().toISOString(), step: 'log', code: e.code || null }; return; }
   hiddenCache = null;
   if (!hide) return;
+  const members = groupMembers(path);
+  if (members) {
+    const raw = await rawHiddenPaths();
+    if (members.some(m => !raw.has(m))) return;   // a backup still works: the gateway uses it, the endpoint stays
+  }
   // Hide it in the endpoints table too. Even if this fails, the open "hidden" error above already
   // keeps the endpoint out of every list and the gateway (hiddenPaths()); the failure is shown to
   // the developer instead of being swallowed.
@@ -63,13 +68,34 @@ async function record({ path, status = null, upstreamStatus = null, code = null,
 // Paths hidden because of an open plan/quota/key error (cached briefly; reset on every change).
 let hiddenCache = null;
 let problem = null;   // last failure to log/hide, shown in the Error tab
-async function hiddenPaths() {
+// Raw: every endpoint with an open plan/quota/key error (also backups that aren't listed themselves).
+async function rawHiddenPaths() {
   if (hiddenCache && Date.now() - hiddenCache.at < 15000) return hiddenCache.set;
   let set = new Set();
   try { set = new Set((await query('SELECT DISTINCT path FROM endpoint_errors WHERE hidden AND resolved_at IS NULL')).map(r => r.path)); }
   catch (e) { if (!missing(e)) throw e; }
   hiddenCache = { at: Date.now(), set };
   return set;
+}
+// What callers don't get to see: a raw-hidden endpoint, except one that still has a working backup
+// in its group (config/endpointGroups.js); that one stays and the gateway switches to the backup.
+async function hiddenPaths() {
+  const raw = await rawHiddenPaths();
+  const out = new Set();
+  for (const path of raw) {
+    const members = groupMembers(path);
+    if (members && members.some(m => !raw.has(m))) continue;
+    out.add(path);
+  }
+  return out;
+}
+let GROUPS = null;
+function groupMembers(path) {
+  if (!GROUPS) {
+    GROUPS = new Map();
+    for (const g of require('../config/endpointGroups')) GROUPS.set(g.path, [g.path, ...(g.backups || []).map(b => (typeof b === 'string' ? b : b.path))]);
+  }
+  return GROUPS.get(path) || null;
 }
 const lastProblem = () => problem;
 const resetHidden = () => { hiddenCache = null; };
@@ -189,4 +215,4 @@ function explain({ path, status, code, message }) {
 // What a caller sees instead of the upstream's plan/quota error (the real one is in the Error tab).
 const UNAVAILABLE_MESSAGE = 'Endpoint ini lagi nggak tersedia untuk sementara. Coba lagi nanti atau pakai endpoint lain dulu ya.';
 
-module.exports = { record, resolved, list, showAgain, remove, clearResolved, isPlanError, explain, originOf, hiddenPaths, resetHidden, lastProblem, schemaReady, UNAVAILABLE_MESSAGE };
+module.exports = { record, resolved, list, showAgain, remove, clearResolved, isPlanError, explain, originOf, hiddenPaths, rawHiddenPaths, groupMembers, resetHidden, lastProblem, schemaReady, UNAVAILABLE_MESSAGE };

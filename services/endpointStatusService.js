@@ -31,10 +31,19 @@ async function list(loaded = null) {
   const checked = new Map(checks.map(r => [r.path, { code: r.status ? norm(r.status) : 503, ms: r.ms, at: new Date(r.checked_at), source: 'check' }]));
   // Disabled endpoints (by the developer, or hidden automatically after a plan/quota error) are not shown.
   const hidden = await require('./errorLogService').hiddenPaths().catch(() => new Set());
-  const out = endpoints.filter(e => (!loaded || loaded.has(e.path)) && (!e.status || e.status === 'active') && !hidden.has(e.path)).map(e => {
+  // Backups that aren't endpoints of their own (config/endpointGroups.js) aren't listed either.
+  const backupOnly = new Set(require('../lib/apiproxy').registry().filter(r => r.backupOnly).map(r => r.path));
+  const latest = path => { const a = live.get(path), b = checked.get(path); return a && b ? (a.at >= b.at ? a : b) : a || b; };
+  const errorLog = require('./errorLogService');
+  const out = endpoints.filter(e => (!loaded || loaded.has(e.path)) && (!e.status || e.status === 'active') && !hidden.has(e.path) && !backupOnly.has(e.path)).map(e => {
     const base = { path: e.path, method: (e.method || 'GET').toUpperCase() };
-    const a = live.get(e.path), b = checked.get(e.path);
-    const pick = a && b ? (a.at >= b.at ? a : b) : a || b;
+    let pick = latest(e.path);
+    // An endpoint with backups works as long as one of them does: show that one.
+    const members = errorLog.groupMembers(e.path);
+    if (members && (!pick || pick.code !== 200)) {
+      const ok = members.map(latest).find(x => x && x.code === 200);
+      if (ok) pick = { ...ok, source: 'backup' };
+    }
     if (!pick) return { ...base, state: 'pending', code: null, ms: null, at: null, source: null };
     return { ...base, state: pick.code === 200 ? 'ok' : 'down', code: pick.code, ms: pick.ms, at: pick.at.toISOString(), source: pick.source };
   });

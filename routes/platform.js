@@ -1019,7 +1019,11 @@ router.delete('/owner/keys/:keyId', sameOrigin, auth, owner, validId('keyId'), a
 // The registry stores metadata/access flags only. An endpoint executes only when a plugin
 // handler for its path is deployed in plugin/ (handler_loaded); metadata never runs code.
 function withHandler(req, row) {
-  return { ...row, handler_loaded: (req.app.locals.loadedPluginPaths || new Set()).has(row.path) };
+  const groups = require('../config/endpointGroups');
+  const own = groups.find(g => g.path === row.path);
+  const backupFor = groups.filter(g => (g.backups || []).some(b => (typeof b === 'string' ? b : b.path) === row.path)).map(g => g.path);
+  return { ...row, handler_loaded: (req.app.locals.loadedPluginPaths || new Set()).has(row.path),
+    backups: own ? own.backups.map(b => (typeof b === 'string' ? b : b.path)) : [], backup_for: backupFor };
 }
 
 router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
@@ -1042,7 +1046,7 @@ async function runSelfTest(app, only = null) {
   const summary = out.reduce((m, r) => (m[r.result] = (m[r.result] || 0) + 1, m), {});
   return { out, summary };
 }
-const upstreamConfigured = () => !!process.env.THERESAV_API_KEY || Object.values(apiproxy.SERVERS).some(s => process.env[s.keyEnv]);
+const upstreamConfigured = () => !!process.env.THERESAV_API_KEY || Object.values(apiproxy.SERVERS).some(s => s.keyMode === 'none' || process.env[s.keyEnv]);
 
 router.post('/owner/api/selftest', sameOrigin, auth, owner, async (req, res) => {
   if (!upstreamConfigured()) return fail(res, 503, 'UPSTREAM_NOT_CONFIGURED', 'Isi dulu THERESAV_API_KEY (atau salah satu key server lain) di Vercel, terus redeploy sebelum ngetes.');

@@ -18,6 +18,7 @@ const usageService = require('./services/usageService');
 const turnstile = require('./services/turnstileService');
 const activity = require('./services/activityService');
 const errorLog = require('./services/errorLogService');
+const failover = require('./services/failoverService');
 const maintenance = require('./services/maintenanceService');
 const { canAccess, getTier } = require('./services/tierService');
 const auditService = require('./services/auditService');
@@ -571,7 +572,8 @@ function apiGateway(cleanPath, run) {
       }
       // Server-side failures go to the Developer Panel's "Error" tab (services/errorLogService.js);
       // a plan / quota / key problem from the upstream hides the endpoint until it works again.
-      if (res.statusCode >= 500) {
+      // (with failover every member's failure was already logged under its own path)
+      if (res.statusCode >= 500 && !res.locals.failover) {
         let body = res.locals.realError?.body || null;
         if (!body) { try { const chunk = args[0]; if (chunk && (typeof chunk === 'string' || Buffer.isBuffer(chunk)) && chunk.length < 20000) body = JSON.parse(String(chunk)); } catch {} }
         tasks.push(errorLog.record({ path: cleanPath, status: res.locals.realError?.status || res.statusCode, code: body?.error || null, message: body?.message || body?.error || null, source: 'live' })
@@ -596,7 +598,10 @@ function apiGateway(cleanPath, run) {
     };
     req.apiAuth = { userId: identity.userId, keyId: identity.keyId, tier: identity.tier, quota };
     try {
-      await run(req, res);
+      // Endpoints with backups (config/endpointGroups.js) switch to a working one automatically.
+      const members = await failover.chain(req.app, cleanPath).catch(() => null);
+      if (members && members.length > 1) { res.locals.failover = true; await failover.execute(req, res, cleanPath, members); }
+      else await run(req, res);
     } catch (error) {
       console.error('Plugin handler failed:', { path: cleanPath, name: error?.name || null, code: error?.code || null });
       if (!res.headersSent) return gatewayFail(res, 502, 'UPSTREAM_FAILED', 'Layanan sumbernya lagi bermasalah. Kuota nggak dipotong.');
@@ -631,6 +636,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
           pluginRuns.set(cleanPath, run);
           registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
+          if (route.backupOnly) return;   // only a backup for another endpoint: not listed on its own
           if (!rawEndpoints[category]) rawEndpoints[category] = [];
           rawEndpoints[category].push({
             name,
