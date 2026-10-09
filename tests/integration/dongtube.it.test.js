@@ -44,7 +44,7 @@ it('catalog lists the new Dongtube endpoints; the backup-only ones stay out of i
   assert.ok(cat.Games.some(e => e.cleanPath === '/api/games/tebakkata'));
   assert.ok(cat.Tools.some(e => e.cleanPath === '/api/tools/text2qr'));
   const all = Object.values(cat).flat().map(e => e.cleanPath);
-  assert.ok(!all.some(p => p.startsWith('/api/dongtube/')), 'backups are not listed on their own');
+  assert.ok(!all.some(p => p.startsWith('/api/alt/')), 'backups are not listed on their own');
   for (const left of ['/api/tools/vccgen', '/api/canvas/fake-dana', '/api/get/pp-wa', '/api/tools/nik-parser']) assert.ok(!all.includes(left), left);
 });
 
@@ -86,7 +86,7 @@ it('Dongtube variants back each other up: KBBI switches to the second one with i
   reply = u => (u.pathname === '/search/kbbi' ? { status: 500, json: { status: false, error: 'down' } } : { status: 200, json: { status: true, result: 'arti' } });
   const r = await get('/api/search/kbbi?q=makan');
   assert.equal(r.status, 200, r.text);
-  assert.equal(r.headers['x-yannz-backup'], '/api/dongtube/tools/kbbi');
+  assert.equal(r.headers['x-yannz-backup'], '/api/alt/tools/kbbi');
   assert.deepEqual(calls.map(c => c.path), ['/search/kbbi', '/tools/kbbi']);
   assert.equal(calls[1].query.word, 'makan');
 });
@@ -96,7 +96,7 @@ it('an existing endpoint falls back to Dongtube: GitHub stalk (clutch) -> Dongtu
   reply = u => (u.hostname === 'api.clutch.web.id' ? { status: 502, json: { status: false, message: 'server error' } } : { status: 200, json: { status: true, result: { login: 'torvalds' } } });
   const r = await get('/api/stalk/github?username=torvalds');
   assert.equal(r.status, 200, r.text);
-  assert.equal(r.headers['x-yannz-backup'], '/api/dongtube/stalk/github');
+  assert.equal(r.headers['x-yannz-backup'], '/api/alt/stalk/github');
   assert.equal(calls[1].host, 'api.dongtube.id');
   assert.equal(calls[1].query.user, 'torvalds');
 });

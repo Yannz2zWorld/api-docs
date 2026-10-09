@@ -160,7 +160,8 @@ it('Maker: Brat answers with the image itself (passed through), Brat Video defau
   assert.equal((await call('/api/maker/bratvid?text=hi&format=webm')).json.error, 'INVALID_PARAMETER');
   reply = () => ({ status: 200, json: { status: true, creator: 'X', result: { emoji1: '😂', emoji2: '😭', url: 'https://www.gstatic.com/x.png' } } });
   const mix = await call('/api/maker/emojimix?emoji1=' + encodeURIComponent('😂') + '&emoji2=' + encodeURIComponent('😭'));
-  assert.equal(mix.json.result.url, 'https://www.gstatic.com/x.png');
+  assert.match(mix.json.result.url, /\/media\//, 'opens on our own domain');
+  assert.equal(require('../../services/mediaProxyService').urlOf(mix.json.result.url.split('/media/')[1]), 'https://www.gstatic.com/x.png');
   assert.equal(calls.at(-1).url.searchParams.get('emoji2'), '😭');
   assert.equal((await call('/api/maker/emojimix?emoji1=x')).json.error, 'PARAM_REQUIRED');
   const cat = (await app.request('GET', '/api/endpoints')).json.endpoints.Maker;

@@ -252,30 +252,52 @@ app.use('/views', express.static(path.join(__dirname, 'views')));
 // middleware maintenance supaya tetap bisa diakses saat website maintenance. Unggah file lewat
 // halaman /upload (POST /cdn/upload di routes/platform.js).
 const cdnService = require('./services/cdnService');
+const mediaProxy = require('./services/mediaProxyService');
 app.get('/cdn/:id', async (req, res) => {
   const id = String(req.params.id || '');
   if (!cdnService.isValidId(id)) return res.status(404).json({ status: false, error: 'NOT_FOUND' });
   try {
     const f = await cdnService.fetchFile(id);
     if (!f) return res.status(404).json({ status: false, error: 'NOT_FOUND' });
-    if ('redirect' in f) {   // large file stored in Cloudflare R2: send the browser to the bucket's public URL
+    if ('redirect' in f) {   // large file kept in Cloudflare R2 / catbox: passed through, the visitor stays on this domain
       if (!f.redirect) return res.status(503).json({ status: false, error: 'CDN_UNAVAILABLE' });
-      res.set('Cache-Control', 'public, max-age=300');
-      return res.redirect(302, f.redirect);
+      return mediaProxy.stream(req, res, f.redirect, { safeHeaders: safeFileHeaders });
     }
-    // Uploaded files are served from this domain: safe types open in the browser, everything else
-    // downloads, and the sandbox CSP keeps any uploaded content from running script here.
-    const fname = encodeURIComponent(f.name).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
-    res.set('Cache-Control', 'public, max-age=86400, immutable');
-    res.set('Content-Type', f.mime);
-    res.set('Content-Length', String(f.size));
-    res.set('Content-Disposition', `${f.inline ? 'inline' : 'attachment'}; filename*=UTF-8''${fname}`);
-    res.set('X-Content-Type-Options', 'nosniff');
-    res.set('Content-Security-Policy', f.mime === 'application/pdf' ? "default-src 'none'; frame-ancestors 'none'" : "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'; sandbox");
-    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
-    return res.end(f.buffer);
+    return sendStoredFile(res, f);
   } catch (e) {
     return res.status(503).json({ status: false, error: 'CDN_UNAVAILABLE' });
+  }
+});
+
+// Files are served from this domain: safe types open in the browser, everything else downloads, and
+// the sandbox CSP keeps any uploaded / fetched content from running script here.
+function sendStoredFile(res, f) {
+  const fname = encodeURIComponent(f.name).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+  res.set('Cache-Control', 'public, max-age=86400, immutable');
+  res.set('Content-Type', f.mime);
+  res.set('Content-Length', String(f.size));
+  res.set('Content-Disposition', `${f.inline ? 'inline' : 'attachment'}; filename*=UTF-8''${fname}`);
+  safeFileHeaders(res, f.mime);
+  return res.end(f.buffer);
+}
+function safeFileHeaders(res, mime) {
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('Content-Security-Policy', mime === 'application/pdf' ? "default-src 'none'; frame-ancestors 'none'" : "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'; sandbox");
+  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+}
+
+// Media links in API results (services/mediaProxyService.js): the file is fetched once, kept here,
+// and always opened on this domain, never by sending the visitor to the source.
+app.get('/media/:token', async (req, res) => {
+  try {
+    const r = await mediaProxy.open(req.params.token);
+    if (r.file) return sendStoredFile(res, r.file);
+    if (r.passthrough) return mediaProxy.stream(req, res, r.passthrough, { safeHeaders: safeFileHeaders });   // too big to keep
+    if (r.error === 'NOT_FOUND') return res.status(404).json({ status: false, error: 'NOT_FOUND', message: 'Link media ini nggak valid.' });
+    res.set('Cache-Control', 'no-store');
+    return res.status(502).json({ status: false, error: 'MEDIA_UNAVAILABLE', message: 'File-nya lagi nggak bisa diambil dari sumbernya. Coba lagi nanti.' });
+  } catch (e) {
+    return res.status(503).json({ status: false, error: 'MEDIA_UNAVAILABLE', message: 'File-nya lagi nggak bisa dibuka. Coba lagi nanti.' });
   }
 });
 
@@ -419,8 +441,8 @@ app.get('/api/site-music', async (req, res) => {
 app.get('/api/site-music/audio', async (req, res) => {
   const m = siteMusic.enabled() ? await siteMusic.resolve() : null;
   if (!m) return res.status(502).json({ status: false, error: 'MUSIC_UNAVAILABLE' });
-  res.set('Cache-Control', 'private, max-age=600');
-  return res.redirect(302, m.audio);
+  if (m.local) { res.set('Cache-Control', 'private, max-age=600'); return res.redirect(302, m.audio); }   // our own file
+  return mediaProxy.stream(req, res, m.audio, { cache: 'private, max-age=600' });   // a TikTok audio link: passed through
 });
 
 app.get('/api/set', (req, res) => {
@@ -594,6 +616,10 @@ function apiGateway(cleanPath, run) {
         body = { ...(body.creator ? { creator: body.creator } : {}), status: false, error: 'ENDPOINT_UNAVAILABLE', message: `${errorLog.UNAVAILABLE_MESSAGE} Kuota nggak dipotong.`,
           ...(identity.tier === 'OWNER' ? { developerNote: 'Detail error-nya ada di Developer Panel → Error.' } : {}) };
       }
+      // Media links in a working answer point at our own /media (services/mediaProxyService.js).
+      // and no answer names or links an upstream server (they only run in the background).
+      if (res.statusCode < 400) body = mediaProxy.rewrite(body, req);
+      body = mediaProxy.scrub(body, req);
       return sendJson(body);
     };
     req.apiAuth = { userId: identity.userId, keyId: identity.keyId, tier: identity.tier, quota };

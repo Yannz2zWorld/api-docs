@@ -24,12 +24,16 @@ before(async () => {
       calls.push({ host: 'aio', path: u.pathname, url: u.searchParams.get('url'), key: new Headers(init.headers || {}).get('x-apikey') });
       const r = aio(); return new Response(JSON.stringify(r.json), { status: r.status, headers: { 'content-type': 'application/json' } });
     }
+    if (/\.mp3$/.test(u.pathname)) return new Response(Buffer.from('ID3song'), { status: 200, headers: { 'content-type': 'audio/mpeg' } });   // the song itself
     if (u.hostname === 'www.tikwm.com') {
       calls.push({ host: 'tikwm', url: u.searchParams.get('url') });
       const r = tikwm(); return new Response(JSON.stringify(r.json), { status: r.status, headers: { 'content-type': 'application/json' } });
     }
     return realFetch(input, init);
   };
+  // Passed-through files are fetched with the public-host check: these test hosts resolve publicly.
+  const dns = require('dns').promises, realLookup = dns.lookup;
+  dns.lookup = async (host, o) => (['sf16-music.tiktokcdn.com', 'www.tikwm.com'].includes(host) ? [{ address: '93.184.216.34', family: 4 }] : realLookup(host, o));
   await h.setupDatabase();
   app = await h.startApp({ THERESAV_API_KEY: KEY });
 });
@@ -71,7 +75,7 @@ it('by default the full bundled song is played: no upstream call, served with ra
   assert.equal(audio.headers.location, `/assets/site-music.mp3?v=${size}`);
 });
 
-it('with SITE_MUSIC_URL set to a TikTok link, song info comes from the AIO downloader (key in the header, never in the answer) and the audio link redirects', async () => {
+it('with SITE_MUSIC_URL set to a TikTok link, song info comes from the AIO downloader (key in the header, never in the answer) and the audio comes through our domain', async () => {
   useTiktok();
   const info = await app.request('GET', '/api/site-music');
   assert.equal(info.status, 200, info.text);
@@ -80,8 +84,10 @@ it('with SITE_MUSIC_URL set to a TikTok link, song info comes from the AIO downl
   assert.ok(!info.text.includes(KEY) && !info.text.includes(AUDIO));
 
   const audio = await app.request('GET', '/api/site-music/audio');
-  assert.equal(audio.status, 302);
-  assert.equal(audio.headers.location, AUDIO);
+  assert.equal(audio.status, 200, audio.text);
+  assert.equal(audio.headers.location, undefined, 'never sent to TikTok');
+  assert.equal(audio.headers['content-type'], 'audio/mpeg');
+  assert.equal(audio.text, 'ID3song');
   assert.equal(calls.length, 1, 'the lookup is cached');
 });
 
@@ -90,7 +96,8 @@ it('falls back to tikwm when the AIO answer has no audio; 502 when nothing works
   aio = () => ({ status: 200, json: { status: true, result: { video: 'https://cdn.example/v.mp4' } } });
   const info = await app.request('GET', '/api/site-music');
   assert.equal(info.json.title, 'Dari tikwm');
-  assert.equal((await app.request('GET', '/api/site-music/audio')).headers.location, 'https://www.tikwm.com/fallback.mp3');
+  const fb = await app.request('GET', '/api/site-music/audio');
+  assert.deepEqual([fb.status, fb.headers.location, fb.text], [200, undefined, 'ID3song']);
   assert.deepEqual(calls.map(c => c.host), ['aio', 'tikwm']);
 
   music.reset(); calls = []; useTiktok();

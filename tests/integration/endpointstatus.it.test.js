@@ -54,7 +54,7 @@ const autocheck = () => app.request('POST', '/api/endpoints/autocheck', { header
 it('is public and lists every endpoint; not checked yet = pending (no made-up 200s)', async () => {
   const d = await get();
   // Backup-only endpoints (plugin/dongtube.js) are not listed on their own.
-  const total = (await h.db().query("SELECT count(*)::int AS n FROM endpoints WHERE path NOT LIKE '/api/dongtube/%'")).rows[0].n;
+  const total = (await h.db().query("SELECT count(*)::int AS n FROM endpoints WHERE path NOT LIKE '/api/alt/%'")).rows[0].n;
   assert.equal(d.endpoints.length, total);
   assert.equal(d.summary.total, total);
   const ping = find(d, '/api/tools/ping');
@@ -97,7 +97,7 @@ it('a failed endpoint is checked again after 30 minutes, a working one after 6 h
   const r = await autocheck();
   const paths = r.json.checked.map(x => x.path);
   assert.ok(paths.includes('/api/ai/claude') || paths.includes('/api/ai/hyperai'), JSON.stringify(paths));
-  for (const p of paths) assert.ok(['/api/ai/claude', '/api/dongtube/ai/claude', '/api/ai/hyperai'].includes(p), `${p} was OK and is not due yet`);
+  for (const p of paths) assert.ok(['/api/ai/claude', '/api/alt/ai/claude', '/api/ai/hyperai'].includes(p), `${p} was OK and is not due yet`);
 });
 
 it('Refresh (force) really checks everything again, signed-in only, at most every 5 minutes', async () => {

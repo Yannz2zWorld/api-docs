@@ -21,6 +21,9 @@ before(async () => {
     if (!size) return new Response('not found', { status: 404 });
     return new Response('x', { status: 206, headers: { 'content-range': `bytes 0-0/${size}`, 'content-length': '1' } });
   };
+  // Passed-through files are fetched with the public-host check: these test hosts resolve publicly.
+  const dns = require('dns').promises, realLookup = dns.lookup;
+  dns.lookup = async (host, o) => (['files.catbox.moe'].includes(host) ? [{ address: '93.184.216.34', family: 4 }] : realLookup(host, o));
   await h.setupDatabase();
   app = await h.startApp({ PUBLIC_BASE_URL: 'https://apiz2z.test' });
   user = await app.login('cat@example.test');
@@ -30,7 +33,7 @@ beforeEach(() => { probes = []; delete process.env.CDN_ACCOUNT_LIMIT_MB; });
 const it = (name, fn) => test(name, { skip: h.skip }, fn);
 const register = (body, cookie = user) => app.request('POST', '/cdn/upload/register', { cookie, body, headers: { origin: app.origin } });
 
-it('a catbox link becomes our own /cdn link that redirects to it; size comes from catbox, not the browser', async () => {
+it('a catbox link becomes our own /cdn link, passed through from here; size comes from catbox, not the browser', async () => {
   const r = await register({ url: 'https://files.catbox.moe/abc123.mp4', name: 'Video Liburan.mp4', type: 'video/mp4', size: 1 });
   assert.equal(r.status, 200, r.text);
   assert.match(r.json.result.url, /^https:\/\/apiz2z\.test\/cdn\/[a-f0-9]{32}\.mp4$/);
@@ -38,8 +41,10 @@ it('a catbox link becomes our own /cdn link that redirects to it; size comes fro
   assert.equal(probes[0].range, 'bytes=0-0', 'only one byte is requested to learn the size');
 
   const got = await app.request('GET', '/cdn/' + r.json.result.url.split('/cdn/')[1], {});
-  assert.equal(got.status, 302);
-  assert.equal(got.headers.location, 'https://files.catbox.moe/abc123.mp4');
+  assert.ok([200, 206].includes(got.status), got.text);
+  assert.equal(got.headers.location, undefined, 'never sent to catbox: the file comes through our domain');
+  assert.equal(got.text, 'x');
+  assert.equal(probes.at(-1).url, 'https://files.catbox.moe/abc123.mp4');
 });
 
 it('only real files.catbox.moe links are accepted; missing or over-200 MB files are refused', async () => {

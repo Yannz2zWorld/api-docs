@@ -171,7 +171,10 @@ it('TikTok: only TikTok links are accepted and a successful upstream answer is r
     const r = await app.request('GET', '/api/download/tiktok?url=' + encodeURIComponent('https://vt.tiktok.com/ZSabc/'), app.asBrowser(cookie));
     assert.equal(r.status, 200);
     assert.equal(forwarded, 'https://vt.tiktok.com/ZSabc/');
-    assert.equal(r.json.result.data.find(m => m.type === 'nowatermark').url, 'https://www.tikwm.com/play.mp4');
+    // media links open on our own domain (services/mediaProxyService.js)
+    const nowm = r.json.result.data.find(m => m.type === 'nowatermark').url;
+    assert.match(nowm, /\/media\//);
+    assert.equal(require('../../services/mediaProxyService').urlOf(nowm.split('/media/')[1]), 'https://www.tikwm.com/play.mp4');
     assert.equal(r.json.result.stats.views, '1.200');
     assert.equal(r.json.result.author.nickname, 'User');
 
