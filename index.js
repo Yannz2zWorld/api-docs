@@ -197,6 +197,11 @@ app.get('/assets/music.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'music.js'));
 });
+// Custom UI (views/ui-theme.js): the look and colour each visitor picked on /custom-ui.
+app.get('/assets/ui-theme.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'ui-theme.js'));
+});
 app.get('/assets/endpoint-monitor.js', (req, res) => {
   res.set('Cache-Control', 'no-cache');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'endpoint-monitor.js'));
@@ -311,7 +316,7 @@ app.locals.maintenance = maintenance;
 // calling an endpoint directly cannot get around it.
 const MAINTENANCE_OPEN = new Set(['/health', '/health/database', '/api/logo-proxy', '/api/set', '/auth/config', '/auth/me', '/auth/logout', '/owner-login', '/developer-login', '/auth/google', '/auth/google/callback', '/auth/google/credential', '/favicon.ico']);
 const MAINTENANCE_SIGN_IN = new Set(['/auth/login', '/auth/register', '/auth/email/verify', '/auth/email/resend', '/auth/password/forgot', '/auth/password/reset']);
-const SITE_PAGES = new Set(['/', '/home', '/keys', '/billing', '/pricing', '/profile', '/upload', '/owner', '/api', '/api/playground', '/3d', '/scythe', '/usage']);
+const SITE_PAGES = new Set(['/', '/home', '/keys', '/billing', '/pricing', '/profile', '/upload', '/custom-ui', '/owner', '/api', '/api/playground', '/3d', '/scythe', '/usage']);
 let maintenancePage = null;
 function sendMaintenance(req, res, message) {
   res.set('Retry-After', '300');

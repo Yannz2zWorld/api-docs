@@ -98,6 +98,7 @@ router.get('/pricing', (req, res) => res.sendFile(path.join(VIEWS, 'pricing.html
 router.get('/keys', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'keys.html')));
 router.get('/profile', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'profile.html')));
 router.get('/upload', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'upload.html')));
+router.get('/custom-ui', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'custom-ui.html')));
 
 // ---------------------------------------------------------------- CDN upload (website feature)
 // Used by the /upload page; a site feature for signed-in accounts, not an API endpoint (no API key,

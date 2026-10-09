@@ -1,5 +1,37 @@
 {
  "exact": {
+  "Tampilan": "Appearance",
+  "Pilih gaya tampilan dan warna favoritmu. Langsung berubah di semua halaman, dan tersimpan di browser ini.": "Pick a look and your favourite colour. It changes every page right away and is saved in this browser.",
+  "1. Pilih gaya": "1. Pick a look",
+  "2. Pilih warna": "2. Pick a colour",
+  "Warna utama buat tombol, kartu, dan sorotan. Semua warna bisa.": "The main colour for buttons, cards and highlights. Any colour works.",
+  "Pakai warna bawaan gaya": "Use the look's own colour",
+  "Mode": "Mode",
+  ": warnanya ganti-ganti terus kayak lampu gaming": ": the colour keeps cycling like gaming lights",
+  "Contoh tampilan": "Preview",
+  "Contoh isian": "Sample field",
+  "ENDPOINT AKTIF": "ACTIVE ENDPOINTS",
+  "Selesai": "Done",
+  "Balik ke tampilan awal": "Back to the original look",
+  "Tersimpan.": "Saved.",
+  "Pakai warna bawaan gaya.": "Using the look's own colour.",
+  "Mode RGB nyala.": "RGB mode on.",
+  "Mode RGB mati.": "RGB mode off.",
+  "Balik ke tampilan awal.": "Back to the original look.",
+  "Gelap, garis tegas, aksen merah. Tampilan bawaan.": "Dark, bold lines, red accent. The original look.",
+  "Krem bertitik, garis hitam tebal, bayangan kotak, aksen kuning.": "Dotted cream, thick black lines, block shadows, yellow accent.",
+  "Abu bertitik, kartu putih tebal, aksen ungu cerah.": "Dotted grey, bold white cards, bright purple accent.",
+  "Biru malam, garis menyala sesuai warna pilihan.": "Midnight blue with lines that glow in your colour.",
+  "Kaca buram di atas gradasi warna, lembut dan modern.": "Frosted glass over a colour gradient, soft and modern.",
+  "Putih bersih, garis tipis, bayangan halus.": "Clean white, thin lines, soft shadows.",
+  "Hitam pekat, huruf mesin ketik, sudut lancip.": "Pitch black, typewriter letters, sharp corners.",
+  "Pink lembut, sudut bulat, ceria.": "Soft pink, round corners, cheerful.",
+  "Kertas tua, tinta cokelat, nuansa jadul.": "Old paper, brown ink, a vintage feel.",
+  "Pilih warna bebas": "Pick any colour",
+  "Warna cepat": "Quick colours",
+  "Merah (R)": "Red (R)",
+  "Hijau (G)": "Green (G)",
+  "Biru (B)": "Blue (B)",
   "Saya bukan robot": "I'm not a robot",
   "Centang sekali buat masuk ke semua halaman.": "Tick once to get into every page.",
   "Centang \"Saya bukan robot\" dulu ya.": "Tick \"I'm not a robot\" first.",
@@ -979,6 +1011,14 @@
   "Cadangan buat": "Backup for"
  },
  "patterns": [
+  [
+   "^Gaya (.+) dipakai\\.$",
+   "Look $1 applied."
+  ],
+  [
+   "^Warna (#[0-9a-fA-F]{6})$",
+   "Colour $1"
+  ],
   [
    "^· (\\d+) pilihan$",
    "· $1 choices"
