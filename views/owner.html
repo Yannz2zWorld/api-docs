@@ -23,6 +23,9 @@
   .ep-new .actions { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .ep-new .actions p { margin: 0; }
   @media (max-width: 720px) { .ep-new { grid-template-columns: 1fr; } }
+  .tab-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--bad, #f87171); color: #111; font: 700 10px/1 "DM Mono", monospace; }
+  .tab-count[hidden] { display: none; }
+  .err-msg { max-width: 420px; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 "DM Mono", monospace; }
   .backup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 14px; }
   .backup-card { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); }
   .backup-card h3 { margin: 0; }
@@ -42,6 +45,7 @@
     <button role="tab" data-tab="users">Users</button>
     <button role="tab" data-tab="keys">API Keys</button>
     <button role="tab" data-tab="endpoints">Endpoints</button>
+    <button role="tab" data-tab="errors">Error <span class="tab-count" id="err-count" hidden></span></button>
     <button role="tab" data-tab="payments">Payments</button>
     <button role="tab" data-tab="server">Server &amp; Pembayaran</button>
     <button role="tab" data-tab="activity">Activity</button>
@@ -157,6 +161,13 @@ module.exports = async (req, res) =&gt; {
     <p class="muted" id="notify-state"></p>
   </section>
 
+  <section class="panel" id="tab-errors" hidden>
+    <h2>Error</h2>
+    <p class="muted">Semua error endpoint, dari request asli maupun cek otomatis. Kalau server sumbernya bilang limit plan, kuota/kredit habis, atau key ditolak, endpoint-nya otomatis disembunyikan dari API Docs, Playground, dan status endpoint. Endpoint itu tetap dicek, dan begitu jalan lagi bakal muncul lagi sendiri.</p>
+    <div class="row"><span id="err-summary" class="muted">Memuat…</span><span style="flex:1"></span><button type="button" class="sm" id="err-reload">Muat ulang</button><button type="button" class="sm" id="err-clear">Hapus yang udah beres</button></div>
+    <div id="err-data">Memuat…</div>
+  </section>
+
   <section class="panel" id="tab-cdn" hidden>
     <h2>CDN</h2>
     <p class="muted">CDN itu fitur upload file di menu (bukan endpoint API). Di sini kamu bisa lihat semua file yang diupload, salin link-nya, atau hapus.</p>
@@ -253,7 +264,7 @@ const fail = (el, e) => { $(el).innerHTML = `<p class="error">${esc(e.message)}<
 const loaders = {};
 let loaded = new Set();
 document.querySelector('.tabs').addEventListener('click', e => {
-  const tab = e.target.dataset.tab; if (!tab) return;
+  const tab = e.target.closest('[data-tab]')?.dataset.tab; if (!tab) return;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
   document.querySelectorAll('section[id^=tab-]').forEach(s => { s.hidden = s.id !== 'tab-' + tab; });
   if (!loaded.has(tab)) { loaded.add(tab); loaders[tab]?.(); }
@@ -524,7 +535,7 @@ loaders.endpoints = async () => {
       <td>${e.handler_loaded ? chip('deployed', 'ok') : e.plugin ? chip('nunggu deploy', 'warn') : chip('metadata only', 'warn')}</td>
       <td><select data-ep-tier="${esc(e.id)}">${['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'].map(t => `<option value="${t}" ${t === e.minimum_tier ? 'selected' : ''}>${tierName(t)}</option>`).join('')}</select></td>
       <td><select data-ep-badge="${esc(e.id)}" aria-label="Label endpoint">${[['', 'Tanpa label'], ['new', '🍃 New'], ['hot', '🔥 Hot'], ['recommend', '👍 Recommend']].map(([v, l]) => `<option value="${v}" ${v === (e.badge || '') ? 'selected' : ''}>${l}</option>`).join('')}</select> ${epBadge(e.badge)}</td>
-      <td>${chip(e.status, e.status === 'active' ? 'ok' : 'bad')} ${e.locked ? chip('locked', 'bad') : chip('open', 'ok')}</td>
+      <td>${chip(e.status, e.status === 'active' ? 'ok' : 'bad')} ${e.locked ? chip('locked', 'bad') : chip('open', 'ok')}${e.auto_disabled ? `<br><small class="error">${tr('Disembunyikan otomatis')}: <span data-no-i18n>${esc(e.disabled_reason || '')}</span></small>` : ''}</td>
       <td><button class="sm" data-ep="${e.locked ? 'unlock' : 'lock'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.locked ? 'Unlock' : 'Lock'}</button>
           <button class="sm" data-ep="status" data-status="${e.status === 'active' ? 'disabled' : 'active'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.status === 'active' ? 'Disable' : 'Enable'}</button>
           ${e.handler_loaded ? '' : `<button class="sm danger" data-ep="delete" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Hapus</button>`}</td></tr>`).join('')}</table>`;
@@ -668,6 +679,41 @@ loaders.audit = async () => {
   } catch (e) { fail('#audit-data', e); }
 };
 $('#audit-load').addEventListener('click', () => loaders.audit());
+
+// ---------- endpoint errors
+function errBadge(n) { const b = $('#err-count'); b.textContent = n; b.hidden = !n; }
+loaders.errors = async () => {
+  try {
+    const d = await api('/owner/api/errors');
+    errBadge(d.open);
+    $('#err-summary').textContent = tr(`${d.open} error belum beres · ${d.hidden} endpoint disembunyikan otomatis`);
+    $('#err-data').innerHTML = d.errors.length ? `<table><tr><th>Endpoint</th><th>Kode</th><th>Pesan error</th><th>Dari</th><th>Kejadian</th><th>Terakhir</th><th>Status</th><th></th></tr>${d.errors.map(e => {
+      const hidden = e.endpoint_status && e.endpoint_status !== 'active';
+      const state = e.resolved_at ? chip(tr('udah jalan lagi'), 'ok') : e.auto_disabled ? chip(tr('disembunyikan otomatis'), 'bad') : hidden ? chip(tr('nonaktif'), 'bad') : chip(tr('masih tampil'), 'warn');
+      return `<tr>
+        <td data-no-i18n><b>${esc(e.name || '')}</b><br><code>${esc(e.path)}</code></td>
+        <td>${e.status ? chip(e.status, 'bad') : '—'}<br><small data-no-i18n>${esc(e.code || '')}</small></td>
+        <td><div class="err-msg" data-no-i18n>${esc(e.message || '—')}</div></td>
+        <td><small>${e.source === 'check' ? tr('cek otomatis') : tr('request asli')}</small></td>
+        <td>${num(e.count)}×</td>
+        <td><small>${when(e.last_seen)}</small></td>
+        <td>${state}</td>
+        <td>${hidden ? `<button type="button" class="sm" data-err-show="${esc(e.path)}">${tr('Tampilkan lagi')}</button> ` : ''}<button type="button" class="sm danger" data-err-del="${esc(e.id)}">${tr('Hapus')}</button></td></tr>`;
+    }).join('')}</table>` : `<p>${tr('Belum ada error. Aman 👍')}</p>`;
+  } catch (e) { fail('#err-data', e); }
+};
+$('#err-reload').addEventListener('click', () => loaders.errors());
+$('#err-clear').addEventListener('click', async () => { try { await send('/owner/api/errors/clear-resolved'); loaders.errors(); } catch (e) { say(e.message); } });
+$('#err-data').addEventListener('click', async e => {
+  const show = e.target.closest('[data-err-show]');
+  const del = e.target.closest('[data-err-del]');
+  try {
+    if (show) { if (!ask(tr(`Tampilkan lagi ${show.dataset.errShow}? Kalau server sumbernya masih nolak, nanti disembunyikan lagi otomatis.`))) return; await send('/owner/api/errors/show', 'POST', { path: show.dataset.errShow }); loaders.errors(); }
+    if (del) { await send(`/owner/api/errors/${encodeURIComponent(del.dataset.errDel)}`, 'DELETE'); loaders.errors(); }
+  } catch (err) { say(err.message); }
+});
+// The tab shows how many errors are still open, from the start.
+api('/owner/api/errors?all=0').then(d => errBadge(d.open)).catch(() => {});
 
 // ---------- CDN files
 const size = n => n == null ? '—' : n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`;

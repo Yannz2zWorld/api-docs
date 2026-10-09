@@ -23,6 +23,7 @@ const cdn = require('../services/cdnService');
 const backups = require('../services/backupService');
 const endpointStatus = require('../services/endpointStatusService');
 const endpointChecks = require('../services/endpointCheckService');
+const errorLog = require('../services/errorLogService');
 
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
@@ -198,7 +199,7 @@ router.get('/api/me/recent-endpoints', auth, async (req, res) => {
   const limit = Math.max(1, Math.min(20, Number(req.query.limit) || 9));
   const sql = cols => `SELECT l.path, max(l.created_at) AS last_at, count(*)::int AS calls, ${cols}
       FROM activity_log l JOIN endpoints e ON e.path = l.path
-     WHERE l.user_id = $1 AND l.kind = 'api' AND l.created_at > now() - interval '90 days'
+     WHERE l.user_id = $1 AND l.kind = 'api' AND l.created_at > now() - interval '90 days' AND e.status = 'active'
      GROUP BY l.path, ${cols}
      ORDER BY max(l.created_at) DESC LIMIT ${limit}`;
   try {
@@ -1274,6 +1275,34 @@ async function settleManual(req, res, approve) {
 }
 router.post('/owner/payments/:id/approve', sameOrigin, auth, owner, validId('id'), (req, res) => settleManual(req, res, true));
 router.post('/owner/payments/:id/reject', sameOrigin, auth, owner, validId('id'), (req, res) => settleManual(req, res, false));
+
+// ---------------------------------------------------------------- owner: endpoint errors
+// "Error" tab: every endpoint error from real requests and automatic checks, grouped, with the
+// endpoints that were hidden automatically (services/errorLogService.js).
+router.get('/owner/api/errors', auth, owner, async (req, res) => {
+  const rows = await errorLog.list({ includeResolved: req.query.all !== '0' });
+  const open = rows.filter(r => !r.resolved_at);
+  res.json({ success: true, errors: rows, open: open.length, hidden: new Set(rows.filter(r => r.auto_disabled).map(r => r.path)).size });
+});
+router.post('/owner/api/errors/show', sameOrigin, auth, owner, async (req, res) => {
+  const path = String(req.body?.path || '');
+  if (!/^\/api\/[\w\-/]+$/.test(path)) return fail(res, 400, 'INVALID_PATH', 'Path endpoint nggak valid.');
+  const row = await errorLog.showAgain(path);
+  if (!row) return fail(res, 404, 'NOT_FOUND', 'Endpoint-nya nggak ketemu.');
+  endpointStatus.reset();
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_shown', targetType: 'endpoint', targetId: String(row.id), metadata: { path }, ipAddress: ip(req) });
+  res.json({ success: true });
+});
+router.delete('/owner/api/errors/:id', sameOrigin, auth, owner, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return fail(res, 400, 'INVALID_ID', 'ID nggak valid.');
+  const r = await errorLog.remove(req.params.id);
+  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'Error-nya nggak ketemu.');
+  res.json({ success: true });
+});
+router.post('/owner/api/errors/clear-resolved', sameOrigin, auth, owner, async (req, res) => {
+  const r = await errorLog.clearResolved();
+  res.json({ success: true, removed: r.length });
+});
 
 // ---------------------------------------------------------------- owner: CDN files
 // The CDN is the upload feature in the menu (/upload), not an API endpoint; the developer sees and

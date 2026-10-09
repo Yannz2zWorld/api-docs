@@ -9,6 +9,7 @@
 const { query } = require('../lib/db');
 const theresav = require('../lib/theresav');
 const apiproxy = require('../lib/apiproxy');
+const errorLog = require('./errorLogService');
 
 const OK_STALE_MS = 6 * 60 * 60 * 1000;
 const FAIL_STALE_MS = 30 * 60 * 1000;
@@ -87,6 +88,14 @@ async function save(results) {
     [rows.map(r => r.path), rows.map(codeOf), rows.map(r => r.result === 'ok'), rows.map(r => (r.ms != null ? Math.round(r.ms) : null)),
       rows.map(r => (r.result === 'ok' ? null : String(r.error || 'gagal').slice(0, 300))), rows.map(r => r.kind || null)]);
   } catch (e) { if (!missing(e)) throw e; }
+  // Failures go to the Developer Panel's "Error" tab; a passing check brings back an endpoint that
+  // was hidden automatically.
+  for (const r of rows) {
+    if (r.result === 'ok') await errorLog.resolved(r.path);
+    else await errorLog.record({ path: r.path, status: codeOf(r), upstreamStatus: r.status || null,
+      code: r.result === 'not_configured' ? 'UPSTREAM_NOT_CONFIGURED' : r.timeout ? 'TIMEOUT' : 'CHECK_FAILED',
+      message: r.result === 'not_configured' ? 'Key server API-nya belum diisi di Vercel.' : r.error || null, source: 'check' });
+  }
   require('./endpointStatusService').reset();
 }
 
@@ -112,7 +121,9 @@ async function checkStale(app, limit = 6, { okAfterMs = OK_STALE_MS, failAfterMs
   if (!items.size) return [];
   let claimed;
   try {
-    const active = new Set((await query("SELECT path FROM endpoints WHERE status = 'active'")).map(r => r.path));
+    // Active endpoints, plus the ones hidden automatically (so they come back once they work again).
+    const active = new Set((await query("SELECT path FROM endpoints WHERE status = 'active' OR auto_disabled")
+      .catch(e => { if (e.code !== '42703') throw e; return query("SELECT path FROM endpoints WHERE status = 'active'"); })).map(r => r.path));
     const paths = [...items.keys()].filter(p => active.has(p));
     if (!paths.length) return [];
     await query('INSERT INTO endpoint_checks (path) SELECT unnest($1::text[]) ON CONFLICT (path) DO NOTHING', [paths]);

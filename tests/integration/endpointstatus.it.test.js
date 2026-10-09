@@ -60,7 +60,7 @@ it('is public and lists every endpoint; not checked yet = pending (no made-up 20
 
 it('automatic check: checks a few old ones at a time, never the same twice, until every endpoint has a code', async () => {
   assert.equal((await app.request('POST', '/api/endpoints/autocheck')).status, 403, 'only from the website');
-  reply = u => (u.pathname === '/api/ai/claude' ? { status: 200, json: { status: false, error: 'quota habis' } }
+  reply = u => (u.pathname === '/api/ai/claude' ? { status: 200, json: { status: false, error: 'server lagi sibuk' } }
     : u.pathname === '/ai/hyperai' ? { status: 503, json: { status: false, message: 'down' } }
     : u.pathname === '/api/download/reddit' ? { status: 400, json: { status: false, message: 'url is required' } }
     : { status: 200, json: { status: true, result: 'ok' } });
@@ -146,9 +146,9 @@ it('real calls count too; the caller\'s own mistakes (400/401/403) are skipped',
   assert.deepEqual([chat.state, chat.code, chat.source], ['down', r.status, 'live']);
 });
 
-it('disabled endpoints show 503 (red)', async () => {
+it('disabled (or automatically hidden) endpoints are not listed', async () => {
   await h.db().query("UPDATE endpoints SET status='disabled' WHERE path='/api/tools/ping'");
-  try { const p = find(await get(), '/api/tools/ping'); assert.deepEqual([p.state, p.code, p.source], ['down', 503, 'off']); }
+  try { assert.equal(find(await get(), '/api/tools/ping'), undefined); }
   finally { await h.db().query("UPDATE endpoints SET status='active' WHERE path='/api/tools/ping'"); }
 });
 
