@@ -169,3 +169,15 @@ it('vercel.json schedules the daily backup', () => {
   const v = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'vercel.json'), 'utf8'));
   assert.deepEqual(v.crons, [{ path: '/cron/backup', schedule: '0 19 * * *' }]);
 });
+
+it('BACKUP_EMAIL sends the backups to another address than the developer login', async () => {
+  process.env.BACKUP_EMAIL = 'backup-inbox@example.test';
+  try {
+    const st = await get('/owner/backup/status', owner);
+    assert.equal(st.json.email.to, 'ba***@example.test');
+    const r = await app.request('POST', '/owner/backup/email', { cookie: owner, headers: { origin: app.origin } });
+    assert.equal(r.status, 200, r.text);
+    assert.equal(sent[0].to, 'backup-inbox@example.test');
+    assert.equal(r.json.to, 'backup-inbox@example.test');
+  } finally { delete process.env.BACKUP_EMAIL; }
+});
