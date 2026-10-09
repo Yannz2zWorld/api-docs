@@ -1282,7 +1282,7 @@ router.post('/owner/payments/:id/reject', sameOrigin, auth, owner, validId('id')
 router.get('/owner/api/errors', auth, owner, async (req, res) => {
   const rows = await errorLog.list({ includeResolved: req.query.all !== '0' });
   const open = rows.filter(r => !r.resolved_at);
-  res.json({ success: true, errors: rows, open: open.length, hidden: new Set(rows.filter(r => r.auto_disabled).map(r => r.path)).size });
+  res.json({ success: true, errors: rows.map(r => ({ ...r, ...errorLog.explain(r) })), open: open.length, hidden: new Set(rows.filter(r => r.auto_disabled).map(r => r.path)).size });
 });
 router.post('/owner/api/errors/show', sameOrigin, auth, owner, async (req, res) => {
   const path = String(req.body?.path || '');

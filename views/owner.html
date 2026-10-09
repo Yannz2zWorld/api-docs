@@ -25,7 +25,9 @@
   @media (max-width: 720px) { .ep-new { grid-template-columns: 1fr; } }
   .tab-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--bad, #f87171); color: #111; font: 700 10px/1 "DM Mono", monospace; }
   .tab-count[hidden] { display: none; }
-  .err-msg { max-width: 420px; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 "DM Mono", monospace; }
+  .err-why { min-width: 240px; max-width: 360px; font-size: 13px; line-height: 1.5; }
+  .err-why b { color: var(--ink, #f4f4f5); }
+  .err-msg { min-width: 220px; max-width: 320px; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 "DM Mono", monospace; }
   .backup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 14px; }
   .backup-card { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); }
   .backup-card h3 { margin: 0; }
@@ -685,14 +687,16 @@ function errBadge(n) { const b = $('#err-count'); b.textContent = n; b.hidden = 
 loaders.errors = async () => {
   try {
     const d = await api('/owner/api/errors');
+    const en = window.YannzI18n?.lang === 'en';
     errBadge(d.open);
     $('#err-summary').textContent = tr(`${d.open} error belum beres · ${d.hidden} endpoint disembunyikan otomatis`);
-    $('#err-data').innerHTML = d.errors.length ? `<table><tr><th>Endpoint</th><th>Kode</th><th>Pesan error</th><th>Dari</th><th>Kejadian</th><th>Terakhir</th><th>Status</th><th></th></tr>${d.errors.map(e => {
+    $('#err-data').innerHTML = d.errors.length ? `<table><tr><th>Endpoint</th><th>Kode</th><th>Letak &amp; penyebab</th><th>Pesan error asli</th><th>Dari</th><th>Kejadian</th><th>Terakhir</th><th>Status</th><th></th></tr>${d.errors.map(e => {
       const hidden = e.endpoint_status && e.endpoint_status !== 'active';
       const state = e.resolved_at ? chip(tr('udah jalan lagi'), 'ok') : e.auto_disabled ? chip(tr('disembunyikan otomatis'), 'bad') : hidden ? chip(tr('nonaktif'), 'bad') : chip(tr('masih tampil'), 'warn');
       return `<tr>
         <td data-no-i18n><b>${esc(e.name || '')}</b><br><code>${esc(e.path)}</code></td>
         <td>${e.status ? chip(e.status, 'bad') : '—'}<br><small data-no-i18n>${esc(e.code || '')}</small></td>
+        <td class="err-why" data-no-i18n><b>${esc(en ? e.whereEn : e.where)}</b><br>${esc(en ? e.whyEn : e.why)}</td>
         <td><div class="err-msg" data-no-i18n>${esc(e.message || '—')}</div></td>
         <td><small>${e.source === 'check' ? tr('cek otomatis') : tr('request asli')}</small></td>
         <td>${num(e.count)}×</td>
@@ -703,6 +707,8 @@ loaders.errors = async () => {
   } catch (e) { fail('#err-data', e); }
 };
 $('#err-reload').addEventListener('click', () => loaders.errors());
+// The explanations come in both languages from the server: switch with the page.
+addEventListener('yannz:lang', () => { if (!$('#tab-errors').hidden) loaders.errors(); });
 $('#err-clear').addEventListener('click', async () => { try { await send('/owner/api/errors/clear-resolved'); loaders.errors(); } catch (e) { say(e.message); } });
 $('#err-data').addEventListener('click', async e => {
   const show = e.target.closest('[data-err-show]');

@@ -949,7 +949,9 @@
   "Endpoint-nya nggak ketemu.": "Endpoint not found.",
   "ID nggak valid.": "Invalid ID.",
   "Error-nya nggak ketemu.": "Error not found.",
-  "Key server API-nya belum diisi di Vercel.": "The API server key isn't set in Vercel yet."
+  "Key server API-nya belum diisi di Vercel.": "The API server key isn't set in Vercel yet.",
+  "Letak & penyebab": "Where & why",
+  "Pesan error asli": "Original error message"
  },
  "patterns": [
   [

@@ -47,6 +47,10 @@ it('an upstream "plan quota" error hides the endpoint everywhere and shows why i
   assert.equal(errs.length, 1);
   assert.match(errs[0].message, /plan quota/);
   assert.deepEqual([errs[0].source, errs[0].hidden, errs[0].auto_disabled, errs[0].endpoint_status], ['live', true, true, 'disabled']);
+  // Where it happens and why, in short (both languages).
+  assert.equal(errs[0].where, 'Server sumber: api.theresav.eu (/api/ai/chatgpt)');
+  assert.match(errs[0].why, /Kuota\/plan akun kita di server api\.theresav\.eu habis/);
+  assert.match(errs[0].whyEn, /quota\/plan on the server api\.theresav\.eu is used up/);
   const list = await o('GET', '/owner/api/errors');
   assert.ok(list.json.open >= 1 && list.json.hidden >= 1);
   const row = (await o('GET', '/owner/api/endpoints')).json.endpoints.find(e => e.path === P);
@@ -88,6 +92,9 @@ it('failed automatic checks are logged too; a missing server key hides the endpo
   assert.equal(svc.isPlanError({ upstreamStatus: 401, message: 'x' }), true);
   assert.equal(svc.isPlanError({ status: 502, message: 'API Error (403): {"error":"plan"}' }), true);
   assert.equal(svc.isPlanError({ status: 504, message: 'timeout' }), false);
+  assert.match(svc.explain({ path: '/api/ai/bard', status: 503, code: 'UPSTREAM_NOT_CONFIGURED' }).why, /Key TERMAI_API_KEY belum diisi di Vercel/);
+  assert.match(svc.explain({ path: '/api/ai/hyperai', status: 504, code: 'TIMEOUT', message: 'timeout' }).why, /Server api\.clutch\.web\.id kelamaan jawab/);
+  assert.equal(svc.explain({ path: '/api/tools/ping', status: 503, code: 'GATEWAY_UNAVAILABLE' }).where, 'Website kita (Vercel)');
   reply = u => (u.pathname === '/api/ai/claude' ? { status: 402, json: { status: false, message: 'Payment Required: insufficient balance' } } : { status: 200, json: { status: true, result: 'ok' } });
   await h.db().query("UPDATE endpoint_checks SET checked_at = now() - interval '7 hours'");
   for (let i = 0; i < 30; i++) { const r = await app.request('POST', '/api/endpoints/autocheck', { headers: { 'x-yannz-client': 'web' } }); if (!r.json.checked.length) break; }
