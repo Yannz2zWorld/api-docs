@@ -200,7 +200,7 @@ async function fetchFile(id) {
     query('DELETE FROM cdn_files WHERE id=$1', [id]).catch(() => {});
     return null;
   }
-  if (row.storage === 'r2') return row.ready ? { redirect: await r2.fileUrl(id) } : null;
+  if (row.storage === 'r2') return row.ready ? { redirect: await r2.fileUrl(id), size: Number(row.size) || 0, mime: String(row.mime || ''), name: row.name ? String(row.name) : id } : null;
   if (row.storage === 'catbox') return { redirect: row.url || null };
   const ext = extOf(id);
   return { mime: INLINE.has(ext) ? String(row.mime) : 'application/octet-stream', name: row.name ? String(row.name) : id, buffer: Buffer.from(String(row.data), 'base64'), size: Number(row.size), inline: INLINE.has(ext) };

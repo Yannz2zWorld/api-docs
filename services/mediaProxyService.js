@@ -181,9 +181,10 @@ async function keep(prefix, { buffer, type, name }) {
 // site's background song) through our own domain: the visitor never leaves it. Range requests are
 // passed on so videos can be skipped through.
 const INLINE = /^(image\/(png|jpeg|gif|webp|bmp|avif)|video\/(mp4|webm|quicktime|ogg)|audio\/(mpeg|mp4|aac|ogg|wav|flac|webm|x-m4a)|application\/pdf)$/;
-async function stream(req, res, url, { safeHeaders, cache = 'public, max-age=86400' } = {}) {
+async function stream(req, res, url, { safeHeaders, cache = 'public, max-age=86400', range } = {}) {
   let r;
-  try { r = await fetchSource(url, req.get('range') ? { Range: req.get('range') } : {}); }
+  const want = range || req.get('range');
+  try { r = await fetchSource(url, want ? { Range: want } : {}); }
   catch { res.set('Cache-Control', 'no-store'); return res.status(502).json({ status: false, error: 'MEDIA_UNAVAILABLE', message: 'File-nya lagi nggak bisa diambil. Coba lagi nanti.' }); }
   const type = (r.headers.get('content-type') || 'application/octet-stream').split(';')[0].trim().toLowerCase();
   const inline = INLINE.test(type);

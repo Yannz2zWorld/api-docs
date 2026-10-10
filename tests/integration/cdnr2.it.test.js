@@ -17,7 +17,14 @@ before(async () => {
   global.fetch = async (input, init = {}) => {
     const req = typeof input === 'string' || input instanceof URL ? new Request(String(input), init) : input;
     const u = new URL(req.url);
-    if (u.origin === PUBLIC) { const o = objects.get(decodeURIComponent(u.pathname.slice(1))); return o ? new Response(Buffer.alloc(o.size, 7), { status: 200, headers: { 'content-type': o.contentType, 'content-length': String(o.size) } }) : new Response(null, { status: 404 }); }
+    if (u.origin === PUBLIC) {
+      const o = objects.get(decodeURIComponent(u.pathname.slice(1)));
+      if (!o) return new Response(null, { status: 404 });
+      const m = /^bytes=(\d+)-(\d*)$/.exec(req.headers.get('range') || '');
+      if (!m) return new Response(Buffer.alloc(o.size, 7), { status: 200, headers: { 'content-type': o.contentType, 'content-length': String(o.size) } });
+      const start = Number(m[1]), end = m[2] ? Math.min(Number(m[2]), o.size - 1) : o.size - 1;
+      return new Response(Buffer.alloc(end - start + 1, 7), { status: 206, headers: { 'content-type': o.contentType, 'content-length': String(end - start + 1), 'content-range': `bytes ${start}-${end}/${o.size}` } });
+    }
     if (u.hostname !== R2_HOST) return realFetch(input, init);
     const key = decodeURIComponent(u.pathname.split('/').pop());
     calls.push({ method: req.method, key, signed: u.searchParams.has('X-Amz-Signature') || Boolean(req.headers.get('authorization')) });
@@ -78,11 +85,28 @@ it('start -> browser PUT to R2 -> finish gives a /cdn link, passed through from 
   assert.deepEqual([done.json.result.size, done.json.result.mime, done.json.result.name], [bytes.length, 'video/mp4', 'Video Liburan.mp4']);
   assert.ok(calls.some(c => c.method === 'HEAD' && c.signed), 'finish checks the object in R2 with a signed request');
 
-  const got = await app.request('GET', '/cdn/' + start.json.id, {});
-  assert.equal(got.status, 200, got.text);
-  assert.equal(got.headers.location, undefined, 'never sent to the bucket: the file comes through our domain');
-  assert.equal(got.headers['content-type'], 'video/mp4');
-  assert.equal(Number(got.headers['content-length']), bytes.length);
+  // A video player asks in ranges: answered from our domain in pieces of at most 4 MB (one answer
+  // from Vercel can't carry more than ~4.5 MB), and it asks for the rest itself.
+  const PIECE = 4 * 1024 * 1024;
+  const first = await app.request('GET', '/cdn/' + start.json.id, { headers: { range: 'bytes=0-' } });
+  assert.equal(first.status, 206, first.text);
+  assert.equal(first.headers.location, undefined, 'never sent to the bucket');
+  assert.equal(first.headers['content-type'], 'video/mp4');
+  assert.equal(first.headers['content-range'], `bytes 0-${PIECE - 1}/${bytes.length}`);
+  assert.equal(Number(first.headers['content-length']), PIECE);
+  const rest = await app.request('GET', '/cdn/' + start.json.id, { headers: { range: `bytes=${PIECE}-` } });
+  assert.equal(rest.headers['content-range'], `bytes ${PIECE}-${bytes.length - 1}/${bytes.length}`);
+  assert.equal((await app.request('GET', '/cdn/' + start.json.id, { headers: { range: `bytes=${bytes.length}-` } })).status, 416);
+  // A browser opening the link: a small player page on this domain that loads the video in pieces.
+  const page = await app.request('GET', '/cdn/' + start.json.id, { headers: { 'sec-fetch-dest': 'document' } });
+  assert.equal(page.status, 200);
+  assert.match(page.headers['content-type'], /^text\/html/);
+  assert.match(page.text, new RegExp(`<video [^>]*src="/cdn/${start.json.id}"`));
+  assert.match(page.headers['content-security-policy'], /sandbox/);
+  // A plain request for the whole file (a bot downloading it): sent to a short-lived link to the file.
+  const bot = await app.request('GET', '/cdn/' + start.json.id, {});
+  assert.equal(bot.status, 302);
+  assert.ok(bot.headers.location.startsWith(PUBLIC + '/'), bot.headers.location);
 });
 
 it('limits: over 200 MB is refused; unsafe types are stored as downloads', async () => {
