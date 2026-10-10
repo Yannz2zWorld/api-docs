@@ -259,6 +259,9 @@
     <h2>CDN</h2>
     <p class="muted">CDN itu fitur upload file di menu (bukan endpoint API). Di sini kamu bisa lihat semua file yang diupload, salin link-nya, atau hapus.</p>
     <form class="row" id="cdn-filter"><input name="q" placeholder="Cari nama file, ID, atau email pengunggah" aria-label="Cari file CDN" style="flex:1;min-width:220px"><button class="primary" type="submit">Cari</button><a class="btn" href="/upload">Upload file</a></form>
+    <div class="err-card" id="cdn-storage" style="margin:10px 0"><b>Penyimpanan file besar</b> <span id="cdn-storage-state" class="muted">Memuat…</span>
+      <div class="row" style="margin-top:8px"><button type="button" id="cdn-cors">Pasang izin upload</button><small class="muted">Biar file di atas 4 MB bisa langsung di-upload dari website ke bucket. Cukup sekali, ulangi kalau ganti domain atau bucket.</small></div>
+      <p id="cdn-cors-msg" class="save-note" aria-live="polite"></p></div>
     <div id="cdn-data">Memuat…</div>
   </section>
 
@@ -1220,6 +1223,26 @@ loaders.cdn = async () => {
   } catch (e) { fail('#cdn-data', e); }
 };
 $('#cdn-filter').addEventListener('submit', e => { e.preventDefault(); loaders.cdn(); });
+async function cdnStorage() {
+  try {
+    const st = (await api('/owner/api/cdn/storage')).storage;
+    const el = $('#cdn-storage-state');
+    el.removeAttribute('data-no-i18n');
+    if (!st.configured) { el.textContent = tr('belum diisi (maks 4 MB per file).'); $('#cdn-cors').disabled = true; return; }
+    el.setAttribute('data-no-i18n', '');
+    el.textContent = `${st.kind === 'r2' ? 'Cloudflare R2' : st.host} · bucket ${st.bucket}${st.private ? ' · private' : ''}`;
+    $('#cdn-cors').disabled = false;
+  } catch (e) { $('#cdn-storage-state').textContent = e.message; }
+}
+const cdnLoad = loaders.cdn;
+loaders.cdn = () => { cdnStorage(); return cdnLoad(); };
+$('#cdn-cors').addEventListener('click', async () => {
+  const b = $('#cdn-cors'), msg = $('#cdn-cors-msg');
+  b.disabled = true; msg.className = 'save-note'; msg.textContent = tr('Lagi masang…');
+  try { const d = await send('/owner/api/cdn/storage/cors'); msg.textContent = '✓ ' + tr(d.message); }
+  catch (err) { msg.className = 'save-note error'; msg.textContent = err.message; }
+  finally { b.disabled = false; }
+});
 $('#cdn-data').addEventListener('click', async e => {
   const copy = e.target.closest('[data-cdn-copy]');
   if (copy) { navigator.clipboard.writeText(copy.dataset.cdnCopy).then(() => { copy.textContent = tr('Tersalin ✓'); setTimeout(() => { copy.textContent = tr('Salin link'); }, 1400); }); return; }

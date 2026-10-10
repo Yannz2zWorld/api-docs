@@ -21,6 +21,7 @@ const builder = require('../services/endpointBuilder');
 const theresav = require('../lib/theresav');
 const apiproxy = require('../lib/apiproxy');
 const cdn = require('../services/cdnService');
+const r2 = require('../lib/r2');
 const backups = require('../services/backupService');
 const endpointStatus = require('../services/endpointStatusService');
 const endpointChecks = require('../services/endpointCheckService');
@@ -1615,6 +1616,25 @@ router.post('/owner/api/errors/clear-resolved', sameOrigin, auth, owner, async (
 // ---------------------------------------------------------------- owner: CDN files
 // The CDN is the upload feature in the menu (/upload), not an API endpoint; the developer sees and
 // manages the uploaded files here.
+// Large-file storage (lib/r2.js): which one is set up, and "Pasang izin upload" (the bucket's CORS
+// rules, so /upload can send big files straight to it).
+router.get('/owner/api/cdn/storage', auth, owner, (req, res) => res.json({ success: true, storage: r2.info() }));
+router.post('/owner/api/cdn/storage/cors', sameOrigin, auth, owner, async (req, res) => {
+  if (!r2.isConfigured()) return fail(res, 503, 'STORAGE_NOT_CONFIGURED', 'Penyimpanan file besar belum diisi. Isi S3_ACCESS_KEY_ID dan S3_SECRET_ACCESS_KEY (plus S3_ENDPOINT dan S3_BUCKET) di Vercel, terus redeploy.');
+  const origins = [...new Set([req.get('origin'), process.env.PUBLIC_BASE_URL].filter(Boolean).map(o => { try { return new URL(o).origin; } catch { return null; } }).filter(o => o && /^https:\/\//.test(o)))];
+  if (!origins.length) return fail(res, 400, 'NO_ORIGIN', 'Alamat website-nya nggak kebaca. Buka panel ini dari domain website kamu (https).');
+  let r;
+  try { r = await r2.setCors(origins); }
+  catch { return fail(res, 502, 'STORAGE_UNREACHABLE', 'Penyimpanan-nya nggak bisa dihubungi. Cek S3_ENDPOINT, terus coba lagi.'); }
+  if (!r.ok) {
+    const why = r.status === 403 ? 'Key-nya nggak punya izin ngatur bucket. Bikin Application Key baru dengan akses "All buckets" (Read and Write), ganti S3_ACCESS_KEY_ID dan S3_SECRET_ACCESS_KEY di Vercel, redeploy, terus coba lagi.'
+      : r.status === 404 ? 'Bucket-nya nggak ketemu. Cek S3_BUCKET dan S3_ENDPOINT.' : 'Penyimpanan-nya nolak.';
+    return fail(res, 502, 'STORAGE_CORS_FAILED', `${why}${r.message ? ` (${r.status}: ${r.message})` : ` (HTTP ${r.status})`}`);
+  }
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'cdn_storage_cors', targetType: 'cdn', metadata: { origins }, ipAddress: ip(req) }).catch(() => {});
+  res.json({ success: true, message: 'Telah disimpan. Upload file besar dari website udah diizinkan.', origins });
+});
+
 router.get('/owner/cdn', auth, owner, async (req, res) => {
   const q = String(req.query.q || '').trim().slice(0, 100);
   const sql = cols => `SELECT c.id, c.name, c.mime, c.size, c.created_at, c.expires_at, ${cols} u.email AS owner_email
