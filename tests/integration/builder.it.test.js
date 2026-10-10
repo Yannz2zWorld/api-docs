@@ -163,6 +163,17 @@ it('code the rules cannot handle goes to the AI (any Anthropic-compatible gatewa
   const r7 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
   aiStop = 'end_turn';
   assert.deepEqual([r7.status, r7.json.error], [502, 'AI_TRUNCATED']);
+  // The reply seen through KryptonLab, which drops the system prompt: prose with a fenced script.
+  aiReply = () => `I'll help you convert this code. Based on the structure, it looks like you want me to review/clean up this JavaScript bot command handler. Here's the converted version:\n\n\`\`\`javascript\n${script}\n\`\`\`\n\nThis handler reads \`text\` from the query.`;
+  const pasted = "case 'iqcpink': {\n  if (!text) return m.reply('teksnya?');\n  const buf = await fetchBuffer(`https://api.example.dev/iqc?text=${text}`);\n  conn.sendMessage(m.chat, { image: buf });\n  break;\n}";
+  const r9 = await o('POST', '/owner/api/endpoints/convert', { code: pasted, ai: 'only' });
+  assert.equal(r9.status, 200, r9.text);
+  assert.match(r9.json.code, /"pink" card/);
+  assert.doesNotMatch(r9.json.code, /```|I'll help/);
+  assert.deepEqual([r9.json.meta.name, r9.json.meta.path], ['Iqcpink', '/api/tools/iqcpink'], 'named after the bot command');
+  const sent = aiCalls.at(-1).body.messages[0].content;
+  assert.match(sent, /<meta>/, 'the instructions are in the user turn too (gateways that drop the system prompt)');
+  assert.match(sent, /case 'iqcpink'/);
   aiReply = () => 'maaf, saya tidak paham';
   const r8 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
   assert.deepEqual([r8.status, r8.json.error, r8.json.reply], [502, 'AI_BAD_REPLY', 'maaf, saya tidak paham']);

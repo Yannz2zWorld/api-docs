@@ -245,7 +245,17 @@ function parseReply(text) {
     const body = code[1].replace(/^\s*```(?:js|javascript)?\s*\n?/i, '').replace(/\n?```\s*$/, '').trim();
     return { ...m, code: body, cut: !code[2] };
   }
-  return parseJsonReply(t);
+  const json = parseJsonReply(t);
+  if (json && (json.code || json.error)) return json;
+  // Prose with the script in a fenced block ("Here's the converted code: ```js …```"): the longest
+  // block that exports a handler is the script; a ```json block, if any, is the metadata.
+  const blocks = [...t.matchAll(/```([\w-]*)[^\n]*\n([\s\S]*?)(```|$)/g)].map(m => ({ lang: m[1].toLowerCase(), body: m[2].trim(), closed: Boolean(m[3]) }));
+  const script = blocks.filter(x => /module\.exports|exports\.\w+\s*=/.test(x.body)).sort((x, y) => y.body.length - x.body.length)[0];
+  if (script) {
+    const meta = blocks.find(x => x.lang === 'json' && x !== script);
+    return { ...((meta && parseJsonReply(meta.body)) || {}), code: script.body, cut: !script.closed };
+  }
+  return json;
 }
 
 async function convertByAI(hidden, envs) {
@@ -256,7 +266,8 @@ async function convertByAI(hidden, envs) {
     model,
     max_tokens: 16000,
     system: SYSTEM,
-    messages: [{ role: 'user', content: `Env names for the removed secrets:\n${envList}\n\nCode to convert:\n\n${hidden.code.slice(0, 60000)}` }]
+    // The instructions go in the user turn too: some gateways (e.g. KryptonLab) drop the system prompt.
+    messages: [{ role: 'user', content: `${SYSTEM}\n\n----- Env names for the removed secrets:\n${envList}\n\n----- Code to convert:\n\n${hidden.code.slice(0, 60000)}\n\n----- Reply now: only <meta>{…}</meta> then <code>…</code> (or <error>…</error>), no other text.` }]
   };
   const textOf = m => (m?.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
   try {
@@ -284,7 +295,9 @@ async function convertByAI(hidden, envs) {
   let script = out.code;
   for (const s of hidden.secrets) if (script.includes(s.placeholder)) script = script.split(s.placeholder).join('');   // never deploy a placeholder
   const params = Array.isArray(out.params) ? out.params.filter(p => p && /^[a-zA-Z_][\w-]{0,30}$/.test(p.name)).slice(0, 8).map(p => ({ name: p.name, required: p.required !== false, placeholder: String(p.placeholder || '').slice(0, 80) })) : [];
-  const name = String(out.name || 'Endpoint Baru').slice(0, 100);
+  // No name from the AI: the bot command's own name (case 'iqcpink' → "Iqcpink").
+  const caseName = /\bcase\s+['"`]([\w-]{2,40})['"`]/.exec(hidden.code)?.[1];
+  const name = String(out.name || (caseName ? titleCase(caseName) : 'Endpoint Baru')).slice(0, 100);
   const category = titleCase(slug(out.category || 'tools') || 'tools');
   let p = String(out.path || '');
   if (!/^\/api\/[a-z0-9-]{1,40}\/[a-z0-9-]{1,60}$/.test(p)) p = `/api/${slug(category)}/${slug(name) || 'endpoint'}`;
