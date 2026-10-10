@@ -181,7 +181,19 @@ ${R} .hero h1 span,${R} .mark,${R} .account-menu summary,${R} .shell .btn:not(.s
 ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-pop button:hover,${R} .logout:hover{color:var(--ink)}`;
   }
 
-  let rgbTimer = null;
+  // RGB: every colour change makes the browser restyle the whole page. So the colour steps are
+  // spaced by the page's size (a small page: smooth; the Developer panel's thousands of elements:
+  // a few steps a second, same speed around the wheel), it waits while the visitor scrolls, taps or
+  // types, and it stops while the tab is hidden. Changing it 16 times a second froze big pages.
+  let rgbTimer = null, rgbOn = false, rgbHue = 0, rgbHold = 0;
+  ['pointerdown', 'wheel', 'touchmove', 'keydown', 'scroll'].forEach(t => addEventListener(t, () => { rgbHold = performance.now() + 1500; }, { passive: true, capture: true }));
+  function rgbStep() {
+    rgbTimer = null;
+    if (!rgbOn) return;
+    const every = Math.min(500, Math.max(60, document.getElementsByTagName('*').length / 12));
+    if (!document.hidden && performance.now() >= rgbHold) { rgbHue = (rgbHue + 33 * every / 1000) % 360; setAccent(hsl(rgbHue)); }
+    rgbTimer = setTimeout(rgbStep, every);
+  }
   function setAccent(hex) {
     const root = document.documentElement.style;
     root.setProperty('--accent', hex);
@@ -190,7 +202,7 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
   function apply(pref = load()) {
     const s = STYLES[pref.style] || STYLES.default;
     const html = document.documentElement;
-    clearInterval(rgbTimer); rgbTimer = null;
+    clearTimeout(rgbTimer); rgbTimer = null; rgbOn = false;
     const custom = pref.style !== 'default' || pref.accent || pref.rgb;
     // Pages with their own design (the /3d game) keep their layout but take the chosen colour, so
     // none of the original red is left once the UI is customised.
@@ -211,8 +223,8 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
     html.setAttribute('data-ui', pref.style);
     setAccent(pref.accent || s.accent);
     if (pref.rgb && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      let h = 0;
-      rgbTimer = setInterval(() => { h = (h + 2) % 360; setAccent(hsl(h)); }, 60);
+      rgbOn = true; rgbHue = 0;
+      rgbStep();
     }
     changed();
   }

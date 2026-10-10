@@ -44,7 +44,7 @@ it('looks and colours: many looks, any colour, readable text on it, RGB mode', (
     setAttribute(k, v) { this.attrs[k] = v; }, removeAttribute(k) { delete this.attrs[k]; }, hasAttribute: () => false };
   const sandbox = { window: {}, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; } },
     document: { documentElement: root, head: { append() {} }, getElementById: () => null, createElement: () => ({}) },
-    matchMedia: () => ({ matches: false }), addEventListener() {}, setInterval: () => 1, clearInterval() {},
+    matchMedia: () => ({ matches: false }), addEventListener() {}, setInterval: () => 1, clearInterval() {}, setTimeout: () => 1, clearTimeout() {}, performance: { now: () => 0 },
     fetch: async () => ({ ok: false, json: async () => ({}) }) };
   vm.runInNewContext(view('ui-theme.js'), sandbox);
   const UI = sandbox.window.YannzUI;
@@ -100,11 +100,38 @@ it('the page script syncs with the account', () => {
   assert.match(fs.readFileSync(path.join(__dirname, '..', '..', 'migrations', '021_user_ui.sql'), 'utf8'), /ADD COLUMN IF NOT EXISTS ui_prefs jsonb/);
 });
 
+it('RGB mode is paced by the page size and waits while the visitor scrolls or taps (it froze big pages)', () => {
+  const store = {}, listeners = {}, timers = [];
+  let now = 0, nodes = 300, hidden = false;
+  const props = {};
+  const sandbox = { window: {}, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; } },
+    document: { get hidden() { return hidden; }, documentElement: { style: { setProperty(k, v) { props[k] = v; }, removeProperty(k) { delete props[k]; } }, setAttribute() {}, removeAttribute() {}, hasAttribute: () => false },
+      head: { append() {} }, getElementById: () => null, createElement: () => ({}), getElementsByTagName: () => ({ length: nodes }) },
+    matchMedia: () => ({ matches: false }), addEventListener: (t, f) => { listeners[t] = f; }, dispatchEvent() {}, CustomEvent: class {},
+    setInterval: () => { throw new Error('no fixed 60 ms interval'); }, clearInterval() {},
+    setTimeout: (f, ms) => { timers.push({ f, ms }); return timers.length; }, clearTimeout() {}, performance: { now: () => now }, fetch: async () => ({ ok: false }) };
+  vm.runInNewContext(view('ui-theme.js'), sandbox);
+  sandbox.window.YannzUI.apply({ style: 'default', accent: '', rgb: true });
+  const tick = () => { const t = timers.shift(); now += t.ms; t.f(); return t.ms; };
+  assert.equal(timers.at(-1).ms, 60, 'a small page: smooth steps');
+  let before = props['--accent']; tick();
+  assert.notEqual(props['--accent'], before, 'the colour moves');
+  nodes = 18000;
+  assert.equal(tick(), 60); assert.equal(timers.at(-1).ms, 500, 'thousands of elements (Developer panel): a step every 0.5 s');
+  for (const t of ['pointerdown', 'wheel', 'touchmove', 'keydown', 'scroll']) assert.equal(typeof listeners[t], 'function', t);
+  listeners.wheel(); before = props['--accent']; tick();
+  assert.equal(props['--accent'], before, 'held while the visitor scrolls');
+  now += 1600; tick();
+  assert.notEqual(props['--accent'], before, 'moves again after the scrolling stops');
+  hidden = true; before = props['--accent']; tick();
+  assert.equal(props['--accent'], before, 'still while the tab is hidden');
+});
+
 it('29 looks, the same list on the page and on the server', async () => {
   const store = {};
   const sandbox = { window: {}, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; } },
     document: { documentElement: { style: { setProperty() {}, removeProperty() {} }, setAttribute() {}, removeAttribute() {}, hasAttribute: () => false }, head: { append() {} }, getElementById: () => null, createElement: () => ({}) },
-    matchMedia: () => ({ matches: false }), addEventListener() {}, dispatchEvent() {}, CustomEvent: class {}, setInterval: () => 1, clearInterval() {}, fetch: async () => ({ ok: false }) };
+    matchMedia: () => ({ matches: false }), addEventListener() {}, dispatchEvent() {}, CustomEvent: class {}, setInterval: () => 1, clearInterval() {}, setTimeout: () => 1, clearTimeout() {}, performance: { now: () => 0 }, fetch: async () => ({ ok: false }) };
   vm.runInNewContext(view('ui-theme.js'), sandbox);
   const ids = Object.keys(sandbox.window.YannzUI.STYLES);
   assert.equal(ids.length, 29);
