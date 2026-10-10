@@ -47,6 +47,17 @@
   .ep-notes { margin: 0; padding-left: 18px; }
   #code-dialog { width: min(820px, 96vw); }
   #ep-edit-dialog { width: min(560px, 96vw); }
+  #ep-try-dialog { width: min(720px, 96vw); }
+  #ep-try-params { display: grid; gap: 8px; margin: 10px 0; }
+  #ep-try-params label { display: grid; gap: 4px; font-weight: 600; }
+  #ep-try-params input { width: 100%; }
+  #ep-try-out { margin-top: 12px; }
+  #ep-try-media { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 8px; }
+  #ep-try-media:empty { display: none; }
+  #ep-try-media.one { grid-template-columns: 1fr; }
+  #ep-try-media img, #ep-try-media video { width: 100%; max-height: 420px; object-fit: contain; border: 2px solid var(--edge-soft); border-radius: 10px; background: var(--surface-2); }
+  #ep-try-media audio { width: 100%; }
+  #ep-try-media .dl { align-self: start; }
   #ep-edit .field { display: grid; gap: 6px; margin: 10px 0; font-weight: 600; }
   #ep-edit .field input, #ep-edit .field textarea { width: 100%; }
   #code-dialog textarea { width: 100%; min-height: 340px; font: 12px/1.5 "DM Mono", monospace; tab-size: 2; }
@@ -329,6 +340,19 @@
   <p class="muted"><small>Kosongin = balik ke bawaan dari kode. Ganti path cuma ganti alamatnya: path lama bakal bilang endpoint-nya udah pindah, tier, kuota, cek otomatis, dan cadangannya tetap jalan.</small></p>
   <p id="ep-edit-state" class="save-note" aria-live="polite"></p>
   <div class="row" style="margin-top:12px"><button class="primary" type="submit" value="save">Simpan</button><button type="button" id="ep-edit-reset">Reset ke bawaan</button><button type="button" onclick="document.getElementById('ep-edit-dialog').close()">Batal</button></div>
+</form></dialog>
+<dialog id="ep-try-dialog"><form id="ep-try-form">
+  <h2>Tes endpoint</h2>
+  <p class="muted" id="ep-try-label" data-no-i18n></p>
+  <p class="muted" id="ep-try-note" hidden></p>
+  <div id="ep-try-params"></div>
+  <div class="row"><button class="primary" type="submit" id="ep-try-run">Kirim</button><button type="button" onclick="document.getElementById('ep-try-dialog').close()">Tutup</button></div>
+  <p class="muted"><small>Dites pakai akun developer kamu, tanpa API key. Tetap jalan walau endpoint-nya lagi dinonaktifkan atau disembunyiin.</small></p>
+  <div id="ep-try-out" class="ep-test" hidden>
+    <div><b id="ep-try-status"></b> <small class="muted" id="ep-try-meta" data-no-i18n></small></div>
+    <div id="ep-try-media"></div>
+    <pre id="ep-try-body" data-no-i18n></pre>
+  </div>
 </form></dialog>
 <dialog id="user-dialog"><div id="user-detail"></div><div class="row" style="margin-top:14px"><button class="primary" type="button" onclick="document.getElementById('user-dialog').close()">Tutup</button></div></dialog>
 
@@ -634,6 +658,7 @@ const epRow = e => `<tr data-ep-row="${esc(e.id)}">
       <td>${chip(e.status, e.status === 'active' ? 'ok' : 'bad')} ${e.locked ? chip('locked', 'bad') : chip('open', 'ok')}${e.auto_disabled ? `<br><small class="error">${tr('Disembunyikan otomatis')}: <span data-no-i18n>${esc(e.disabled_reason || '')}</span></small>` : ''}</td>
       <td><button class="sm" data-ep="${e.locked ? 'unlock' : 'lock'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.locked ? 'Unlock' : 'Lock'}</button>
           <button class="sm" data-ep="status" data-status="${e.status === 'active' ? 'disabled' : 'active'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.status === 'active' ? 'Disable' : 'Enable'}</button>
+          ${e.handler_loaded && !e.deleted ? `<button class="sm" data-ep="try" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Tes</button>` : ''}
           ${e.deleted ? '' : `<button class="sm" data-ep="edit" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Edit</button>`}
           ${e.can_show ? `<button class="sm" data-ep="show" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Tampilkan</button>` : ''}
           ${e.alias_of ? `<button class="sm" data-ep="hide" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Sembunyikan</button>` : ''}
@@ -695,6 +720,7 @@ $('#endpoints-data').addEventListener('click', async e => {
   const { ep, id, path } = b.dataset;
   if (ep === 'code') return openCode(id, path);
   if (ep === 'edit') return openEdit(id);
+  if (ep === 'try') return openTry(id);
   const q = { lock: `Kunci ${path}? Semua user selain developer bakal ditolak (ENDPOINT_LOCKED).`, unlock: `Buka kunci ${path}?`, status: `${b.dataset.status === 'disabled' ? 'Nonaktifkan' : 'Aktifkan'} ${path}?`, show: `Tampilkan ${path} di daftar API? Namanya jadi versi baru (misal V2) dari endpoint yang dia cadangin, dan tetap jadi cadangan juga.`, hide: `Sembunyiin ${path} dari daftar API? Dia balik cuma jadi cadangan.`, delete: `Hapus metadata ${path}?`, 'delete-code': `Hapus endpoint ${path}? File kodenya dihapus dari GitHub dan endpoint-nya langsung dimatiin.` }[ep];
   if (!ask(q)) return;
   b.disabled = true;
@@ -746,6 +772,140 @@ $('#ep-edit-reset').addEventListener('click', () => {
   const f = $('#ep-edit'); f.elements.name.value = f.elements.path.value = f.elements.description.value = f.elements.category.value = '';
   saveEdit({ name: '', path: '', description: '', category: '' });
 });
+// ---------- "Tes": run an endpoint as the developer (signed in, no API key) and show what it answers:
+// a picture, video or audio file as itself, JSON as text plus the media it links to, anything else
+// as text or a file to download.
+let tryInfo = null, tryUrls = [];
+const fmtSize = n => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(2)} MB`);
+function tryReset() {
+  tryUrls.forEach(u => URL.revokeObjectURL(u)); tryUrls = [];
+  $('#ep-try-out').hidden = true; $('#ep-try-media').replaceChildren(); $('#ep-try-body').textContent = '';
+}
+async function openTry(id) {
+  const dlg = $('#ep-try-dialog');
+  tryReset(); tryInfo = null;
+  $('#ep-try-params').replaceChildren(); $('#ep-try-note').hidden = true;
+  $('#ep-try-label').textContent = tr('Lagi dimuat…'); $('#ep-try-run').disabled = true;
+  dlg.showModal();
+  try { tryInfo = (await api(`/owner/api/endpoints/${id}/test-info`)).endpoint; }
+  catch (err) { $('#ep-try-label').textContent = err.message; return; }
+  const t = tryInfo;
+  $('#ep-try-label').textContent = `${t.name} · ${t.upload ? 'GET/POST' : 'GET'} ${t.call_path}`;
+  if (t.status !== 'active') { $('#ep-try-note').hidden = false; $('#ep-try-note').textContent = tr('Endpoint ini lagi dinonaktifkan, tapi tetap bisa dites di sini.'); }
+  const box = $('#ep-try-params');
+  for (const p of t.params) {
+    const label = document.createElement('label');
+    label.append(document.createTextNode(p.name + (p.required ? ' *' : '')));
+    const input = document.createElement('input');
+    input.dataset.tryParam = p.name; input.value = t.sample[p.name] ?? ''; input.placeholder = p.type === 'file' ? tr('URL file, atau pilih file di bawah') : (p.placeholder || '');
+    input.setAttribute('data-no-i18n', '');
+    label.append(input);
+    if (p.type === 'file' && t.upload) {
+      const file = document.createElement('input');
+      file.type = 'file'; file.dataset.tryFile = p.name; if (p.accept) file.accept = p.accept;
+      label.append(file);
+    }
+    box.append(label);
+  }
+  // No parameter list (e.g. a plugin added from code): a free query string.
+  if (!t.params.length) {
+    const label = document.createElement('label');
+    label.append(document.createTextNode(tr('Query (opsional)')));
+    const input = document.createElement('input');
+    input.dataset.tryRaw = ''; input.placeholder = 'q=anime&page=1'; input.value = new URLSearchParams(t.sample).toString();
+    input.setAttribute('data-no-i18n', '');
+    label.append(input); box.append(label);
+  }
+  $('#ep-try-run').disabled = false;
+}
+// Links to pictures, videos and audio inside a JSON answer (the site's own /media and /cdn links too).
+const TRY_EXT = { image: /\.(jpe?g|png|webp|gif|avif|bmp)(\?|#|$)/i, video: /\.(mp4|webm|mov|m4v)(\?|#|$)/i, audio: /\.(mp3|m4a|aac|ogg|oga|wav|opus|flac)(\?|#|$)/i };
+const TRY_KEY = { image: /(photo|image|img|thumb|cover|picture|poster|avatar|icon)/i, video: /(video|mp4|nowm|watermark)/i, audio: /(music|audio|mp3|sound|song)/i };
+function tryMediaIn(data) {
+  const out = new Map();
+  const walk = (v, key, depth) => {
+    if (depth > 6 || out.size >= 8) return;
+    if (typeof v === 'string') {
+      if (!/^(https?:\/\/\S+|\/(media|cdn)\/\S+)$/i.test(v) || out.has(v)) return;
+      const kind = ['video', 'audio', 'image'].find(k => TRY_EXT[k].test(v)) || ['audio', 'video', 'image'].find(k => TRY_KEY[k].test(key || ''));
+      if (kind) out.set(v, kind);
+    } else if (Array.isArray(v)) v.forEach(x => walk(x, key, depth + 1));
+    else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => walk(x, k, depth + 1));
+  };
+  walk(data, '', 0);
+  return [...out];
+}
+function tryMediaEl(src, kind) {
+  const el = document.createElement(kind === 'image' ? 'img' : kind);
+  el.addEventListener('error', () => el.remove());   // a link that doesn't open is left out; the JSON still shows it
+  el.src = src;
+  if (kind === 'image') { el.alt = ''; el.loading = 'lazy'; } else { el.controls = true; el.preload = 'metadata'; if (kind === 'video') el.playsInline = true; }
+  return el;
+}
+$('#ep-try-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!tryInfo) return;
+  tryReset();
+  const qs = new URLSearchParams();
+  const raw = $('#ep-try-params [data-try-raw]');
+  if (raw) new URLSearchParams(raw.value.trim().replace(/^\?/, '')).forEach((v, k) => qs.set(k, v));
+  $('#ep-try-params').querySelectorAll('[data-try-param]').forEach(i => { if (i.value.trim()) qs.set(i.dataset.tryParam, i.value.trim()); });
+  const file = $('#ep-try-params [data-try-file]')?.files?.[0] || null;
+  const missing = tryInfo.params.filter(p => p.required && !qs.has(p.name) && !(file && p.type === 'file')).map(p => p.name);
+  if (missing.length) { say(tr('Parameter wajib belum diisi:') + ' ' + missing.join(', ')); return; }
+  if (file && file.size > 8 * 1048576) { say(tr('Ukuran file maksimal 8 MB.')); return; }
+  const url = tryInfo.call_path + (qs.toString() ? '?' + qs : '');
+  const headers = { 'X-Yannz-Client': 'web', 'X-Yannz-Test': '1' };
+  const opts = file ? { method: 'POST', credentials: 'same-origin', headers: { ...headers, 'Content-Type': file.type || 'application/octet-stream' }, body: file } : { credentials: 'same-origin', headers };
+  const btn = $('#ep-try-run'); btn.disabled = true; btn.textContent = tr('Lagi dites…');
+  const out = $('#ep-try-out'), media = $('#ep-try-media'), body = $('#ep-try-body');
+  const started = performance.now();
+  try {
+    const r = await fetch(url, opts);
+    const blob = await r.blob();
+    const ms = Math.round(performance.now() - started);
+    const type = (r.headers.get('content-type') || blob.type || '').split(';')[0].trim();
+    let ok = r.ok;
+    media.className = '';
+    if (type === 'application/json' || /\+json$/.test(type)) {
+      const text = await blob.text();
+      let data = null; try { data = JSON.parse(text); } catch {}
+      if (data && (data.status === false || data.success === false)) ok = false;
+      body.textContent = data ? JSON.stringify(data, null, 2).slice(0, 200000) : text.slice(0, 200000);
+      if (data && ok) {
+        const found = tryMediaIn(data);
+        found.forEach(([src, kind]) => media.append(tryMediaEl(src, kind)));
+        if (found.length === 1) media.className = 'one';
+      }
+    } else if (/^(image|video|audio)\//.test(type)) {
+      const src = URL.createObjectURL(blob); tryUrls.push(src);
+      media.className = 'one';
+      const a = document.createElement('a');
+      a.className = 'btn sm dl'; a.href = src; a.download = 'hasil.' + (type.split('/')[1] || 'bin').replace(/[^a-z0-9]/gi, '').slice(0, 5); a.textContent = tr('Download');
+      media.append(tryMediaEl(src, type.split('/')[0]), a);
+      body.textContent = `[${type}] ${fmtSize(blob.size)}`;
+    } else if (/^text\/|xml|javascript/.test(type) || !type) {
+      body.textContent = (await blob.text()).slice(0, 200000);
+    } else {
+      const src = URL.createObjectURL(blob); tryUrls.push(src);
+      const a = document.createElement('a');
+      a.className = 'btn sm dl'; a.href = src; a.download = 'hasil'; a.textContent = `${tr('Download file')} (${fmtSize(blob.size)})`;
+      media.append(a);
+      body.textContent = `[${type}] ${fmtSize(blob.size)}`;
+    }
+    out.hidden = false;
+    out.className = 'ep-test ' + (ok ? 'ok' : 'bad');
+    $('#ep-try-status').textContent = `${ok ? '✓' : '✕'} ${r.status} ${ok ? 'OK' : 'ERROR'}`;
+    $('#ep-try-meta').textContent = `${ms} ms · ${type || '—'} · ${fmtSize(blob.size)}`;
+  } catch (err) {
+    out.hidden = false; out.className = 'ep-test bad';
+    $('#ep-try-status').textContent = '✕ ' + tr('Koneksi putus');
+    $('#ep-try-meta').textContent = String(err.message || err);
+  } finally {
+    btn.disabled = false; btn.textContent = tr('Kirim');
+  }
+});
+$('#ep-try-dialog').addEventListener('close', tryReset);
 // ---------- add endpoint: paste any code → "Sempurnakan & tes" → preview → "Tambah & deploy"
 const ep = { tested: false, params: [] };
 const testBox = (el, t) => {
