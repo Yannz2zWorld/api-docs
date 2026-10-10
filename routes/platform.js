@@ -26,6 +26,7 @@ const endpointStatus = require('../services/endpointStatusService');
 const endpointChecks = require('../services/endpointCheckService');
 const errorLog = require('../services/errorLogService');
 
+const aliases = require('../services/endpointAliasService');
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
 const { parseProofImage, parseAvatarImage } = require('../lib/proofImage');
@@ -1129,7 +1130,9 @@ function withHandler(req, row) {
   return { ...row, handler_loaded: (req.app.locals.loadedPluginPaths || new Set()).has(row.path),
     file, file_endpoints: sameFile, code_editable: Boolean(file) && sameFile === 1 && !String(row.plugin || '').startsWith('deleted:'),
     deleted: String(row.plugin || '').startsWith('deleted:'),
-    backups: own ? own.backups.map(b => (typeof b === 'string' ? b : b.path)) : [], backup_for: backupFor };
+    backups: own ? own.backups.map(b => (typeof b === 'string' ? b : b.path)) : [], backup_for: backupFor,
+    // A backup-only endpoint that can be shown as a version, or a version shown from a backup.
+    can_show: (req.app.locals.backupRoutes || new Map()).has(row.path), alias_of: (req.app.locals.endpointAliases || new Map()).get(row.path) || null };
 }
 
 router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
@@ -1137,8 +1140,46 @@ router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
   const loaded = req.app.locals.loadedPluginPaths || new Set();
   const gone = (await query("SELECT id,path FROM endpoints WHERE plugin LIKE 'deleted:%'")).filter(r => !loaded.has(r.path)).map(r => r.id);
   if (gone.length) await query('DELETE FROM endpoints WHERE id = ANY($1::uuid[])', [gone]);
-  const rows = await query('SELECT * FROM endpoints ORDER BY name');
+  await aliases.sync(req.app, true).catch(() => null);
+  // A shown version stands in for its backup's row; a hidden version's row is left out.
+  const all = await aliases.rows().catch(() => []);
+  const shownBackups = new Set(all.filter(a => a.shown).map(a => a.backup_path));
+  const hiddenVersions = new Set(all.filter(a => !a.shown).map(a => a.public_path));
+  const rows = (await query('SELECT * FROM endpoints ORDER BY name')).filter(r => !shownBackups.has(r.path) && !hiddenVersions.has(r.path));
   res.json({ success: true, endpoints: rows.map(r => withHandler(req, r)) });
+});
+
+// "Tampilkan": a backup-only endpoint listed as the next version of the endpoint it backs up
+// (e.g. /api/anime/anichin/detail-v2, "Anichin Detail V2"); it stays a backup too.
+router.post('/owner/api/endpoints/:id/show', sameOrigin, auth, owner, validId('id'), async (req, res) => {
+  const row = (await query('SELECT * FROM endpoints WHERE id=$1', [req.params.id]))[0];
+  if (!row) return fail(res, 404, 'NOT_FOUND', 'Endpoint nggak ketemu.');
+  if (!(req.app.locals.backupRoutes || new Map()).has(row.path)) return fail(res, 409, 'NOT_A_BACKUP', 'Endpoint ini bukan cadangan, udah tampil di daftar.');
+  try {
+    const v = await aliases.show(req.app, row);
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_show', targetType: 'endpoint', targetId: row.id, metadata: { backup: row.path, path: v.public_path, name: v.name }, ipAddress: ip(req) });
+    require('../services/endpointStatusService').reset();
+    res.json({ success: true, endpoint: { path: v.public_path, name: v.name }, message: `${v.name} udah tampil di daftar API: ${v.public_path}` });
+  } catch (e) {
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Jalankan migrasi 024_endpoint_aliases.sql dulu di Neon.');
+    if (e.code === 'NO_FREE_VERSION') return fail(res, 409, e.code, e.message);
+    throw e;
+  }
+});
+// "Sembunyikan": the version leaves the list again (it is a backup only, as before).
+router.post('/owner/api/endpoints/:id/hide', sameOrigin, auth, owner, validId('id'), async (req, res) => {
+  const row = (await query('SELECT * FROM endpoints WHERE id=$1', [req.params.id]))[0];
+  if (!row) return fail(res, 404, 'NOT_FOUND', 'Endpoint nggak ketemu.');
+  try {
+    const a = await aliases.hide(req.app, row.path);
+    if (!a) return fail(res, 409, 'NOT_A_VERSION', 'Endpoint ini bukan versi dari cadangan.');
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_hide', targetType: 'endpoint', targetId: row.id, metadata: { backup: a.backup_path, path: a.public_path }, ipAddress: ip(req) });
+    require('../services/endpointStatusService').reset();
+    res.json({ success: true, message: `${a.name} disembunyiin lagi, sekarang cuma jadi cadangan.` });
+  } catch (e) {
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Jalankan migrasi 024_endpoint_aliases.sql dulu di Neon.');
+    throw e;
+  }
 });
 
 // ---------------------------------------------------------------- owner: add endpoint from any code

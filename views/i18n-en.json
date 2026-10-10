@@ -1135,7 +1135,10 @@
   "Bikin QR baru": "Make a new QR",
   "Pembeli scan QRIS, terus tier-nya aktif otomatis begitu Pakasir konfirmasi pembayarannya (dicek ke API status Pakasir, bukan cuma percaya webhook). Nyala kalau": "Buyers scan a QRIS code, and their tier switches on as soon as Pakasir confirms the payment (checked with the Pakasir status API, not just the webhook). It is on when",
   "Gateway pembayaran nggak ngasih QR. Coba lagi bentar.": "The payment gateway didn't return a QR. Try again in a moment.",
-  "Lanjutkan dengan Google": "Continue with Google"
+  "Lanjutkan dengan Google": "Continue with Google",
+  "Versi dari cadangan": "Version of the backup",
+  "Tampilkan": "Show",
+  "Sembunyikan": "Hide"
  },
  "patterns": [
   [
@@ -1897,6 +1900,22 @@
   [
    "^(\\d+) dari (\\d+) endpoint · scroll buat lihat lainnya$",
    "Showing $1 of $2 endpoints · scroll for more"
+  ],
+  [
+   "^Tampilkan (\\S+) di daftar API\\? Namanya jadi versi baru \\(misal V2\\) dari endpoint yang dia cadangin, dan tetap jadi cadangan juga\\.$",
+   "Show $1 in the API list? It becomes a new version (e.g. V2) of the endpoint it backs up, and stays a backup too."
+  ],
+  [
+   "^Sembunyiin (\\S+) dari daftar API\\? Dia balik cuma jadi cadangan\\.$",
+   "Hide $1 from the API list? It goes back to being a backup only."
+  ],
+  [
+   "^(.+) udah tampil di daftar API: (\\S+)$",
+   "$1 is now in the API list: $2"
+  ],
+  [
+   "^(.+) disembunyiin lagi, sekarang cuma jadi cadangan\\.$",
+   "$1 is hidden again; it is a backup only now."
   ]
  ]
 }
