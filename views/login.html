@@ -93,9 +93,9 @@
     .message{margin:12px 0 0}.message:empty{display:none}
     .oauth .divider{margin:22px 0 16px}.oauth[hidden]{display:none}
     .panel h2{transition:opacity .2s}
-  .layout>*,.panel,.view,.oauth{min-width:0}.panel{max-width:100%}#google-oauth iframe,#google-oauth>div{max-width:100%!important}
-  #google-oauth{display:flex;justify-content:center;align-items:center;overflow:hidden}#google-oauth:empty{display:none}#google-fallback{text-decoration:none;color:inherit}#google-fallback[hidden]{display:none}
-    #google-oauth iframe{max-width:100%}
+  .layout>*,.panel,.view,.oauth{min-width:0}.panel{max-width:100%}
+  /* Google's button lives in an iframe 20px wider than the button (−10px margins each side): never clip or squeeze it. */
+  #google-oauth{display:flex;justify-content:center;align-items:center;min-height:44px}#google-oauth:empty{display:none}#google-oauth iframe{box-shadow:3px 4px 0 var(--drop);border-radius:4px}#google-fallback{text-decoration:none;color:inherit}#google-fallback[hidden]{display:none}
   
     :root{color-scheme:dark}::selection{background:var(--ink);color:var(--bg)}
     :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
@@ -207,7 +207,6 @@
         <p class="ts-note" id="ts-note" hidden>Selesain verifikasi di atas dulu buat lanjut pakai Google.</p>
         <div id="google-message" class="message" aria-live="polite"></div>
       </div>
-      <p class="oauth-note">Sandi kamu di-hash di server (scrypt), dan sesi disimpan di cookie HttpOnly yang aman.</p>
       <div class="meta"><span>Sistem login: siap</span><a href="/api">Dokumentasi API</a></div>
     </div>
   </section>
@@ -276,10 +275,15 @@
       if(!cfg.configured||!cfg.clientId) throw new Error('Google OAuth belum di-setting di server.');
       const gis=await waitForGis(8000);
       gis.initialize({client_id:cfg.clientId,callback:handleGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
-      const host=$('#google-oauth');host.innerHTML='';
-      // Size from the always-visible panel (the oauth block may be hidden while another view is open).
-      const panelWidth=Math.floor($('.panel').getBoundingClientRect().width)||300;
-      gis.renderButton(host,{theme:'filled_black',size:'large',text:'continue_with',shape:'rectangular',logo_alignment:'left',width:Math.max(200,Math.min(400,panelWidth))});
+      const host=$('#google-oauth');
+      // The button is as wide as the space inside the panel (its padding excluded), so it lines up with
+      // the form fields and is never cut off; drawn again when that space changes (rotate / resize).
+      const room=()=>{const panel=$('.panel'),cs=getComputedStyle(panel);return Math.floor(panel.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))||300;};
+      let drawn=0;
+      const draw=()=>{const w=Math.max(200,Math.min(400,room()));if(w===drawn)return;drawn=w;host.innerHTML='';
+        gis.renderButton(host,{theme:'filled_black',size:'large',text:'continue_with',shape:'rectangular',logo_alignment:'left',width:w});};
+      draw();
+      let t=null;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(draw,200);});
       $('#google-fallback').hidden=true;
     }catch(err){showGoogleError(err.message);}
   }

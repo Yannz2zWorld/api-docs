@@ -465,7 +465,6 @@
   "← Ganti email": "← Change email",
   "Lanjut pakai Google": "Continue with Google",
   "Selesain verifikasi di atas dulu buat lanjut pakai Google.": "Finish the check above to continue with Google.",
-  "Sandi kamu di-hash di server (scrypt), dan sesi disimpan di cookie HttpOnly yang aman.": "Your password is hashed on the server (scrypt), and your session lives in a secure HttpOnly cookie.",
   "Sistem login: siap": "Authentication layer: ready",
   "Dokumentasi API": "API documentation",
   "Lagi nyiapin workspace kamu": "Preparing your workspace",

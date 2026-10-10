@@ -18,7 +18,7 @@ before(async () => {
   if (h.skip) return;
   global.fetch = async (url, opts = {}) => {
     const u = new URL(String(url));
-    if (['api.theresav.eu', 'api.clutch.web.id', 'api.termai.cc', 'api.dongtube.id'].includes(u.hostname)) {
+    if (['api.theresav.eu', 'api.clutch.web.id', 'api.termai.cc', 'api.dongtube.id', 'api.botcahx.eu.org'].includes(u.hostname)) {
       seen.push({ host: u.hostname, path: u.pathname, query: Object.fromEntries(u.searchParams) });
       const r = reply(u);
       if (r.delay) await new Promise(res => setTimeout(res, r.delay));
@@ -37,7 +37,7 @@ before(async () => {
   const realLookup = dns.promises.lookup;
   dns.promises.lookup = async (host, o) => (host === 'apiz2z.web.id' ? [{ address: '93.184.216.34', family: 4 }] : realLookup(host, o));
   await h.setupDatabase();
-  app = await h.startApp({ THERESAV_API_KEY: 'k', CLUTCH_API_KEY: 'c', TERMAI_API_KEY: 't', DONGTUBE_API_KEY: 'd', CRON_SECRET: 'cron-xyz', PUBLIC_BASE_URL: 'https://apiz2z.web.id' });
+  app = await h.startApp({ THERESAV_API_KEY: 'k', CLUTCH_API_KEY: 'c', TERMAI_API_KEY: 't', DONGTUBE_API_KEY: 'd', BOTCAHX_API_KEY: 'b', CRON_SECRET: 'cron-xyz', PUBLIC_BASE_URL: 'https://apiz2z.web.id' });
   user = await app.login('status@example.test');
   owner = await app.login(h.OWNER_EMAIL);
   status = require('../../services/endpointStatusService');   // after startApp: lib/db uses the test shim
@@ -53,8 +53,8 @@ const autocheck = () => app.request('POST', '/api/endpoints/autocheck', { header
 
 it('is public and lists every endpoint; not checked yet = pending (no made-up 200s)', async () => {
   const d = await get();
-  // Backup-only endpoints (plugin/dongtube.js) are not listed on their own.
-  const total = (await h.db().query("SELECT count(*)::int AS n FROM endpoints WHERE path NOT LIKE '/api/alt/%'")).rows[0].n;
+  // Backup-only endpoints (plugin/dongtube.js, plugin/botcahx.js) are not listed on their own.
+  const total = (await h.db().query("SELECT count(*)::int AS n FROM endpoints WHERE path NOT LIKE '/api/alt/%' AND path NOT LIKE '/api/alt2/%'")).rows[0].n;
   assert.equal(d.endpoints.length, total);
   assert.equal(d.summary.total, total);
   const ping = find(d, '/api/tools/ping');

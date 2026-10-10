@@ -101,6 +101,6 @@ it('the monitor shows a group as 200 while a backup works; the panel lists the b
   const ig = (await app.request('GET', '/api/endpoints/status')).json.endpoints.find(e => e.path === '/api/download/instagram');
   assert.deepEqual([ig.code, ig.source], [200, 'backup']);
   const rows = (await app.request('GET', '/owner/api/endpoints', { cookie: owner })).json.endpoints;
-  assert.deepEqual(rows.find(e => e.path === '/api/download/tiktok').backups, ['/api/download/tiktok-v2', '/api/alt/download/tiktok', '/api/download/aio', '/api/alt/download/aio']);
+  assert.deepEqual(rows.find(e => e.path === '/api/download/tiktok').backups, ['/api/download/tiktok-v2', '/api/alt/download/tiktok', '/api/download/aio', '/api/alt/download/aio', '/api/alt2/download/tiktok']);
   assert.deepEqual(rows.find(e => e.path === '/api/download/aio').backup_for.sort(), ['/api/download/instagram', '/api/download/tiktok', '/api/download/youtube']);
 });
