@@ -115,7 +115,7 @@ function dressModel(model) {
     o.frustumCulled = false;
     const m = o.material;
     if (m.name === 'glow') {
-      o.material = new THREE.MeshBasicMaterial({ vertexColors: true, color: RED, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });
+      o.material = new THREE.MeshBasicMaterial({ name: 'glow', vertexColors: true, color: RED, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });
       pulse.push({ m: o.material, base: 0.55, key: 'opacity' });
       return;
     }
@@ -171,7 +171,8 @@ function mount(el) {
   const root = new THREE.Group();          // placed on screen by resize()
   const spin = new THREE.Group();          // slow turn + pointer response
   const tilt = new THREE.Group();          // the scythe leans across the frame
-  tilt.rotation.z = variant === 'stack' ? -0.42 : -0.32;
+  const centred = variant === 'stack' || variant === 'preview';   // dashboard and the Custom UI preview
+  tilt.rotation.z = centred ? -0.42 : -0.32;
   root.add(spin);
   spin.add(tilt);
   scene.add(root);
@@ -213,7 +214,7 @@ function mount(el) {
     const visH = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), visW = visH * camera.aspect;
     // [screen x, screen y, share of the height, share of the width]
     let sx, sy, frac, wide;
-    if (variant === 'stack') [sx, sy, frac, wide] = [0.5, 0.48, 0.9, 1.05];
+    if (centred) [sx, sy, frac, wide] = [0.5, 0.48, 0.9, 1.05];
     else if (camera.aspect < 0.7) [sx, sy, frac, wide] = [0.54, 0.34, 0.6, 0.86];   // tall, narrow panel
     else if (w < 560) [sx, sy, frac, wide] = [0.7, 0.4, 0.66, 0.6];
     else [sx, sy, frac, wide] = camera.aspect > 1.25 ? [0.68, 0.45, 0.76, 0.6] : [0.66, 0.4, 0.68, 0.6];
@@ -230,7 +231,7 @@ function mount(el) {
   canvas.style.cursor = 'grab';
   canvas.addEventListener('pointerdown', e => {
     if (!model) return;
-    Object.assign(drag, { active: true, id: e.pointerId, x: e.clientX, y: e.clientY, mouse: e.pointerType === 'mouse', at: performance.now(), v: 0 });
+    Object.assign(drag, { active: true, id: e.pointerId, x: e.clientX, y: e.clientY, mouse: e.pointerType === 'mouse', at: performance.now(), v: 0, x0: e.clientX, y0: e.clientY, t0: performance.now() });
     canvas.setPointerCapture(e.pointerId);
     canvas.style.cursor = 'grabbing';
   });
@@ -249,7 +250,19 @@ function mount(el) {
     drag.last = performance.now();
     if (drag.last - drag.at > 80) drag.v = 0;   // held still before letting go: no fling
     canvas.style.cursor = 'grab';
+    // A tap (no drag) on the scythe opens its colour panel (views/scythe-color.js).
+    if (e.type === 'pointerup' && variant !== 'core' && window.YannzScythe && performance.now() - drag.t0 < 400 && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 8 && hitScythe(e)) {
+      drag.v = 0;
+      window.YannzScythe.open(e.clientX, e.clientY);
+    }
   };
+  const ray = new THREE.Raycaster();
+  function hitScythe(e) {
+    if (!model) return false;
+    const r = canvas.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+    return ray.intersectObject(model, true).length > 0;
+  }
   canvas.addEventListener('pointerup', release);
   canvas.addEventListener('pointercancel', release);
 
@@ -285,7 +298,7 @@ function mount(el) {
       if (entrance < 1 && el.classList.contains('is-ready')) entrance = Math.min(1, entrance + dt / 1.4);
       const inE = 1 - Math.pow(1 - entrance, 3), back = 1 + 2.2 * Math.pow(entrance - 1, 3) + 1.2 * Math.pow(entrance - 1, 2);
       spin.scale.setScalar(0.72 + 0.28 * back);
-      spin.rotation.y = drag.yaw - (1 - inE) * 2.6 + (Math.sin(t * 0.32) * (variant === 'stack' ? 0.75 : 0.55) + pointer.x * 0.35) * drag.sway;
+      spin.rotation.y = drag.yaw - (1 - inE) * 2.6 + (Math.sin(t * 0.32) * (centred ? 0.75 : 0.55) + pointer.x * 0.35) * drag.sway;
       spin.rotation.x = drag.pitch + pointer.y * 0.12 * drag.sway;
       tilt.position.y = Math.sin(t * 0.9) * 0.06;
       const beat = 0.82 + Math.sin(t * 2.1) * 0.12 + Math.sin(t * 5.3) * 0.06;
@@ -338,6 +351,12 @@ function mount(el) {
     draco.dispose();
     model = gltf.scene;
     pulse = dressModel(model);
+    // The visitor's scythe colours (handle / head / effects), and every effect that follows them.
+    if (window.YannzScythe) {
+      const paint = window.YannzScythe.paint(THREE, model);
+      [[rim, 'color'], [blade, 'color'], [halo.material, 'color'], [floorGlow.material, 'color'], [fx.points.material, 'color']].forEach(([o, p]) => paint.track(o, p));
+      if (variant !== 'core') canvas.title = 'Klik scythe buat ganti warnanya';
+    }
     // Centre on the bounding box and keep its size for framing.
     const box = new THREE.Box3().setFromObject(model);
     box.getSize(size);

@@ -22,7 +22,7 @@
   .ym-btn{display:grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:#1d1d21;color:#f4f4f5;cursor:pointer;box-shadow:none;transition:background .15s,transform .15s}
   .ym-btn:hover{background:#2a2a30;transform:none}
   .ym-btn:focus-visible{outline:2px solid #f4f4f5;outline-offset:2px}
-  .ym-play{background:var(--accent,#c8202f);color:#fff}
+  .ym-play{background:var(--accent,#c8202f);color:var(--accent-ink,#fff)}
   .ym-play:hover{background:var(--red-deep,#a3172a)}
   .ym-btn svg{width:18px;height:18px;fill:currentColor}
   .ym-dock[data-state=loading] .ym-play svg{animation:ym-spin 1s linear infinite}
