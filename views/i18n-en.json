@@ -1070,7 +1070,46 @@
   "Menyimpan…": "Saving…",
   "Pengumumannya muncul di halaman login dan Home.": "The announcement shows on the sign-in page and Home.",
   "Maintenance Info Website ON.": "Maintenance Info Website ON.",
-  "Maintenance Info Website OFF.": "Maintenance Info Website OFF."
+  "Maintenance Info Website OFF.": "Maintenance Info Website OFF.",
+  "Tempel kode apa aja: case bot WA, route Express, script axios/fetch, atau plugin. Web nyesuaiin kodenya sama format website, terus langsung dites. Kalau jalan, cek dulu hasilnya, baru klik": "Paste any code: a WhatsApp bot case, an Express route, an axios/fetch script, or a plugin. The site adapts it to its own format and tests it right away. If it works, check the result first, then click",
+  "Tes koneksi AI": "Test AI connection",
+  "AI: lagi dicek…": "AI: checking…",
+  "Kode — upload file atau tempel": "Code — upload a file or paste it",
+  "Maks 200 KB.": "Max 200 KB.",
+  "Sempurnakan & tes": "Perfect & test",
+  "Lagi nyempurnain…": "Perfecting…",
+  "Cara": "Method",
+  "Otomatis (aturan dulu, AI kalau perlu)": "Automatic (rules first, AI if needed)",
+  "Tanpa AI": "Without AI",
+  "Langsung pakai AI": "Use AI right away",
+  "Path": "Path",
+  "Input buat tes": "Test input",
+  "Kode hasil (boleh diedit, habis edit tes ulang)": "Resulting code (you can edit it; test again after editing)",
+  "Tes ulang": "Test again",
+  "Lagi tes & commit…": "Testing & committing…",
+  "Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Tombol deploy baru bisa diklik kalau tesnya jalan.": "The script is committed to GitHub, Vercel redeploys automatically (about 20–60 seconds), then the endpoint goes live. The deploy button only works once the test passes.",
+  "Test/Check All API": "Test/Check All API",
+  "Ngecek semua endpoint ke server sumbernya masing-masing. Pakai kuota tiap server.": "Checks every endpoint against its source server. Uses each server's quota.",
+  "Edit kode endpoint": "Edit endpoint code",
+  "Edit kode": "Edit code",
+  "Tes": "Test",
+  "Tes & simpan": "Test & save",
+  "Lagi tes & simpan…": "Testing & saving…",
+  "Kode baru dites dulu. Kalau jalan, di-commit ke GitHub dan Vercel deploy ulang otomatis.": "The new code is tested first. If it works, it's committed to GitHub and Vercel redeploys automatically.",
+  "Query buat tes": "Test query",
+  "Query tambahan": "Extra query",
+  "✓ Jalan": "✓ Works",
+  "✕ Belum jalan": "✕ Not working yet",
+  "Disempurnakan pakai aturan otomatis (tanpa AI).": "Perfected with the automatic rules (no AI).",
+  "Kode-nya udah format plugin, dipakai apa adanya.": "The code is already a plugin, used as it is.",
+  "AI: belum diatur (isi AI_API_KEY di Vercel). Kode simpel tetap bisa tanpa AI.": "AI: not set up (fill in AI_API_KEY on Vercel). Simple code still works without AI.",
+  "Kalau pakai AI bisa sampai 1–2 menit.": "With AI this can take 1–2 minutes.",
+  "Tempel kodenya dulu.": "Paste the code first.",
+  "Tes dulu sampai jalan, baru bisa deploy.": "Test it until it works, then you can deploy.",
+  "dihapus, nunggu deploy": "deleted, waiting for deploy",
+  "Kode maksimal 200 KB ya.": "Code is limited to 200 KB.",
+  "Endpoint dihapus.": "Endpoint deleted.",
+  "Cek semua endpoint ke server sumbernya sekarang? Ini bakal pakai kuota tiap server.": "Check every endpoint against its source server now? This uses each server's quota."
  },
  "patterns": [
   [
@@ -1800,6 +1839,14 @@
   [
    "^DANA (aktif|disembunyikan), GoPay (aktif|disembunyikan)\\.$",
    "DANA {{$1}}, GoPay {{$2}}."
+  ],
+  [
+   "^Disempurnakan pakai AI \\((.+)\\)\\.$",
+   "Perfected with AI ({{$1}})."
+  ],
+  [
+   "^AI: (.+) lewat (.+)$",
+   "AI: {{$1}} via {{$2}}"
   ]
  ]
 }

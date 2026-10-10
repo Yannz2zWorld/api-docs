@@ -117,8 +117,12 @@ it('owner endpoint registry: metadata is separate from executable handlers', asy
   assert.equal(bad.status, 400);
 
   const pingRow = list.json.endpoints.find(e => e.path === '/api/tools/ping');
+  delete process.env.GITHUB_TOKEN;   // never reach GitHub from the tests
   const del = await app.request('DELETE', `/owner/api/endpoints/${pingRow.id}`, { cookie: owner, headers: { origin: app.origin } });
-  assert.deepEqual([del.status, del.json.error], [409, 'HANDLER_LOADED']);
+  assert.deepEqual([del.status, del.json.error], [503, 'GITHUB_NOT_CONFIGURED'], 'its own code file: deleted on GitHub, which needs the token');
+  const shared = list.json.endpoints.find(e => e.handler_loaded && e.file_endpoints > 1);
+  const delShared = await app.request('DELETE', `/owner/api/endpoints/${shared.id}`, { cookie: owner, headers: { origin: app.origin } });
+  assert.deepEqual([delShared.status, delShared.json.error], [409, 'MULTI_ENDPOINT_FILE'], 'a file serving many endpoints is never deleted from here');
   assert.equal((await app.request('DELETE', `/owner/api/endpoints/${created.json.endpoint.id}`, { cookie: owner, headers: { origin: app.origin } })).status, 200);
 
   const badPatch = await app.request('PATCH', `/owner/api/endpoints/${pingRow.id}`, { cookie: owner, headers: { origin: app.origin }, body: { locked: 'yes' } });

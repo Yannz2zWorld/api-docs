@@ -50,8 +50,8 @@ function validateCode(code) {
 }
 
 // The committed file: metadata from the form + the uploaded script, verbatim, in its own scope.
-function buildPluginFile({ name, desc, category, path, code }) {
-  const meta = JSON.stringify({ name, desc, category, path }, null, 2);
+function buildPluginFile({ name, desc, category, path, code, params }) {
+  const meta = JSON.stringify({ name, desc, category, path, ...(Array.isArray(params) && params.length ? { params } : {}) }, null, 2);
   return `// Endpoint added from the owner panel. The metadata registers the route (see the plugin loader in
 // index.js); the uploaded script between the markers handles it. It exports either a function
 // (req, res) or an object with run(req, res). Tier, lock and status live in the endpoints table.
@@ -67,7 +67,9 @@ ${code.replace(/\r\n/g, '\n').replace(/\s+$/, '')}
 const handler = uploaded.exports;
 const run = typeof handler === 'function' ? handler : handler && typeof handler.run === 'function' ? handler.run.bind(handler) : null;
 if (!run) throw new Error(meta.path + ': the uploaded script must export a function (req, res) or { run(req, res) }');
-module.exports = { ...meta, run };
+// The sandbox form shows the script's own parameters when it has them (lib/theresav, lib/apiproxy specs).
+const params = meta.params || (handler && Array.isArray(handler.params) ? handler.params : undefined);
+module.exports = { ...meta, ...(params ? { params } : {}), ...(handler && handler.upload ? { upload: true } : {}), run };
 `;
 }
 
@@ -121,4 +123,46 @@ async function commitPlugin({ file, content, message }) {
   return { sha: commit.sha || null, url: commit.html_url || null, file };
 }
 
-module.exports = { PluginError, isConfigured, parsePath, validateCode, buildPluginFile, commitPlugin, MAX_CODE_BYTES };
+// A plugin file made by the owner panel keeps the uploaded script between two markers.
+const MARK_START = '// ---- uploaded script ----\n', MARK_END = '\n// ---- end of uploaded script ----';
+function splitPluginFile(content) {
+  const a = content.indexOf(MARK_START), b = content.indexOf(MARK_END);
+  if (a < 0 || b < a) return null;
+  let meta = null;
+  const m = /const meta = (\{[\s\S]*?\n\});/.exec(content);
+  if (m) { try { meta = JSON.parse(m[1]); } catch { meta = null; } }
+  return { script: content.slice(a + MARK_START.length, b), meta };
+}
+
+// Current content and blob sha of a file on the branch, or null when it isn't there.
+async function getFile(file) {
+  const { repo, branch } = config();
+  if (!isConfigured()) throw new PluginError(503, 'GITHUB_NOT_CONFIGURED', 'Edit/hapus plugin butuh GITHUB_TOKEN di Environment Variables Vercel.');
+  const r = await gh('GET', `${contentsUrl(repo, file)}?ref=${encodeURIComponent(branch)}`);
+  if (r.status === 404) return null;
+  if (r.status !== 200 || !r.json) throw githubFailure(r.status);
+  return { content: Buffer.from(r.json.content || '', 'base64').toString('utf8'), sha: r.json.sha };
+}
+
+// Replaces a file in one commit; `sha` is the blob that was edited, so a newer change is never lost.
+async function updateFile({ file, content, sha, message }) {
+  const { repo, branch } = config();
+  if (!isConfigured()) throw new PluginError(503, 'GITHUB_NOT_CONFIGURED', 'Edit plugin butuh GITHUB_TOKEN di Environment Variables Vercel.');
+  const r = await gh('PUT', contentsUrl(repo, file), { message, content: Buffer.from(content, 'utf8').toString('base64'), sha, branch });
+  if (r.status === 409) throw new PluginError(409, 'PLUGIN_CHANGED', 'File plugin-nya baru diubah dari tempat lain. Buka lagi editornya terus ulangi.');
+  if (r.status !== 200 && r.status !== 201) throw githubFailure(r.status);
+  const commit = (r.json && r.json.commit) || {};
+  return { sha: commit.sha || null, url: commit.html_url || null, file };
+}
+
+async function deleteFile({ file, sha, message }) {
+  const { repo, branch } = config();
+  if (!isConfigured()) throw new PluginError(503, 'GITHUB_NOT_CONFIGURED', 'Hapus plugin butuh GITHUB_TOKEN di Environment Variables Vercel.');
+  const r = await gh('DELETE', contentsUrl(repo, file), { message, sha, branch });
+  if (r.status === 409) throw new PluginError(409, 'PLUGIN_CHANGED', 'File plugin-nya baru diubah dari tempat lain. Coba lagi.');
+  if (r.status !== 200) throw githubFailure(r.status);
+  const commit = (r.json && r.json.commit) || {};
+  return { sha: commit.sha || null, url: commit.html_url || null, file };
+}
+
+module.exports = { PluginError, isConfigured, parsePath, validateCode, buildPluginFile, commitPlugin, splitPluginFile, getFile, updateFile, deleteFile, MAX_CODE_BYTES };

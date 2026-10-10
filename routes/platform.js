@@ -17,6 +17,7 @@ const emailService = require('../services/emailService');
 const passwords = require('../services/passwordService');
 const activity = require('../services/activityService');
 const pluginService = require('../services/githubPluginService');
+const builder = require('../services/endpointBuilder');
 const theresav = require('../lib/theresav');
 const apiproxy = require('../lib/apiproxy');
 const cdn = require('../services/cdnService');
@@ -1057,13 +1058,72 @@ function withHandler(req, row) {
   const groups = require('../config/endpointGroups');
   const own = groups.find(g => g.path === row.path);
   const backupFor = groups.filter(g => (g.backups || []).some(b => (typeof b === 'string' ? b : b.path) === row.path)).map(g => g.path);
+  const files = req.app.locals.pluginFiles || new Map();
+  const file = files.get(row.path) || null;
+  const sameFile = file ? [...files.values()].filter(f => f === file).length : 0;
   return { ...row, handler_loaded: (req.app.locals.loadedPluginPaths || new Set()).has(row.path),
+    file, file_endpoints: sameFile, code_editable: Boolean(file) && sameFile === 1 && !String(row.plugin || '').startsWith('deleted:'),
+    deleted: String(row.plugin || '').startsWith('deleted:'),
     backups: own ? own.backups.map(b => (typeof b === 'string' ? b : b.path)) : [], backup_for: backupFor };
 }
 
 router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
+  // Endpoints whose code was deleted: once the new deploy no longer serves them, the row goes too.
+  const loaded = req.app.locals.loadedPluginPaths || new Set();
+  const gone = (await query("SELECT id,path FROM endpoints WHERE plugin LIKE 'deleted:%'")).filter(r => !loaded.has(r.path)).map(r => r.id);
+  if (gone.length) await query('DELETE FROM endpoints WHERE id = ANY($1::uuid[])', [gone]);
   const rows = await query('SELECT * FROM endpoints ORDER BY name');
   res.json({ success: true, endpoints: rows.map(r => withHandler(req, r)) });
+});
+
+// ---------------------------------------------------------------- owner: add endpoint from any code
+// "Sempurnakan & tes": pasted code → handler script (services/endpointBuilder.js) → one test run.
+// Nothing is deployed here; the developer reviews the preview and then uses "Tambah & deploy".
+const buildFail = (res, e) => {
+  if (e instanceof builder.BuildError || e instanceof pluginService.PluginError) return fail(res, e.status, e.code, e.message, e.extra || {});
+  throw e;
+};
+const knownPath = (req, p) => (req.app.locals.loadedPluginPaths || new Set()).has(p);
+async function duplicateOf(req, p) {
+  const row = (await query('SELECT id,name,path FROM endpoints WHERE path=$1', [p]))[0];
+  return row || (knownPath(req, p) ? { path: p, name: p } : null);
+}
+async function freePath(req, p) {
+  if (!(await duplicateOf(req, p))) return p;
+  for (let i = 2; i < 20; i++) { const c = `${p}-v${i}`; if (!(await duplicateOf(req, c))) return c; }
+  return p;
+}
+const buildLimiter = { running: 0 };
+
+router.get('/owner/api/ai', auth, owner, (req, res) => res.json({ success: true, ai: builder.aiStatus() }));
+router.post('/owner/api/ai/ping', sameOrigin, auth, owner, async (req, res) => {
+  const r = await builder.pingAI();
+  res.status(r.ok ? 200 : r.configured ? 502 : 503).json({ success: r.ok, ...r });
+});
+
+router.post('/owner/api/endpoints/convert', sameOrigin, auth, owner, async (req, res) => {
+  if (buildLimiter.running >= 2) return fail(res, 429, 'BUILDER_BUSY', 'Lagi ada proses lain. Tunggu bentar ya.');
+  buildLimiter.running++;
+  try {
+    const ai = ['auto', 'only', 'never'].includes(req.body?.ai) ? req.body.ai : 'auto';
+    const out = await builder.convert(req.body?.code, { useAI: ai });
+    const duplicate = await duplicateOf(req, out.meta.path);
+    if (duplicate) out.meta.path = await freePath(req, out.meta.path);
+    const test = await builder.tryScript(out.script, { path: out.meta.path, sample: out.meta.sample });
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_convert', targetType: 'endpoint', metadata: { source: out.source, path: out.meta.path, ok: test.ok }, ipAddress: ip(req) }).catch(() => {});
+    res.json({ success: true, source: out.source, model: out.model || null, meta: out.meta, code: out.script, secrets: out.secrets, notes: out.notes || [], duplicate, test });
+  } catch (e) { return buildFail(res, e); }
+  finally { buildLimiter.running--; }
+});
+
+router.post('/owner/api/endpoints/try', sameOrigin, auth, owner, async (req, res) => {
+  const b = req.body || {};
+  if (!pluginService.parsePath(b.path)) return fail(res, 400, 'INVALID_ENDPOINT', 'Path harus kayak /api/kategori/nama.');
+  try { pluginService.validateCode(b.code); } catch (e) { return buildFail(res, e); }
+  try {
+    const test = await builder.tryScript(b.code, { path: b.path, sample: b.sample && typeof b.sample === 'object' ? b.sample : {} });
+    res.json({ success: true, test });
+  } catch (e) { return buildFail(res, e); }
 });
 
 // Self-test the theresav-backed endpoints from the server (which can reach theresav even when a
@@ -1197,6 +1257,11 @@ async function createPluginEndpoint(req, res) {
     throw e;
   }
   if (!pluginService.isConfigured()) return fail(res, 503, 'GITHUB_NOT_CONFIGURED', 'Upload plugin belum aktif: set GITHUB_TOKEN (dan GITHUB_REPO kalau repo-nya beda) di Environment Variables Vercel, terus redeploy.');
+  if (await duplicateOf(req, b.path)) return fail(res, 409, 'ENDPOINT_EXISTS', 'Path endpoint ini udah terdaftar.');
+  // Only code that works is deployed: one run with the sample input first.
+  const test = await builder.tryScript(b.code, { path: b.path, sample: b.sample && typeof b.sample === 'object' ? b.sample : {} }).catch(e => ({ ok: false, error: e.code || 'SCRIPT_ERROR', message: e.message }));
+  if (!test.ok) return fail(res, 422, 'TEST_FAILED', `Endpoint-nya belum jalan, jadi nggak di-deploy: ${test.message}`, { test });
+  const params = Array.isArray(b.params) ? b.params.filter(p => p && /^[a-zA-Z_][\w-]{0,30}$/.test(p.name)).slice(0, 8).map(p => ({ name: p.name, required: p.required !== false, placeholder: String(p.placeholder || '').slice(0, 80) })) : [];
 
   const r = await query(
     "INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,'GET',$4,false,'active',$5) ON CONFLICT(path) DO NOTHING RETURNING *",
@@ -1207,7 +1272,7 @@ async function createPluginEndpoint(req, res) {
   try {
     commit = await pluginService.commitPlugin({
       file: target.file,
-      content: pluginService.buildPluginFile({ name, desc, category: target.category, path: b.path, code: b.code }),
+      content: pluginService.buildPluginFile({ name, desc, category: target.category, path: b.path, code: b.code, params }),
       message: `Add endpoint ${b.path} from the owner panel`
     });
   } catch (e) {
@@ -1257,11 +1322,63 @@ async function setEndpointLock(req, res, locked) {
 router.post('/owner/api/endpoints/:id/lock', sameOrigin, auth, owner, validId('id'), (req, res) => setEndpointLock(req, res, true));
 router.post('/owner/api/endpoints/:id/unlock', sameOrigin, auth, owner, validId('id'), (req, res) => setEndpointLock(req, res, false));
 
+// ---------------------------------------------------------------- owner: edit / delete an endpoint's code
+// Only endpoints that have their own plugin file (one endpoint in the file); a file serving many
+// endpoints (theresav, dongtube, …) is left alone: disable or lock those instead.
+async function codeTarget(req, res) {
+  const row = (await query('SELECT * FROM endpoints WHERE id=$1', [req.params.id]))[0];
+  if (!row) { fail(res, 404, 'NOT_FOUND', 'Endpoint nggak ketemu.'); return null; }
+  const e = withHandler(req, row);
+  if (!e.file) { fail(res, 409, 'NO_CODE', 'Endpoint ini belum punya file kode.'); return null; }
+  if (!e.code_editable) { fail(res, 409, 'MULTI_ENDPOINT_FILE', `File plugin/${e.file} isinya ${e.file_endpoints} endpoint, jadi nggak bisa diedit/dihapus dari sini. Pakai Disable atau Lock aja.`); return null; }
+  return { row, e, file: `plugin/${e.file}` };
+}
+
+router.get('/owner/api/endpoints/:id/code', auth, owner, validId('id'), async (req, res) => {
+  const t = await codeTarget(req, res); if (!t) return;
+  try {
+    const f = await pluginService.getFile(t.file);
+    if (!f) return fail(res, 404, 'FILE_NOT_FOUND', `File ${t.file} nggak ada di repo.`);
+    const split = pluginService.splitPluginFile(f.content);
+    res.json({ success: true, file: t.file, sha: f.sha, mode: split ? 'script' : 'file', code: split ? split.script : f.content, meta: split?.meta || null });
+  } catch (e) { return buildFail(res, e); }
+});
+
+router.put('/owner/api/endpoints/:id/code', sameOrigin, auth, owner, validId('id'), async (req, res) => {
+  const t = await codeTarget(req, res); if (!t) return;
+  const b = req.body || {};
+  try { pluginService.validateCode(b.code); } catch (e) { return buildFail(res, e); }
+  if (typeof b.sha !== 'string' || !/^[0-9a-f]{40}$/.test(b.sha)) return fail(res, 400, 'SHA_REQUIRED', 'Buka editornya lagi dulu (versi file-nya nggak ketahuan).');
+  const test = await builder.tryScript(b.code, { path: t.row.path, sample: b.sample && typeof b.sample === 'object' ? b.sample : {} }).catch(e => ({ ok: false, error: e.code || 'SCRIPT_ERROR', message: e.message }));
+  if (!test.ok) return fail(res, 422, 'TEST_FAILED', `Kode barunya belum jalan, jadi nggak disimpan: ${test.message}`, { test });
+  try {
+    let content = b.code;
+    if (b.mode === 'script') {
+      const current = await pluginService.getFile(t.file);
+      const meta = (current && pluginService.splitPluginFile(current.content)?.meta) || { name: t.row.name, desc: t.row.description || t.row.name, category: pluginService.parsePath(t.row.path)?.category || 'Tools', path: t.row.path };
+      content = pluginService.buildPluginFile({ ...meta, code: b.code });
+    }
+    const commit = await pluginService.updateFile({ file: t.file, content, sha: b.sha, message: `Update endpoint ${t.row.path} from the owner panel` });
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_code_update', targetType: 'endpoint', targetId: t.row.id, metadata: { path: t.row.path, file: t.file, commit: commit.sha }, ipAddress: ip(req) });
+    res.json({ success: true, commit, test, message: `Kode baru udah di-commit ke ${t.file}. Vercel deploy ulang (biasanya 20–60 detik), habis itu versi barunya aktif.` });
+  } catch (e) { return buildFail(res, e); }
+});
+
 router.delete('/owner/api/endpoints/:id', sameOrigin, auth, owner, validId('id'), async (req, res) => {
-  const row = (await query('SELECT id,path FROM endpoints WHERE id=$1', [req.params.id]))[0];
+  const row = (await query('SELECT id,path,plugin FROM endpoints WHERE id=$1', [req.params.id]))[0];
   if (!row) return fail(res, 404, 'NOT_FOUND', 'Endpoint nggak ketemu.');
-  // Deleting a live handler's metadata would make it 503 until the next cold start re-registers it.
-  if (withHandler(req, row).handler_loaded) return fail(res, 409, 'HANDLER_LOADED', 'Endpoint ini punya plugin aktif. Nonaktifkan atau kunci aja, jangan hapus metadata-nya.');
+  // An endpoint with its own code file: the file is deleted on GitHub and the endpoint is switched
+  // off right away; its row goes once the new deploy no longer serves it.
+  if (withHandler(req, row).handler_loaded) {
+    const t = await codeTarget(req, res); if (!t) return;
+    try {
+      const f = await pluginService.getFile(t.file);
+      const commit = f ? await pluginService.deleteFile({ file: t.file, sha: f.sha, message: `Delete endpoint ${row.path} from the owner panel` }) : null;
+      await query("UPDATE endpoints SET status='disabled',plugin=$2,updated_at=now() WHERE id=$1", [row.id, `deleted:${t.e.file}`]);
+      await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_delete', targetType: 'endpoint', targetId: row.id, metadata: { path: row.path, file: t.file, commit: commit?.sha || null }, ipAddress: ip(req) });
+      return res.json({ success: true, commit, message: `Endpoint ${row.path} dimatiin dan file ${t.file} dihapus. Habis Vercel deploy ulang, endpoint-nya hilang dari daftar.` });
+    } catch (e) { return buildFail(res, e); }
+  }
   await query('DELETE FROM endpoints WHERE id=$1', [req.params.id]);
   await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_delete', targetType: 'endpoint', targetId: req.params.id, metadata: { path: row.path }, ipAddress: ip(req) });
   res.json({ success: true });

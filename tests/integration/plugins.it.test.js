@@ -33,7 +33,7 @@ after(async () => { global.fetch = realFetch; if (h.skip) return; await app?.clo
 const it = (name, fn) => test(name, { skip: h.skip }, fn);
 
 const SCRIPT = "module.exports = async (req, res) => res.json({ status: true, result: String(req.query.text || '').toUpperCase() });";
-const create = body => app.request('POST', '/owner/api/endpoints', { cookie: owner, headers: { origin: app.origin }, body: { name: 'Upper', path: '/api/tools/upper', description: 'Huruf besar', minimum_tier: 'SULTAN', code: SCRIPT, ...body } });
+const create = body => app.request('POST', '/owner/api/endpoints', { cookie: owner, headers: { origin: app.origin }, body: { name: 'Upper', path: '/api/tools/upper', description: 'Huruf besar', minimum_tier: 'SULTAN', code: SCRIPT, sample: { text: 'halo' }, ...body } });
 const row = p => h.db().query('SELECT * FROM endpoints WHERE path=$1', [p]).then(r => r.rows[0]);
 
 it('without GITHUB_TOKEN the upload is refused and nothing is stored', async () => {
