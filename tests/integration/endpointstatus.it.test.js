@@ -178,7 +178,7 @@ it('the dashboard loads the monitor (codes + meanings) and API Docs has cURL / N
   assert.match(js.text, /\/api\/endpoints\/autocheck/);
   assert.match(js.text, /The server took too long to respond/);
   assert.ok(!/Another server took too long/.test(js.text));
-  for (const t of ['Metode request tidak didukung', 'Request terlalu lama', 'Ukuran data terlalu besar', 'Format data tidak didukung', 'Data tidak dapat diproses', 'Terlalu banyak request', 'Terjadi kesalahan pada server', 'Fitur belum didukung', 'Server menerima respons tidak valid', 'Server sedang tidak tersedia', 'Server lain terlalu lama merespons']) assert.ok(js.text.includes(t), t);
+  for (const t of ['Metode request tidak didukung', 'Request terlalu lama', 'Ukuran data terlalu besar', 'Format data tidak didukung', 'Data tidak dapat diproses', 'Terlalu banyak request', 'Terjadi kesalahan pada server', 'Fitur belum didukung', 'Server menerima respons tidak valid', 'Server sedang tidak tersedia', 'Server terlalu lama merespons']) assert.ok(js.text.includes(t), t);
   const img = await app.request('GET', '/assets/check-sample.png');
   assert.deepEqual([img.status, img.headers['content-type']], [200, 'image/png']);
   const home = fs.readFileSync(path.join(__dirname, '..', '..', 'views', 'index.html'), 'utf8');
