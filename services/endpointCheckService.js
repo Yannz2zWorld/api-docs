@@ -69,6 +69,12 @@ function checkable(app) {
   const map = new Map();
   for (const e of [...theresav.registry(), ...apiproxy.registry()]) if (loaded.has(e.path)) map.set(e.path, { path: e.path, name: e.name, category: e.category, kind: 'proxy', entry: e });
   for (const [path, sample] of Object.entries(LOCAL_SAMPLES)) if (loaded.has(path) && runs.has(path) && !map.has(path)) map.set(path, { path, name: path.split('/').pop(), category: 'Local', kind: 'local', run: runs.get(path), sample });
+  // Backups shown as versions (services/endpointAliasService.js): checked with their backup's sample,
+  // the result kept under the version's own path.
+  for (const [pub, backup] of app.locals.endpointAliases || new Map()) {
+    const b = map.get(backup);
+    if (b && !map.has(pub)) map.set(pub, { ...b, path: pub, name: (app.locals.endpointAliasNames || new Map()).get(pub) || b.name });
+  }
   return map;
 }
 

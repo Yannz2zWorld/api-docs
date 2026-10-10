@@ -13,6 +13,7 @@ const { classifyGoogleVerifyError, classifyDatabaseError, missingAuthConfig } = 
 const userService = require('./services/userService');
 const { query } = require('./lib/db');
 const platformRouter = require('./routes/platform');
+const endpointAliases = require('./services/endpointAliasService');
 const apiKeyService = require('./services/apiKeyService');
 const usageService = require('./services/usageService');
 const turnstile = require('./services/turnstileService');
@@ -145,6 +146,12 @@ app.use((req, res, next) => {
 // Bodies are small everywhere except a manual payment, which carries the proof image
 // (<= 2 MB, base64 in JSON; Vercel's request limit is 4.5 MB).
 const uploadPaths = new Set();   // theresav file endpoints accept a raw uploaded file (POST body)
+// Versions shown from backups (services/endpointAliasService.js): picked up from the database every
+// 30 s on each running instance, before the request is routed (and before an upload body is read).
+app.use((req, res, next) => {
+  if (!/^\/(api|owner)\//.test(req.path) || !app.locals.pluginRuns) return next();
+  endpointAliases.sync(app).catch(() => null).finally(next);
+});
 uploadPaths.add('/cdn/upload');   // CDN upload page (routes/platform.js)
 const smallJson = express.json({ limit: '100kb' });
 const proofJson = express.json({ limit: '3mb' });
@@ -519,6 +526,11 @@ app.locals.pluginFiles = pluginFiles;
 // path -> run(), so the endpoint checker (services/endpointCheckService.js) can test local plugins.
 const pluginRuns = new Map();
 app.locals.pluginRuns = pluginRuns;
+// Backup-only endpoints (name, description, category, parameters): the Developer panel can show one
+// as a version of the endpoint it backs up (services/endpointAliasService.js).
+const backupRoutes = new Map();
+app.locals.backupRoutes = backupRoutes;
+app.locals.uploadPaths = uploadPaths;
 
 function gatewayFail(res, status, error, message, extra = {}) {
   return res.status(status).json({ success: false, error, message, ...extra });
@@ -685,6 +697,7 @@ function apiGateway(cleanPath, run) {
 }
 
 let totalRoutes = 0;
+const routeCount = () => totalRoutes;
 let rawEndpoints = {};
 const pluginFolder = path.join(__dirname, 'plugin');
 const registrySyncTasks = [];
@@ -712,7 +725,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
           pluginRuns.set(cleanPath, run);
           registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
-          if (route.backupOnly) return;   // only a backup for another endpoint: not listed on its own
+          if (route.backupOnly) { backupRoutes.set(cleanPath, { name, desc, category, path: routePath, ...(Array.isArray(params) ? { params } : {}) }); return; }   // only a backup for another endpoint: not listed on its own
           if (!rawEndpoints[category]) rawEndpoints[category] = [];
           rawEndpoints[category].push({
             name,
@@ -738,6 +751,35 @@ fs.readdirSync(pluginFolder).forEach(file => {
 
 const registryReady = Promise.allSettled(registrySyncTasks);
 
+// Backups shown as versions (Developer panel → Endpoints → "Tampilkan"): served under their own path
+// by the backup's code, through the same gateway (tier, lock, quota, errors) as every endpoint.
+const aliasGateways = new Map();
+const serveAlias = async (req, res, next) => {
+  const backup = app.locals.endpointAliases?.get(req.path);
+  const run = backup && pluginRuns.get(backup);
+  if (!run) return next();
+  if (!aliasGateways.has(req.path)) aliasGateways.set(req.path, apiGateway(req.path, (q, r) => pluginRuns.get(app.locals.endpointAliases.get(req.path) || backup)(q, r)));
+  return aliasGateways.get(req.path)(req, res, next);
+};
+app.get(/^\/api\//, serveAlias);
+app.post(/^\/api\//, (req, res, next) => (uploadPaths.has(req.path) ? serveAlias(req, res, next) : next()));
+// The catalog with the shown versions in their endpoint's category.
+function catalogWithAliases() {
+  const shown = app.locals.endpointAliases;
+  if (!shown || !shown.size) return sortedEndpoints;
+  const out = Object.fromEntries(Object.entries(sortedEndpoints).map(([c, items]) => [c, items.slice()]));
+  for (const [pub, backup] of shown) {
+    const b = backupRoutes.get(backup);
+    if (!b) continue;
+    const main = endpointAliases.mainOf(backup);
+    const cat = Object.keys(sortedEndpoints).find(c => sortedEndpoints[c].some(i => i.cleanPath === main)) || b.category;
+    const query = b.path.includes('?') ? b.path.slice(b.path.indexOf('?')) : '';
+    (out[cat] || (out[cat] = [])).push({ name: app.locals.endpointAliasNames.get(pub) || b.name, desc: b.desc, path: pub + query, cleanPath: pub, ...(b.params ? { params: b.params } : {}) });
+  }
+  for (const c of Object.keys(out)) out[c].sort((a, b) => a.name.localeCompare(b.name));
+  return out;
+}
+
 const sortedEndpoints = Object.keys(rawEndpoints)
   .sort((a, b) => a.localeCompare(b))
   .reduce((sorted, category) => {
@@ -746,7 +788,7 @@ const sortedEndpoints = Object.keys(rawEndpoints)
   }, {});
 
 app.get('/api/endpoints', async (req, res) => {
-  try { const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description,badge FROM endpoints').catch(e=>{if(e.code!=='42703')throw e;return query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints');})]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const hidden=await errorLog.hiddenPaths().catch(()=>new Set());const visible=item=>{const m=meta[item.cleanPath];return (!m||!m.status||m.status==='active')&&!hidden.has(item.cleanPath);};/* disabled or auto-hidden endpoints (see services/errorLogService.js) are not listed */ const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.filter(visible).map(item=>({...item,access:meta[item.cleanPath]||null}))]).filter(([,items])=>items.length)); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
+  try { await endpointAliases.sync(app).catch(() => null); const sortedEndpoints = catalogWithAliases(); const totalRoutes = routeCount() + (app.locals.endpointAliases?.size || 0); const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description,badge FROM endpoints').catch(e=>{if(e.code!=='42703')throw e;return query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints');})]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const hidden=await errorLog.hiddenPaths().catch(()=>new Set());const visible=item=>{const m=meta[item.cleanPath];return (!m||!m.status||m.status==='active')&&!hidden.has(item.cleanPath);};/* disabled or auto-hidden endpoints (see services/errorLogService.js) are not listed */ const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.filter(visible).map(item=>({...item,access:meta[item.cleanPath]||null}))]).filter(([,items])=>items.length)); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
   catch { return res.status(503).json({success:false,error:'ENDPOINTS_UNAVAILABLE',message:'Katalog lagi nggak tersedia.'}); }
 });
 

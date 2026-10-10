@@ -613,13 +613,15 @@ function epBadge(b) {
 // its own row: rebuilding every row (650+ endpoints, 1,300 menus) after each change froze the page.
 const epData = new Map();
 const epRow = e => `<tr data-ep-row="${esc(e.id)}">
-      <td><span data-no-i18n><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></span>${e.backups?.length ? `<br><small class="muted">${tr('Cadangan')}: <span data-no-i18n>${e.backups.map(esc).join(', ')}</span></small>` : ''}${e.backup_for?.length ? `<br><small class="muted">${tr('Cadangan buat')}: <span data-no-i18n>${e.backup_for.map(esc).join(', ')}</span></small>` : ''}</td>
+      <td><span data-no-i18n><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></span>${e.backups?.length ? `<br><small class="muted">${tr('Cadangan')}: <span data-no-i18n>${e.backups.map(esc).join(', ')}</span></small>` : ''}${e.backup_for?.length ? `<br><small class="muted">${tr('Cadangan buat')}: <span data-no-i18n>${e.backup_for.map(esc).join(', ')}</span></small>` : ''}${e.alias_of ? `<br><small class="muted">${tr('Versi dari cadangan')}: <span data-no-i18n>${esc(e.alias_of)}</span></small>` : ''}</td>
       <td>${e.deleted ? chip('dihapus, nunggu deploy', 'warn') : e.handler_loaded ? chip('deployed', 'ok') : e.plugin ? chip('nunggu deploy', 'warn') : chip('metadata only', 'warn')}${e.handler_loaded && e.file ? `<br><small class="muted" data-no-i18n>plugin/${esc(e.file)}${e.file_endpoints > 1 ? ` · ${e.file_endpoints} endpoint` : ''}</small>` : ''}</td>
       <td><select data-ep-tier="${esc(e.id)}">${['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'].map(t => `<option value="${t}" ${t === e.minimum_tier ? 'selected' : ''}>${tierName(t)}</option>`).join('')}</select></td>
       <td><select data-ep-badge="${esc(e.id)}" aria-label="Label endpoint">${[['', 'Tanpa label'], ['new', '🍃 New'], ['hot', '🔥 Hot'], ['recommend', '👍 Recommend']].map(([v, l]) => `<option value="${v}" ${v === (e.badge || '') ? 'selected' : ''}>${l}</option>`).join('')}</select> ${epBadge(e.badge)}</td>
       <td>${chip(e.status, e.status === 'active' ? 'ok' : 'bad')} ${e.locked ? chip('locked', 'bad') : chip('open', 'ok')}${e.auto_disabled ? `<br><small class="error">${tr('Disembunyikan otomatis')}: <span data-no-i18n>${esc(e.disabled_reason || '')}</span></small>` : ''}</td>
       <td><button class="sm" data-ep="${e.locked ? 'unlock' : 'lock'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.locked ? 'Unlock' : 'Lock'}</button>
           <button class="sm" data-ep="status" data-status="${e.status === 'active' ? 'disabled' : 'active'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.status === 'active' ? 'Disable' : 'Enable'}</button>
+          ${e.can_show ? `<button class="sm" data-ep="show" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Tampilkan</button>` : ''}
+          ${e.alias_of ? `<button class="sm" data-ep="hide" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Sembunyikan</button>` : ''}
           ${e.code_editable ? `<button class="sm" data-ep="code" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Edit kode</button>` : ''}
           ${!e.handler_loaded || e.code_editable ? `<button class="sm danger" data-ep="${e.handler_loaded ? 'delete-code' : 'delete'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Hapus</button>` : ''}</td></tr>`;
 // Rows go in 50 at a time, the next 50 as the list is scrolled near its end: laying out every row at
@@ -677,16 +679,17 @@ $('#endpoints-data').addEventListener('click', async e => {
   const b = e.target.closest('button[data-ep]'); if (!b) return;
   const { ep, id, path } = b.dataset;
   if (ep === 'code') return openCode(id, path);
-  const q = { lock: `Kunci ${path}? Semua user selain developer bakal ditolak (ENDPOINT_LOCKED).`, unlock: `Buka kunci ${path}?`, status: `${b.dataset.status === 'disabled' ? 'Nonaktifkan' : 'Aktifkan'} ${path}?`, delete: `Hapus metadata ${path}?`, 'delete-code': `Hapus endpoint ${path}? File kodenya dihapus dari GitHub dan endpoint-nya langsung dimatiin.` }[ep];
+  const q = { lock: `Kunci ${path}? Semua user selain developer bakal ditolak (ENDPOINT_LOCKED).`, unlock: `Buka kunci ${path}?`, status: `${b.dataset.status === 'disabled' ? 'Nonaktifkan' : 'Aktifkan'} ${path}?`, show: `Tampilkan ${path} di daftar API? Namanya jadi versi baru (misal V2) dari endpoint yang dia cadangin, dan tetap jadi cadangan juga.`, hide: `Sembunyiin ${path} dari daftar API? Dia balik cuma jadi cadangan.`, delete: `Hapus metadata ${path}?`, 'delete-code': `Hapus endpoint ${path}? File kodenya dihapus dari GitHub dan endpoint-nya langsung dimatiin.` }[ep];
   if (!ask(q)) return;
   b.disabled = true;
   try {
     if (ep === 'lock' || ep === 'unlock') { await send(`/owner/api/endpoints/${id}/${ep}`); return epUpdate(id, { locked: ep === 'lock' }); }
     if (ep === 'status') { const r = await send(`/owner/api/endpoints/${id}`, 'PATCH', { status: b.dataset.status }); return epUpdate(id, { status: b.dataset.status, ...epFields(r), ...(b.dataset.status === 'active' ? { auto_disabled: false } : {}) }); }
+    if (ep === 'show' || ep === 'hide') { const d = await send(`/owner/api/endpoints/${id}/${ep}`); say(d.message); }
     if (ep === 'delete') await send(`/owner/api/endpoints/${id}`, 'DELETE');
     if (ep === 'delete-code') { const d = await send(`/owner/api/endpoints/${id}`, 'DELETE'); say(d.message || 'Endpoint dihapus.'); }
   } catch (err) { say(err.message); b.disabled = false; return; }
-  loaders.endpoints();   // a deleted endpoint: the list itself changes
+  loaders.endpoints();   // deleted, shown or hidden: the list itself changes
 });
 // ---------- add endpoint: paste any code → "Sempurnakan & tes" → preview → "Tambah & deploy"
 const ep = { tested: false, params: [] };

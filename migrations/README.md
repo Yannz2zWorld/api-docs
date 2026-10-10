@@ -19,6 +19,7 @@ Apply in order to the configured Neon database (Neon SQL editor or `psql "$DATAB
 22. `022_announcements.sql` — `server_settings.maintenance_since` (when maintenance was turned on, shown on the maintenance announcement) and the Dev announcement from the Developer panel (`announce_message`, `announce_message2`, `announce_button_label`, `announce_button_url`, `announce_at`). Before it runs, maintenance keeps working without the start time and saving an announcement answers `MIGRATION_REQUIRED`.
 
 23. `023_pakasir_v2.sql` — `payments.gateway_total` (amount plus gateway fee shown again when the buyer reopens the same QRIS). Optional: without it the page shows the order amount.
+24. `024_endpoint_aliases.sql` — `endpoint_aliases` (Developer panel → Endpoints → "Tampilkan": a backup shown as a version, e.g. `/api/anime/anichin/detail-v2`). Optional: without it the button answers `MIGRATION_REQUIRED`.
 
 All files are additive/idempotent (`CREATE ... IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`) and never drop data. The application does not run DDL at request time.
 
