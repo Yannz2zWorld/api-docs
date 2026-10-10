@@ -1,6 +1,6 @@
 'use strict';
 // Pakasir payment gateway, API v2 (https://pakasir.com/p/create-transaction; v1 stops 20 Oct 2026).
-//   create  POST /api/v2/create-transaction/{slug}/{order_id}   body {method, amount}   → txn_id, qr_string / va_number
+//   create  POST /api/v2/create-transaction/{slug}/{order_id}   body {method, amount}   → txn_id, qr_string
 //   status  GET  /api/v2/transaction-status/{slug}/{txn_id}                             → status pending|completed|canceled
 //   cancel  POST /api/v2/cancel-transaction/{slug}/{txn_id}
 //   fee     GET  /api/v2/payment-fee/{amount}                    (public)
@@ -13,11 +13,12 @@
 const crypto = require('crypto');
 const axios = require('axios');
 
-// payment_link is left out: it sends the buyer to Pakasir's own page, and payments stay on this site.
-const METHODS = ['qris', 'bri_va', 'bni_va', 'cimb_niaga_va', 'permata_va', 'maybank_va', 'bnc_va', 'artha_graha_va', 'sampoerna_va'];
-const MINIMUM = { qris: 500, bri_va: 10000, bni_va: 10000, cimb_niaga_va: 10000, permata_va: 10000, maybank_va: 10000, bnc_va: 10000, artha_graha_va: 10000, sampoerna_va: 10000 };
+// QRIS only: bank Virtual Accounts are not offered, and payment_link (Pakasir's own page) is left
+// out so payments stay on this site.
+const METHODS = ['qris'];
+const MINIMUM = { qris: 500 };
 const MAXIMUM = { qris: 10000000 };
-const LABEL = { qris: 'QRIS', bri_va: 'BRI', bni_va: 'BNI', cimb_niaga_va: 'CIMB Niaga', permata_va: 'Permata', maybank_va: 'Maybank', bnc_va: 'Bank Neo Commerce', artha_graha_va: 'Artha Graha', sampoerna_va: 'Sahabat Sampoerna' };
+const LABEL = { qris: 'QRIS' };
 const TIMEOUT_MS = 15000;
 
 const base = () => (process.env.PAKASIR_BASE_URL || 'https://app.pakasir.com').replace(/\/+$/, '');
@@ -55,8 +56,7 @@ async function createTransaction(orderId, method, amount) {
     fee: Number(t.fee || 0),
     total_payment: Number(t.total_payment || n),
     payment_method: t.payment_method || method,
-    qr_string: t.qr_string || (method === 'qris' ? t.payment_number : null) || null,
-    va_number: t.va_number || (method !== 'qris' ? t.payment_number : null) || null,
+    qr_string: t.qr_string || t.payment_number || null,
     expired_at: t.expired_at || null,
     is_sandbox: t.is_sandbox === true
   };

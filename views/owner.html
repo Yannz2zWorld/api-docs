@@ -207,7 +207,7 @@
     <p id="ann-state" class="save-note" aria-live="polite"></p>
 
     <h2 style="margin-top:28px">Payment gateway Pakasir (API v2)</h2>
-    <p class="muted">Pembeli bayar pakai QRIS atau Virtual Account, terus tier-nya aktif otomatis begitu Pakasir konfirmasi pembayarannya (dicek ke API status Pakasir, bukan cuma percaya webhook). Nyala kalau <code>PAYMENT_GATEWAY=on</code>, <code>PAKASIR_PROJECT</code> dan <code>PAKASIR_API_KEY</code> udah diisi di Vercel.</p>
+    <p class="muted">Pembeli scan QRIS, terus tier-nya aktif otomatis begitu Pakasir konfirmasi pembayarannya (dicek ke API status Pakasir, bukan cuma percaya webhook). Nyala kalau <code>PAYMENT_GATEWAY=on</code>, <code>PAKASIR_PROJECT</code> dan <code>PAKASIR_API_KEY</code> udah diisi di Vercel.</p>
     <div class="row"><button type="button" class="primary" id="pakasir-check">Tes Pakasir</button></div>
     <div id="pakasir-state" class="save-note" aria-live="polite"></div>
 

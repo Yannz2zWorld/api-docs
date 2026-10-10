@@ -492,7 +492,7 @@ router.get('/api/orders', auth, async (req, res) => {
     duration: tiers.DURATION,
     prices: Object.fromEntries(tiers.purchasable.map(t => [t, tiers.TIERS[t].price])),
     methods: {
-      QRIS_GATEWAY: { available: pakasir.isEnabled(), maintenance: !pakasir.isEnabled(), autoVerified: pakasir.isVerificationConfigured(), methods: pakasir.METHODS.map(m => ({ id: m, label: pakasir.LABEL[m], minimum: pakasir.MINIMUM[m] })) },
+      QRIS_GATEWAY: { available: pakasir.isEnabled(), maintenance: !pakasir.isEnabled(), autoVerified: pakasir.isVerificationConfigured() },
       QRIS: { available: true, image: '/assets/qris-manual.jpg' },
       DANA: { available: Boolean(accounts.DANA), account: accounts.DANA },
       GOPAY: { available: Boolean(accounts.GOPAY), account: accounts.GOPAY }
@@ -546,10 +546,10 @@ router.post('/api/orders/:id/pakasir', sameOrigin, auth, validId('id'), async (r
   if (!pakasir.METHODS.includes(method)) return fail(res, 400, 'INVALID_PAYMENT_METHOD', 'Metode pembayaran ini nggak didukung.');
   const order = await pendingOrderFor(req);
   if (!order) return fail(res, 404, 'ORDER_NOT_FOUND', 'Order nggak ketemu atau udah kedaluwarsa.');
-  // Same method again: show the transaction already made. Another method: cancel that one first.
+  // A QR that is still valid is shown again; an expired one is cancelled and a new one is made.
   const prior = await query("SELECT * FROM payments WHERE order_id=$1 AND provider='pakasir' AND status='pending' ORDER BY created_at DESC", [order.id]);
   const same = prior.find(p => p.payment_method === method && (!p.gateway_expires_at || new Date(p.gateway_expires_at) > new Date()));
-  if (same) return res.json({ success: true, payment: { id: same.id, status: same.status, provider_reference: same.provider_reference, amount: same.amount }, gateway: { txn_id: same.transaction_id, method, label: pakasir.LABEL[method], qr_string: same.qr_string, va_number: same.va_number, expired_at: same.gateway_expires_at, total_payment: same.gateway_total || order.amount } });
+  if (same) return res.json({ success: true, payment: { id: same.id, status: same.status, provider_reference: same.provider_reference, amount: same.amount }, gateway: { txn_id: same.transaction_id, method, label: pakasir.LABEL[method], qr_string: same.qr_string, expired_at: same.gateway_expires_at, total_payment: same.gateway_total || order.amount } });
   for (const p of prior) {
     await pakasir.cancelTransaction(p.transaction_id);
     await query("UPDATE payments SET status='expired',updated_at=now() WHERE id=$1 AND status='pending'", [p.id]);
@@ -565,9 +565,9 @@ router.post('/api/orders/:id/pakasir', sameOrigin, auth, validId('id'), async (r
     console.error('Pakasir create failed:', { status: e?.response?.status || null, code: e?.code || null });
     return fail(res, 502, 'PAYMENT_PROVIDER_ERROR', 'Gateway pembayaran lagi nggak bisa memproses transaksi. Coba lagi bentar, atau pakai pembayaran manual.');
   }
-  if (!tx.txn_id || (!tx.qr_string && !tx.va_number)) {
+  if (!tx.txn_id || !tx.qr_string) {
     console.error('Pakasir create returned no payment details:', { method });
-    return fail(res, 502, 'PAYMENT_PROVIDER_ERROR', 'Gateway pembayaran nggak ngasih QR / nomor VA. Coba lagi bentar.');
+    return fail(res, 502, 'PAYMENT_PROVIDER_ERROR', 'Gateway pembayaran nggak ngasih QR. Coba lagi bentar.');
   }
   const gatewayExpires = tx.expired_at && !Number.isNaN(Date.parse(tx.expired_at)) ? new Date(tx.expired_at).toISOString() : null;
   const payment = (await query(
@@ -576,10 +576,10 @@ router.post('/api/orders/:id/pakasir', sameOrigin, auth, validId('id'), async (r
      ON CONFLICT(provider,transaction_id) WHERE transaction_id IS NOT NULL
      DO UPDATE SET qr_string=EXCLUDED.qr_string,va_number=EXCLUDED.va_number,gateway_expires_at=EXCLUDED.gateway_expires_at,status='pending',updated_at=now()
      RETURNING id,status,provider_reference,amount`,
-    [order.id, req.account.id, method, tx.txn_id, gatewayOrderId, order.amount, tx.qr_string, tx.va_number, gatewayExpires]
+    [order.id, req.account.id, method, tx.txn_id, gatewayOrderId, order.amount, tx.qr_string, null, gatewayExpires]
   ))[0];
   await query('UPDATE payments SET gateway_total=$2 WHERE id=$1', [payment.id, tx.total_payment]).catch(() => {});   // optional column (migration 023)
-  res.status(201).json({ success: true, payment, gateway: { txn_id: tx.txn_id, method, label: pakasir.LABEL[method], qr_string: tx.qr_string, va_number: tx.va_number, expired_at: gatewayExpires, total_payment: tx.total_payment, fee: tx.fee, sandbox: tx.is_sandbox }, note: 'Status tetap pending sampai Pakasir konfirmasi pembayarannya.' });
+  res.status(201).json({ success: true, payment, gateway: { txn_id: tx.txn_id, method, label: pakasir.LABEL[method], qr_string: tx.qr_string, expired_at: gatewayExpires, total_payment: tx.total_payment, fee: tx.fee, sandbox: tx.is_sandbox }, note: 'Status tetap pending sampai Pakasir konfirmasi pembayarannya.' });
 });
 
 // The buyer's page asks every few seconds; a paid order is settled right here, so the tier is

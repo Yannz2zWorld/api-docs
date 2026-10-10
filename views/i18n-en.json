@@ -1110,22 +1110,11 @@
   "Kode maksimal 200 KB ya.": "Code is limited to 200 KB.",
   "Endpoint dihapus.": "Endpoint deleted.",
   "Cek semua endpoint ke server sumbernya sekarang? Ini bakal pakai kuota tiap server.": "Check every endpoint against its source server now? This uses each server's quota.",
-  "Otomatis (QRIS / VA)": "Automatic (QRIS / VA)",
-  "Bayar, tier langsung aktif otomatis": "Pay, and your tier switches on automatically",
-  "Bayar pakai": "Pay with",
-  "QRIS (semua e-wallet & m-banking)": "QRIS (any e-wallet or mobile banking)",
-  "Virtual Account minimal Rp10.000, jadi buat paket ini cuma bisa QRIS.": "Virtual Accounts need at least Rp10.000, so this plan can only use QRIS.",
-  "Lagi bikin pembayaran…": "Creating the payment…",
   "Total udah termasuk biaya gateway.": "The total includes the gateway fee.",
   "Scan pakai aplikasi e-wallet / m-banking yang support QRIS. Nominalnya otomatis, tinggal bayar.": "Scan it with any e-wallet or banking app that supports QRIS. The amount is filled in, just pay.",
-  "Transfer": "Transfer",
-  "ke nomor VA di atas lewat m-banking, ATM, atau internet banking.": "to the VA number above through mobile banking, an ATM or internet banking.",
   "Nunggu pembayaran… Tier langsung aktif otomatis begitu dibayar, halaman ini nggak usah di-refresh.": "Waiting for the payment… Your tier switches on as soon as it is paid, no need to refresh this page.",
-  "Disalin": "Copied",
   "✓ Pembayaran diterima.": "✓ Payment received.",
-  "Transaksi ini udah kedaluwarsa / dibatalin. Pilih metode lagi buat bikin yang baru.": "This transaction has expired or was cancelled. Pick a method again to make a new one.",
   "Payment gateway Pakasir (API v2)": "Pakasir payment gateway (API v2)",
-  "Pembeli bayar pakai QRIS atau Virtual Account, terus tier-nya aktif otomatis begitu Pakasir konfirmasi pembayarannya (dicek ke API status Pakasir, bukan cuma percaya webhook). Nyala kalau": "Buyers pay with QRIS or a Virtual Account, and their tier switches on as soon as Pakasir confirms the payment (checked with the Pakasir status API, not just the webhook). It is on when",
   "dan": "and",
   "udah diisi di Vercel.": "are set in Vercel.",
   "Tes Pakasir": "Test Pakasir",
@@ -1141,7 +1130,12 @@
   "Mode sandbox: pembayaran sandbox diterima (buat ngetes aja)": "Sandbox mode: sandbox payments accepted (testing only)",
   "Mode sandbox: cuma pembayaran asli yang dihitung": "Sandbox mode: only real payments count",
   "Status tetap pending sampai Pakasir konfirmasi pembayarannya.": "The status stays pending until Pakasir confirms the payment.",
-  "Lanjut bayar / ganti metode": "Continue paying / change method"
+  "Scan QR, tier langsung aktif otomatis": "Scan the QR, your tier switches on automatically",
+  "Lagi bikin QR pembayaran…": "Creating the payment QR…",
+  "QR ini udah kedaluwarsa / dibatalin.": "This QR has expired or was cancelled.",
+  "Bikin QR baru": "Make a new QR",
+  "Pembeli scan QRIS, terus tier-nya aktif otomatis begitu Pakasir konfirmasi pembayarannya (dicek ke API status Pakasir, bukan cuma percaya webhook). Nyala kalau": "Buyers scan a QRIS code, and their tier switches on as soon as Pakasir confirms the payment (checked with the Pakasir status API, not just the webhook). It is on when",
+  "Gateway pembayaran nggak ngasih QR. Coba lagi bentar.": "The payment gateway didn't return a QR. Try again in a moment."
  },
  "patterns": [
   [
@@ -1887,18 +1881,6 @@
   [
    "^Bayar sebelum (.+)$",
    "Pay before $1"
-  ],
-  [
-   "^Nomor Virtual Account (.+)$",
-   "$1 Virtual Account number"
-  ],
-  [
-   "^Virtual Account (.+)$",
-   "$1 Virtual Account"
-  ],
-  [
-   "^persis (Rp[\\d.]+)$",
-   "exactly $1"
   ],
   [
    "^Tier (\\S+) kamu udah aktif\\.$",
