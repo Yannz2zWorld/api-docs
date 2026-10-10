@@ -12,6 +12,8 @@
 <link rel="stylesheet" href="/assets/theme.css">
 <script src="/assets/i18n.js"></script>
 <script src="/assets/ui-theme.js"></script>
+<script src="/assets/scythe-color.js"></script>
+<script defer src="/assets/scene3d.js?v=8"></script>
 <style>
   .looks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
   .look { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 10px; padding: 12px; border: 2px solid var(--edge-soft); border-radius: 14px; background: var(--surface-2); transition: transform .16s, box-shadow .16s, border-color .16s; }
@@ -52,6 +54,18 @@
   .statbox .num { font: 800 40px "Space Grotesk", sans-serif; letter-spacing: -.04em; }
   .statbox .ic { width: 42px; height: 42px; border-radius: 12px; border: var(--line); background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 800; box-shadow: 3px 3px 0 var(--drop); }
   .sticky-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  /* scythe colours: the live 3D scythe and its three colours */
+  .scythe-wrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: center; }
+  .scythe-stage { position: relative; height: 360px; border: var(--line); border-radius: var(--radius); background: #0b0b0c; overflow: hidden; }
+  .scythe-stage .scene3d { position: absolute; inset: 0; }
+  .scythe-stage .scene3d canvas { display: block; width: 100% !important; height: 100% !important; }
+  .scythe-stage .hint { position: absolute; left: 10px; bottom: 10px; font: 600 10px "DM Mono", monospace; letter-spacing: .06em; text-transform: uppercase; color: #a1a1aa; pointer-events: none; }
+  .sc-row { display: grid; grid-template-columns: 1fr 52px 100px; gap: 10px; align-items: center; margin: 0 0 12px; }
+  .sc-row label { font: 700 12px "DM Mono", monospace; letter-spacing: .06em; text-transform: uppercase; }
+  .sc-row input[type=color] { width: 52px; height: 40px; padding: 0; border: var(--line); border-radius: 10px; cursor: pointer; }
+  .sc-row input[type=text] { width: 100px; font-family: "DM Mono", monospace; text-transform: uppercase; }
+  .sc-row[data-on] label { color: var(--accent); }
+  @media (max-width: 760px) { .scythe-wrap { grid-template-columns: 1fr; } .scythe-stage { height: 300px; } }
   @media (max-width: 520px) { .color-row { grid-template-columns: 1fr; } .picker { width: 100%; height: 56px; } }
 </style>
 </head>
@@ -99,6 +113,21 @@
     </div>
   </section>
 
+  <section class="panel" aria-labelledby="scythe-title">
+    <h2 id="scythe-title">3. Warna scythe</h2>
+    <p class="muted" style="margin-top:-6px">Atur warna pegangan, kepala, dan efek scythe. Warna efek dipakai juga buat semua skill di game 3D. Bisa juga dengan klik scythe-nya langsung di Home atau di game 3D.</p>
+    <div class="scythe-wrap">
+      <div class="scythe-stage"><div class="scene3d" data-scene3d="preview"></div><span class="hint">Geser buat muter · klik buat ganti warna</span></div>
+      <div>
+        <div class="sc-row" data-part="handle"><label for="sc-handle">Pegangan</label><input type="color" id="sc-handle"><input type="text" maxlength="7" spellcheck="false" aria-label="Pegangan (HEX)"></div>
+        <div class="sc-row" data-part="head"><label for="sc-head">Kepala</label><input type="color" id="sc-head"><input type="text" maxlength="7" spellcheck="false" aria-label="Kepala (HEX)"></div>
+        <div class="sc-row" data-part="fx" data-on><label for="sc-fx">Efek &amp; skill</label><input type="color" id="sc-fx"><input type="text" maxlength="7" spellcheck="false" aria-label="Efek & skill (HEX)"></div>
+        <div class="swatches" id="sc-swatches" role="group" aria-label="Warna cepat scythe" style="margin:4px 0 14px"></div>
+        <button type="button" id="sc-reset">Balik ke warna asli scythe</button>
+      </div>
+    </div>
+  </section>
+
   <div class="sticky-actions"><a class="btn primary" href="/home">Selesai</a><button type="button" id="reset">Balik ke tampilan awal</button></div>
   <p id="saved" class="muted" aria-live="polite"></p>
 </main>
@@ -112,6 +141,7 @@
 
   let saving = 0;
   function commit(msg) {
+    pref = { ...pref, scythe: UI.load().scythe };   // keep the scythe colours set meanwhile
     const n = ++saving;
     render();
     $('#saved').textContent = msg || '';
@@ -167,7 +197,33 @@
   });
   $('#style-color').addEventListener('click', () => { pref = { ...pref, accent: '', rgb: false }; commit('Pakai warna bawaan gaya.'); });
   $('#rgb').addEventListener('change', e => { pref = { ...pref, rgb: e.target.checked }; commit(e.target.checked ? 'Mode RGB nyala.' : 'Mode RGB mati.'); });
-  $('#reset').addEventListener('click', () => { pref = { style: 'default', accent: '', rgb: false }; commit('Balik ke tampilan awal.'); });
+  $('#reset').addEventListener('click', () => { pref = { ...UI.load(), style: 'default', accent: '', rgb: false }; commit('Balik ke tampilan awal.'); });
+
+  // ---------------- scythe colours (views/scythe-color.js)
+  const SC = window.YannzScythe;
+  let scPart = 'fx';
+  const SC_SW = ['#ff1a2c', '#ffd60a', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#ffffff', '#b8b4bc', '#f2ebe0', '#111111'];
+  $('#sc-swatches').innerHTML = SC_SW.map(c => `<button type="button" class="swatch" data-color="${c}" style="background:${c}" aria-label="Warna ${c}"></button>`).join('');
+  function scRender(c = SC.get()) {
+    document.querySelectorAll('.sc-row').forEach(r => {
+      const v = c[r.dataset.part];
+      r.querySelector('[type=color]').value = v;
+      const t = r.querySelector('[type=text]'); if (document.activeElement !== t) t.value = v.toUpperCase();
+      r.toggleAttribute('data-on', r.dataset.part === scPart);
+    });
+  }
+  function scSet(part, v) { SC.set({ ...SC.get(), [part]: v.toLowerCase() }); $('#saved').textContent = 'Warna scythe disimpan.'; }
+  document.querySelectorAll('.sc-row').forEach(r => {
+    const part = r.dataset.part;
+    const pick = () => { scPart = part; scRender(); };
+    r.addEventListener('focusin', pick); r.addEventListener('pointerdown', pick);
+    r.querySelector('[type=color]').addEventListener('input', e => scSet(part, e.target.value));
+    r.querySelector('[type=text]').addEventListener('input', e => { let v = e.target.value.trim(); if (!v.startsWith('#')) v = '#' + v; if (/^#[0-9a-f]{6}$/i.test(v)) scSet(part, v); });
+  });
+  $('#sc-swatches').addEventListener('click', e => { const b = e.target.closest('.swatch'); if (b) scSet(scPart, b.dataset.color); });
+  $('#sc-reset').addEventListener('click', () => { SC.set(SC.DEFAULT); $('#saved').textContent = 'Warna scythe balik ke aslinya.'; });
+  window.addEventListener('yannz:scythe', e => scRender(e.detail));
+  scRender();
 })();
 </script>
 <script src="/assets/music.js" defer></script>

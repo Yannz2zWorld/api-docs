@@ -197,6 +197,11 @@ app.get('/assets/music.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'music.js'));
 });
+// Scythe colours (views/scythe-color.js): handle / head / effects, set by tapping the scythe.
+app.get('/assets/scythe-color.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'scythe-color.js'));
+});
 // Custom UI (views/ui-theme.js): the look and colour each visitor picked on /custom-ui.
 app.get('/assets/ui-theme.js', (req, res) => {
   res.set('Cache-Control', 'no-cache');

@@ -41,7 +41,7 @@ it('every page after sign-in loads the theme and has "Custom UI" in its menu', (
 it('looks and colours: many looks, any colour, readable text on it, RGB mode', () => {
   const store = {};
   const root = { attrs: {}, style: { props: {}, setProperty(k, v) { this.props[k] = v; }, removeProperty(k) { delete this.props[k]; } },
-    setAttribute(k, v) { this.attrs[k] = v; }, removeAttribute(k) { delete this.attrs[k]; } };
+    setAttribute(k, v) { this.attrs[k] = v; }, removeAttribute(k) { delete this.attrs[k]; }, hasAttribute: () => false };
   const sandbox = { window: {}, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; } },
     document: { documentElement: root, head: { append() {} }, getElementById: () => null, createElement: () => ({}) },
     matchMedia: () => ({ matches: false }), addEventListener() {}, setInterval: () => 1, clearInterval() {},
@@ -65,11 +65,11 @@ it('looks and colours: many looks, any colour, readable text on it, RGB mode', (
   UI.set({ style: 'cream', accent: '#123456', rgb: false });
   assert.equal(root.attrs['data-ui'], 'cream');
   assert.equal(root.style.props['--accent'], '#123456');
-  assert.deepEqual(JSON.parse(store['yannz-ui']), { style: 'cream', accent: '#123456', rgb: false, uid: null }, 'kept in the browser (account not known in this sandbox)');
+  assert.deepEqual(JSON.parse(store['yannz-ui']), { style: 'cream', accent: '#123456', rgb: false, scythe: null, uid: null }, 'kept in the browser (account not known in this sandbox)');
   UI.set({ style: 'default', accent: '', rgb: false });
   assert.equal(root.attrs['data-ui'], undefined, 'the original look needs no override');
   store['yannz-ui'] = '{"style":"nope","accent":"red"}';
-  assert.deepEqual({ ...UI.load() }, { style: 'default', accent: '', rgb: false }, 'bad saved values fall back');
+  assert.deepEqual({ ...UI.load() }, { style: 'default', accent: '', rgb: false, scythe: null }, 'bad saved values fall back');
 });
 
 it('the look is saved on the account: it follows the user, other accounts keep their own', async () => {
@@ -98,4 +98,36 @@ it('the page script syncs with the account', () => {
   assert.match(js, /fetch\('\/api\/profile\/ui'/);
   assert.match(js, /method: 'PUT'/);
   assert.match(fs.readFileSync(path.join(__dirname, '..', '..', 'migrations', '021_user_ui.sql'), 'utf8'), /ADD COLUMN IF NOT EXISTS ui_prefs jsonb/);
+});
+
+it('29 looks, the same list on the page and on the server', async () => {
+  const store = {};
+  const sandbox = { window: {}, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; } },
+    document: { documentElement: { style: { setProperty() {}, removeProperty() {} }, setAttribute() {}, removeAttribute() {}, hasAttribute: () => false }, head: { append() {} }, getElementById: () => null, createElement: () => ({}) },
+    matchMedia: () => ({ matches: false }), addEventListener() {}, dispatchEvent() {}, CustomEvent: class {}, setInterval: () => 1, clearInterval() {}, fetch: async () => ({ ok: false }) };
+  vm.runInNewContext(view('ui-theme.js'), sandbox);
+  const ids = Object.keys(sandbox.window.YannzUI.STYLES);
+  assert.equal(ids.length, 29);
+  const put = body => app.request('PUT', '/api/profile/ui', { cookie: user, headers: { origin: app.origin }, body });
+  for (const id of ids) assert.equal((await put({ style: id })).status, 200, id);
+});
+
+it('scythe colours (handle / head / effects) are saved on the account with the look', async () => {
+  const put = body => app.request('PUT', '/api/profile/ui', { cookie: user, headers: { origin: app.origin }, body });
+  const r = await put({ style: 'lemon', accent: '', rgb: false, scythe: { handle: '#3B82F6', head: '#ffd60a', fx: '#22c55e' } });
+  assert.equal(r.status, 200, r.text);
+  assert.deepEqual((await app.request('GET', '/api/profile/ui', { cookie: user })).json.ui.scythe, { handle: '#3b82f6', head: '#ffd60a', fx: '#22c55e' });
+  assert.equal((await put({ style: 'lemon', scythe: { handle: 'red', head: '#ffd60a', fx: '#22c55e' } })).status, 400);
+  assert.equal((await put({ style: 'lemon', scythe: { handle: '#ffffff' } })).status, 400, 'all three colours');
+});
+
+it('the scythe colour panel is reached by tapping the scythe (home, /3d) and on Custom UI, never a menu', () => {
+  for (const f of ['index.html', 'login.html', 'custom-ui.html', 'scythe.html']) assert.match(view(f), /\/assets\/scythe-color\.js/, f);
+  assert.match(view('scene3d.js'), /YannzScythe\.open\(e\.clientX, e\.clientY\)/);
+  assert.match(view('scythe.html'), /SC\.open\(e\.clientX,e\.clientY\)/);
+  assert.match(view('scythe.html'), /<html lang="id" data-no-theme>/, 'the game keeps its own design');
+  assert.match(view('custom-ui.html'), /data-scene3d="preview"/);
+  for (const f of ['index.html', 'custom-ui.html', 'owner.html']) assert.ok(!/href="[^"]*scythe-colou?r/.test(view(f)), 'no menu entry for it');
+  const js = view('scythe-color.js');
+  for (const part of ['handle', 'head', 'fx']) assert.match(js, new RegExp(`${part}: '#`));
 });

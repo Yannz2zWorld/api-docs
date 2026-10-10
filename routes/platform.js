@@ -291,7 +291,10 @@ router.get('/api/profile', auth, async (req, res) => {
 });
 
 // Custom UI saved on the account (migration 021): the look and colour follow the user to any device.
-const UI_STYLES = new Set(['default', 'cream', 'pop', 'neon', 'glass', 'minimal', 'terminal', 'pastel', 'paper']);
+const UI_STYLES = new Set(['default', 'cream', 'pop', 'neon', 'glass', 'minimal', 'terminal', 'pastel', 'paper',
+  'lemon', 'mint', 'sky', 'peach', 'lilac', 'bubblegum', 'coral', 'lime', 'ocean', 'sand', 'comic', 'newsprint', 'matcha',
+  'blueprint', 'forest', 'wine', 'mocha', 'slate', 'noir', 'arcade']);
+const UI_HEX = /^#[0-9a-f]{6}$/;
 router.get('/api/profile/ui', auth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   let ui = null;
@@ -304,8 +307,15 @@ router.put('/api/profile/ui', sameOrigin, auth, async (req, res) => {
   const style = String(b.style || 'default');
   const accent = typeof b.accent === 'string' ? b.accent.trim().toLowerCase() : '';
   if (!UI_STYLES.has(style)) return fail(res, 400, 'INVALID_STYLE', 'Gaya tampilan ini nggak ada.');
-  if (accent && !/^#[0-9a-f]{6}$/.test(accent)) return fail(res, 400, 'INVALID_COLOR', 'Warnanya harus kode HEX, misal #ffd60a.');
-  const ui = { style, accent, rgb: b.rgb === true };
+  if (accent && !UI_HEX.test(accent)) return fail(res, 400, 'INVALID_COLOR', 'Warnanya harus kode HEX, misal #ffd60a.');
+  // Scythe colours (views/scythe-color.js): handle, head and effects, each a HEX colour.
+  let scythe = null;
+  if (b.scythe != null) {
+    const c = b.scythe;
+    if (typeof c !== 'object' || !['handle', 'head', 'fx'].every(k => typeof c[k] === 'string' && UI_HEX.test(c[k].trim().toLowerCase()))) return fail(res, 400, 'INVALID_COLOR', 'Warna scythe harus kode HEX, misal #ff1a2c.');
+    scythe = { handle: c.handle.trim().toLowerCase(), head: c.head.trim().toLowerCase(), fx: c.fx.trim().toLowerCase() };
+  }
+  const ui = { style, accent, rgb: b.rgb === true, ...(scythe ? { scythe } : {}) };
   try { await query('UPDATE users SET ui_prefs=$2::jsonb, updated_at=now() WHERE id=$1', [req.account.id, JSON.stringify(ui)]); }
   catch (e) {
     if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Simpan tampilan ke akun butuh migration 021_user_ui.sql dulu.');

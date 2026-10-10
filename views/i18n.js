@@ -220,7 +220,7 @@
   .lang-switch-label{color:var(--muted,#a1a1aa)}
   .lang-switch-opts{display:inline-flex;border:2px solid var(--edge,#d4d4d8);border-radius:999px;overflow:hidden}
   .lang-switch-opts button{margin:0;padding:5px 9px;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;box-shadow:none;cursor:pointer}
-  .lang-switch-opts button[aria-pressed=true]{background:var(--accent,#c8202f);color:#fff}
+  .lang-switch-opts button[aria-pressed=true]{background:var(--accent,#c8202f);color:var(--accent-ink,#fff)}
   .lang-switch-opts button:focus-visible{outline:2px solid currentColor;outline-offset:-3px}`;
   document.head.append(css);
 

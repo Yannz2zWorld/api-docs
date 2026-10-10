@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id">
+<html lang="id" data-no-theme>
 <head>
 <meta charset="utf-8">
 <meta name="theme-color" content="#0b0b0c">
@@ -121,6 +121,8 @@ body.world .attacks .ctl{padding:8px 14px}
 .toggles .lang-switch{flex:0 0 auto;align-self:center;margin-left:4px;color:var(--ink)}
 </style>
 <script src="/assets/i18n.js"></script>
+<script src="/assets/ui-theme.js"></script>
+<script src="/assets/scythe-color.js"></script>
 </head>
 <body>
 <div id="stage" aria-label="Tampilan 3D sabit. Geser buat muter, cubit atau scroll buat zoom, dua jari buat geser."></div>
@@ -161,7 +163,7 @@ body.world .attacks .ctl{padding:8px 14px}
     <div class="row toggles" role="group" aria-label="Opsi tampilan">
       <button class="btn" id="tSound" aria-pressed="true">Suara</button>
       <button class="btn" id="tRotate" aria-pressed="false">Putar otomatis</button>
-      <button class="btn" id="tGlow" aria-pressed="true">Cahaya merah</button>
+      <button class="btn" id="tGlow" aria-pressed="true">Cahaya efek</button>
       <button class="btn" id="tSway" aria-pressed="true">Kain bergoyang</button>
       <button class="btn" id="tAura" aria-pressed="true">Aura gelap</button>
       <button class="btn" id="tPose" aria-pressed="false">Pose miring</button>
@@ -365,7 +367,8 @@ function makeTextures(){
   // soft radial glow for eye / gem halos
   [c,g]=canvas(128);
   const gr=g.createRadialGradient(64,64,0,64,64,64);
-  gr.addColorStop(0,'rgba(255,90,100,1)'); gr.addColorStop(.25,'rgba(255,30,50,.55)'); gr.addColorStop(1,'rgba(255,0,20,0)');
+  // white, so each glow takes its colour from its material (the visitor's effect colour, views/scythe-color.js)
+  gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.25,'rgba(255,255,255,.55)'); gr.addColorStop(1,'rgba(255,255,255,0)');
   g.fillStyle=gr; g.fillRect(0,0,128,128);
   T.glow=new THREE.CanvasTexture(c);
   return T;
@@ -430,6 +433,12 @@ const glowMat=new THREE.MeshBasicMaterial({color:0xff2238, vertexColors:true, tr
 const spriteMat=new THREE.SpriteMaterial({map:TEX.glow, color:0xff3344, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false});
 const glowObjects=[]; // additive helpers, toggled by "Crimson glow"
 const redLights=[];
+// Material names = scythe parts (views/scythe-color.js colours them: handle / head / effects).
+for(const [k,m] of Object.entries(MAT)) m.name=k;
+glowMat.name='glow';
+// The visitor's effect colour, for effects that build their own colours (trail, target rings).
+const FX={r:1,g:.1,b:.17}, FX_COL=new THREE.Color(0xff2a3a);
+function setFx(hex){ const n=parseInt(String(hex||'#ff1a2c').slice(1),16); FX.r=(n>>16)/255; FX.g=((n>>8)&255)/255; FX.b=(n&255)/255; FX_COL.set(hex||'#ff2a3a'); }
 
 /* ============================================================
    Shared anatomical parts
@@ -1425,7 +1434,7 @@ function updateTrail(now,wIn,wOut){
   for(let i=0;i<trS.length;i++){
     const s=trS[i], f=Math.pow(Math.max(0,1-(now-s.t)/TR_LIFE),1.6), j=i*6;
     trPos[j]=s.a.x; trPos[j+1]=s.a.y; trPos[j+2]=s.a.z; trPos[j+3]=s.b.x; trPos[j+4]=s.b.y; trPos[j+5]=s.b.z;
-    trCol[j]=.3*f; trCol[j+1]=0; trCol[j+2]=.03*f; trCol[j+3]=1.0*f; trCol[j+4]=.22*f; trCol[j+5]=.28*f;
+    trCol[j]=FX.r*.3*f; trCol[j+1]=FX.g*.3*f; trCol[j+2]=FX.b*.3*f; trCol[j+3]=Math.min(1,FX.r+.12)*f; trCol[j+4]=Math.min(1,FX.g+.12)*f; trCol[j+5]=Math.min(1,FX.b+.12)*f;
   }
   trGeo.setDrawRange(0,Math.max(0,trS.length-1)*6);
   trGeo.attributes.position.needsUpdate=true; trGeo.attributes.color.needsUpdate=true;
@@ -1888,7 +1897,7 @@ function updateScarecrows(dt,time){
     if(sc.state==='idle'){
       sc.wobV.x+=(-40*sc.wob.x-4*sc.wobV.x)*dt; sc.wobV.y+=(-40*sc.wob.y-4*sc.wobV.y)*dt; sc.wob.addScaledVector(sc.wobV,dt);
       sc.g.rotation.x=sc.wob.x; sc.g.rotation.z=sc.wob.y;
-      const ok=inReach(sc); sc.ring.material.color.setHex(ok?0xff2a3a:0x6b5a55); sc.ring.material.opacity=ok?.7+.25*Math.sin(time*8):.35;
+      const ok=inReach(sc); if(ok) sc.ring.material.color.copy(FX_COL); else sc.ring.material.color.setHex(0x6b5a55); sc.ring.material.opacity=ok?.7+.25*Math.sin(time*8):.35;
     } else if(sc.state==='cut'){
       sc.t+=dt;
       for(const h of sc.halves){
@@ -2126,6 +2135,25 @@ function exitWorld(){
    UI wiring
    ============================================================ */
 let current='full', swayOn=true, glowOn=true;
+/* ---------- scythe colours (views/scythe-color.js): tap the scythe to change them ---------- */
+if(window.YannzScythe){
+  const SC=window.YannzScythe;
+  SC.paint(THREE,{traverse(fn){ [...Object.values(MAT),glowMat].forEach(m=>fn({material:m})); }});
+  const fxThings=[[spriteMat,'color'],[pivotGlow.material,'color'],[flash,'color'],...waves.map(w=>[w.m.material,'color']),...discPool.map(d=>[d.m.material,'color']),...streakPool.map(d=>[d.m.material,'color']),...redLights.map(l=>[l,'color'])];
+  fxThings.forEach(([o,p])=>SC.track(THREE,o,p,'fx'));
+  setFx(SC.get().fx);
+  window.addEventListener('yannz:scythe',e=>setFx(e.detail.fx));
+  const cv=renderer.domElement, ray=new THREE.Raycaster(); let tap=null;
+  cv.addEventListener('pointerdown',e=>{ tap=(ctrlOn||world.on)?null:{x:e.clientX,y:e.clientY,t:performance.now()}; });
+  cv.addEventListener('pointerup',e=>{
+    if(!tap||ctrlOn||world.on) return; const t=tap; tap=null;
+    if(performance.now()-t.t>400||Math.hypot(e.clientX-t.x,e.clientY-t.y)>8) return;   // a drag turns the view
+    const r=cv.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);
+    if(ray.intersectObject(root,true).length) SC.open(e.clientX,e.clientY);
+  });
+  cv.title='Klik scythe buat ganti warnanya';
+}
 document.querySelectorAll('#views .btn').forEach(b=>b.addEventListener('click',()=>goTo(b.dataset.view)));
 document.querySelectorAll('.atk').forEach(b=>b.addEventListener('click',()=>requestMove(b.dataset.move)));
 function toggle(id,fn){ const b=$(id); b.addEventListener('click',()=>{ const on=b.getAttribute('aria-pressed')!=='true'; b.setAttribute('aria-pressed',on?'true':'false'); fn(on); }); }

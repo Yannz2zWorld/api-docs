@@ -38,18 +38,84 @@
       edge: '#f0abd0', edgeSoft: '#f6cde2', drop: '#f5c2dd', border: 2, radius: 22, shadow: [5, 5], accent: '#ec4899' },
     paper: { name: 'Retro Paper', desc: 'Kertas tua, tinta cokelat, nuansa jadul.', dark: false,
       bg: '#f2e8d5', dot: '#dccaa6', surface: '#fbf5e8', surface2: '#f6ecd9', surface3: '#efe2c8', ink: '#3b2a1e', muted: '#6f5843', faint: '#9b8468',
-      edge: '#3b2a1e', edgeSoft: '#b8a07c', drop: '#3b2a1e', border: 2, radius: 6, shadow: [4, 4], accent: '#c2410c', font: "Georgia, 'Times New Roman', serif" }
+      edge: '#3b2a1e', edgeSoft: '#b8a07c', drop: '#3b2a1e', border: 2, radius: 6, shadow: [4, 4], accent: '#c2410c', font: "Georgia, 'Times New Roman', serif" },
+    lemon: { name: 'Lemon', desc: 'Kuning lemon bertitik, kartu putih, garis hitam tebal.', dark: false,
+      bg: '#fffbea', dot: '#eadc8f', surface: '#ffffff', surface2: '#fffbea', surface3: '#eadc8f', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 18, shadow: [6, 6], accent: '#facc15', font: "'Space Grotesk', Outfit, sans-serif" },
+    mint: { name: 'Mint', desc: 'Hijau mint bertitik, garis hitam tebal, segar.', dark: false,
+      bg: '#ecfdf5', dot: '#a7e3c8', surface: '#ffffff', surface2: '#ecfdf5', surface3: '#a7e3c8', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 18, shadow: [6, 6], accent: '#10b981', font: "'Space Grotesk', Outfit, sans-serif" },
+    sky: { name: 'Sky', desc: 'Biru langit bertitik, kartu putih tebal.', dark: false,
+      bg: '#eff6ff', dot: '#b6cff3', surface: '#ffffff', surface2: '#eff6ff', surface3: '#b6cff3', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 18, shadow: [6, 6], accent: '#3b82f6', font: "'Space Grotesk', Outfit, sans-serif" },
+    peach: { name: 'Peach', desc: 'Oranye persik lembut, garis hitam tegas.', dark: false,
+      bg: '#fff1e6', dot: '#f2c6a3', surface: '#ffffff', surface2: '#fff1e6', surface3: '#f2c6a3', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 18, shadow: [6, 6], accent: '#fb923c', font: "'Space Grotesk', Outfit, sans-serif" },
+    lilac: { name: 'Lilac', desc: 'Ungu lilac bertitik, kartu putih, aksen ungu.', dark: false,
+      bg: '#f5f0ff', dot: '#d3c4f3', surface: '#ffffff', surface2: '#f5f0ff', surface3: '#d3c4f3', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 18, shadow: [6, 6], accent: '#8b5cf6', font: "'Space Grotesk', Outfit, sans-serif" },
+    bubblegum: { name: 'Bubblegum', desc: 'Pink permen karet, sudut bulat besar.', dark: false,
+      bg: '#fff0f6', dot: '#f5bcd6', surface: '#ffffff', surface2: '#fff0f6', surface3: '#f5bcd6', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 26, shadow: [6, 6], accent: '#ff4fa3', font: "'Space Grotesk', Outfit, sans-serif" },
+    coral: { name: 'Coral', desc: 'Merah koral bertitik, garis hitam tebal.', dark: false,
+      bg: '#fff3f0', dot: '#f6c3b8', surface: '#ffffff', surface2: '#fff3f0', surface3: '#f6c3b8', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 18, shadow: [6, 6], accent: '#ff5a5f', font: "'Space Grotesk', Outfit, sans-serif" },
+    lime: { name: 'Lime Punch', desc: 'Hijau lime terang, bayangan kotak besar.', dark: false,
+      bg: '#f7fee7', dot: '#cbe596', surface: '#ffffff', surface2: '#f7fee7', surface3: '#cbe596', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 18, shadow: [8, 8], accent: '#84cc16', font: "'Space Grotesk', Outfit, sans-serif" },
+    ocean: { name: 'Ocean', desc: 'Biru laut muda, kartu putih, aksen toska.', dark: false,
+      bg: '#e6f6f8', dot: '#a9dbe2', surface: '#ffffff', surface2: '#e6f6f8', surface3: '#a9dbe2', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 18, shadow: [6, 6], accent: '#0891b2', font: "'Space Grotesk', Outfit, sans-serif" },
+    sand: { name: 'Sand', desc: 'Pasir hangat, sudut kecil, aksen jingga.', dark: false,
+      bg: '#f6efe1', dot: '#dfcda6', surface: '#ffffff', surface2: '#f6efe1', surface3: '#dfcda6', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 8, shadow: [6, 6], accent: '#d97706', font: "'Space Grotesk', Outfit, sans-serif" },
+    comic: { name: 'Comic', desc: 'Kertas komik bertitik rapat, garis super tebal.', dark: false,
+      bg: '#fffdf2', dot: '#c9c3a8', surface: '#ffffff', surface2: '#fffdf2', surface3: '#c9c3a8', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 4, radius: 6, shadow: [7, 7], accent: '#ef4444', font: "'Space Grotesk', Outfit, sans-serif" },
+    newsprint: { name: 'Newsprint', desc: 'Kertas koran abu, tinta hitam, huruf klasik.', dark: false,
+      bg: '#f2f2f0', dot: '#c8c8c4', surface: '#fafaf8', surface2: '#f2f2f0', surface3: '#c8c8c4', ink: '#111111', muted: '#3f3f46', faint: '#71717a',
+      edge: '#111111', edgeSoft: '#111111', drop: '#111111', border: 3, radius: 4, shadow: [5, 5], accent: '#111111', font: "Georgia, 'Times New Roman', serif" },
+    matcha: { name: 'Matcha', desc: 'Hijau matcha kalem, tinta hijau tua.', dark: false,
+      bg: '#f1f5e8', dot: '#c9d6a8', surface: '#fbfdf6', surface2: '#f1f5e8', surface3: '#c9d6a8', ink: '#1f2a14', muted: '#4b5a3a', faint: '#71717a',
+      edge: '#1f2a14', edgeSoft: '#1f2a14', drop: '#1f2a14', border: 3, radius: 14, shadow: [6, 6], accent: '#65a30d', font: "'Space Grotesk', Outfit, sans-serif" },
+    blueprint: { name: 'Blueprint', desc: 'Biru cetak biru, garis putih tebal, aksen kuning.', dark: true,
+      bg: '#0b3a75', dot: '#2a5ea0', surface: '#0f4588', surface2: '#13509a', surface3: '#1a5aa8', ink: '#eaf2ff', muted: '#b9cdee', faint: '#8aa7d6',
+      edge: '#eaf2ff', edgeSoft: '#3f72b8', drop: '#062449', border: 3, radius: 10, shadow: [6, 6], accent: '#ffd60a', font: "'DM Mono', ui-monospace, monospace" },
+    forest: { name: 'Forest', desc: 'Hijau hutan gelap, garis terang, aksen hijau muda.', dark: true,
+      bg: '#0f1f17', dot: '#1f3a2b', surface: '#15291f', surface2: '#1a3326', surface3: '#20402f', ink: '#e7f5ec', muted: '#a9c9b5', faint: '#76937f',
+      edge: '#e7f5ec', edgeSoft: '#2f5340', drop: '#050c08', border: 3, radius: 16, shadow: [6, 6], accent: '#4ade80' },
+    wine: { name: 'Wine', desc: 'Merah anggur gelap, garis terang, aksen rose.', dark: true,
+      bg: '#1a0b10', dot: '#3a1822', surface: '#241016', surface2: '#2e1520', surface3: '#391a28', ink: '#fbe9ee', muted: '#d9aab8', faint: '#a77b8a',
+      edge: '#fbe9ee', edgeSoft: '#4d2433', drop: '#0a0306', border: 3, radius: 16, shadow: [6, 6], accent: '#f43f5e' },
+    mocha: { name: 'Mocha', desc: 'Cokelat kopi gelap, garis krem, aksen karamel.', dark: true,
+      bg: '#1f1813', dot: '#3a2d24', surface: '#2a2019', surface2: '#33281f', surface3: '#3d3026', ink: '#f5ebe0', muted: '#d4c1ad', faint: '#a08c78',
+      edge: '#f5ebe0', edgeSoft: '#4d3d31', drop: '#0d0907', border: 3, radius: 14, shadow: [6, 6], accent: '#d4a373' },
+    slate: { name: 'Slate', desc: 'Abu kebiruan gelap, garis terang, aksen biru.', dark: true,
+      bg: '#111827', dot: '#253045', surface: '#1a2333', surface2: '#212c40', surface3: '#28354c', ink: '#e5e7eb', muted: '#aeb6c4', faint: '#7c8698',
+      edge: '#e5e7eb', edgeSoft: '#334058', drop: '#05080f', border: 3, radius: 12, shadow: [6, 6], accent: '#60a5fa' },
+    noir: { name: 'Noir', desc: 'Hitam putih pekat, garis putih tebal, tanpa warna lain.', dark: true,
+      bg: '#000000', dot: '#1c1c1c', surface: '#0d0d0d', surface2: '#151515', surface3: '#1e1e1e', ink: '#ffffff', muted: '#bdbdbd', faint: '#8a8a8a',
+      edge: '#ffffff', edgeSoft: '#3a3a3a', drop: '#3a3a3a', border: 3, radius: 8, shadow: [6, 6], accent: '#ffffff' },
+    arcade: { name: 'Arcade', desc: 'Ungu malam, huruf mesin, aksen kuning arcade.', dark: true,
+      bg: '#1b0b33', dot: '#34195c', surface: '#24103f', surface2: '#2c144d', surface3: '#35195c', ink: '#f3e8ff', muted: '#c7b3e6', faint: '#9a84bd',
+      edge: '#f3e8ff', edgeSoft: '#4a2a7a', drop: '#0b0418', border: 3, radius: 10, shadow: [6, 6], accent: '#facc15', font: "'DM Mono', ui-monospace, monospace" },
   };
 
   const HEX = /^#[0-9a-f]{6}$/i;
+  // scythe: { handle, head, fx } colours of the 3D scythe (views/scythe-color.js), or null.
+  const scytheOf = c => (c && typeof c === 'object' && ['handle', 'head', 'fx'].every(k => HEX.test(c[k] || ''))) ? { handle: c.handle.toLowerCase(), head: c.head.toLowerCase(), fx: c.fx.toLowerCase() } : null;
+  const clean = v => ({ style: STYLES[v?.style] ? v.style : 'default', accent: HEX.test(v?.accent || '') ? v.accent.toLowerCase() : '', rgb: Boolean(v?.rgb), scythe: scytheOf(v?.scythe) });
   function load() {
-    try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && STYLES[v.style]) return { style: v.style, accent: HEX.test(v.accent || '') ? v.accent.toLowerCase() : '', rgb: Boolean(v.rgb) }; } catch {}
-    return { style: 'default', accent: '', rgb: false };
+    try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v) return clean(v); } catch {}
+    return clean(null);
   }
   function save(pref) { try { localStorage.setItem(KEY, JSON.stringify(pref)); } catch {} }
   const owner = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null')?.uid || null; } catch { return null; } };
   let uid = null;   // the signed-in account, once known
   const same = (a, b) => a.style === b.style && (a.accent || '') === (b.accent || '') && Boolean(a.rgb) === Boolean(b.rgb);
+  const sameScythe = (a, b) => JSON.stringify(a.scythe || null) === JSON.stringify(b.scythe || null);
+  const custom = p => p.style !== 'default' || p.accent || p.rgb || p.scythe;
+  const scytheChanged = p => window.dispatchEvent(new CustomEvent('yannz:scythe', { detail: p.scythe || { handle: '#f2ebe0', head: '#b8b4bc', fx: '#ff1a2c' } }));
 
   // The account's choice wins. An account without one takes this browser's choice, but only one
   // made by this account (or before saving to accounts existed), never someone else's on a shared
@@ -60,18 +126,19 @@
     uid = d.user || null;
     const local = load(), mine = !owner() || owner() === uid;
     if (d.ui && STYLES[d.ui.style]) {
-      const pref = { style: d.ui.style, accent: HEX.test(d.ui.accent || '') ? d.ui.accent.toLowerCase() : '', rgb: Boolean(d.ui.rgb) };
+      const pref = clean(d.ui);
       save({ ...pref, uid });
       if (!same(pref, local)) apply(pref);
-    } else if (mine && (local.style !== 'default' || local.accent || local.rgb)) {
+      if (!sameScythe(pref, local)) scytheChanged(pref);
+    } else if (mine && custom(local)) {
       save({ ...local, uid }); push(local);
     } else if (!mine) {
-      const pref = { style: 'default', accent: '', rgb: false };
-      save({ ...pref, uid }); apply(pref);
+      const pref = clean(null);
+      save({ ...pref, uid }); apply(pref); scytheChanged(pref);
     }
   }
   function push(pref) {
-    return fetch('/api/profile/ui', { method: 'PUT', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ style: pref.style, accent: pref.accent || '', rgb: Boolean(pref.rgb) }) })
+    return fetch('/api/profile/ui', { method: 'PUT', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ style: pref.style, accent: pref.accent || '', rgb: Boolean(pref.rgb), scythe: pref.scythe || null }) })
       .then(r => r.ok).catch(() => false);
   }
 
@@ -90,7 +157,7 @@
     const R = 'html[data-ui]';
     return `${R}{--bg:${s.bg};--dot:${s.dot};--surface:${s.surface};--surface-2:${s.surface2};--surface-3:${s.surface3};--ink:${s.ink};--muted:${s.muted};--faint:${s.faint};
 --edge:${edge};--edge-soft:${s.edgeSoft};--drop:${drop};--radius:${s.radius}px;--line:${s.border}px solid var(--edge);--shadow:${shadow};
---red:var(--accent);--red-deep:color-mix(in srgb,var(--accent) 78%,#000);--paper:var(--surface);--yellow:var(--accent);--blood:var(--accent);--blood-deep:var(--red-deep);--blue:var(--muted);--green:var(--edge);
+--red:var(--accent);--red-deep:color-mix(in srgb,var(--accent) 78%,#000);--paper:var(--surface);--cream:var(--bg);--login-bg:var(--surface);--yellow:var(--accent);--blood:var(--accent);--blood-deep:var(--red-deep);--blue:var(--muted);--green:var(--edge);
 --ok:${s.dark ? '#86efac' : '#15803d'};--bad:${s.dark ? '#fca5a5' : '#b91c1c'};--warn:${s.dark ? '#e4e4e7' : '#3f3f46'};color-scheme:${s.dark ? 'dark' : 'light'}}
 ${R} body{background-color:var(--bg);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.2px);background-size:22px 22px;color:var(--ink)${s.font ? `;font-family:${s.font}` : ''}}
 ${s.font ? `${R} h1,${R} h2,${R} h3,${R} .brand,${R} .hero h1,${R} .section-head h2,${R} .metric-value{font-family:${s.font}}` : ''}
@@ -123,6 +190,7 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
   function apply(pref = load()) {
     const s = STYLES[pref.style] || STYLES.default;
     const html = document.documentElement;
+    if (html.hasAttribute('data-no-theme')) return;   // pages with their own design (the /3d game) only use the saved scythe colours
     clearInterval(rgbTimer); rgbTimer = null;
     let tag = document.getElementById('yannz-ui-style');
     const custom = pref.style !== 'default' || pref.accent || pref.rgb;
@@ -142,9 +210,10 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
   }
 
   // set(): applied at once, kept in this browser, saved on the account (resolves true when saved there).
-  window.YannzUI = { STYLES, load, save, apply, inkOn, sync, set(pref) { save({ ...pref, uid: uid || owner() }); apply(pref); return push(pref); } };
+  // The look stays after signing out too: this browser keeps the last account's choice.
+  window.YannzUI = { STYLES, load, save, apply, inkOn, sync, owner: () => uid || owner(), set(pref) { const p = clean(pref); save({ ...p, uid: uid || owner() }); apply(p); return push(p); } };
   apply();
   sync();
   // Another tab changed it: follow.
-  addEventListener('storage', e => { if (e.key === KEY) apply(); });
+  addEventListener('storage', e => { if (e.key === KEY) { const p = load(); apply(p); scytheChanged(p); } });
 })();
