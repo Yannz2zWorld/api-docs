@@ -137,63 +137,152 @@ it('Pakasir is fail-closed: in maintenance unless switched on, and not configure
   }
 });
 
-it('webhook: malformed, forged, wrong-order and wrong-amount payloads are rejected', async () => {
-  const cookie = await app.login('pforged@example.test');
-  const o = (await order(cookie, 'DEWA')).json.order;
-  const valid = { project: 'yannz-test-project', order_id: o.order_code, amount: 25000, status: 'completed' };
-  const cases = [
-    {},
-    { ...valid, status: 'pending' },
-    { ...valid, project: 'someone-else' },
-    { ...valid, amount: 5000 },
-    { ...valid, order_id: 'YAN-DEWA-DOESNOTEXIST' }
-  ];
-  for (const body of cases) {
-    const r = await webhook(body);
-    assert.deepEqual([r.status, r.json.error], [400, 'INVALID_PAYMENT'], JSON.stringify(body));
+// ---------------------------------------------------------------- Pakasir API v2
+// axios is stubbed: create → {txn_id, qr_string|va_number, …}; status → {status, order_id, amount}.
+function stubPakasir(state) {
+  const { post: realPost, get: realGet } = axios;
+  state.calls = [];
+  axios.post = async (url, body, opts) => {
+    state.calls.push({ method: 'POST', url, body, headers: opts?.headers });
+    if (/cancel-transaction/.test(url)) return { data: { message: 'Berhasil batalkan transaksi' } };
+    const orderId = decodeURIComponent(url.split('/').pop());
+    const txn = 'txn-' + orderId;
+    state.txns[txn] = { order_id: orderId, amount: body.amount };
+    return { data: { txn_id: txn, project: 'yannz-test-project', order_id: orderId, amount: body.amount, fee: 400, total_payment: body.amount + 400, payment_method: body.method,
+      qr_string: body.method === 'qris' ? '00020101021226610016ID.CO.QRIS' : '', va_number: body.method === 'qris' ? '' : '8808123456789', expired_at: new Date(Date.now() + 3600e3).toISOString(), is_sandbox: false } };
+  };
+  axios.get = async (url, opts) => {
+    state.calls.push({ method: 'GET', url, headers: opts?.headers });
+    if (state.getError) throw state.getError;
+    const txn = decodeURIComponent(url.split('/').pop());
+    const t = state.txns[txn] || {};
+    return { data: { txn_id: txn, order_id: t.order_id, amount: state.amount ?? t.amount, is_sandbox: Boolean(state.sandbox), status: state.status, completed_at: null } };
+  };
+  return () => { axios.post = realPost; axios.get = realGet; };
+}
+const withGateway = async (fn, extra = {}) => {
+  Object.assign(process.env, { PAYMENT_GATEWAY: 'on', PAKASIR_API_KEY: 'test-only-key', ...extra });
+  const state = { txns: {}, status: 'pending' };
+  const restore = stubPakasir(state);
+  try { await fn(state); } finally {
+    restore();
+    for (const k of ['PAYMENT_GATEWAY', 'PAKASIR_API_KEY', 'PAKASIR_WEBHOOK_SECRET', 'PAKASIR_SANDBOX', ...Object.keys(extra)]) delete process.env[k];
   }
-  const unverified = await webhook(valid);
-  assert.deepEqual([unverified.status, unverified.json.error], [202, 'PAYMENT_NOT_VERIFIED'], 'no verification URL configured: fail closed');
-  assert.equal(await tierOf('pforged@example.test'), 'FREE');
+};
+
+it('webhook: malformed, forged, wrong-order and wrong-amount payloads are rejected', async () => {
+  await withGateway(async state => {
+    const cookie = await app.login('pforged@example.test');
+    const o = (await order(cookie, 'DEWA')).json.order;
+    const created = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
+    assert.equal(created.status, 201, created.text);
+    const valid = { txn_id: created.json.gateway.txn_id, order_id: o.order_code, amount: 25000, status: 'completed', is_sandbox: false };
+    for (const body of [{}, { ...valid, status: 'pending' }, { ...valid, project: 'someone-else' }, { ...valid, amount: 5000 }, { ...valid, txn_id: 'nope', order_id: 'YAN-DEWA-DOESNOTEXIST' }]) {
+      const r = await webhook(body);
+      assert.deepEqual([r.status, r.json.error], [400, 'INVALID_PAYMENT'], JSON.stringify(body));
+    }
+    state.status = 'pending';
+    const unverified = await webhook(valid);
+    assert.deepEqual([unverified.status, unverified.json.error], [202, 'PAYMENT_NOT_VERIFIED'], 'Pakasir says not paid: the webhook body alone changes nothing');
+    assert.equal(await tierOf('pforged@example.test'), 'FREE');
+  });
 });
 
-it('webhook: trusted verification settles once; replays and concurrent duplicates do nothing', async () => {
-  const email = 'pgateway@example.test';
-  const cookie = await app.login(email);
-  const o = (await order(cookie, 'SEPUH')).json.order;
-  Object.assign(process.env, { PAYMENT_GATEWAY: 'on', PAKASIR_API_KEY: 'test-only-key', PAKASIR_V2_VERIFY_URL: 'https://verify.example.test/{project}/{order_id}?amount={amount}' });
-  const { post: realPost, get: realGet } = axios;
-  let verifyStatus = 'completed';
-  axios.post = async () => ({ data: { transaction: { txn_id: 'TXN-' + o.order_code, payment_link: 'https://pay.example.test/x', qr_string: '000201...', expired_at: new Date(Date.now() + 3600e3).toISOString() } } });
-  axios.get = async url => {
-    assert.match(url, new RegExp(encodeURIComponent(o.order_code)));
-    return { data: { transaction: { order_id: o.order_code, amount: 10000, status: verifyStatus } } };
-  };
-  try {
+it('webhook v2: only with the right X-Secret, confirmed by the status API; settles once, replays do nothing', async () => {
+  await withGateway(async state => {
+    const email = 'pgateway@example.test';
+    const cookie = await app.login(email);
+    const o = (await order(cookie, 'SEPUH')).json.order;
     const created = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
-    assert.equal(created.status, 201);
+    assert.equal(created.status, 201, created.text);
     assert.equal(created.json.payment.status, 'pending', 'creating a payment never marks it paid');
-    const reloaded = (await app.request('GET', '/api/orders', { cookie })).json.orders.find(x => x.id === o.id);
-    assert.equal(reloaded.payment_url, 'https://pay.example.test/x', 'gateway details survive a reload');
+    assert.equal(created.json.gateway.total_payment, 10400, 'total with the gateway fee');
+    const create = state.calls.find(c => c.method === 'POST');
+    assert.match(create.url, /\/api\/v2\/create-transaction\/yannz-test-project\//);
+    assert.equal(create.headers['X-Api-Key'], 'test-only-key');
+    assert.deepEqual(create.body, { method: 'qris', amount: 10000 });
 
-    const body = { project: 'yannz-test-project', order_id: o.order_code, amount: 10000, status: 'completed' };
-    verifyStatus = 'pending';
-    assert.equal((await webhook(body)).json.error, 'PAYMENT_NOT_VERIFIED', 'provider says not paid: forged webhook ignored');
-    assert.equal(await tierOf(email), 'FREE');
-
-    verifyStatus = 'completed';
-    const results = await Promise.all([webhook(body), webhook(body), webhook(body)]);
+    const body = { txn_id: created.json.gateway.txn_id, order_id: o.order_code, amount: 10000, status: 'completed', is_sandbox: false };
+    const send = (b, secret) => app.request('POST', '/webhooks/pakasir', { body: b, headers: secret ? { 'x-secret': secret } : {} });
+    assert.equal((await send(body)).status, 401, 'secret set: a webhook without it is refused');
+    assert.equal((await send(body, 'wrong')).status, 401);
+    state.status = 'completed';
+    const results = await Promise.all([send(body, 'whsec-123'), send(body, 'whsec-123'), send(body, 'whsec-123')]);
     assert.equal(results.filter(r => r.json.processed === true).length, 1);
     assert.equal(await tierOf(email), 'SEPUH');
-    const replay = await webhook(body);
+    const check = state.calls.find(c => c.method === 'GET');
+    assert.match(check.url, new RegExp(`/api/v2/transaction-status/yannz-test-project/${body.txn_id}$`));
+    const replay = await send(body, 'whsec-123');
     assert.deepEqual([replay.status, replay.json.duplicate, replay.json.processed], [200, true, false]);
-    const settled = await h.db().query("SELECT count(*)::int n FROM audit_logs WHERE action='pakasir_webhook_paid' AND target_id=$1", [o.id]);
+    const settled = await h.db().query("SELECT count(*)::int n FROM audit_logs WHERE action='pakasir_paid' AND target_id=$1", [o.id]);
     assert.equal(settled.rows[0].n, 1);
-  } finally {
-    axios.post = realPost;
-    axios.get = realGet;
-    delete process.env.PAKASIR_API_KEY;
-    delete process.env.PAYMENT_GATEWAY;
-    delete process.env.PAKASIR_V2_VERIFY_URL;
-  }
+  }, { PAKASIR_WEBHOOK_SECRET: 'whsec-123' });
 });
+
+it('the billing page checks the status itself: paid without any webhook; wrong amount or sandbox never counts', async () => {
+  await withGateway(async state => {
+    const email = 'ppoll@example.test';
+    const cookie = await app.login(email);
+    const o = (await order(cookie, 'SEPUH')).json.order;
+    await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
+    const status = () => app.request('GET', `/api/orders/${o.id}/payment-status`, { cookie });
+    assert.equal((await status()).json.status, 'pending');
+    state.status = 'completed'; state.amount = 5000;
+    await new Promise(r => setTimeout(r, 4100));   // the status API allows one check per 4 seconds
+    assert.equal((await status()).json.status, 'pending', 'a different amount is not this order');
+    state.amount = undefined; state.sandbox = true;
+    await new Promise(r => setTimeout(r, 4100));
+    assert.equal((await status()).json.status, 'pending', 'a sandbox payment is not real money');
+    state.sandbox = false;
+    await new Promise(r => setTimeout(r, 4100));
+    assert.equal((await status()).json.status, 'paid');
+    assert.equal(await tierOf(email), 'SEPUH');
+    const other = await app.login('ppoll-other@example.test');
+    assert.equal((await app.request('GET', `/api/orders/${o.id}/payment-status`, { cookie: other })).status, 404, 'only the buyer');
+  });
+});
+
+it('switching QRIS ↔ Virtual Account cancels the earlier transaction; VA needs Rp10.000; late payments still count', async () => {
+  await withGateway(async state => {
+    const email = 'pswitch@example.test';
+    const cookie = await app.login(email);
+    const small = (await order(cookie, 'SULTAN')).json.order;   // Rp5.000
+    assert.deepEqual([(await post(cookie, `/api/orders/${small.id}/pakasir`, { method: 'bri_va' })).json.error], ['INVALID_PAYMENT_AMOUNT']);
+    assert.equal((await post(cookie, `/api/orders/${small.id}/pakasir`, { method: 'payment_link' })).json.error, 'INVALID_PAYMENT_METHOD', 'never sent to another site');
+    const o = (await order(cookie, 'DEWA')).json.order;
+    const qris = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
+    const again = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
+    assert.equal(again.json.gateway.txn_id, qris.json.gateway.txn_id, 'same method: the same transaction');
+    const va = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'bni_va' });
+    assert.equal(va.status, 201, va.text);
+    assert.equal(va.json.gateway.va_number, '8808123456789');
+    assert.notEqual(va.json.gateway.txn_id, qris.json.gateway.txn_id);
+    assert.ok(state.calls.some(c => /cancel-transaction\/yannz-test-project\//.test(c.url) && c.url.endsWith(qris.json.gateway.txn_id)), 'the QRIS one is cancelled at Pakasir');
+    assert.equal(va.json.payment.provider_reference, `${o.order_code}-2`);
+    // The order window closes, then the buyer pays: the money arrived, so it still counts.
+    await h.db().query("UPDATE orders SET expires_at=now()-interval '1 minute' WHERE id=$1", [o.id]);
+    await app.request('GET', '/api/orders', { cookie });   // runs the expiry
+    assert.equal((await h.db().query('SELECT status FROM orders WHERE id=$1', [o.id])).rows[0].status, 'expired');
+    state.status = 'completed';
+    const late = await webhook({ txn_id: va.json.gateway.txn_id, order_id: `${o.order_code}-2`, amount: 25000, status: 'completed', is_sandbox: false });
+    assert.equal(late.json.processed, true, late.text);
+    assert.equal(await tierOf(email), 'DEWA');
+  });
+});
+
+it('Developer panel → Tes Pakasir: key accepted or refused, webhook URL shown', async () => {
+  await withGateway(async state => {
+    state.getError = Object.assign(new Error('nf'), { response: { status: 404 } });
+    let r = await post(owner, '/owner/pakasir/check', {});
+    assert.deepEqual([r.json.ok, r.json.enabled], [true, true]);
+    assert.match(r.json.webhookUrl, /\/webhooks\/pakasir$/);
+    state.getError = Object.assign(new Error('auth'), { response: { status: 401 } });
+    r = await post(owner, '/owner/pakasir/check', {});
+    assert.equal(r.json.ok, false);
+    assert.match(r.json.message, /ditolak/);
+    assert.doesNotMatch(r.text, /test-only-key/);
+    const user = await app.login('pcheck-user@example.test');
+    assert.equal((await post(user, '/owner/pakasir/check', {})).status, 403);
+  });
+});
+
