@@ -23,7 +23,7 @@
 html{height:100%}
 body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--ink);
   font:15px/1.5 Outfit,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
-::selection{background:var(--red);color:#fff}
+::selection{background:var(--red);color:var(--red-ink,#fff)}
 #stage{position:fixed;inset:0;background:radial-gradient(120% 80% at 50% 42%,var(--stage-core) 0%,#18181b 40%,var(--stage-edge) 78%)}
 #stage canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
 
@@ -38,7 +38,7 @@ body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--ink);
   font:500 10px "DM Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;box-shadow:3px 3px 0 var(--drop);transition:transform .15s,box-shadow .15s,background .15s}
 .back:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--red-deep);background:var(--surface-3)}
 .back:focus-visible,.btn:focus-visible{outline:2px solid var(--red);outline-offset:3px}
-.back b{width:22px;height:22px;border-radius:6px;background:var(--red);color:#fff;display:grid;place-items:center;font:800 11px "Space Grotesk",sans-serif}
+.back b{width:22px;height:22px;border-radius:6px;background:var(--red);color:var(--red-ink,#fff);display:grid;place-items:center;font:800 11px "Space Grotesk",sans-serif}
 .title .grow{flex:1;min-width:0}
 .title h1{margin:0;font:700 clamp(20px,4.6vw,26px)/1.05 "Space Grotesk",sans-serif;letter-spacing:-.04em;color:var(--ink)}
 .title p{margin:3px 0 0;font:500 10px "DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -59,9 +59,9 @@ body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--ink);
 .attacks{gap:8px}
 .atk{flex:1 0 auto;padding:12px 14px;font-weight:500;border-color:var(--edge);background:var(--surface-3)}
 .atk:active{transform:translate(1px,1px);box-shadow:none}
-.atk.firing{background:var(--red);border-color:var(--red);color:#fff;box-shadow:3px 3px 0 var(--red-deep)}
+.atk.firing{background:var(--red);border-color:var(--red);color:var(--red-ink,#fff);box-shadow:3px 3px 0 var(--red-deep)}
 .atk.combo{border-style:dashed}
-.ctl{flex:1 0 auto;padding:12px 14px;background:var(--red);border-color:var(--red);color:#fff;box-shadow:3px 3px 0 var(--red-deep)}
+.ctl{flex:1 0 auto;padding:12px 14px;background:var(--red);border-color:var(--red);color:var(--red-ink,#fff);box-shadow:3px 3px 0 var(--red-deep)}
 .ctl:hover{border-color:var(--red);box-shadow:4px 4px 0 var(--red-deep)}
 .ctl[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .fs{flex:0 0 auto}
@@ -75,7 +75,7 @@ body.world .ctrlhint{display:none}
 #joy .knob{width:44px;height:44px;border-radius:50%;background:var(--red);border:2px solid var(--edge);pointer-events:none}
 #vbtns{position:fixed;right:calc(env(safe-area-inset-right,0px) + 12px);bottom:var(--joyB,110px);z-index:6;flex-direction:column;gap:8px}
 #vbtns button{width:42px;height:42px;border-radius:9px;border:2px solid var(--edge-soft);background:var(--surface-2);color:var(--ink);font:500 12px/1 "DM Mono",monospace;touch-action:none;padding:0;box-shadow:3px 3px 0 var(--drop)}
-#vbtns button.on{background:var(--red);border-color:var(--red);color:#fff}
+#vbtns button.on{background:var(--red);border-color:var(--red);color:var(--red-ink,#fff)}
 #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 96px);transform:translateX(-50%);z-index:7;width:max-content;max-width:min(92vw,520px);
   padding:10px 14px;border:2px solid var(--edge);border-radius:10px;background:var(--surface);color:var(--ink);box-shadow:4px 4px 0 var(--drop);
   font:500 13px/1.45 Outfit,sans-serif;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none}
@@ -115,7 +115,7 @@ body.world .attacks .ctl{padding:8px 14px}
 #loader .sigil{width:44px;height:44px;border:2px solid var(--edge-soft);border-top-color:var(--red);border-radius:50%;animation:spin .9s linear infinite}
 #loader .msg{font:500 11px "DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);max-width:32ch;text-align:center;line-height:1.5}
 #loader.err .sigil{display:none}
-#loader.err .msg{color:#fca5a5}
+#loader.err .msg{color:var(--bad,#fca5a5)}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){#loader .sigil{animation-duration:3s}}
 .toggles .lang-switch{flex:0 0 auto;align-self:center;margin-left:4px;color:var(--ink)}
@@ -1791,6 +1791,7 @@ function buildWorld(){
   ground.rotation.x=-Math.PI/2; ground.position.set(REST_RIG.x,groundY-.003,REST_RIG.z); ground.receiveShadow=true; worldGroup.add(ground);
   moon=new THREE.Sprite(new THREE.SpriteMaterial({map:TEX.glow,color:0xff3040,transparent:true,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending}));
   moon.scale.setScalar(30); worldGroup.add(moon);
+  if(window.YannzScythe) window.YannzScythe.track(THREE,moon.material,'color','fx');   // the red moon follows the colour too
   // targets spread far apart so you have to fly to each one
   for(const [dx,dz] of [[0,-18],[16,-27],[-18,-30],[30,-8],[-32,-6],[9,-44],[-12,-52],[38,-34],[-40,-36],[24,14],[-26,18]])
     scarecrows.push(makeScarecrow(REST_RIG.x+dx,REST_RIG.z+dz));
@@ -2141,8 +2142,11 @@ if(window.YannzScythe){
   SC.paint(THREE,{traverse(fn){ [...Object.values(MAT),glowMat].forEach(m=>fn({material:m})); }});
   const fxThings=[[spriteMat,'color'],[pivotGlow.material,'color'],[flash,'color'],...waves.map(w=>[w.m.material,'color']),...discPool.map(d=>[d.m.material,'color']),...streakPool.map(d=>[d.m.material,'color']),...redLights.map(l=>[l,'color'])];
   fxThings.forEach(([o,p])=>SC.track(THREE,o,p,'fx'));
-  setFx(SC.get().fx);
-  window.addEventListener('yannz:scythe',e=>setFx(e.detail.fx));
+  // the red screen flash on hits follows the effect colour too
+  const flashEl=document.getElementById('flash');
+  const flashBg=()=>{ if(flashEl) flashEl.style.background=`radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(${SC.tone([170,10,30]).join(',')},.5) 100%)`; };
+  setFx(SC.get().fx); flashBg();
+  window.addEventListener('yannz:scythe',()=>{ setFx(SC.get().fx); flashBg(); });
   const cv=renderer.domElement, ray=new THREE.Raycaster(); let tap=null;
   cv.addEventListener('pointerdown',e=>{ tap=(ctrlOn||world.on)?null:{x:e.clientX,y:e.clientY,t:performance.now()}; });
   cv.addEventListener('pointerup',e=>{

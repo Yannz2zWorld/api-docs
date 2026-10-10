@@ -29,7 +29,7 @@
   .ym-dock[data-state=error] .ym-play{background:#3f3f46}
   .ym-dock[data-wait] .ym-play{animation:ym-pulse 1.6s ease-in-out infinite}
   @keyframes ym-spin{to{transform:rotate(360deg)}}
-  @keyframes ym-pulse{50%{box-shadow:0 0 0 6px rgba(200,32,47,.35)}}
+  @keyframes ym-pulse{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent,#c8202f) 35%,transparent)}}
   .ym-pop{position:absolute;right:0;bottom:calc(100% + 10px);width:230px;padding:12px 14px;border:2px solid var(--edge,#d4d4d8);border-radius:14px;background:#111113;box-shadow:4px 4px 0 var(--drop,#3f3f46)}
   .ym-pop[hidden]{display:none}
   .ym-title{display:block;color:#f4f4f5;font:600 12px 'Outfit',system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

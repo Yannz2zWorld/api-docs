@@ -1380,7 +1380,9 @@ router.get('/owner/server', auth, owner, async (req, res) => {
   const r = await query('SELECT to_jsonb(server_settings.*) AS s FROM server_settings WHERE id=1');
   const row = r[0]?.s || {};
   res.json({ success: true, settings: {
-    maintenance_enabled: Boolean(row.maintenance_enabled), maintenance_message: row.maintenance_message || '', updated_at: row.updated_at || null,
+    maintenance_enabled: Boolean(row.maintenance_enabled), maintenance_message: row.maintenance_message || '', maintenance_since: row.maintenance_since || null, updated_at: row.updated_at || null,
+    announce_message: row.announce_message || '', announce_message2: row.announce_message2 || '',
+    announce_button_label: row.announce_button_label || '', announce_button_url: row.announce_button_url || '', announce_at: row.announce_at || null,
     payment_dana_number: row.payment_dana_number || '', payment_dana_name: row.payment_dana_name || '',
     payment_gopay_number: row.payment_gopay_number || '', payment_gopay_name: row.payment_gopay_name || ''
   }, notifications: notifier.status() });
@@ -1389,14 +1391,42 @@ router.get('/owner/server', auth, owner, async (req, res) => {
 router.patch('/owner/server', sameOrigin, auth, owner, async (req, res) => {
   const enabled = req.body?.maintenance_enabled === true;
   const message = String(req.body?.maintenance_message || '').trim().slice(0, 500) || 'Website lagi maintenance. Tunggu bentar sampai selesai ya.';
-  const r = await query(
-    `INSERT INTO server_settings(id,maintenance_enabled,maintenance_message,updated_at,updated_by) VALUES(1,$1,$2,now(),$3)
-     ON CONFLICT(id) DO UPDATE SET maintenance_enabled=EXCLUDED.maintenance_enabled,maintenance_message=EXCLUDED.maintenance_message,updated_at=now(),updated_by=EXCLUDED.updated_by RETURNING *`,
+  const save = withSince => query(
+    `INSERT INTO server_settings(id,maintenance_enabled,maintenance_message,updated_at,updated_by${withSince ? ',maintenance_since' : ''}) VALUES(1,$1,$2,now(),$3${withSince ? ',CASE WHEN $1 THEN now() END' : ''})
+     ON CONFLICT(id) DO UPDATE SET maintenance_enabled=EXCLUDED.maintenance_enabled,maintenance_message=EXCLUDED.maintenance_message,updated_at=now(),updated_by=EXCLUDED.updated_by
+     ${withSince ? ',maintenance_since=CASE WHEN NOT EXCLUDED.maintenance_enabled THEN NULL WHEN server_settings.maintenance_enabled AND server_settings.maintenance_since IS NOT NULL THEN server_settings.maintenance_since ELSE now() END' : ''} RETURNING *`,
     [enabled, message, req.account.id]
   );
+  // The start time (shown on the maintenance announcement) is kept while maintenance stays on.
+  let r;
+  try { r = await save(true); } catch (e) { if (!migrationMissing(e)) throw e; r = await save(false); }
   req.app.locals.maintenance?.invalidate();
   await audit.writeAudit({ actorUserId: req.account.id, action: 'maintenance_change', targetType: 'server_settings', metadata: { enabled }, ipAddress: ip(req) });
   res.json({ success: true, settings: r[0] });
+});
+
+// "Pengumuman Dev": a notice on the sign-in page and Home. An empty message turns it off.
+// The button opens a link the owner chooses (a page here or an http(s) address).
+router.patch('/owner/announcement', sameOrigin, auth, owner, async (req, res) => {
+  const text = (v, n) => String(v ?? '').replace(/\r\n?/g, '\n').trim().slice(0, n);
+  const message = text(req.body?.message, 1000), message2 = text(req.body?.message2, 1000);
+  const label = text(req.body?.button_label, 40).replace(/\n/g, ' '), url = text(req.body?.button_url, 500);
+  if (url && !(/^\/(?!\/)\S*$/.test(url) || /^https?:\/\/[^\s/]+\S*$/i.test(url))) return fail(res, 400, 'INVALID_URL', 'URL tombol harus diawali https://, http://, atau / (halaman di website ini).');
+  if (label && !url) return fail(res, 400, 'INVALID_URL', 'Isi URL tombolnya juga, atau kosongin teks tombolnya.');
+  const on = Boolean(message);
+  try {
+    const r = await query(
+      `UPDATE server_settings SET announce_message=$1,announce_message2=$2,announce_button_label=$3,announce_button_url=$4,announce_at=CASE WHEN $5 THEN now() END,updated_at=now(),updated_by=$6 WHERE id=1 RETURNING *`,
+      [on ? message : null, on ? message2 || null : null, on ? label || null : null, on ? url || null : null, on, req.account.id]
+    );
+    req.app.locals.maintenance?.invalidate();
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'announcement_change', targetType: 'server_settings', metadata: { on }, ipAddress: ip(req) });
+    const row = r[0] || {};
+    return res.json({ success: true, announcement: on ? { message: row.announce_message, message2: row.announce_message2 || '', button_label: row.announce_button_label || '', button_url: row.announce_button_url || '', at: row.announce_at } : null });
+  } catch (e) {
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Pengumuman Dev butuh migration 022_announcements.sql dulu.');
+    throw e;
+  }
 });
 
 // Destination accounts buyers see for manual DANA / GoPay transfers. Empty = method hidden.

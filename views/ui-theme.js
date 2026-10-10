@@ -158,7 +158,7 @@
     return `${R}{--bg:${s.bg};--dot:${s.dot};--surface:${s.surface};--surface-2:${s.surface2};--surface-3:${s.surface3};--ink:${s.ink};--muted:${s.muted};--faint:${s.faint};
 --edge:${edge};--edge-soft:${s.edgeSoft};--drop:${drop};--radius:${s.radius}px;--line:${s.border}px solid var(--edge);--shadow:${shadow};
 --red:var(--accent);--red-deep:color-mix(in srgb,var(--accent) 78%,#000);--paper:var(--surface);--cream:var(--bg);--login-bg:var(--surface);--yellow:var(--accent);--blood:var(--accent);--blood-deep:var(--red-deep);--blue:var(--muted);--green:var(--edge);
---ok:${s.dark ? '#86efac' : '#15803d'};--bad:${s.dark ? '#fca5a5' : '#b91c1c'};--warn:${s.dark ? '#e4e4e7' : '#3f3f46'};color-scheme:${s.dark ? 'dark' : 'light'}}
+--ui-bad:var(--bad);--ui-deep:var(--red-deep);--ok:${s.dark ? '#86efac' : '#15803d'};--bad:${s.dark ? 'color-mix(in srgb,var(--accent) 62%,#fff)' : 'color-mix(in srgb,var(--accent) 80%,#000)'};--warn:${s.dark ? '#e4e4e7' : '#3f3f46'};color-scheme:${s.dark ? 'dark' : 'light'}}
 ${R} body{background-color:var(--bg);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.2px);background-size:22px 22px;color:var(--ink)${s.font ? `;font-family:${s.font}` : ''}}
 ${s.font ? `${R} h1,${R} h2,${R} h3,${R} .brand,${R} .hero h1,${R} .section-head h2,${R} .metric-value{font-family:${s.font}}` : ''}
 ${R} .topbar{background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom-color:var(--edge-soft)}
@@ -190,14 +190,21 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
   function apply(pref = load()) {
     const s = STYLES[pref.style] || STYLES.default;
     const html = document.documentElement;
-    if (html.hasAttribute('data-no-theme')) return;   // pages with their own design (the /3d game) only use the saved scythe colours
     clearInterval(rgbTimer); rgbTimer = null;
-    let tag = document.getElementById('yannz-ui-style');
     const custom = pref.style !== 'default' || pref.accent || pref.rgb;
+    // Pages with their own design (the /3d game) keep their layout but take the chosen colour, so
+    // none of the original red is left once the UI is customised.
+    if (html.hasAttribute('data-no-theme')) {
+      const st = html.style, a = pref.accent || s.accent;
+      if (custom) { setAccent(a); st.setProperty('--red', a); st.setProperty('--red-deep', 'color-mix(in srgb,' + a + ' 78%,#000)'); st.setProperty('--red-ink', inkOn(a)); st.setProperty('--bad', 'color-mix(in srgb,' + a + ' 62%,#fff)'); st.setProperty('--ui-bad', 'var(--bad)'); }
+      else ['--accent', '--accent-ink', '--red', '--red-deep', '--red-ink', '--bad', '--ui-bad'].forEach(k => st.removeProperty(k));
+      return changed();
+    }
+    let tag = document.getElementById('yannz-ui-style');
     if (!custom) {
       html.removeAttribute('data-ui'); tag?.remove();
       html.style.removeProperty('--accent'); html.style.removeProperty('--accent-ink');
-      return;
+      return changed();
     }
     if (!tag) { tag = document.createElement('style'); tag.id = 'yannz-ui-style'; (document.head || html).append(tag); }
     tag.textContent = css(s);
@@ -207,11 +214,19 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
       let h = 0;
       rgbTimer = setInterval(() => { h = (h + 2) % 360; setAccent(hsl(h)); }, 60);
     }
+    changed();
   }
+  // The colour the whole site uses now: the chosen one, the look's own, or null for the original.
+  function accentOf(pref = load()) {
+    const s = STYLES[pref.style] || STYLES.default;
+    return pref.style !== 'default' || pref.accent || pref.rgb ? pref.accent || s.accent : null;
+  }
+  // Tell the rest of the page (scythe colours follow the UI colour while they are not customised).
+  function changed() { try { window.dispatchEvent(new CustomEvent('yannz:ui')); } catch { /* old browsers */ } }
 
   // set(): applied at once, kept in this browser, saved on the account (resolves true when saved there).
   // The look stays after signing out too: this browser keeps the last account's choice.
-  window.YannzUI = { STYLES, load, save, apply, inkOn, sync, owner: () => uid || owner(), set(pref) { const p = clean(pref); save({ ...p, uid: uid || owner() }); apply(p); return push(p); } };
+  window.YannzUI = { STYLES, load, save, apply, inkOn, sync, accentOf, owner: () => uid || owner(), set(pref) { const p = clean(pref); save({ ...p, uid: uid || owner() }); apply(p); return push(p); } };
   apply();
   sync();
   // Another tab changed it: follow.
