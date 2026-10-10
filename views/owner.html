@@ -396,7 +396,7 @@ loaders.status = async () => {
     const s = await api('/owner/status');
     const db = s.database;
     // Optional settings show grey when empty instead of red.
-    const OPTIONAL = new Set(['PAYMENT_GATEWAY', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAKASIR_WEBHOOK_SECRET', 'PAKASIR_SANDBOX', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'GITHUB_TOKEN', 'CORS_ORIGINS', 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL']);
+    const OPTIONAL = new Set(['PAYMENT_GATEWAY', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAKASIR_WEBHOOK_SECRET', 'PAKASIR_SANDBOX', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'GITHUB_TOKEN', 'CORS_ORIGINS', 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL', 'S3_ENDPOINT', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'S3_BUCKET', 'S3_PUBLIC_URL']);
     const cfg = Object.entries(s.config).map(([k, v]) => chip(k + (v || !OPTIONAL.has(k) ? '' : ' (opsional)'), v ? 'ok' : OPTIONAL.has(k) ? '' : 'warn')).join(' ');
     $('#status-data').innerHTML = `
       <h3>Database</h3>${chip(db.connected ? 'connected' : 'disconnected', db.connected ? 'ok' : 'bad')} ${db.ok === undefined ? '' : chip(db.ok ? 'schema ok' : 'migration required', db.ok ? 'ok' : 'bad')}
