@@ -1066,7 +1066,11 @@
   "Belum ada pengumuman.": "No announcement yet.",
   "Isi pesannya dulu. Buat matiin, pakai Hapus pengumuman.": "Write the message first. To turn it off, use Remove announcement.",
   "Hapus pengumuman? Kartunya nggak muncul lagi di login dan Home.": "Remove the announcement? The card won't show on the sign-in page and Home anymore.",
-  "Tanggal": "Date"
+  "Tanggal": "Date",
+  "Menyimpan…": "Saving…",
+  "Pengumumannya muncul di halaman login dan Home.": "The announcement shows on the sign-in page and Home.",
+  "Maintenance Info Website ON.": "Maintenance Info Website ON.",
+  "Maintenance Info Website OFF.": "Maintenance Info Website OFF."
  },
  "patterns": [
   [
@@ -1788,6 +1792,14 @@
   [
    "^Pengumuman aktif sejak (.+)\\.$",
    "Announcement live since {{$1}}."
+  ],
+  [
+   "^Belum disimpan: (.+)$",
+   "Not saved: {{$1}}"
+  ],
+  [
+   "^DANA (aktif|disembunyikan), GoPay (aktif|disembunyikan)\\.$",
+   "DANA {{$1}}, GoPay {{$2}}."
   ]
  ]
 }

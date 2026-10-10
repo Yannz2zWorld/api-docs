@@ -13,6 +13,9 @@
 <link rel="stylesheet" href="/assets/theme.css">
 <script src="/assets/i18n.js"></script>
 <style>
+  .save-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 1.5em; }
+  .save-ok { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 2px solid var(--edge); border-radius: 8px; background: var(--accent); color: var(--accent-ink); font: 800 12px "DM Mono", monospace; letter-spacing: .04em; box-shadow: 2px 2px 0 var(--drop); }
+  .save-fail { font-weight: 700; }
   .ep-new { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; margin: 14px 0 22px; padding: 16px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); }
   .ep-new h3 { grid-column: 1 / -1; margin: 0; }
   .ep-new label { display: grid; gap: 6px; font: 500 11px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
@@ -165,7 +168,7 @@ module.exports = async (req, res) =&gt; {
     <p class="muted">Kalau ON, seluruh website masuk mode maintenance: Home, Login, Register, Profile, Dashboard, API dan halaman user lain nampilin info maintenance (di login dan Home muncul kartu Pengumuman Dev: pesan kamu plus jam mulai maintenance); login Google, login email + sandi, dan daftar ditolak (dicek di server). Cuma kamu (developer) yang tetap bisa masuk lewat <a href="/developer-login">/developer-login</a> dan ngatur website.</p>
     <label class="row"><input type="checkbox" id="maint"> Maintenance Info Website = ON</label>
     <div class="row"><input id="maint-msg" placeholder="Pesan maintenance" style="flex:1;min-width:240px" maxlength="500"><button class="primary" id="save-server" type="button">Simpan</button></div>
-    <p id="server-msg" aria-live="polite"></p>
+    <p id="server-msg" class="save-note" aria-live="polite"></p>
 
     <h2 style="margin-top:28px">Pengumuman Dev</h2>
     <p class="muted">Muncul sebagai kartu pengumuman di halaman login dan Home. Tiap user lihat sekali; kalau kamu simpan pengumuman baru, muncul lagi. Kosongin pesannya terus simpan buat matiin.</p>
@@ -176,14 +179,14 @@ module.exports = async (req, res) =&gt; {
     <div class="row" style="margin-top:10px"><input id="ann-label" maxlength="40" placeholder="Teks tombol (misal: Gabung grup)"><input id="ann-url" maxlength="500" placeholder="URL tombol: https://... atau /pricing" style="flex:1;min-width:220px"></div>
     <p class="muted" style="margin:6px 0 0">Tanpa URL, tombolnya jadi "Dimengerti".</p>
     <div class="row" style="margin-top:10px"><button class="primary" id="save-ann" type="button">Simpan pengumuman</button><button id="clear-ann" type="button">Hapus pengumuman</button></div>
-    <p id="ann-state" aria-live="polite"></p>
+    <p id="ann-state" class="save-note" aria-live="polite"></p>
 
     <h2 style="margin-top:28px">Rekening pembayaran manual</h2>
     <p class="muted">Nomor yang muncul ke pembeli buat DANA / GoPay. Kosongin aja kalau mau nyembunyiin metodenya. QRIS manual pakai gambar <code>views/assets/qris-manual.jpg</code>.</p>
     <div class="row"><input id="dana-number" inputmode="tel" placeholder="Nomor DANA" maxlength="20"><input id="dana-name" placeholder="Nama akun DANA" maxlength="60"></div>
     <div class="row" style="margin-top:10px"><input id="gopay-number" inputmode="tel" placeholder="Nomor GoPay" maxlength="20"><input id="gopay-name" placeholder="Nama akun GoPay" maxlength="60"></div>
     <div class="row" style="margin-top:10px"><button class="primary" id="save-pay" type="button">Simpan rekening</button></div>
-    <p id="pay-msg" aria-live="polite"></p>
+    <p id="pay-msg" class="save-note" aria-live="polite"></p>
     <p class="muted" id="notify-state"></p>
   </section>
 
@@ -657,39 +660,53 @@ loaders.server = async () => {
     $('#server-msg').textContent = settings.maintenance_enabled && settings.maintenance_since ? `Maintenance ON sejak ${new Date(settings.maintenance_since).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}.` : '';
     $('#ann-msg').value = settings.announce_message || ''; $('#ann-msg2').value = settings.announce_message2 || '';
     $('#ann-label').value = settings.announce_button_label || ''; $('#ann-url').value = settings.announce_button_url || '';
-    $('#ann-state').textContent = settings.announce_message ? `Pengumuman aktif sejak ${new Date(settings.announce_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}.` : 'Belum ada pengumuman.';
+    $('#ann-state').replaceChildren();
+    if (settings.announce_message) { const ok = document.createElement('span'); ok.className = 'save-ok'; ok.setAttribute('data-no-i18n', ''); ok.textContent = '✓ Telah disimpan.'; $('#ann-state').append(ok); }
+    $('#ann-state').append(settings.announce_message ? `Pengumuman aktif sejak ${new Date(settings.announce_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}.` : 'Belum ada pengumuman.');
     $('#dana-number').value = settings.payment_dana_number || ''; $('#dana-name').value = settings.payment_dana_name || '';
     $('#gopay-number').value = settings.payment_gopay_number || ''; $('#gopay-name').value = settings.payment_gopay_name || '';
     $('#notify-state').textContent = (notifications?.telegram?.link ? 'Bukti pembayaran manual muncul di tab Payments. Habis upload, pembeli dikasih tombol chat WhatsApp dan Telegram ke kamu buat konfirmasi.' : 'Bukti pembayaran manual muncul di tab Payments. Habis upload, pembeli dikasih tombol chat WhatsApp ke kamu buat konfirmasi.');
   } catch (e) { $('#server-msg').textContent = e.message; }
 };
-$('#save-pay').addEventListener('click', async () => {
+// Save buttons in this tab: "Menyimpan…" while it runs, then a clear "✓ Telah disimpan." (or why not).
+async function saving(button, note, run) {
+  const label = button.textContent;
+  button.disabled = true; button.textContent = 'Menyimpan…';
+  note.replaceChildren();
   try {
-    const d = await send('/owner/server/payments', 'PATCH', { payment_dana_number: $('#dana-number').value, payment_dana_name: $('#dana-name').value, payment_gopay_number: $('#gopay-number').value, payment_gopay_name: $('#gopay-name').value });
-    $('#pay-msg').textContent = `Udah disimpan. DANA ${d.settings.payment_dana_number ? 'aktif' : 'disembunyikan'}, GoPay ${d.settings.payment_gopay_number ? 'aktif' : 'disembunyikan'}.`;
-  } catch (e) { $('#pay-msg').textContent = e.message; }
-});
+    const extra = await run();
+    const ok = document.createElement('span'); ok.className = 'save-ok'; ok.setAttribute('data-no-i18n', ''); ok.textContent = '✓ Telah disimpan.';
+    note.append(ok);
+    if (extra) { const t = document.createElement('span'); t.textContent = extra; note.append(t); }
+  } catch (e) {
+    const t = document.createElement('span'); t.className = 'save-fail'; t.textContent = `Belum disimpan: ${e.message}`; note.append(t);
+  } finally { button.disabled = false; button.textContent = label; }
+}
+$('#save-pay').addEventListener('click', () => saving($('#save-pay'), $('#pay-msg'), async () => {
+  const d = await send('/owner/server/payments', 'PATCH', { payment_dana_number: $('#dana-number').value, payment_dana_name: $('#dana-name').value, payment_gopay_number: $('#gopay-number').value, payment_gopay_name: $('#gopay-name').value });
+  return `DANA ${d.settings.payment_dana_number ? 'aktif' : 'disembunyikan'}, GoPay ${d.settings.payment_gopay_number ? 'aktif' : 'disembunyikan'}.`;
+}));
 $('#save-server').addEventListener('click', async () => {
   const enabled = $('#maint').checked;
   if (!ask(enabled ? 'Nyalain Maintenance Info Website? Seluruh website ditutup buat semua user kecuali developer, dan user nggak bisa login.' : 'Matiin maintenance? Website balik normal.')) return;
-  try { const d = await send('/owner/server', 'PATCH', { maintenance_enabled: enabled, maintenance_message: $('#maint-msg').value }); $('#server-msg').textContent = `Udah disimpan: Maintenance Info Website ${d.settings.maintenance_enabled ? 'ON' : 'OFF'}.`; }
-  catch (e) { $('#server-msg').textContent = e.message; }
+  saving($('#save-server'), $('#server-msg'), async () => {
+    const d = await send('/owner/server', 'PATCH', { maintenance_enabled: enabled, maintenance_message: $('#maint-msg').value });
+    return `Maintenance Info Website ${d.settings.maintenance_enabled ? 'ON' : 'OFF'}.`;
+  });
 });
 
-const saveAnn = async body => {
-  try {
-    const d = await send('/owner/announcement', 'PATCH', body);
-    $('#ann-state').textContent = d.announcement ? 'Udah disimpan. Pengumumannya muncul di halaman login dan Home.' : 'Pengumuman dihapus.';
-  } catch (e) { $('#ann-state').textContent = e.message; }
-};
+const saveAnn = (button, body) => saving(button, $('#ann-state'), async () => {
+  const d = await send('/owner/announcement', 'PATCH', body);
+  return d.announcement ? 'Pengumumannya muncul di halaman login dan Home.' : 'Pengumuman dihapus.';
+});
 $('#save-ann').addEventListener('click', () => {
   if (!$('#ann-msg').value.trim()) { $('#ann-state').textContent = 'Isi pesannya dulu. Buat matiin, pakai Hapus pengumuman.'; return; }
-  saveAnn({ message: $('#ann-msg').value, message2: $('#ann-msg2').value, button_label: $('#ann-label').value, button_url: $('#ann-url').value });
+  saveAnn($('#save-ann'), { message: $('#ann-msg').value, message2: $('#ann-msg2').value, button_label: $('#ann-label').value, button_url: $('#ann-url').value });
 });
 $('#clear-ann').addEventListener('click', () => {
   if (!ask('Hapus pengumuman? Kartunya nggak muncul lagi di login dan Home.')) return;
   ['#ann-msg', '#ann-msg2', '#ann-label', '#ann-url'].forEach(k => { $(k).value = ''; });
-  saveAnn({ message: '' });
+  saveAnn($('#clear-ann'), { message: '' });
 });
 
 // ---------- audit
