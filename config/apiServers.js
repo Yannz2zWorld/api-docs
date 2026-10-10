@@ -19,6 +19,7 @@ module.exports = {
   dongtube: { base: 'https://api.dongtube.id',   keyEnv: 'DONGTUBE_API_KEY', keyMode: 'query', keyName: 'apikey', strip: ['author', 'channel'], perMinute: 60 },
   pitucode: { base: 'https://api.pitucode.com',  keyEnv: 'PITUCODE_API_KEY', keyMode: 'query', keyName: 'apikey' },
   termai:   { base: 'https://api.termai.cc',      keyEnv: 'TERMAI_API_KEY',   keyMode: 'query', keyName: 'key' },
+  botcahx:  { base: 'https://api.botcahx.eu.org', keyEnv: 'BOTCAHX_API_KEY', keyMode: 'query', keyName: 'apikey', strip: ['code'] },
   // Public, no key needed. Endpoints from here are mostly backups (config/endpointGroups.js).
   faa:      { base: 'https://api-faa.my.id',      keyEnv: null,               keyMode: 'none' }
 };
