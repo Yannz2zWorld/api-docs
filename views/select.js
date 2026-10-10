@@ -71,8 +71,13 @@
   // it is never translated either. The widget's own UI text (search, "no matches") still is.
   const keep = (select, node) => { if (select.closest('[data-no-i18n]')) node.setAttribute('data-no-i18n', ''); return node; };
 
-  function enhance(select) {
-    if (select.__ys || select.multiple || (select.size && select.size > 1) || select.closest('[data-native-select]')) return;
+  const skip = select => select.__ys || select.multiple || (select.size && select.size > 1) || select.closest('[data-native-select]');
+  // The select's size, read before anything on the page changes (see scan()).
+  // A menu in a table cell keeps the default width: measuring it would lay the whole table out.
+  const measure = select => (select.closest('td,th') ? { w: 0, pw: 0, full: /100%/.test(select.style.width) }
+    : { w: select.offsetWidth, pw: select.parentElement ? select.parentElement.clientWidth : 0, full: /100%/.test(select.style.width) || getComputedStyle(select).width === '100%' });
+  function enhance(select, size = measure(select)) {
+    if (skip(select)) return;
     const id = 'ys' + (++uid);
     const trigger = el('button', 'ys-trigger');
     trigger.type = 'button';
@@ -83,10 +88,9 @@
     trigger.append(label);
     trigger.insertAdjacentHTML('beforeend', CHEV);
     // Keep the select's size: full width where it filled its container, else its own width.
-    const parentWidth = select.parentElement ? select.parentElement.clientWidth : 0;
-    if (select.offsetWidth && parentWidth && select.offsetWidth >= parentWidth - 4) trigger.classList.add('ys-wide');
-    else if (select.offsetWidth) trigger.style.minWidth = select.offsetWidth + 'px';
-    if (/100%/.test(select.style.width) || getComputedStyle(select).width === '100%') trigger.classList.add('ys-wide');
+    if (size.w && size.pw && size.w >= size.pw - 4) trigger.classList.add('ys-wide');
+    else if (size.w) trigger.style.minWidth = size.w + 'px';
+    if (size.full) trigger.classList.add('ys-wide');
     if (select.style.width) trigger.style.width = select.style.width;
     if (select.style.flex) trigger.style.flex = select.style.flex;
     if (select.style.minWidth) trigger.style.minWidth = select.style.minWidth;
@@ -240,11 +244,35 @@
     else { list.tabIndex = -1; list.focus({ preventScroll: true }); }
   }
 
-  function scan(root) {
-    if (root.tagName === 'SELECT') enhance(root);
-    root.querySelectorAll?.('select').forEach(enhance);
+  // Every size is read first, then the page is changed once. Reading a size right after changing the
+  // page makes the browser lay the whole page out again: done once per menu, a table with 1,300
+  // menus (Developer panel → Endpoints) froze the page for half a minute.
+  function scan(roots) {
+    const todo = new Set();
+    for (const root of roots) {
+      if (root.tagName === 'SELECT') todo.add(root);
+      root.querySelectorAll?.('select').forEach(s => todo.add(s));
+    }
+    const list = [...todo].filter(s => !skip(s));
+    if (list.length > LAZY_FROM) list.forEach(s => lazy.observe(s));   // a long list: menus are made as they come into view
+    else build(list);
   }
-  scan(document);
-  new MutationObserver(muts => { for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) scan(n); })
-    .observe(document.documentElement, { childList: true, subtree: true });
+  function build(list) {
+    list = list.filter(s => !skip(s) && s.isConnected);
+    if (!list.length) return;
+    const sizes = list.map(measure);
+    list.forEach((s, i) => enhance(s, sizes[i]));
+  }
+  const LAZY_FROM = 120;   // a 50-row table chunk (100 menus) is still made at once, in one layout
+  const lazy = new IntersectionObserver(entries => {
+    const seen = entries.filter(e => e.isIntersecting).map(e => e.target);
+    seen.forEach(s => lazy.unobserve(s));
+    build(seen);
+  }, { rootMargin: '600px 0px' });
+  scan([document]);
+  new MutationObserver(muts => {
+    const added = [];
+    for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) added.push(n);
+    if (added.length) scan(added);
+  }).observe(document.documentElement, { childList: true, subtree: true });
 })();

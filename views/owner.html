@@ -15,6 +15,12 @@
 <style>
   .save-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 1.5em; }
   #pakasir-state { display: grid; gap: 4px; }
+  /* Endpoints table: fixed column widths, so rows added while scrolling never make the browser
+     re-measure every row; on a phone the table scrolls sideways inside its box, not the page. */
+  #endpoints-data { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #endpoints-data table { table-layout: fixed; min-width: 920px; }
+  #endpoints-data td { overflow-wrap: anywhere; }
+  #endpoints-data .ys-trigger { min-width: 0; width: 100%; }
   .save-ok { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 2px solid var(--edge); border-radius: 8px; background: var(--accent); color: var(--accent-ink); font: 800 12px "DM Mono", monospace; letter-spacing: .04em; box-shadow: 2px 2px 0 var(--drop); }
   .save-fail { font-weight: 700; }
   .ep-new { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; margin: 14px 0 22px; padding: 16px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); }
@@ -603,10 +609,10 @@ function epBadge(b) {
   const m = { new: ['🍃', 'New'], hot: ['🔥', 'Hot'], recommend: ['👍', 'Recommend'] }[b];
   return m ? `<span class="ep-badge ep-badge--${b}"><span class="ep-badge-ic" aria-hidden="true">${m[0]}</span>${m[1]}</span>` : '';
 }
-loaders.endpoints = async () => {
-  try {
-    const d = await api('/owner/api/endpoints');
-    $('#endpoints-data').innerHTML = `<table><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Label</th><th>Status</th><th>Aksi</th></tr>${d.endpoints.map(e => `<tr>
+// The table is drawn once per visit to the tab. A change (tier, label, lock, enable/disable) only redraws
+// its own row: rebuilding every row (650+ endpoints, 1,300 menus) after each change froze the page.
+const epData = new Map();
+const epRow = e => `<tr data-ep-row="${esc(e.id)}">
       <td><span data-no-i18n><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></span>${e.backups?.length ? `<br><small class="muted">${tr('Cadangan')}: <span data-no-i18n>${e.backups.map(esc).join(', ')}</span></small>` : ''}${e.backup_for?.length ? `<br><small class="muted">${tr('Cadangan buat')}: <span data-no-i18n>${e.backup_for.map(esc).join(', ')}</span></small>` : ''}</td>
       <td>${e.deleted ? chip('dihapus, nunggu deploy', 'warn') : e.handler_loaded ? chip('deployed', 'ok') : e.plugin ? chip('nunggu deploy', 'warn') : chip('metadata only', 'warn')}${e.handler_loaded && e.file ? `<br><small class="muted" data-no-i18n>plugin/${esc(e.file)}${e.file_endpoints > 1 ? ` · ${e.file_endpoints} endpoint` : ''}</small>` : ''}</td>
       <td><select data-ep-tier="${esc(e.id)}">${['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'].map(t => `<option value="${t}" ${t === e.minimum_tier ? 'selected' : ''}>${tierName(t)}</option>`).join('')}</select></td>
@@ -615,19 +621,57 @@ loaders.endpoints = async () => {
       <td><button class="sm" data-ep="${e.locked ? 'unlock' : 'lock'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.locked ? 'Unlock' : 'Lock'}</button>
           <button class="sm" data-ep="status" data-status="${e.status === 'active' ? 'disabled' : 'active'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.status === 'active' ? 'Disable' : 'Enable'}</button>
           ${e.code_editable ? `<button class="sm" data-ep="code" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Edit kode</button>` : ''}
-          ${!e.handler_loaded || e.code_editable ? `<button class="sm danger" data-ep="${e.handler_loaded ? 'delete-code' : 'delete'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Hapus</button>` : ''}</td></tr>`).join('')}</table>`;
+          ${!e.handler_loaded || e.code_editable ? `<button class="sm danger" data-ep="${e.handler_loaded ? 'delete-code' : 'delete'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Hapus</button>` : ''}</td></tr>`;
+// Rows go in 50 at a time, the next 50 as the list is scrolled near its end: laying out every row at
+// once is what made the tab slow to open and to scroll.
+const EP_CHUNK = 50;
+let epList = [], epShown = 0;
+function epAppend() {
+  const table = $('#endpoints-data table');
+  if (!table || epShown >= epList.length) return;
+  const next = epList.slice(epShown, epShown + EP_CHUNK);
+  epShown += next.length;
+  const body = document.createElement('tbody');
+  body.innerHTML = next.map(epRow).join('');
+  table.append(body);
+  const more = $('#endpoints-data .ep-more');
+  if (more) { more.hidden = epShown >= epList.length; more.textContent = `${epShown} dari ${epList.length} endpoint · scroll buat lihat lainnya`; }
+}
+const epMoreWatch = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) epAppend(); }, { rootMargin: '900px 0px' });
+loaders.endpoints = async () => {
+  try {
+    const d = await api('/owner/api/endpoints');
+    epData.clear();
+    d.endpoints.forEach(e => epData.set(String(e.id), e));
+    epList = d.endpoints; epShown = 0;
+    epMoreWatch.disconnect();
+    $('#endpoints-data').innerHTML = '<table><colgroup><col style="width:28%"><col style="width:17%"><col style="width:14%"><col style="width:15%"><col style="width:11%"><col style="width:15%"></colgroup><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Label</th><th>Status</th><th>Aksi</th></tr></table><p class="muted ep-more" hidden></p>';
+    epAppend();
+    epMoreWatch.observe($('#endpoints-data .ep-more'));
   } catch (e) { fail('#endpoints-data', e); }
 };
+// Redraws one row with `changes` applied (none: puts the row back as it was, e.g. a cancelled change).
+function epUpdate(id, changes = {}) {
+  const e = epData.get(String(id));
+  const tr = $('#endpoints-data').querySelector(`tr[data-ep-row="${CSS.escape(String(id))}"]`);
+  if (!e || !tr) return loaders.endpoints();
+  Object.assign(e, changes);
+  const t = document.createElement('tbody');
+  t.innerHTML = epRow(e);
+  tr.replaceWith(t.firstElementChild);
+}
+const epFields = r => Object.fromEntries(['minimum_tier', 'status', 'locked', 'badge'].filter(k => r?.endpoint && k in r.endpoint).map(k => [k, r.endpoint[k]]));
 $('#endpoints-data').addEventListener('change', async e => {
   const badgeId = e.target.dataset.epBadge;
   if (badgeId) {
-    try { await send(`/owner/api/endpoints/${badgeId}`, 'PATCH', { badge: e.target.value || null }); } catch (err) { say(err.message); }
-    return loaders.endpoints();
+    try { const r = await send(`/owner/api/endpoints/${badgeId}`, 'PATCH', { badge: e.target.value || null }); epUpdate(badgeId, { badge: e.target.value || null, ...epFields(r) }); }
+    catch (err) { say(err.message); epUpdate(badgeId); }
+    return;
   }
   const id = e.target.dataset.epTier; if (!id) return;
-  if (!ask(`Ganti tier minimum jadi ${e.target.value}?`)) return loaders.endpoints();
-  try { await send(`/owner/api/endpoints/${id}`, 'PATCH', { minimum_tier: e.target.value }); } catch (err) { say(err.message); }
-  loaders.endpoints();
+  if (!ask(`Ganti tier minimum jadi ${e.target.value}?`)) return epUpdate(id);
+  try { const r = await send(`/owner/api/endpoints/${id}`, 'PATCH', { minimum_tier: e.target.value }); epUpdate(id, { minimum_tier: e.target.value, ...epFields(r) }); }
+  catch (err) { say(err.message); epUpdate(id); }
 });
 $('#endpoints-data').addEventListener('click', async e => {
   const b = e.target.closest('button[data-ep]'); if (!b) return;
@@ -635,13 +679,14 @@ $('#endpoints-data').addEventListener('click', async e => {
   if (ep === 'code') return openCode(id, path);
   const q = { lock: `Kunci ${path}? Semua user selain developer bakal ditolak (ENDPOINT_LOCKED).`, unlock: `Buka kunci ${path}?`, status: `${b.dataset.status === 'disabled' ? 'Nonaktifkan' : 'Aktifkan'} ${path}?`, delete: `Hapus metadata ${path}?`, 'delete-code': `Hapus endpoint ${path}? File kodenya dihapus dari GitHub dan endpoint-nya langsung dimatiin.` }[ep];
   if (!ask(q)) return;
+  b.disabled = true;
   try {
-    if (ep === 'lock' || ep === 'unlock') await send(`/owner/api/endpoints/${id}/${ep}`);
-    if (ep === 'status') await send(`/owner/api/endpoints/${id}`, 'PATCH', { status: b.dataset.status });
+    if (ep === 'lock' || ep === 'unlock') { await send(`/owner/api/endpoints/${id}/${ep}`); return epUpdate(id, { locked: ep === 'lock' }); }
+    if (ep === 'status') { const r = await send(`/owner/api/endpoints/${id}`, 'PATCH', { status: b.dataset.status }); return epUpdate(id, { status: b.dataset.status, ...epFields(r), ...(b.dataset.status === 'active' ? { auto_disabled: false } : {}) }); }
     if (ep === 'delete') await send(`/owner/api/endpoints/${id}`, 'DELETE');
     if (ep === 'delete-code') { const d = await send(`/owner/api/endpoints/${id}`, 'DELETE'); say(d.message || 'Endpoint dihapus.'); }
-  } catch (err) { say(err.message); }
-  loaders.endpoints();
+  } catch (err) { say(err.message); b.disabled = false; return; }
+  loaders.endpoints();   // a deleted endpoint: the list itself changes
 });
 // ---------- add endpoint: paste any code → "Sempurnakan & tes" → preview → "Tambah & deploy"
 const ep = { tested: false, params: [] };
