@@ -29,7 +29,7 @@
     501: ['Not Implemented', 'Fitur belum didukung', 'Feature not supported yet'],
     502: ['Bad Gateway', 'Server menerima respons tidak valid', 'The server got an invalid response'],
     503: ['Service Unavailable', 'Server sedang tidak tersedia', 'The server is unavailable right now'],
-    504: ['Gateway Timeout', 'Server lain terlalu lama merespons', 'The server took too long to respond']
+    504: ['Gateway Timeout', 'Server terlalu lama merespons', 'The server took too long to respond']
   };
   const describe = code => {
     const c = CODES[code] || (code >= 500 ? [`Error`, 'Terjadi kesalahan pada server', 'Something went wrong on the server'] : ['Error', 'Request gagal', 'Request failed']);
