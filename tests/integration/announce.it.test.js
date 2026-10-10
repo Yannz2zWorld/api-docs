@@ -75,6 +75,6 @@ it('the card is on the sign-in page and Home, flat (no glow), and the Developer 
   const ownerPage = view('owner.html');
   for (const id of ['ann-msg', 'ann-msg2', 'ann-label', 'ann-url', 'save-ann', 'clear-ann']) assert.match(ownerPage, new RegExp(`id="${id}"`), id);
   assert.match(ownerPage, /'✓ Telah disimpan\.'/, 'a clear note once a save went through');
-  assert.match(ownerPage, /saving\(\$\('#save-ann'\)/);
+  assert.match(ownerPage, /saveAnn\(\$\('#save-ann'\)/);
   assert.match(fs.readFileSync(path.join(__dirname, '..', '..', 'migrations', '022_announcements.sql'), 'utf8'), /ADD COLUMN IF NOT EXISTS announce_button_url/);
 });
