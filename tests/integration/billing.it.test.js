@@ -157,7 +157,7 @@ it('QRIS gateway: the QR payload is rendered as an SVG for the buyer only; the o
   const cookie = await app.login(email);
   const o = (await order(cookie, 'SULTAN', 30)).json.order;
   const original = axios.post;
-  axios.post = async () => ({ data: { txn_id: 'txn-gw-1', project: 'yannz-test-project', order_id: o.order_code, amount: 5000, fee: 310, total_payment: 5310, payment_method: 'qris', qr_string: '00020101021226610016ID.CO.SHOPEE.WWW', va_number: '', expired_at: new Date(Date.now() + 3600e3).toISOString(), is_sandbox: false } });
+  axios.post = async () => ({ data: { txn_id: 'txn-gw-1', project: 'yannz-test-project', order_id: o.order_code, amount: 5000, fee: 310, total_payment: 5310, payment_method: 'qris', qr_string: '00020101021226610016ID.CO.SHOPEE.WWW', expired_at: new Date(Date.now() + 3600e3).toISOString(), is_sandbox: false } });
   try {
     const r = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
     assert.equal(r.status, 201, r.text);

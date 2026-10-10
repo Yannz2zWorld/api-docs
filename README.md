@@ -340,7 +340,7 @@ review. States: order `pending|paid|rejected|expired`, payment `pending|paid|rej
 Payment methods:
 | Method | How | Settles |
 |---|---|---|
-| Otomatis (QRIS / VA) | Pakasir API v2 transaction: QRIS (the QR payload is rendered as an image by `/api/orders/:id/qr.svg`) or a Virtual Account number (BRI, BNI, CIMB Niaga, Permata, Maybank, BNC, Artha Graha, Sampoerna; min Rp10.000) | Pakasir status API (via webhook or the buyer's page), or owner approval |
+| QRIS otomatis | Pakasir API v2 QRIS transaction; the QR payload is rendered as an image by `/api/orders/:id/qr.svg` (bank Virtual Accounts are not offered) | Pakasir status API (via webhook or the buyer's page), or owner approval |
 | QRIS manual | the owner's static QRIS (`views/assets/qris-manual.jpg`); buyer enters the exact amount | owner approval |
 | DANA | transfer to the number set in Owner > Server & Pembayaran | owner approval |
 | GoPay | same, GoPay number | owner approval |
@@ -366,10 +366,11 @@ Payment confirmation (current flow):
 
 Pakasir API v2 (IMPLEMENTED; tested against a mocked provider, routes confirmed live):
 - Create: `POST https://app.pakasir.com/api/v2/create-transaction/{PAKASIR_PROJECT}/{order_id}`
-  with `X-Api-Key: PAKASIR_API_KEY`, body `{method, amount}` → `txn_id` + `qr_string` or
-  `va_number`. Switching method cancels the earlier transaction
-  (`/api/v2/cancel-transaction/...`) and uses `{order_code}-2`, `-3`, … as the Pakasir order id.
-  `payment_link` is not used: buyers stay on this site. Creating a payment never marks it paid.
+  with `X-Api-Key: PAKASIR_API_KEY`, body `{method: "qris", amount}` → `txn_id` + `qr_string`.
+  QRIS only: bank Virtual Accounts and `payment_link` are not used, so buyers stay on this site.
+  A QR that is still valid is shown again; an expired one is cancelled
+  (`/api/v2/cancel-transaction/...`) and a new one uses `{order_code}-2`, `-3`, … as the Pakasir
+  order id. Creating a payment never marks it paid.
 - Confirm: a payment counts only when `GET /api/v2/transaction-status/{project}/{txn_id}` says
   `completed` for the same order id and amount, and not `is_sandbox` (unless
   `PAKASIR_SANDBOX=on`). This runs on the webhook (`POST /webhooks/pakasir`, which must carry

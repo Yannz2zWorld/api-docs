@@ -15,11 +15,6 @@
   .pay-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
   .acct { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); margin: 10px 0; }
   .acct code { font-size: 18px; letter-spacing: .04em; }
-  .gw-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 6px 0 8px; font-weight: 600; }
-  .gw-pick select { flex: 1; min-width: 220px; }
-  .va-box { display: grid; gap: 6px; justify-items: start; padding: 14px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); margin: 10px 0; }
-  .va-box .acct { margin: 0; padding: 0; border: 0; background: none; }
-  .va-box .acct code { font-size: 22px; }
   .ok-box { padding: 14px; border: 2px solid var(--ok, #86efac); border-radius: 12px; background: var(--surface-2); }
   .order { padding: 14px 0; border-top: 1.5px solid var(--edge-soft); }
   .order:first-child { border-top: 0; }
@@ -79,7 +74,7 @@ const when = v => v ? new Date(v).toLocaleString('id-ID', { dateStyle: 'medium',
 const RANK = ['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'];
 const PRESETS = [[7, '7 hari'], [14, '14 hari'], [30, '1 bulan'], [90, '3 bulan'], [180, '6 bulan'], [365, '1 tahun']];
 const METHOD = {
-  QRIS_GATEWAY: { name: 'Otomatis (QRIS / VA)', hint: 'Bayar, tier langsung aktif otomatis' },
+  QRIS_GATEWAY: { name: 'QRIS otomatis', hint: 'Scan QR, tier langsung aktif otomatis' },
   QRIS: { name: 'QRIS manual', hint: 'Scan QRIS developer + upload bukti' },
   DANA: { name: 'DANA', hint: 'Transfer manual + upload bukti' },
   GOPAY: { name: 'GoPay', hint: 'Transfer manual + upload bukti' }
@@ -176,30 +171,21 @@ function openCheckout(order, method) {
   box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Automatic payment through Pakasir (API v2): QRIS or a bank virtual account. The page asks the
-// server every few seconds; the server checks Pakasir and activates the tier as soon as it is paid.
+// Automatic QRIS through Pakasir (API v2). The page asks the server every few seconds; the server
+// checks Pakasir and activates the tier as soon as it is paid.
 let gatewayPoll = null;
-function renderGateway(order, body, method) {
+function renderGateway(order, body) {
   clearInterval(gatewayPoll);
-  const opts = (ctx.methods.QRIS_GATEWAY.methods || [{ id: 'qris', label: 'QRIS', minimum: 500 }]).filter(m => Number(order.amount) >= m.minimum);
-  body.innerHTML = `<label class="gw-pick">Bayar pakai <select id="gw-method">${opts.map(m => `<option value="${esc(m.id)}"${m.id === method ? ' selected' : ''}>${esc(m.id === 'qris' ? 'QRIS (semua e-wallet & m-banking)' : 'Virtual Account ' + m.label)}</option>`).join('')}</select></label>
-    ${opts.length < (ctx.methods.QRIS_GATEWAY.methods || []).length ? '<small class="muted">Virtual Account minimal Rp10.000, jadi buat paket ini cuma bisa QRIS.</small>' : ''}
-    <div id="gw-body"><p class="loading">Lagi bikin pembayaran…</p></div>`;
-  $('#gw-method').onchange = e => renderGateway(order, body, e.target.value);
+  body.innerHTML = '<div id="gw-body"><p class="loading">Lagi bikin QR pembayaran…</p></div>';
   const box = $('#gw-body');
-  post(`/api/orders/${encodeURIComponent(order.id)}/pakasir`, { method }).then(d => {
+  post(`/api/orders/${encodeURIComponent(order.id)}/pakasir`, { method: 'qris' }).then(d => {
     const g = d.gateway || {};
     const total = g.total_payment || order.amount;
     const fee = Number(total) !== Number(order.amount) ? '<small>Total udah termasuk biaya gateway.</small>' : '';
     const until = g.expired_at ? `<small>Bayar sebelum ${when(g.expired_at)}</small>` : '';
-    box.innerHTML = (method === 'qris'
-      ? `<div class="qr-box"><img src="/api/orders/${encodeURIComponent(order.id)}/qr.svg?t=${Date.now()}" alt="QRIS pembayaran ${esc(order.order_code)}" width="280" height="280"><b>${rp(total)}</b>${until}${fee}</div>
-         <p>Scan pakai aplikasi e-wallet / m-banking yang support QRIS. Nominalnya otomatis, tinggal bayar.</p>`
-      : `<div class="va-box"><span class="muted">Nomor Virtual Account ${esc(g.label || '')}</span><div class="acct"><code id="va-number">${esc(g.va_number || '')}</code><button type="button" class="sm ghost" id="copy-va">Salin</button></div><b>${rp(total)}</b>${until}${fee}</div>
-         <p>Transfer <b>persis ${rp(total)}</b> ke nomor VA di atas lewat m-banking, ATM, atau internet banking.</p>`) +
-      `<p class="notice" id="gw-state" aria-live="polite">Nunggu pembayaran… Tier langsung aktif otomatis begitu dibayar, halaman ini nggak usah di-refresh.</p>`;
-    const copy = $('#copy-va');
-    if (copy) copy.onclick = () => navigator.clipboard?.writeText(g.va_number || '').then(() => { copy.textContent = 'Disalin'; });
+    box.innerHTML = `<div class="qr-box"><img src="/api/orders/${encodeURIComponent(order.id)}/qr.svg?t=${Date.now()}" alt="QRIS pembayaran ${esc(order.order_code)}" width="280" height="280"><b>${rp(total)}</b>${until}${fee}</div>
+      <p>Scan pakai aplikasi e-wallet / m-banking yang support QRIS. Nominalnya otomatis, tinggal bayar.</p>
+      <p class="notice" id="gw-state" aria-live="polite">Nunggu pembayaran… Tier langsung aktif otomatis begitu dibayar, halaman ini nggak usah di-refresh.</p>`;
     let busy = false;
     gatewayPoll = setInterval(async () => {
       if (!document.body.contains(box)) { clearInterval(gatewayPoll); return; }
@@ -210,11 +196,11 @@ function renderGateway(order, body, method) {
         if (r.status === 'paid') {
           clearInterval(gatewayPoll);
           box.innerHTML = `<p class="ok-box"><b>✓ Pembayaran diterima.</b> Tier ${esc(order.tier)} kamu udah aktif.</p>`;
-          body.querySelectorAll('.gw-pick, .gw-pick ~ small').forEach(el => el.remove());
           loadOrders();
         } else if (r.status === 'canceled') {
           clearInterval(gatewayPoll);
-          $('#gw-state').textContent = 'Transaksi ini udah kedaluwarsa / dibatalin. Pilih metode lagi buat bikin yang baru.';
+          box.innerHTML = '<p class="notice">QR ini udah kedaluwarsa / dibatalin.</p><div class="row"><button type="button" class="primary sm" id="gw-new">Bikin QR baru</button></div>';
+          $('#gw-new').onclick = () => renderGateway(order, body);
         }
       } catch { /* try again on the next tick */ }
       busy = false;
@@ -224,7 +210,7 @@ function renderGateway(order, body, method) {
 
 function renderMethod(order, method) {
   const body = $('#co-body');
-  if (method === 'QRIS_GATEWAY') { renderGateway(order, body, 'qris'); return; }
+  if (method === 'QRIS_GATEWAY') { renderGateway(order, body); return; }
   let instructions = '';
   if (method === 'QRIS') {
     instructions = `<img class="qris-static" src="${esc(ctx.methods.QRIS.image)}" alt="QRIS Yannz2z"><p>Scan QRIS di atas, terus <b>isi nominal ${rp(order.amount)} persis</b>.</p>`;
@@ -288,7 +274,7 @@ function orderState(o) {
   if (o.status === 'paid') return '<p class="notice">✅ Lunas. Tier kamu udah aktif.</p>';
   if (o.status !== 'pending') return `<p><small>Order ${esc(o.status)}.</small></p>`;
   if (o.provider === 'manual' && o.payment_status === 'pending') return '<p><small>⏳ Bukti udah terkirim — nunggu approval developer.</small></p>';
-  return `<div class="row"><button type="button" class="primary sm" data-pay="${esc(o.id)}">${o.provider === 'pakasir' ? 'Lanjut bayar / ganti metode' : 'Bayar sekarang'}</button></div>`;
+  return `<div class="row"><button type="button" class="primary sm" data-pay="${esc(o.id)}">${o.provider === 'pakasir' ? 'Lihat QR / ganti metode' : 'Bayar sekarang'}</button></div>`;
 }
 
 async function loadOrders() {

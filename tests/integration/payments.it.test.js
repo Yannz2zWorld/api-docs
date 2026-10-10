@@ -138,7 +138,7 @@ it('Pakasir is fail-closed: in maintenance unless switched on, and not configure
 });
 
 // ---------------------------------------------------------------- Pakasir API v2
-// axios is stubbed: create → {txn_id, qr_string|va_number, …}; status → {status, order_id, amount}.
+// axios is stubbed: create → {txn_id, qr_string, …}; status → {status, order_id, amount}.
 function stubPakasir(state) {
   const { post: realPost, get: realGet } = axios;
   state.calls = [];
@@ -149,7 +149,7 @@ function stubPakasir(state) {
     const txn = 'txn-' + orderId;
     state.txns[txn] = { order_id: orderId, amount: body.amount };
     return { data: { txn_id: txn, project: 'yannz-test-project', order_id: orderId, amount: body.amount, fee: 400, total_payment: body.amount + 400, payment_method: body.method,
-      qr_string: body.method === 'qris' ? '00020101021226610016ID.CO.QRIS' : '', va_number: body.method === 'qris' ? '' : '8808123456789', expired_at: new Date(Date.now() + 3600e3).toISOString(), is_sandbox: false } };
+      qr_string: '00020101021226610016ID.CO.QRIS', expired_at: new Date(Date.now() + 3600e3).toISOString(), is_sandbox: false } };
   };
   axios.get = async (url, opts) => {
     state.calls.push({ method: 'GET', url, headers: opts?.headers });
@@ -242,29 +242,32 @@ it('the billing page checks the status itself: paid without any webhook; wrong a
   });
 });
 
-it('switching QRIS ↔ Virtual Account cancels the earlier transaction; VA needs Rp10.000; late payments still count', async () => {
+it('QRIS only: other methods are refused; an expired QR is cancelled and replaced; late payments still count', async () => {
   await withGateway(async state => {
     const email = 'pswitch@example.test';
     const cookie = await app.login(email);
-    const small = (await order(cookie, 'SULTAN')).json.order;   // Rp5.000
-    assert.deepEqual([(await post(cookie, `/api/orders/${small.id}/pakasir`, { method: 'bri_va' })).json.error], ['INVALID_PAYMENT_AMOUNT']);
-    assert.equal((await post(cookie, `/api/orders/${small.id}/pakasir`, { method: 'payment_link' })).json.error, 'INVALID_PAYMENT_METHOD', 'never sent to another site');
     const o = (await order(cookie, 'DEWA')).json.order;
+    for (const method of ['bri_va', 'bni_va', 'payment_link']) {
+      assert.equal((await post(cookie, `/api/orders/${o.id}/pakasir`, { method })).json.error, 'INVALID_PAYMENT_METHOD', method);
+    }
     const qris = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
+    assert.equal(qris.status, 201, qris.text);
+    assert.equal(qris.json.gateway.qr_string, '00020101021226610016ID.CO.QRIS');
+    assert.equal('va_number' in qris.json.gateway, false);
     const again = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
-    assert.equal(again.json.gateway.txn_id, qris.json.gateway.txn_id, 'same method: the same transaction');
-    const va = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'bni_va' });
-    assert.equal(va.status, 201, va.text);
-    assert.equal(va.json.gateway.va_number, '8808123456789');
-    assert.notEqual(va.json.gateway.txn_id, qris.json.gateway.txn_id);
-    assert.ok(state.calls.some(c => /cancel-transaction\/yannz-test-project\//.test(c.url) && c.url.endsWith(qris.json.gateway.txn_id)), 'the QRIS one is cancelled at Pakasir');
-    assert.equal(va.json.payment.provider_reference, `${o.order_code}-2`);
+    assert.equal(again.json.gateway.txn_id, qris.json.gateway.txn_id, 'a valid QR is shown again');
+    await h.db().query("UPDATE payments SET gateway_expires_at=now()-interval '1 minute' WHERE transaction_id=$1", [qris.json.gateway.txn_id]);
+    const fresh = await post(cookie, `/api/orders/${o.id}/pakasir`, { method: 'qris' });
+    assert.equal(fresh.status, 201, fresh.text);
+    assert.notEqual(fresh.json.gateway.txn_id, qris.json.gateway.txn_id);
+    assert.ok(state.calls.some(c => /cancel-transaction\/yannz-test-project\//.test(c.url) && c.url.endsWith(qris.json.gateway.txn_id)), 'the old QR is cancelled at Pakasir');
+    assert.equal(fresh.json.payment.provider_reference, `${o.order_code}-2`);
     // The order window closes, then the buyer pays: the money arrived, so it still counts.
     await h.db().query("UPDATE orders SET expires_at=now()-interval '1 minute' WHERE id=$1", [o.id]);
     await app.request('GET', '/api/orders', { cookie });   // runs the expiry
     assert.equal((await h.db().query('SELECT status FROM orders WHERE id=$1', [o.id])).rows[0].status, 'expired');
     state.status = 'completed';
-    const late = await webhook({ txn_id: va.json.gateway.txn_id, order_id: `${o.order_code}-2`, amount: 25000, status: 'completed', is_sandbox: false });
+    const late = await webhook({ txn_id: fresh.json.gateway.txn_id, order_id: `${o.order_code}-2`, amount: 25000, status: 'completed', is_sandbox: false });
     assert.equal(late.json.processed, true, late.text);
     assert.equal(await tierOf(email), 'DEWA');
   });
