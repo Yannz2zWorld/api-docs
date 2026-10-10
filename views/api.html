@@ -50,7 +50,7 @@
   .media .variants button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   .media .music { width: 100%; display: grid; gap: 4px; font: 11px "DM Mono", monospace; color: var(--muted); }
   .media-note { margin: 12px 12px 0; font: 12px "DM Mono", monospace; color: var(--muted); }
-  .err-box { margin: 12px; padding: 12px 14px; border: 2px solid var(--bad); border-radius: 10px; color: #fecaca; background: rgba(252, 165, 165, .06); }
+  .err-box { margin: 12px; padding: 12px 14px; border: 2px solid var(--bad); border-radius: 10px; color: var(--ui-bad, #fecaca); background: color-mix(in srgb, var(--ui-bad, #fca5a5) 6%, transparent); }
   .term-foot { display: flex; justify-content: space-between; gap: 8px; padding: 8px 12px; border-top: 2px solid var(--edge-soft); color: var(--faint); font: 12px "DM Mono", monospace; flex-wrap: wrap; }
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -498,7 +498,7 @@ $('#copy-output').addEventListener('click', e => {
   navigator.clipboard.writeText(text).then(() => flash(e.target, 'Tersalin ✓'));
 });
 </script>
-<script src="/assets/select.js?v=1" defer></script>
+<script src="/assets/select.js?v=2" defer></script>
 <script src="/assets/music.js" defer></script>
 </body>
 </html>

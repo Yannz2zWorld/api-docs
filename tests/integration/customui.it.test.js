@@ -163,3 +163,38 @@ it('every scythe animation follows the chosen effect colour: intros, loading scr
   assert.match(view('scythe.html'), /SC\.tone\(\[170,10,30\]\)/);
   assert.equal((await app.request('GET', '/assets/scythe-mark-parts.png')).status, 200);
 });
+
+it('once the UI is customised, no original red is left: pages use the UI colour, and the scythe effect follows it until set', () => {
+  // 1. No fixed red in the page styles: only defaults that the theme overrides (`--x: #c8202f`,
+  //    `var(--x, #c8202f)`) may still name it.
+  const RED = /#(c8202f|a3172a|ef4444|f87171|fca5a5|fecaca|ff1a2c|ff2a3a|dc2626|b91c1c)\b|rgba?\((2\d\d|1[5-9]\d), ?(\d|[1-5]\d), ?(\d|[1-6]\d)[,)]/i;
+  const files = ['index.html', 'login.html', 'api.html', 'playground.html', 'keys.html', 'billing.html', 'pricing.html', 'profile.html', 'upload.html', 'owner.html', 'maintenance.html', 'custom-ui.html', 'theme.css', 'chat.js', 'music.js', 'select.js', 'human-check.js', 'i18n.js', 'endpoint-monitor.js', 'announce.js'];
+  for (const f of files) {
+    let src = view(f).replace(/var\(--[\w-]+,\s*(#[0-9a-f]{3,8}|rgba?\([^)]*\))\)/gi, 'var()').replace(/--[\w-]+:\s*(#[0-9a-f]{3,8}|rgba?\([^)]*\))/gi, '--x:0');
+    if (f === 'custom-ui.html') src = src.replace(/const (SC_SW|SWATCHES) = \[[^\]]*\]/g, '');   // the colour choices themselves
+    const m = src.match(RED);
+    assert.equal(m, null, `${f}: fixed red ${m && m[0]}`);
+  }
+  const game = view('scythe.html').replace(/\n\s*--red:#c8202f; --red-deep:#a3172a;/, '');
+  assert.ok(!/(color|background|border-color):\s*#(c8202f|fca5a5|a3172a)/.test(game), 'the /3d game styles use its colour variables');
+  assert.match(view('maintenance.html'), /\/assets\/ui-theme\.js/, 'the maintenance page follows the look too');
+  assert.match(view('ui-theme.js'), /data-no-theme[\s\S]*setProperty\('--red', a\)/, 'pages with their own design still take the colour');
+
+  // 2. The scythe effect colour follows the UI colour while it is not customised.
+  const run = pref => {
+    const sandbox = { localStorage: { getItem: () => JSON.stringify(pref), setItem() {} },
+      document: { readyState: 'complete', documentElement: { style: { setProperty() {} } }, querySelectorAll: () => [], addEventListener() {} },
+      addEventListener() {}, dispatchEvent() {}, CustomEvent: class {}, Image: class {} };
+    sandbox.window = sandbox;
+    sandbox.YannzUI = { load: () => pref, accentOf: p => (p.style !== 'default' || p.accent ? p.accent || '#16a34a' : null) };
+    vm.runInNewContext(view('scythe-color.js'), sandbox);
+    return sandbox.YannzScythe;
+  };
+  assert.equal(run({ style: 'default', accent: '', scythe: null }).get().fx, '#ff1a2c', 'original UI: original red');
+  const pink = run({ style: 'default', accent: '#ec4899', scythe: null });
+  assert.equal(pink.get().fx, '#ec4899', 'pink UI: pink effects');
+  assert.equal(pink.stored().fx, '#ff1a2c', 'still saved as "follow the UI"');
+  assert.notDeepEqual([...pink.tone([200, 32, 47])], [200, 32, 47], 'intros and loading screens are not red');
+  assert.equal(run({ style: 'mint', accent: '', scythe: null }).get().fx, '#16a34a', "a look's own colour");
+  assert.equal(run({ style: 'default', accent: '#ec4899', scythe: { handle: '#f2ebe0', head: '#b8b4bc', fx: '#22c55e' } }).get().fx, '#22c55e', 'a chosen effect colour wins');
+});

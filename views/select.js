@@ -38,7 +38,7 @@
   .ys-opt span{min-width:0;flex:1}
   .ys-opt small{display:block;color:var(--muted,#a1a1aa);font:500 11.5px "DM Mono",monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
   .ys-opt:hover,.ys-opt.active{background:var(--surface-2,#1b1b1e)}
-  .ys-opt[aria-selected="true"]{background:rgba(200,32,47,.16);box-shadow:inset 3px 0 0 var(--accent,#c8202f)}
+  .ys-opt[aria-selected="true"]{background:color-mix(in srgb,var(--accent,#c8202f) 16%,transparent);box-shadow:inset 3px 0 0 var(--accent,#c8202f)}
   .ys-opt[aria-disabled="true"]{opacity:.4;cursor:not-allowed}
   .ys-check{flex:none;width:18px;height:18px;color:var(--accent,#c8202f);visibility:hidden}
   .ys-opt[aria-selected="true"] .ys-check{visibility:visible}

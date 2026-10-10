@@ -212,7 +212,7 @@
       r.toggleAttribute('data-on', r.dataset.part === scPart);
     });
   }
-  function scSet(part, v) { SC.set({ ...SC.get(), [part]: v.toLowerCase() }); $('#saved').textContent = 'Warna scythe disimpan.'; }
+  function scSet(part, v) { SC.set({ ...SC.stored(), [part]: v.toLowerCase() }); $('#saved').textContent = 'Warna scythe disimpan.'; }
   document.querySelectorAll('.sc-row').forEach(r => {
     const part = r.dataset.part;
     const pick = () => { scPart = part; scRender(); };
@@ -222,7 +222,7 @@
   });
   $('#sc-swatches').addEventListener('click', e => { const b = e.target.closest('.swatch'); if (b) scSet(scPart, b.dataset.color); });
   $('#sc-reset').addEventListener('click', () => { SC.set(SC.DEFAULT); $('#saved').textContent = 'Warna scythe balik ke aslinya.'; });
-  window.addEventListener('yannz:scythe', e => scRender(e.detail));
+  window.addEventListener('yannz:scythe', () => scRender());
   scRender();
 })();
 </script>

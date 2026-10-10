@@ -87,7 +87,7 @@ button:active, .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px
 button.primary, .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 button.primary:hover, .btn.primary:hover { background: #e4e4e7; color: var(--accent-ink); }
 button.danger { border-color: var(--bad); color: var(--bad); background: transparent; }
-button.danger:hover { background: rgba(252, 165, 165, .1); color: #fecaca; }
+button.danger:hover { background: color-mix(in srgb, var(--ui-bad, #fca5a5) 10%, transparent); color: var(--ui-bad, #fecaca); }
 button.ghost { background: transparent; }
 button.sm { padding: 6px 10px; font-size: 11px; box-shadow: 2px 2px 0 var(--drop); border-radius: 8px; }
 button.sm:hover { box-shadow: 3px 3px 0 var(--drop); }
@@ -201,5 +201,5 @@ button.primary:hover, .btn.primary:hover { background: var(--red-deep); color: #
 .ep-badge { display: inline-flex; align-items: center; gap: 3px; vertical-align: middle; margin-left: 6px; padding: 1px 7px; border-radius: 999px; border: 1.5px solid currentColor; font: 700 10px/1.4 "DM Mono", ui-monospace, monospace; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
 .ep-badge-ic { font-size: 1em; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
 .ep-badge--new { color: #4ade80; background: rgba(74, 222, 128, .1); }
-.ep-badge--hot { color: #f87171; background: rgba(248, 113, 113, .12); }
+.ep-badge--hot { color: var(--ui-bad, #f87171); background: color-mix(in srgb, var(--ui-bad, #f87171) 12%, transparent); }
 .ep-badge--recommend { color: #facc15; background: rgba(250, 204, 21, .1); }

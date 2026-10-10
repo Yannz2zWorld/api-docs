@@ -18,16 +18,31 @@
   const DEFAULT = { handle: '#f2ebe0', head: '#b8b4bc', fx: '#ff1a2c' };
   const HEX = /^#[0-9a-f]{6}$/i;
   // Model material names (the same in the dashboard GLB and the /3d game).
-  const PART = { steel: 'head', skull: 'head', metal: 'handle', bone: 'handle', leather: 'handle', fabric: 'handle',
+  // The red cloth ('cloth') takes the handle colour once that is chosen, otherwise the effect colour
+  // (which follows the Custom UI colour), so no original red is left on a customised site.
+  const PART = { steel: 'head', skull: 'head', metal: 'handle', bone: 'handle', leather: 'handle', fabric: 'cloth',
     energy: 'fx', energyCore: 'fx', gem: 'fx', glow: 'fx', rose: 'fx', roseInner: 'fx' };
   const LABEL = { handle: 'Pegangan', head: 'Kepala', fx: 'Efek & skill' };
   const SWATCHES = ['#ff1a2c', '#ffd60a', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#ffffff', '#b8b4bc', '#f2ebe0', '#111111'];
 
   const clean = c => ({ handle: HEX.test(c?.handle || '') ? c.handle.toLowerCase() : DEFAULT.handle,
     head: HEX.test(c?.head || '') ? c.head.toLowerCase() : DEFAULT.head, fx: HEX.test(c?.fx || '') ? c.fx.toLowerCase() : DEFAULT.fx });
+  // The colours in use. While the effect colour is not customised it follows the Custom UI colour,
+  // so once the UI is customised none of the original red is left anywhere (3D, intros, loading).
+  function pref() {
+    if (window.YannzUI) return window.YannzUI.load();
+    try { return JSON.parse(localStorage.getItem('yannz-ui') || 'null'); } catch { return null; }
+  }
+  // What the visitor saved (the default effect colour means "follow the UI").
+  function stored() { return clean(pref()?.scythe); }
   function get() {
-    if (window.YannzUI) return clean(window.YannzUI.load().scythe);
-    try { return clean(JSON.parse(localStorage.getItem('yannz-ui') || 'null')?.scythe); } catch { return clean(null); }
+    const UI = window.YannzUI, p = pref();
+    const c = clean(p?.scythe);
+    if (c.fx === DEFAULT.fx) {
+      const accent = UI?.accentOf ? UI.accentOf(p) : p?.accent;
+      if (accent && HEX.test(accent)) c.fx = accent.toLowerCase();
+    }
+    return c;
   }
   const custom = c => c.handle !== DEFAULT.handle || c.head !== DEFAULT.head || c.fx !== DEFAULT.fx;
 
@@ -50,16 +65,59 @@
   // next to the part's original colour (the grip stays darker than the bone shaft, and so on).
   const lum = c => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
   const scenes = [];
+  const kOf = (THREE, c, part) => Math.max(0.12, Math.min(1.8, lum(c) / Math.max(0.02, lum(new THREE.Color(DEFAULT[part])))));
   function entry(THREE, obj, prop, part) {
     const c = obj && obj[prop];
     if (!c || !c.isColor) return null;
-    return { obj, prop, part, orig: c.clone(), k: Math.max(0.12, Math.min(1.8, lum(c) / Math.max(0.02, lum(new THREE.Color(DEFAULT[part]))))) };
+    if (part === 'cloth') return { obj, prop, part, orig: c.clone(), k: { handle: kOf(THREE, c, 'handle'), fx: kOf(THREE, c, 'fx') } };
+    return { obj, prop, part, orig: c.clone(), k: kOf(THREE, c, part) };
   }
+  const clothPart = colours => (colours.handle !== DEFAULT.handle ? 'handle' : colours.fx !== DEFAULT.fx ? 'fx' : null);
   function apply(THREE, list, colours) {
     for (const e of list) {
-      if (colours[e.part] === DEFAULT[e.part]) e.obj[e.prop].copy(e.orig);
-      else e.obj[e.prop].set(colours[e.part]).multiplyScalar(e.k);
+      const part = e.part === 'cloth' ? clothPart(colours) : e.part;
+      if (!part || colours[part] === DEFAULT[part]) e.obj[e.prop].copy(e.orig);
+      else e.obj[e.prop].set(colours[part]).multiplyScalar(e.part === 'cloth' ? e.k[part] : e.k);
     }
+  }
+  // The cloth's crimson lives in its texture, which a colour can only darken. Keep the texture as
+  // light / dark and move its average colour into the material colour: it looks the same, and any
+  // colour can then be put on it.
+  const linV = v => ((v /= 255) <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+  function neutralise(THREE, m) {
+    const map = m.map, img = map && map.image;
+    if (!img || !img.width || m.userData.yzNeutral) return;
+    try {
+      const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+      const x = cv.getContext('2d', { willReadFrequently: true });
+      x.drawImage(img, 0, 0);
+      const data = x.getImageData(0, 0, cv.width, cv.height), d = data.data, n = d.length / 4;
+      let r = 0, g = 0, b = 0, max = 0;
+      const L = new Float32Array(n);
+      for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+        const lr = linV(d[i]), lg = linV(d[i + 1]), lb = linV(d[i + 2]);
+        r += lr; g += lg; b += lb;
+        L[j] = 0.2126 * lr + 0.7152 * lg + 0.0722 * lb;
+        if (L[j] > max) max = L[j];
+      }
+      r /= n; g /= n; b /= n;
+      const avg = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      if (!(avg > 0) || !(max > 0)) return;
+      for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+        const k = L[j] / max, v = Math.round(255 * (k <= 0.0031308 ? k * 12.92 : 1.055 * Math.pow(k, 1 / 2.4) - 0.055));
+        d[i] = d[i + 1] = d[i + 2] = v;
+      }
+      x.putImageData(data, 0, 0);
+      const tex = new THREE.CanvasTexture(cv);
+      for (const k of ['flipY', 'encoding', 'colorSpace', 'wrapS', 'wrapT', 'anisotropy', 'magFilter', 'minFilter']) if (k in map) tex[k] = map[k];
+      tex.repeat.copy(map.repeat); tex.offset.copy(map.offset); tex.needsUpdate = true;
+      const s = max / avg;
+      m.color.setRGB(m.color.r * r * s, m.color.g * g * s, m.color.b * b * s);
+      if (m.bumpMap === map) m.bumpMap = tex;
+      m.map = tex;
+      m.userData.yzNeutral = true;
+      m.needsUpdate = true;
+    } catch { /* a texture the canvas cannot read: the cloth just keeps its own colour */ }
   }
   function paint(THREE, root) {
     const list = [];
@@ -70,6 +128,7 @@
         const part = PART[m.name];
         if (!part || seen.has(m)) continue;
         seen.add(m);
+        if (part === 'cloth') neutralise(THREE, m);
         for (const prop of ['color', 'emissive']) { const e = entry(THREE, m, prop, part); if (e) list.push(e); }
       }
     });
@@ -87,7 +146,9 @@
   }
   // The chosen colour as 0..1 numbers (for effects that build their colours themselves).
   function rgb(part) { const n = parseInt(get()[part].slice(1), 16); return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }
-  window.addEventListener('yannz:scythe', e => { for (const s of scenes) apply(s.THREE, s.list, e.detail); });
+  window.addEventListener('yannz:scythe', () => { const c = get(); for (const s of scenes) apply(s.THREE, s.list, c); });
+  // A new UI colour moves the effect colour too while it follows the UI.
+  window.addEventListener('yannz:ui', () => window.dispatchEvent(new CustomEvent('yannz:scythe', { detail: get() })));
 
   // ---------------------------------------------------------------- 2D animations (intros, loading)
   // The canvas / CSS animations are drawn in crimson. tone() moves such a colour to the chosen effect
@@ -119,7 +180,7 @@
   function cssVars(c) { document.documentElement.style.setProperty('--scythe-fx', toHex(tone('#c8202f', c.fx))); }
 
   // The 2D scythe picture is a render of the 3D model; scythe-mark-parts.png says which part each
-  // pixel belongs to (red = handle, green = head, blue or uncovered = effects). A recoloured pixel
+  // pixel belongs to (red = handle, green = head, blue or uncovered = effects, magenta = cloth). A recoloured pixel
   // keeps its own brightness, like the 3D materials do.
   const MARK = '/assets/scythe-mark.webp', PARTS = '/assets/scythe-mark-parts.png';
   const lin = v => (v /= 255) <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
@@ -141,7 +202,7 @@
       x.clearRect(0, 0, w, h);
       x.drawImage(base, 0, 0);
       const data = x.getImageData(0, 0, w, h), px = data.data;
-      const part = {};
+      const part = {}, cloth = clothPart(c);
       for (const p of ['handle', 'head', 'fx']) {
         if (c[p] === DEFAULT[p]) continue;
         const d = hexRgb(DEFAULT[p]).map(lin), want = hexRgb(c[p]).map(lin);
@@ -151,7 +212,8 @@
         if (!px[i + 3]) continue;
         const r = map[i], g = map[i + 1], b = map[i + 2], covered = map[i + 3] > 127;
         if (covered && !r && !g && !b) continue;          // pieces with no part (socket, leaves)
-        const p = !covered ? 'fx' : r >= g && r >= b ? 'handle' : g >= b ? 'head' : 'fx';
+        const p = !covered ? 'fx' : r > 127 && b > 127 ? cloth : r >= g && r >= b ? 'handle' : g >= b ? 'head' : 'fx';
+        if (!p) continue;
         const t = part[p];
         if (!t) continue;
         const k = lumLin(lin(px[i]), lin(px[i + 1]), lin(px[i + 2])) / t.ld;
@@ -166,7 +228,7 @@
     const list = document.querySelectorAll('img[data-scythe-mark]');
     if (list.length) mark(c).then(u => list.forEach(i => { if (i.getAttribute('src') !== u) i.src = u; }));
   }
-  window.addEventListener('yannz:scythe', e => { cssVars(e.detail); marks(e.detail); });
+  window.addEventListener('yannz:scythe', () => { const c = get(); cssVars(c); marks(c); });
   cssVars(get());
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => marks()); else marks();
 
@@ -207,7 +269,7 @@
     panel.style.top = Math.max(12, Math.min(innerHeight - h - 12, y + 16)) + 'px';
     let active = 'fx';
     const sync = colours => panel.querySelectorAll('.yz-row').forEach(r => { const v = colours[r.dataset.part]; r.querySelector('[type=color]').value = v; const t = r.querySelector('[type=text]'); if (document.activeElement !== t) t.value = v.toUpperCase(); });
-    const change = (part, v) => { const next = { ...get(), [part]: v.toLowerCase() }; set(next); sync(next); };
+    const change = (part, v) => { set({ ...stored(), [part]: v.toLowerCase() }); sync(get()); };
     panel.querySelectorAll('.yz-row').forEach(r => {
       const part = r.dataset.part;
       const pick = () => { active = part; panel.querySelectorAll('.yz-row').forEach(x => x.toggleAttribute('data-on', x === r)); };
@@ -216,11 +278,11 @@
       r.querySelector('[type=text]').addEventListener('input', e => { let v = e.target.value.trim(); if (!v.startsWith('#')) v = '#' + v; if (HEX.test(v)) change(part, v); });
     });
     panel.querySelector('.yz-sw').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) change(active, b.dataset.c); });
-    panel.querySelector('[data-a=reset]').addEventListener('click', () => sync(set(DEFAULT)));
+    panel.querySelector('[data-a=reset]').addEventListener('click', () => { set(DEFAULT); sync(get()); });
     panel.querySelector('[data-a=done]').addEventListener('click', close);
     setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', esc); }, 0);
     panel.querySelector('#yz-fx').focus({ preventScroll: true });
   }
 
-  window.YannzScythe = { DEFAULT, PART, get, set, custom: () => custom(get()), paint, track, rgb, tone, mark, open, close };
+  window.YannzScythe = { DEFAULT, PART, get, stored, set, custom: () => custom(get()), paint, track, rgb, tone, mark, open, close };
 })();
