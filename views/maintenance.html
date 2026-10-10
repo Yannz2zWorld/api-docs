@@ -12,10 +12,11 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
 <script src="/assets/i18n.js"></script>
+<script src="/assets/scythe-color.js"></script>
 <style>
   body { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
   .box { max-width: 520px; width: 100%; text-align: center; }
-  .mark { width: 120px; height: auto; margin: 0 auto 18px; display: block; filter: drop-shadow(0 0 22px rgba(200, 32, 47, .45)); animation: float 3.2s ease-in-out infinite; }
+  .mark { width: 120px; height: auto; margin: 0 auto 18px; display: block; filter: drop-shadow(0 0 22px color-mix(in srgb, var(--scythe-fx, #c8202f) 45%, transparent)); animation: float 3.2s ease-in-out infinite; }
   @keyframes float { 50% { transform: translateY(-8px); } }
   @media (prefers-reduced-motion: reduce) { .mark { animation: none; } }
   h1 { margin: 6px 0 10px; }
@@ -29,7 +30,7 @@
 <body>
 <main class="box panel">
   <div class="lang-row"><div data-lang-switch></div></div>
-  <img class="mark" src="/assets/scythe-mark.webp" alt="">
+  <img class="mark" src="/assets/scythe-mark.webp" data-scythe-mark alt="">
   <span class="kicker">Info Maintenance</span>
   <h1>Website lagi maintenance</h1>
   <p class="msg" data-no-i18n>{{MESSAGE}}</p>

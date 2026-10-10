@@ -131,3 +131,35 @@ it('the scythe colour panel is reached by tapping the scythe (home, /3d) and on 
   const js = view('scythe-color.js');
   for (const part of ['handle', 'head', 'fx']) assert.match(js, new RegExp(`${part}: '#`));
 });
+
+it('every scythe animation follows the chosen effect colour: intros, loading screen, 2D picture, game flash', async () => {
+  // tone(): the default colour leaves the crimson alone; another colour moves it there.
+  const store = { 'yannz-ui': JSON.stringify({ scythe: { handle: '#f2ebe0', head: '#b8b4bc', fx: '#ff1a2c' } }) };
+  const props = {};
+  const sandbox = { window: {}, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; } },
+    document: { readyState: 'complete', documentElement: { style: { setProperty: (k, v) => { props[k] = v; } } }, querySelectorAll: () => [], addEventListener() {} },
+    addEventListener() {}, dispatchEvent() {}, CustomEvent: class {}, Image: class {} };
+  sandbox.window = sandbox;
+  vm.runInNewContext(view('scythe-color.js'), sandbox);
+  const SC = sandbox.YannzScythe;
+  assert.deepEqual([...SC.tone([200, 32, 47])], [200, 32, 47], 'default: unchanged');
+  assert.equal(props['--scythe-fx'], '#c8202f');
+  assert.deepEqual([...SC.tone([200, 32, 47], '#ff1a2c')], [200, 32, 47]);
+  const green = SC.tone([255, 26, 44], '#22c55e');
+  assert.ok(green.every((v, i) => Math.abs(v - [0x22, 0xc5, 0x5e][i]) <= 2), 'the default red lands on the chosen colour: ' + green);
+  assert.deepEqual([...SC.tone([255, 255, 255], '#22c55e')], [255, 255, 255], 'white-hot stays white');
+  assert.deepEqual([...SC.tone([0, 0, 0], '#22c55e')], [0, 0, 0], 'black stays black');
+  assert.equal(await SC.mark(), '/assets/scythe-mark.webp', 'default colours: the original picture');
+  // The animations use it.
+  for (const f of ['aura-intro.js', 'slash-intro.js']) {
+    const js = view(f);
+    assert.match(js, /YannzScythe/, f);
+    assert.ok(!/rgba\((2\d\d|1[5-9]\d), ?\d{1,2}, ?\d{1,2}/.test(js), f + ': no fixed crimson left');
+  }
+  assert.match(view('aura-intro.js'), /SC\.mark\(\)/);
+  assert.match(view('login.html'), /data-scythe-mark/);
+  assert.match(view('login.html'), /\.load-scene \.load-aura\{[^}]*--scythe-fx/);
+  assert.match(view('maintenance.html'), /data-scythe-mark/);
+  assert.match(view('scythe.html'), /SC\.tone\(\[170,10,30\]\)/);
+  assert.equal((await app.request('GET', '/assets/scythe-mark-parts.png')).status, 200);
+});

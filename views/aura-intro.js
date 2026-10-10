@@ -23,6 +23,11 @@
   canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
   cover.appendChild(canvas);
 
+  // Every crimson here follows the visitor's scythe effect colour (views/scythe-color.js).
+  const SC = window.YannzScythe;
+  const C = (r, g, b) => (SC ? SC.tone([r, g, b]) : [r, g, b]).join(',');
+  const RED = C(200, 32, 47), HOT = C(255, 40, 56), EMB = C(255, 42, 58), FRONT = C(220, 38, 54), BRIGHT = C(255, 80, 92),
+    STREAK = C(255, 60, 74), STREAK2 = C(255, 120, 130), RIM = C(255, 110, 120), SPARK = C(255, 90, 100);
   const LITE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
   const dpr = Math.min(window.devicePixelRatio || 1, LITE ? 1.5 : 2);
   const BG = '#0b0b0c';
@@ -45,7 +50,7 @@
   const mark = new Image();
   let markOk = false;
   mark.onload = () => { markOk = true; };
-  mark.src = '/assets/scythe-mark.webp';
+  if (SC) SC.mark().then(u => { mark.src = u; }); else mark.src = '/assets/scythe-mark.webp';
   // An offscreen layer so the silhouette/lit split can be composited without touching the cover.
   const layer = document.createElement('canvas'), lctx = layer.getContext('2d');
 
@@ -66,8 +71,8 @@
     lctx.globalCompositeOperation = 'source-atop';
     const edge = (litX - b.x) * dpr;
     const g = lctx.createLinearGradient(edge - 90 * dpr * k, 0, edge + 30 * dpr * k, 0);
-    g.addColorStop(0, 'rgba(255,40,56,0)');
-    g.addColorStop(0.75, 'rgba(255,40,56,.55)');      // crimson sheen riding the aura's front
+    g.addColorStop(0, `rgba(${HOT},0)`);
+    g.addColorStop(0.75, `rgba(${HOT},.55)`);      // crimson sheen riding the aura's front
     g.addColorStop(0.76, 'rgba(8,8,9,.86)');
     g.addColorStop(1, 'rgba(8,8,9,.86)');
     lctx.fillStyle = g;
@@ -92,8 +97,8 @@
   }
   function soft(x, y, r, a) {
     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, `rgba(255,42,58,${a})`);
-    g.addColorStop(1, 'rgba(255,42,58,0)');
+    g.addColorStop(0, `rgba(${EMB},${a})`);
+    g.addColorStop(1, `rgba(${EMB},0)`);
     ctx.fillStyle = g;
     ctx.fillRect(x - r, y - r, r * 2, r * 2);
   }
@@ -116,9 +121,9 @@
     ctx.fill('evenodd');
     if (hole > 0.5) {                              // glowing rim of the opening
       ctx.save();
-      ctx.lineWidth = 10 * k; ctx.strokeStyle = `rgba(200,32,47,${0.35 * (1 - o)})`;
+      ctx.lineWidth = 10 * k; ctx.strokeStyle = `rgba(${RED},${0.35 * (1 - o)})`;
       ctx.beginPath(); ctx.arc(cx, cy, hole + 4 * k, 0, Math.PI * 2); ctx.stroke();
-      ctx.lineWidth = 2.5 * k; ctx.strokeStyle = `rgba(255,110,120,${0.9 * (1 - o)})`;
+      ctx.lineWidth = 2.5 * k; ctx.strokeStyle = `rgba(${RIM},${0.9 * (1 - o)})`;
       ctx.beginPath(); ctx.arc(cx, cy, hole, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
@@ -132,12 +137,12 @@
       // soft on both sides: a long trailing glow behind a brighter front
       const bw = Math.max(280, W * 0.5), lead = bw * 0.45, fade = Math.sin(Math.PI * s);
       const g = ctx.createLinearGradient(bandX - bw, 0, bandX + lead, 0);
-      g.addColorStop(0, 'rgba(200,32,47,0)');
-      g.addColorStop(0.45, `rgba(200,32,47,${0.14 * fade})`);
-      g.addColorStop(0.68, `rgba(220,38,54,${0.34 * fade})`);
-      g.addColorStop(0.78, `rgba(255,80,92,${0.4 * fade})`);
-      g.addColorStop(0.9, `rgba(200,32,47,${0.12 * fade})`);
-      g.addColorStop(1, 'rgba(200,32,47,0)');
+      g.addColorStop(0, `rgba(${RED},0)`);
+      g.addColorStop(0.45, `rgba(${RED},${0.14 * fade})`);
+      g.addColorStop(0.68, `rgba(${FRONT},${0.34 * fade})`);
+      g.addColorStop(0.78, `rgba(${BRIGHT},${0.4 * fade})`);
+      g.addColorStop(0.9, `rgba(${RED},${0.12 * fade})`);
+      g.addColorStop(1, `rgba(${RED},0)`);
       ctx.fillStyle = g;
       ctx.fillRect(bandX - bw, 0, bw + lead, H);
       if (Math.random() < (LITE ? 0.45 : 0.8)) addStreak(bandX);
@@ -147,8 +152,8 @@
       const a = Math.sin(Math.PI * clamp01(st.age / st.life)) * 0.55;
       if (a <= 0) continue;
       const g = ctx.createLinearGradient(st.x - st.len, 0, st.x, 0);
-      g.addColorStop(0, 'rgba(255,60,74,0)');
-      g.addColorStop(1, `rgba(255,120,130,${a})`);
+      g.addColorStop(0, `rgba(${STREAK},0)`);
+      g.addColorStop(1, `rgba(${STREAK2},${a})`);
       ctx.fillStyle = g;
       ctx.fillRect(st.x - st.len, st.y - st.w / 2, st.len, st.w);
     }
@@ -159,7 +164,7 @@
       const p = clamp01((t - start) / 900);
       if (p <= 0 || p >= 1) continue;
       ctx.lineWidth = 3 * k * (1 - p) + 0.5;
-      ctx.strokeStyle = `rgba(255,60,74,${0.6 * (1 - p)})`;
+      ctx.strokeStyle = `rgba(${STREAK},${0.6 * (1 - p)})`;
       ctx.beginPath(); ctx.arc(cx, cy, (0.12 + p * 0.5) * Math.min(W, H), 0, Math.PI * 2); ctx.stroke();
     }
     // embers
@@ -168,7 +173,7 @@
       e.age += dt; e.x += e.vx * dt; e.y += e.vy * dt;
       const a = clamp01(1 - e.age / e.life);
       if (a <= 0) continue;
-      ctx.fillStyle = `rgba(255,90,100,${a})`;
+      ctx.fillStyle = `rgba(${SPARK},${a})`;
       ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();

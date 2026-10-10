@@ -28,8 +28,14 @@
   const LITE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
   const dpr = Math.min(window.devicePixelRatio || 1, LITE ? 1.5 : 2);
 
-  const BG = '#0b0b0c', RED = '#c8202f';
-  const BLOOD = ['#5c0712', '#7a0a18', '#8f0d1e', '#a3172a'];
+  // Every crimson here (slash, cut, flash, blood) follows the visitor's scythe effect colour
+  // (views/scythe-color.js); with the default colour it is the original red.
+  const SC = window.YannzScythe;
+  const C = (r, g, b) => (SC ? SC.tone([r, g, b]) : [r, g, b]).join(',');
+  const hex = (r, g, b) => `rgb(${C(r, g, b)})`;
+  const BG = '#0b0b0c', RED = hex(200, 32, 47), RED_ = C(200, 32, 47), LIP = C(163, 23, 42), HOT = C(255, 90, 100), BEAD = C(255, 120, 130);
+  const BLOOD = [hex(92, 7, 18), hex(122, 10, 24), hex(143, 13, 30), hex(163, 23, 42)], DRIP = hex(122, 10, 24);
+  const WHITE = hex(255, 241, 242), PINK = hex(255, 107, 119);
   const T = { swing: 1000, cut: 1400, fall: 2700, fallDur: 1300, end: 4900 };
   const rand = (a, b) => a + Math.random() * (b - a);
   const clamp01 = v => Math.max(0, Math.min(1, v));
@@ -96,9 +102,9 @@
     ctx.fill();
     ctx.clip();
     // the wound's lip: a crimson rim with a soft inner glow, clipped to this half
-    strokeCut(22 * k, `rgba(200,32,47,${0.16 * glow})`);
-    strokeCut(8 * k, `rgba(163,23,42,${0.75 * glow})`);
-    strokeCut(2.5 * k, `rgba(255,90,100,${0.9 * glow})`);
+    strokeCut(22 * k, `rgba(${RED_},${0.16 * glow})`);
+    strokeCut(8 * k, `rgba(${LIP},${0.75 * glow})`);
+    strokeCut(2.5 * k, `rgba(${HOT},${0.9 * glow})`);
     ctx.restore();
   }
 
@@ -109,7 +115,7 @@
       const g = ease.out(clamp01((t - T.cut - d.delay) / d.dur));
       if (g <= 0) continue;
       const p = at(d.u), len = d.len * k * g, w = d.w * k, r = w * 0.95;
-      ctx.fillStyle = '#7a0a18';
+      ctx.fillStyle = DRIP;
       ctx.beginPath();
       ctx.moveTo(p.x - w / 2, p.y - 2);
       ctx.quadraticCurveTo(p.x - w * 0.22, p.y + len * 0.5, p.x - w * 0.3, p.y + len);
@@ -117,7 +123,7 @@
       ctx.quadraticCurveTo(p.x + w * 0.22, p.y + len * 0.5, p.x + w / 2, p.y - 2);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = 'rgba(255,120,130,.4)';       // a small highlight on the bead so it reads as liquid
+      ctx.fillStyle = `rgba(${BEAD},.4)`;       // a small highlight on the bead so it reads as liquid
       ctx.beginPath(); ctx.arc(p.x - r * 0.35, p.y + len - r * 0.25, r * 0.28, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
@@ -156,10 +162,10 @@
     }
     const a = at(tail), b = at(head);
     const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-    grad.addColorStop(0, 'rgba(200,32,47,0)');
-    grad.addColorStop(0.55, 'rgba(200,32,47,.95)');
-    grad.addColorStop(0.9, '#ff6b77');
-    grad.addColorStop(1, '#fff1f2');
+    grad.addColorStop(0, `rgba(${RED_},0)`);
+    grad.addColorStop(0.55, `rgba(${RED_},.95)`);
+    grad.addColorStop(0.9, PINK);
+    grad.addColorStop(1, WHITE);
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.beginPath();
@@ -209,8 +215,8 @@
       ctx.fillStyle = BG;
       ctx.fillRect(-10, -10, W + 20, H + 20);
       const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, diag * 0.6);
-      g.addColorStop(0, `rgba(200,32,47,${0.07 * clamp01(t / T.swing)})`);
-      g.addColorStop(1, 'rgba(200,32,47,0)');
+      g.addColorStop(0, `rgba(${RED_},${0.07 * clamp01(t / T.swing)})`);
+      g.addColorStop(1, `rgba(${RED_},0)`);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
       label(t);
@@ -227,9 +233,9 @@
       if (hit > 0) {
         ctx.save();
         ctx.globalAlpha = hit;
-        strokeCut(3 * k, '#fff1f2');
+        strokeCut(3 * k, WHITE);
         ctx.restore();
-        ctx.fillStyle = `rgba(200,32,47,${0.2 * hit})`;
+        ctx.fillStyle = `rgba(${RED_},${0.2 * hit})`;
         ctx.fillRect(-10, -10, W + 20, H + 20);
       }
     }

@@ -243,6 +243,11 @@ app.get('/assets/scythe-mark.webp', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400');
   res.type('image/webp').sendFile(path.join(__dirname, 'views', 'assets', 'scythe-mark.webp'));
 });
+// Which part of the scythe each pixel of scythe-mark.webp is, for recolouring it (views/scythe-color.js).
+app.get('/assets/scythe-mark-parts.png', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.type('image/png').sendFile(path.join(__dirname, 'views', 'assets', 'scythe-mark-parts.png'));
+});
 app.get('/assets/slash-intro.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'slash-intro.js'));

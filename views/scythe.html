@@ -2141,8 +2141,11 @@ if(window.YannzScythe){
   SC.paint(THREE,{traverse(fn){ [...Object.values(MAT),glowMat].forEach(m=>fn({material:m})); }});
   const fxThings=[[spriteMat,'color'],[pivotGlow.material,'color'],[flash,'color'],...waves.map(w=>[w.m.material,'color']),...discPool.map(d=>[d.m.material,'color']),...streakPool.map(d=>[d.m.material,'color']),...redLights.map(l=>[l,'color'])];
   fxThings.forEach(([o,p])=>SC.track(THREE,o,p,'fx'));
-  setFx(SC.get().fx);
-  window.addEventListener('yannz:scythe',e=>setFx(e.detail.fx));
+  // the red screen flash on hits follows the effect colour too
+  const flashEl=document.getElementById('flash');
+  const flashBg=()=>{ if(flashEl) flashEl.style.background=`radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(${SC.tone([170,10,30]).join(',')},.5) 100%)`; };
+  setFx(SC.get().fx); flashBg();
+  window.addEventListener('yannz:scythe',e=>{ setFx(e.detail.fx); flashBg(); });
   const cv=renderer.domElement, ray=new THREE.Raycaster(); let tap=null;
   cv.addEventListener('pointerdown',e=>{ tap=(ctrlOn||world.on)?null:{x:e.clientX,y:e.clientY,t:performance.now()}; });
   cv.addEventListener('pointerup',e=>{

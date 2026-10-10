@@ -9,6 +9,10 @@
 //   YannzScythe.paint(THREE, root)   → recolours a three.js scythe, follows later changes
 //   YannzScythe.track(THREE, obj, prop, part) → an extra light / sprite / ring that follows a part
 //   YannzScythe.open(x, y)           → the small colour panel next to the tap
+//   YannzScythe.tone(c)              → a crimson from the site's scythe animations, moved to the chosen
+//                                      effect colour ([r, g, b] in and out; the default is unchanged)
+//   YannzScythe.mark()               → URL of the 2D scythe (the intro / loading picture) in the chosen
+//                                      colours; <img data-scythe-mark> pictures follow on their own
 (() => {
   if (window.YannzScythe) return;
   const DEFAULT = { handle: '#f2ebe0', head: '#b8b4bc', fx: '#ff1a2c' };
@@ -21,7 +25,11 @@
 
   const clean = c => ({ handle: HEX.test(c?.handle || '') ? c.handle.toLowerCase() : DEFAULT.handle,
     head: HEX.test(c?.head || '') ? c.head.toLowerCase() : DEFAULT.head, fx: HEX.test(c?.fx || '') ? c.fx.toLowerCase() : DEFAULT.fx });
-  function get() { return clean(window.YannzUI ? window.YannzUI.load().scythe : null); }
+  function get() {
+    if (window.YannzUI) return clean(window.YannzUI.load().scythe);
+    try { return clean(JSON.parse(localStorage.getItem('yannz-ui') || 'null')?.scythe); } catch { return clean(null); }
+  }
+  const custom = c => c.handle !== DEFAULT.handle || c.head !== DEFAULT.head || c.fx !== DEFAULT.fx;
 
   let saveTimer = null;
   function set(c) {
@@ -81,6 +89,87 @@
   function rgb(part) { const n = parseInt(get()[part].slice(1), 16); return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }
   window.addEventListener('yannz:scythe', e => { for (const s of scenes) apply(s.THREE, s.list, e.detail); });
 
+  // ---------------------------------------------------------------- 2D animations (intros, loading)
+  // The canvas / CSS animations are drawn in crimson. tone() moves such a colour to the chosen effect
+  // colour: the hue turns with it, saturation scales, and lightness is remapped so the default red
+  // lands on the chosen colour while black stays black and white-hot stays white.
+  const hsl = ([r, g, b]) => {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    if (!d) return [0, 0, l];
+    const s = d / (1 - Math.abs(2 * l - 1));
+    const h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return [h * 60, s, l];
+  };
+  const fromHsl = (h, s, l) => {
+    const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+    const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+    return [r, g, b].map(v => Math.round(Math.max(0, Math.min(1, v + m)) * 255));
+  };
+  const hexRgb = h => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+  const toHex = a => '#' + a.map(v => v.toString(16).padStart(2, '0')).join('');
+  function tone(c, fx = get().fx) {
+    const rgb = typeof c === 'string' ? hexRgb(c) : c;
+    if (fx === DEFAULT.fx) return rgb.slice(0, 3);
+    const [hd, sd, ld] = hsl(hexRgb(DEFAULT.fx)), [hc, sc, lc] = hsl(hexRgb(fx)), [h, s, l] = hsl(rgb);
+    const L = l <= ld ? l * lc / ld : lc + (l - ld) / (1 - ld) * (1 - lc);
+    return fromHsl(((h + hc - hd) % 360 + 360) % 360, Math.min(1, s * sc / sd), L);
+  }
+  // CSS: --scythe-fx is the site crimson (#c8202f) in the chosen effect colour.
+  function cssVars(c) { document.documentElement.style.setProperty('--scythe-fx', toHex(tone('#c8202f', c.fx))); }
+
+  // The 2D scythe picture is a render of the 3D model; scythe-mark-parts.png says which part each
+  // pixel belongs to (red = handle, green = head, blue or uncovered = effects). A recoloured pixel
+  // keeps its own brightness, like the 3D materials do.
+  const MARK = '/assets/scythe-mark.webp', PARTS = '/assets/scythe-mark-parts.png';
+  const lin = v => (v /= 255) <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  const srgb = v => Math.round(255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(Math.min(1, v), 1 / 2.4) - 0.055));
+  const lumLin = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const img = src => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; });
+  let markKey = '', markUrl = null;
+  function mark(c = get()) {
+    if (!custom(c)) return Promise.resolve(MARK);
+    const key = c.handle + c.head + c.fx;
+    if (key === markKey && markUrl) return markUrl;
+    markKey = key;
+    markUrl = Promise.all([img(MARK), img(PARTS)]).then(([base, parts]) => {
+      const w = base.naturalWidth, h = base.naturalHeight;
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const x = cv.getContext('2d', { willReadFrequently: true });
+      x.drawImage(parts, 0, 0, w, h);
+      const map = x.getImageData(0, 0, w, h).data;
+      x.clearRect(0, 0, w, h);
+      x.drawImage(base, 0, 0);
+      const data = x.getImageData(0, 0, w, h), px = data.data;
+      const part = {};
+      for (const p of ['handle', 'head', 'fx']) {
+        if (c[p] === DEFAULT[p]) continue;
+        const d = hexRgb(DEFAULT[p]).map(lin), want = hexRgb(c[p]).map(lin);
+        part[p] = { want, ld: Math.max(0.02, lumLin(...d)) };
+      }
+      for (let i = 0; i < px.length; i += 4) {
+        if (!px[i + 3]) continue;
+        const r = map[i], g = map[i + 1], b = map[i + 2], covered = map[i + 3] > 127;
+        if (covered && !r && !g && !b) continue;          // pieces with no part (socket, leaves)
+        const p = !covered ? 'fx' : r >= g && r >= b ? 'handle' : g >= b ? 'head' : 'fx';
+        const t = part[p];
+        if (!t) continue;
+        const k = lumLin(lin(px[i]), lin(px[i + 1]), lin(px[i + 2])) / t.ld;
+        px[i] = srgb(t.want[0] * k); px[i + 1] = srgb(t.want[1] * k); px[i + 2] = srgb(t.want[2] * k);
+      }
+      x.putImageData(data, 0, 0);
+      return new Promise(ok => cv.toBlob(b => ok(b ? URL.createObjectURL(b) : cv.toDataURL()), 'image/png'));
+    }).catch(() => MARK);
+    return markUrl;
+  }
+  function marks(c = get()) {
+    const list = document.querySelectorAll('img[data-scythe-mark]');
+    if (list.length) mark(c).then(u => list.forEach(i => { if (i.getAttribute('src') !== u) i.src = u; }));
+  }
+  window.addEventListener('yannz:scythe', e => { cssVars(e.detail); marks(e.detail); });
+  cssVars(get());
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => marks()); else marks();
+
   // ---------------------------------------------------------------- the small colour panel
   let panel = null;
   function close() { panel?.remove(); panel = null; document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', esc); }
@@ -133,5 +222,5 @@
     panel.querySelector('#yz-fx').focus({ preventScroll: true });
   }
 
-  window.YannzScythe = { DEFAULT, PART, get, set, paint, track, rgb, open, close };
+  window.YannzScythe = { DEFAULT, PART, get, set, custom: () => custom(get()), paint, track, rgb, tone, mark, open, close };
 })();

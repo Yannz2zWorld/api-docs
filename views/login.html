@@ -51,10 +51,10 @@
     .meta{display:flex;justify-content:space-between;align-items:center;margin-top:25px;font:500 9px 'DM Mono';color:var(--faint)}.meta a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
     .loading{position:fixed;inset:0;background:var(--cream);z-index:100;display:grid;place-items:center;opacity:0;visibility:hidden;transition:opacity .35s ease,visibility .35s}.loading.show{opacity:1;visibility:visible}.load-card{width:min(90vw,500px);text-align:center}.load-scene{height:250px;position:relative;perspective:1000px}.load-core{position:absolute;left:50%;top:50%;width:90px;height:90px;transform:translate(-50%,-50%);transform-style:preserve-3d;animation:core 3s ease-in-out infinite}.load-core span{position:absolute;inset:0;border:3px solid var(--edge);background:rgba(255,255,255,.07);box-shadow:5px 5px 0 var(--drop)}.load-core span:nth-child(2){transform:rotateX(60deg) rotateZ(30deg)}.load-core span:nth-child(3){transform:rotateY(60deg) rotateZ(30deg)}.load-orbit{position:absolute;left:50%;top:50%;border:2px solid var(--edge);border-radius:50%;transform-style:preserve-3d}.lo1{width:260px;height:90px;transform:translate(-50%,-50%) rotateX(65deg);animation:spin 2.8s linear infinite}.lo2{width:220px;height:70px;transform:translate(-50%,-50%) rotateY(68deg);animation:spin 3.6s linear infinite reverse}.load-dot{position:absolute;width:9px;height:9px;border:2px solid var(--edge);background:var(--yellow);border-radius:50%;left:50%;top:50%;transform-origin:0 0;animation:particle 2.4s linear infinite}.load-dot:nth-child(5){animation-delay:-.6s}.load-dot:nth-child(6){animation-delay:-1.2s}.load-dot:nth-child(7){animation-delay:-1.8s}
     /* Loading screen: the scythe with a crimson aura and a sheen sweeping across it */
-    .load-scene .load-aura{position:absolute;left:50%;top:50%;width:240px;height:240px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 42%,transparent),color-mix(in srgb,var(--accent) 0%,transparent) 68%);animation:aura 1.8s ease-in-out infinite}
+    .load-scene .load-aura{position:absolute;left:50%;top:50%;width:240px;height:240px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--scythe-fx,#c8202f) 42%,transparent),color-mix(in srgb,var(--scythe-fx,#c8202f) 0%,transparent) 68%);animation:aura 1.8s ease-in-out infinite}
     .load-mark{position:absolute;left:50%;top:50%;width:142px;height:220px;transform:translate(-50%,-50%);animation:markfloat 3s ease-in-out infinite}
-    .load-mark img{display:block;width:100%;height:100%;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent) 45%,transparent))}
-    .load-sheen{position:absolute;inset:0;-webkit-mask:url(/assets/scythe-mark.webp) center/contain no-repeat;mask:url(/assets/scythe-mark.webp) center/contain no-repeat;background:linear-gradient(100deg,transparent 38%,color-mix(in srgb,var(--accent) 95%,transparent) 50%,transparent 62%) 0 0/300% 100%;mix-blend-mode:screen;animation:sheen 1.6s linear infinite}
+    .load-mark img{display:block;width:100%;height:100%;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--scythe-fx,#c8202f) 45%,transparent))}
+    .load-sheen{position:absolute;inset:0;-webkit-mask:url(/assets/scythe-mark.webp) center/contain no-repeat;mask:url(/assets/scythe-mark.webp) center/contain no-repeat;background:linear-gradient(100deg,transparent 38%,color-mix(in srgb,var(--scythe-fx,#c8202f) 95%,transparent) 50%,transparent 62%) 0 0/300% 100%;mix-blend-mode:screen;animation:sheen 1.6s linear infinite}
     @keyframes aura{50%{transform:translate(-50%,-50%) scale(1.15);opacity:.7}}@keyframes markfloat{50%{transform:translate(-50%,-54%)}}@keyframes sheen{from{background-position:100% 0}to{background-position:0 0}}
     @media (prefers-reduced-motion:reduce){.load-scene .load-aura,.load-mark,.load-sheen{animation:none}}
     .loading h3{font:700 28px 'Space Grotesk';letter-spacing:-.04em;margin:0}.loading p{font:500 10px 'DM Mono';text-transform:uppercase;letter-spacing:.15em;color:var(--muted);margin:8px 0 20px}.progress{height:9px;border:2px solid var(--edge);background:var(--paper);box-shadow:3px 3px 0 var(--drop);overflow:hidden}.progress i{display:block;height:100%;width:0;background:var(--yellow);animation:progress .7s cubic-bezier(.2,.8,.2,1) forwards}.status-line{margin-top:12px;font:500 9px 'DM Mono';color:var(--faint);min-height:14px}
@@ -131,7 +131,7 @@
   <script>document.documentElement.classList.add('scene-pending');setTimeout(function(){document.documentElement.classList.remove('scene-pending')},20000)</script>
   <style>html.scene-pending .stage{opacity:0;visibility:hidden}</style>
   <style>#slash-intro{position:fixed;inset:0;z-index:300;background:var(--bg);pointer-events:none;animation:slash-fallback .4s ease 2.8s forwards}@keyframes slash-fallback{to{opacity:0;visibility:hidden}}@media (prefers-reduced-motion:reduce){#slash-intro{display:none}}</style>
-  <script defer src="/assets/slash-intro.js?v=3"></script>
+  <script defer src="/assets/slash-intro.js?v=4"></script>
   <script defer src="/assets/scene3d.js?v=8"></script>
 </head>
 <body>
@@ -213,7 +213,7 @@
 </div>
 <div class="loading" id="loading-screen" aria-hidden="true">
   <div class="load-card">
-    <div class="load-scene"><div class="load-aura"></div><div class="load-mark"><img src="/assets/scythe-mark.webp" alt="" width="142" height="220"><span class="load-sheen"></span></div></div>
+    <div class="load-scene"><div class="load-aura"></div><div class="load-mark"><img src="/assets/scythe-mark.webp" data-scythe-mark alt="" width="142" height="220"><span class="load-sheen"></span></div></div>
     <h3>Lagi nyiapin workspace kamu</h3><p id="loading-copy">Ngecek sesi</p><div class="progress"><i></i></div><div class="status-line" id="status-line">Nyiapin koneksi aman...</div>
   </div>
 </div>
