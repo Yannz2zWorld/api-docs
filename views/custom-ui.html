@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Custom UI — Yannz API</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png?v=2"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
+<meta name="theme-color" content="#0b0b0c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/i18n.js"></script>
+<script src="/assets/ui-theme.js"></script>
+<style>
+  .looks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+  .look { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 10px; padding: 12px; border: 2px solid var(--edge-soft); border-radius: 14px; background: var(--surface-2); transition: transform .16s, box-shadow .16s, border-color .16s; }
+  .look:hover { transform: translate(-2px, -2px); }
+  .look:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .look[aria-pressed="true"] { border-color: var(--accent); box-shadow: 4px 4px 0 var(--accent); }
+  .look b { font: 700 15px "Space Grotesk", sans-serif; color: var(--ink); }
+  .look small { color: var(--muted); font-size: 12px; line-height: 1.4; }
+  /* a small picture of each look, drawn with that look's own colours */
+  .mini { height: 108px; border-radius: 10px; padding: 10px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; gap: 8px; background-size: 12px 12px; overflow: hidden; }
+  .mini .bar { grid-column: 1 / -1; height: 16px; border-radius: 999px; }
+  .mini .tile { border-radius: 8px; }
+  .mini .tile.a { display: grid; place-items: center; font: 800 13px "Space Grotesk", sans-serif; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .swatch { all: unset; box-sizing: border-box; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; border: 2px solid var(--edge); box-shadow: 3px 3px 0 var(--drop); }
+  .swatch[aria-pressed="true"] { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .swatch:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .color-row { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; margin-top: 18px; }
+  .picker { width: 76px; height: 76px; padding: 0; border-radius: 14px; cursor: pointer; border: var(--line); box-shadow: 4px 4px 0 var(--drop); }
+  .sliders { display: grid; gap: 8px; }
+  .sl { display: grid; grid-template-columns: 18px 1fr 58px; gap: 10px; align-items: center; font: 700 12px "DM Mono", monospace; }
+  .sl input[type=range] { padding: 0; height: 8px; border-radius: 999px; appearance: none; -webkit-appearance: none; border: 0; }
+  .sl input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--surface); border: 3px solid var(--ink); }
+  .sl input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--surface); border: 3px solid var(--ink); }
+  .sl input[type=number] { padding: 6px 8px; text-align: center; }
+  #r-range { background: linear-gradient(90deg, #000, #f00); } #g-range { background: linear-gradient(90deg, #000, #0f0); } #b-range { background: linear-gradient(90deg, #000, #00f); }
+  .hex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+  .hex-row input { width: 130px; font-family: "DM Mono", monospace; text-transform: uppercase; }
+  .toggle { display: inline-flex; gap: 10px; align-items: center; cursor: pointer; font-weight: 600; }
+  .rainbow { font-weight: 800; }
+  /* live preview, made of the site's own parts */
+  .preview { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .member { border: var(--line); border-radius: var(--radius); box-shadow: var(--shadow); background: var(--accent); color: var(--accent-ink); padding: 18px; display: grid; gap: 10px; }
+  .member .tag { justify-self: start; font: 700 11px "DM Mono", monospace; letter-spacing: .08em; padding: 5px 10px; border-radius: 8px; background: color-mix(in srgb, var(--accent-ink) 16%, transparent); }
+  .member b { font: 800 24px "Space Grotesk", sans-serif; letter-spacing: -.02em; }
+  .member .id { justify-self: start; font: 700 13px "DM Mono", monospace; padding: 8px 12px; border-radius: 10px; border: 2px solid color-mix(in srgb, var(--accent-ink) 45%, transparent); }
+  .statbox { border: var(--line); border-radius: var(--radius); box-shadow: var(--shadow); background: var(--surface); padding: 18px; display: grid; gap: 6px; }
+  .statbox .num { font: 800 40px "Space Grotesk", sans-serif; letter-spacing: -.04em; }
+  .statbox .ic { width: 42px; height: 42px; border-radius: 12px; border: var(--line); background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 800; box-shadow: 3px 3px 0 var(--drop); }
+  .sticky-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  @media (max-width: 520px) { .color-row { grid-template-columns: 1fr; } .picker { width: 100%; height: 56px; } }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="/home"><span class="brand-mark">Y</span>Yannz API</a><nav class="nav" aria-label="Navigasi utama"><a href="/home">Dashboard</a><a href="/api/playground">Playground</a><a href="/api">API Docs</a><a href="/keys">Keys</a><a href="/billing">Billing</a><a href="/pricing">Pricing</a><a href="/custom-ui" aria-current="page">Custom UI</a><div data-lang-switch></div></nav></div></header>
+<main class="wrap wide">
+  <span class="kicker">Tampilan</span>
+  <h1>Custom UI</h1>
+  <p class="lead">Pilih gaya tampilan dan warna favoritmu. Langsung berubah di semua halaman, dan tersimpan di akunmu: login di HP atau browser lain, tampilannya tetap sama.</p>
+
+  <section class="panel" aria-labelledby="looks-title">
+    <h2 id="looks-title">1. Pilih gaya</h2>
+    <div class="looks" id="looks" role="group" aria-labelledby="looks-title"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="color-title">
+    <h2 id="color-title">2. Pilih warna</h2>
+    <p class="muted" style="margin-top:-6px">Warna utama buat tombol, kartu, dan sorotan. Semua warna bisa.</p>
+    <div class="swatches" id="swatches" role="group" aria-label="Warna cepat"></div>
+    <div class="color-row">
+      <input type="color" class="picker" id="picker" aria-label="Pilih warna bebas">
+      <div class="sliders">
+        <label class="sl" for="r-range"><span>R</span><input type="range" id="r-range" min="0" max="255" data-c="0"><input type="number" id="r-num" min="0" max="255" data-c="0" aria-label="Merah (R)"></label>
+        <label class="sl" for="g-range"><span>G</span><input type="range" id="g-range" min="0" max="255" data-c="1"><input type="number" id="g-num" min="0" max="255" data-c="1" aria-label="Hijau (G)"></label>
+        <label class="sl" for="b-range"><span>B</span><input type="range" id="b-range" min="0" max="255" data-c="2"><input type="number" id="b-num" min="0" max="255" data-c="2" aria-label="Biru (B)"></label>
+      </div>
+    </div>
+    <div class="hex-row">
+      <label for="hex" class="muted" style="font:600 11px 'DM Mono',monospace;letter-spacing:.08em">HEX</label>
+      <input id="hex" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#FFD60A">
+      <button type="button" class="sm" id="style-color">Pakai warna bawaan gaya</button>
+    </div>
+    <p style="margin:18px 0 0"><label class="toggle"><input type="checkbox" id="rgb"> <span>Mode <span class="rainbow">RGB</span>: warnanya ganti-ganti terus kayak lampu gaming</span></label></p>
+  </section>
+
+  <section class="panel" aria-labelledby="prev-title">
+    <h2 id="prev-title">Contoh tampilan</h2>
+    <div class="preview">
+      <div class="member"><span class="tag">MEMBERSHIP</span><b>FREE USER</b><span class="id" data-no-i18n>YANNZ-1234</span></div>
+      <div class="statbox"><span class="ic">✓</span><span class="num">35</span><small class="muted">ENDPOINT AKTIF</small></div>
+      <div class="statbox">
+        <div class="field" style="margin:0"><label for="demo-input">Contoh isian</label><input id="demo-input" placeholder="https://..."></div>
+        <div class="row"><button type="button" class="primary">Kirim</button><button type="button">Batal</button><span class="chip ok">aktif</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="sticky-actions"><a class="btn primary" href="/home">Selesai</a><button type="button" id="reset">Balik ke tampilan awal</button></div>
+  <p id="saved" class="muted" aria-live="polite"></p>
+</main>
+<script>
+(() => {
+  const UI = window.YannzUI, $ = s => document.querySelector(s);
+  let pref = UI.load();
+  const SWATCHES = ['#c8202f', '#ffd60a', '#6366f1', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7', '#ec4899', '#f97316', '#84cc16', '#14b8a6', '#ffffff', '#111111'];
+  const style = () => UI.STYLES[pref.style] || UI.STYLES.default;
+  const current = () => pref.accent || style().accent;
+
+  let saving = 0;
+  function commit(msg) {
+    const n = ++saving;
+    render();
+    $('#saved').textContent = msg || '';
+    UI.set(pref).then(ok => {
+      if (n !== saving) return;   // a newer change is on its way
+      $('#saved').textContent = (msg ? msg + ' ' : '') + (ok ? 'Tersimpan di akunmu, ikut ke HP / browser mana pun kamu login.' : 'Tersimpan di browser ini (belum ke akun, coba lagi nanti).');
+    });
+  }
+  function looks() {
+    $('#looks').innerHTML = Object.entries(UI.STYLES).map(([id, s]) => {
+      const dot = s.dot === 'transparent' ? 'none' : `radial-gradient(${s.dot} 1px, transparent 1px)`;
+      const edge = s.edge === 'accent' ? s.accent : s.edge;
+      const shadow = s.shadow[0] || s.shadow[1] ? `${Math.min(s.shadow[0], 4)}px ${Math.min(s.shadow[1], 4)}px 0 ${s.drop}` : 'none';
+      const bg = s.bg;
+      const tile = `border:${Math.min(s.border, 2)}px solid ${edge};box-shadow:${shadow};border-radius:${Math.min(s.radius, 12)}px`;
+      return `<button type="button" class="look" data-style="${id}" aria-pressed="false">
+        <span class="mini" aria-hidden="true" style="background:${bg};background-image:${dot}">
+          <span class="bar" style="background:${s.surface};${tile}"></span>
+          <span class="tile a" style="background:${s.accent};color:${UI.inkOn(s.accent)};${tile}">Aa</span>
+          <span class="tile" style="background:${s.surface};${tile}"></span>
+        </span>
+        <b data-no-i18n>${s.name}</b><small>${s.desc}</small></button>`;
+    }).join('');
+  }
+  function swatches() {
+    $('#swatches').innerHTML = SWATCHES.map(c => `<button type="button" class="swatch" data-color="${c}" style="background:${c}" aria-label="Warna ${c}" aria-pressed="false"></button>`).join('');
+  }
+  const rgbOf = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  const hexOf = rgb => '#' + rgb.map(v => Math.max(0, Math.min(255, v | 0)).toString(16).padStart(2, '0')).join('');
+  function render() {
+    document.querySelectorAll('.look').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.style === pref.style)));
+    const c = current();
+    document.querySelectorAll('.swatch').forEach(b => b.setAttribute('aria-pressed', String(!pref.rgb && b.dataset.color === c)));
+    $('#picker').value = c;
+    rgbOf(c).forEach((v, i) => { $(['#r', '#g', '#b'][i] + '-range').value = v; $(['#r', '#g', '#b'][i] + '-num').value = v; });
+    if (document.activeElement !== $('#hex')) $('#hex').value = c.toUpperCase();
+    $('#rgb').checked = pref.rgb;
+    $('#style-color').disabled = !pref.accent;
+  }
+  function setColor(hex, msg) { pref = { ...pref, accent: hex.toLowerCase(), rgb: false }; commit(msg); }
+
+  looks(); swatches(); render();
+  $('#looks').addEventListener('click', e => { const b = e.target.closest('.look'); if (b) { pref = { ...pref, style: b.dataset.style }; commit(`Gaya ${UI.STYLES[b.dataset.style].name} dipakai.`); } });
+  $('#swatches').addEventListener('click', e => { const b = e.target.closest('.swatch'); if (b) setColor(b.dataset.color); });
+  $('#picker').addEventListener('input', e => setColor(e.target.value));
+  document.querySelectorAll('.sliders input').forEach(inp => inp.addEventListener('input', () => {
+    const rgb = rgbOf(current()); rgb[Number(inp.dataset.c)] = Number(inp.value) || 0; setColor(hexOf(rgb));
+  }));
+  $('#hex').addEventListener('input', e => {
+    let v = e.target.value.trim(); if (!v.startsWith('#')) v = '#' + v;
+    if (/^#[0-9a-f]{3}$/i.test(v)) v = '#' + [...v.slice(1)].map(x => x + x).join('');
+    if (/^#[0-9a-f]{6}$/i.test(v)) setColor(v);
+  });
+  $('#style-color').addEventListener('click', () => { pref = { ...pref, accent: '', rgb: false }; commit('Pakai warna bawaan gaya.'); });
+  $('#rgb').addEventListener('change', e => { pref = { ...pref, rgb: e.target.checked }; commit(e.target.checked ? 'Mode RGB nyala.' : 'Mode RGB mati.'); });
+  $('#reset').addEventListener('click', () => { pref = { style: 'default', accent: '', rgb: false }; commit('Balik ke tampilan awal.'); });
+})();
+</script>
+<script src="/assets/music.js" defer></script>
+</body>
+</html>
