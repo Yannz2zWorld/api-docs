@@ -94,8 +94,12 @@
     .oauth .divider{margin:22px 0 16px}.oauth[hidden]{display:none}
     .panel h2{transition:opacity .2s}
   .layout>*,.panel,.view,.oauth{min-width:0}.panel{max-width:100%}
-  /* Google's button lives in an iframe 20px wider than the button (−10px margins each side): never clip or squeeze it. */
-  #google-oauth{display:flex;justify-content:center;align-items:center;min-height:44px}#google-oauth:empty{display:none}#google-oauth iframe{box-shadow:3px 4px 0 var(--drop);border-radius:4px}#google-fallback{text-decoration:none;color:inherit}#google-fallback[hidden]{display:none}
+  /* Our own Google button (logo + site style). Google's real button sits on top of it, invisible and
+     stretched to the same size, so a click still goes through Google Sign-In. */
+  .gbtn{position:relative}.gbtn #google-oauth{position:absolute;inset:0;opacity:.01;overflow:hidden;border-radius:12px}#google-oauth:empty{display:none}
+  #google-oauth>div{position:absolute;left:0;top:0;transform-origin:0 0}#google-oauth iframe{margin:0!important;display:block}
+  .gbtn.gis .google{pointer-events:none}.gbtn.gis:hover .google{transform:translate(-1px,-1px);box-shadow:5px 6px 0 var(--drop)}.gbtn.gis:focus-within .google{outline:2px solid var(--ink);outline-offset:3px}
+  .google{font:600 13px 'Outfit',sans-serif;letter-spacing:0;text-transform:none}.google-icon{width:30px;height:30px;display:grid;place-items:center;border:0!important;border-radius:8px;background:#fff!important;box-shadow:0 0 0 1px rgba(0,0,0,.12)}#google-fallback{text-decoration:none;color:inherit}#google-fallback[hidden]{display:none}
   
     :root{color-scheme:dark}::selection{background:var(--ink);color:var(--bg)}
     :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
@@ -127,7 +131,7 @@
   <script defer src="/assets/announce.js"></script>
   <style>.visual-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:relative;z-index:3}</style>
   <link rel="preload" href="/assets/scythe.glb" as="fetch" type="model/gltf-binary" crossorigin>
-  <style>.turnstile{margin:14px 0 2px;min-height:65px}.turnstile[hidden]{display:none}.oauth.ts-locked #google-oauth,.oauth.ts-locked #google-fallback{pointer-events:none;opacity:.4;filter:grayscale(1)}.ts-note{font:500 10px 'DM Mono',monospace;color:var(--muted);margin:8px 0 0;text-align:center}.ts-note[hidden]{display:none}</style>
+  <style>.turnstile{margin:14px 0 2px;min-height:65px}.turnstile[hidden]{display:none}.oauth.ts-locked #google-oauth{pointer-events:none}.oauth.ts-locked #google-fallback{pointer-events:none;opacity:.4;filter:grayscale(1)}.ts-note{font:500 10px 'DM Mono',monospace;color:var(--muted);margin:8px 0 0;text-align:center}.ts-note[hidden]{display:none}</style>
   <!-- Hide the CSS fallback while the 3D scythe loads; scene3d.js brings it back if 3D fails. -->
   <script>document.documentElement.classList.add('scene-pending');setTimeout(function(){document.documentElement.classList.remove('scene-pending')},20000)</script>
   <style>html.scene-pending .stage{opacity:0;visibility:hidden}</style>
@@ -202,8 +206,10 @@
 
       <div class="oauth" id="oauth-block">
         <div class="divider"><span>atau</span></div>
-        <div id="google-oauth" aria-live="polite"></div>
-        <a class="google" id="google-fallback" href="/auth/google"><span class="google-icon">G</span><span>Lanjut pakai Google</span></a>
+        <div class="gbtn" id="google-wrap">
+          <a class="google" id="google-fallback" href="/auth/google"><span class="google-icon"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true" focusable="false"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span><span>Lanjutkan dengan Google</span></a>
+          <div id="google-oauth"></div>
+        </div>
         <p class="ts-note" id="ts-note" hidden>Selesain verifikasi di atas dulu buat lanjut pakai Google.</p>
         <div id="google-message" class="message" aria-live="polite"></div>
       </div>
@@ -275,16 +281,20 @@
       if(!cfg.configured||!cfg.clientId) throw new Error('Google OAuth belum di-setting di server.');
       const gis=await waitForGis(8000);
       gis.initialize({client_id:cfg.clientId,callback:handleGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
-      const host=$('#google-oauth');
-      // The button is as wide as the space inside the panel (its padding excluded), so it lines up with
-      // the form fields and is never cut off; drawn again when that space changes (rotate / resize).
-      const room=()=>{const panel=$('.panel'),cs=getComputedStyle(panel);return Math.floor(panel.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))||300;};
+      const host=$('#google-oauth'),wrap=$('#google-wrap'),fallback=$('#google-fallback');
+      // Google's button is drawn invisibly over ours and stretched to exactly its size (it is an iframe
+      // we cannot style). Drawn again when the space changes (rotate / resize).
+      const room=()=>Math.floor(wrap.getBoundingClientRect().width)||Math.floor($('.panel').clientWidth)||300;
+      const fit=()=>{const box=host.firstElementChild;if(!box||!box.offsetWidth||!box.offsetHeight)return;
+        box.style.transform=`scale(${wrap.offsetWidth/box.offsetWidth},${wrap.offsetHeight/box.offsetHeight})`;};
+      new MutationObserver(fit).observe(host,{childList:true,subtree:true});
       let drawn=0;
-      const draw=()=>{const w=Math.max(200,Math.min(400,room()));if(w===drawn)return;drawn=w;host.innerHTML='';
-        gis.renderButton(host,{theme:'filled_black',size:'large',text:'continue_with',shape:'rectangular',logo_alignment:'left',width:w});};
+      const draw=()=>{const w=Math.max(200,Math.min(400,room()));if(w!==drawn){drawn=w;host.innerHTML='';
+        gis.renderButton(host,{theme:'outline',size:'large',text:'continue_with',shape:'rectangular',logo_alignment:'left',width:w});}
+        setTimeout(fit,300);setTimeout(fit,1200);};
       draw();
       let t=null;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(draw,200);});
-      $('#google-fallback').hidden=true;
+      wrap.classList.add('gis');fallback.setAttribute('tabindex','-1');fallback.setAttribute('aria-hidden','true');
     }catch(err){showGoogleError(err.message);}
   }
   initGoogle();
