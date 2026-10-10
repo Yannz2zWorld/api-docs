@@ -1134,7 +1134,8 @@
   "QR ini udah kedaluwarsa / dibatalin.": "This QR has expired or was cancelled.",
   "Bikin QR baru": "Make a new QR",
   "Pembeli scan QRIS, terus tier-nya aktif otomatis begitu Pakasir konfirmasi pembayarannya (dicek ke API status Pakasir, bukan cuma percaya webhook). Nyala kalau": "Buyers scan a QRIS code, and their tier switches on as soon as Pakasir confirms the payment (checked with the Pakasir status API, not just the webhook). It is on when",
-  "Gateway pembayaran nggak ngasih QR. Coba lagi bentar.": "The payment gateway didn't return a QR. Try again in a moment."
+  "Gateway pembayaran nggak ngasih QR. Coba lagi bentar.": "The payment gateway didn't return a QR. Try again in a moment.",
+  "Lanjutkan dengan Google": "Continue with Google"
  },
  "patterns": [
   [
