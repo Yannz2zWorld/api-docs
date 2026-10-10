@@ -47,7 +47,7 @@ function configured(path) {
   const apiproxy = require('../lib/apiproxy');
   if (theresav.registry().some(e => e.path === path)) return Boolean(process.env.THERESAV_API_KEY);
   const a = apiproxy.registry().find(e => e.path === path);
-  if (a) { const srv = apiproxy.SERVERS[a.server] || {}; return a.keyOptional || srv.keyMode === 'none' || Boolean(process.env[srv.keyEnv]); }
+  if (a) return apiproxy.ready(a.server) || (a.keyOptional && !/^(off|0|false)$/i.test(String(process.env[(apiproxy.SERVERS[a.server] || {}).switchEnv] || '')));
   return true;   // local plugins
 }
 
