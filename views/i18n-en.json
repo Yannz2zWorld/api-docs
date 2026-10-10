@@ -580,7 +580,7 @@
   "Ngetes endpoint AI/Downloader/Maker/Image ke theresav dari server. Pakai kuota theresav kamu.": "Tests the AI/Downloader/Maker/Image endpoints against theresav from the server. Uses your theresav quota.",
   "Filter status pembayaran": "Filter by payment status",
   "semua": "all",
-  "Kalau ON, seluruh website masuk mode maintenance: Home, Login, Register, Profile, Dashboard, API dan halaman user lain nampilin info maintenance; login Google, login email + sandi, dan daftar ditolak (dicek di server). Cuma kamu (developer) yang tetap bisa masuk lewat": "When it's ON, the whole site goes into maintenance mode: Home, Login, Register, Profile, Dashboard, API and other user pages show the maintenance notice; Google sign-in, email + password sign-in and sign-up are rejected (checked on the server). Only you (the developer) can still get in, via",
+  "Kalau ON, seluruh website masuk mode maintenance: Home, Login, Register, Profile, Dashboard, API dan halaman user lain nampilin info maintenance (di login dan Home muncul kartu Pengumuman Dev: pesan kamu plus jam mulai maintenance); login Google, login email + sandi, dan daftar ditolak (dicek di server). Cuma kamu (developer) yang tetap bisa masuk lewat": "When it's ON, the whole site goes into maintenance mode: Home, Login, Register, Profile, Dashboard, API and other user pages show the maintenance notice (the sign-in page and Home show a Dev announcement card with your message and when maintenance started); Google sign-in, email + password sign-in and sign-up are rejected (checked on the server). Only you (the developer) can still get in, via",
   "dan ngatur website.": "and manage the site.",
   "Pesan maintenance": "Maintenance message",
   "Simpan": "Save",
@@ -1045,7 +1045,27 @@
   "Pesan asli": "Original message",
   "terakhir": "last",
   "Cadangan": "Backups",
-  "Cadangan buat": "Backup for"
+  "Cadangan buat": "Backup for",
+  "Pengumuman Dev": "Dev announcement",
+  "Info dari developer": "Info from the developer",
+  "Pesan dev": "Dev message",
+  "Maintenance dimulai": "Maintenance started",
+  "Jam": "At",
+  "Dimengerti": "Got it",
+  "Pesan 2": "Message 2",
+  "Muncul sebagai kartu pengumuman di halaman login dan Home. Tiap user lihat sekali; kalau kamu simpan pengumuman baru, muncul lagi. Kosongin pesannya terus simpan buat matiin.": "Shown as an announcement card on the sign-in page and Home. Each user sees it once; saving a new announcement shows it again. Clear the message and save to turn it off.",
+  "Pesan 2 (boleh kosong)": "Message 2 (optional)",
+  "(boleh kosong)": "(optional)",
+  "Teks tombol (misal: Gabung grup)": "Button text (e.g. Join the group)",
+  "URL tombol: https://... atau /pricing": "Button URL: https://... or /pricing",
+  "Tanpa URL, tombolnya jadi \"Dimengerti\".": "Without a URL, the button says \"Got it\".",
+  "Simpan pengumuman": "Save announcement",
+  "Hapus pengumuman": "Remove announcement",
+  "Udah disimpan. Pengumumannya muncul di halaman login dan Home.": "Saved. The announcement shows on the sign-in page and Home.",
+  "Pengumuman dihapus.": "Announcement removed.",
+  "Belum ada pengumuman.": "No announcement yet.",
+  "Isi pesannya dulu. Buat matiin, pakai Hapus pengumuman.": "Write the message first. To turn it off, use Remove announcement.",
+  "Hapus pengumuman? Kartunya nggak muncul lagi di login dan Home.": "Remove the announcement? The card won't show on the sign-in page and Home anymore."
  },
  "patterns": [
   [
@@ -1759,6 +1779,14 @@
   [
    "^(.+?) \\(([A-Z0-9_]+|\\d{3})\\)$",
    "{{$1}} ($2)"
+  ],
+  [
+   "^Maintenance ON sejak (.+)\\.$",
+   "Maintenance ON since {{$1}}."
+  ],
+  [
+   "^Pengumuman aktif sejak (.+)\\.$",
+   "Announcement live since {{$1}}."
   ]
  ]
 }

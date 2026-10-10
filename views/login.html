@@ -124,6 +124,7 @@
   <script src="/assets/human-check.js"></script>
   <script src="/assets/ui-theme.js"></script>
   <script src="/assets/scythe-color.js"></script>
+  <script defer src="/assets/announce.js"></script>
   <style>.visual-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:relative;z-index:3}</style>
   <link rel="preload" href="/assets/scythe.glb" as="fetch" type="model/gltf-binary" crossorigin>
   <style>.turnstile{margin:14px 0 2px;min-height:65px}.turnstile[hidden]{display:none}.oauth.ts-locked #google-oauth,.oauth.ts-locked #google-fallback{pointer-events:none;opacity:.4;filter:grayscale(1)}.ts-note{font:500 10px 'DM Mono',monospace;color:var(--muted);margin:8px 0 0;text-align:center}.ts-note[hidden]{display:none}</style>
@@ -422,7 +423,7 @@
 
   const start=location.hash.slice(1);
   if(start==='register'||start==='forgot')show(start);
-  fetch('/auth/me',{credentials:'same-origin',cache:'no-store'}).then(r=>{if(r.ok)location.replace('/home')}).catch(()=>{});
+  if(!window.__yannzAnnounce)fetch('/auth/me',{credentials:'same-origin',cache:'no-store'}).then(r=>{if(r.ok)location.replace('/home')}).catch(()=>{});
 
 </script>
 <script src="/assets/music.js" defer></script>

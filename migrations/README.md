@@ -16,6 +16,8 @@ Apply in order to the configured Neon database (Neon SQL editor or `psql "$DATAB
 
 11. `011_public_ids_key_access.sql` — `users.public_id` (numeric user ID: a random unique number in 10100000–12345678 for every account, existing ones are filled in; the owner is shown as 10000000), `api_keys.visibility` (`public` / `private` / `owner` for keys the owner makes; existing keys stay NULL = unchanged), the `disabled` key status, and `api_key_access` (who may use a private key). Before it runs, profiles show the internal ID and the new key features answer `MIGRATION_REQUIRED`.
 
+22. `022_announcements.sql` — `server_settings.maintenance_since` (when maintenance was turned on, shown on the maintenance announcement) and the Dev announcement from the Developer panel (`announce_message`, `announce_message2`, `announce_button_label`, `announce_button_url`, `announce_at`). Before it runs, maintenance keeps working without the start time and saving an announcement answers `MIGRATION_REQUIRED`.
+
 All files are additive/idempotent (`CREATE ... IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`) and never drop data. The application does not run DDL at request time.
 
 If an existing `users` table predates these files, inspect it first: `users.id` must be `uuid` because `002_platform.sql` references it from foreign keys. Every row's `google_id` and `lower(email)` must be unique, or the unique indexes in 002 will fail to build.

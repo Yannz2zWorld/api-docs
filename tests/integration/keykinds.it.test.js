@@ -198,11 +198,18 @@ it('Maintenance Info Website: pages, API and every sign-in are closed to users; 
   const on = await o('PATCH', '/owner/server', { maintenance_enabled: true, maintenance_message: 'Upgrade server <b>malam ini</b>' });
   assert.equal(on.status, 200, on.text);
   try {
-    for (const url of ['/', '/home', '/profile', '/keys', '/api', '/pricing']) {
+    for (const url of ['/profile', '/keys', '/api', '/pricing']) {
       const r = await app.request('GET', url, { cookie: alice, headers: { accept: 'text/html' } });
       assert.equal(r.status, 503, url);
       assert.match(r.text, /Website lagi maintenance/, url);
       assert.match(r.text, /Upgrade server &lt;b&gt;malam ini&lt;\/b&gt;/, 'message is escaped');
+    }
+    // Sign-in page and Home: the sign-in page with the maintenance announcement card over it.
+    for (const url of ['/', '/home']) {
+      const r = await app.request('GET', url, { cookie: alice, headers: { accept: 'text/html' } });
+      assert.equal(r.status, 503, url);
+      assert.match(r.text, /window\.__yannzAnnounce=\{"maintenance":\{"message":"Upgrade server \\u003cb\\u003emalam ini\\u003c\/b\\u003e","since":"/, url + ': message escaped, start time included');
+      assert.match(r.text, /\/assets\/announce\.js/, url);
     }
     const apiCall = await app.request('GET', '/api/profile', { cookie: alice });
     assert.deepEqual([apiCall.status, apiCall.json.error], [503, 'MAINTENANCE']);

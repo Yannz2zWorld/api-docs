@@ -197,6 +197,11 @@ app.get('/assets/music.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'music.js'));
 });
+// Announcement cards (maintenance, Pengumuman Dev) for the sign-in page and Home.
+app.get('/assets/announce.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'announce.js'));
+});
 // Scythe colours (views/scythe-color.js): handle / head / effects, set by tapping the scythe.
 app.get('/assets/scythe-color.js', (req, res) => {
   res.set('Cache-Control', 'no-cache');
@@ -324,15 +329,22 @@ app.locals.maintenance = maintenance;
 // owner (OWNER_EMAIL) and what the owner needs to sign in. Sign-in itself is checked again in
 // each handler (password routes by the email given, Google after the token is verified), so
 // calling an endpoint directly cannot get around it.
-const MAINTENANCE_OPEN = new Set(['/health', '/health/database', '/api/logo-proxy', '/api/set', '/auth/config', '/auth/me', '/auth/logout', '/owner-login', '/developer-login', '/auth/google', '/auth/google/callback', '/auth/google/credential', '/favicon.ico']);
+const MAINTENANCE_OPEN = new Set(['/health', '/health/database', '/api/logo-proxy', '/api/set', '/auth/config', '/auth/announce', '/auth/me', '/auth/logout', '/owner-login', '/developer-login', '/auth/google', '/auth/google/callback', '/auth/google/credential', '/favicon.ico']);
 const MAINTENANCE_SIGN_IN = new Set(['/auth/login', '/auth/register', '/auth/email/verify', '/auth/email/resend', '/auth/password/forgot', '/auth/password/reset']);
 const SITE_PAGES = new Set(['/', '/home', '/keys', '/billing', '/pricing', '/profile', '/upload', '/custom-ui', '/owner', '/api', '/api/playground', '/3d', '/scythe', '/usage']);
-let maintenancePage = null;
-function sendMaintenance(req, res, message) {
+let maintenancePage = null, loginPage = null;
+function sendMaintenance(req, res, message, since) {
   res.set('Retry-After', '300');
   res.set('Cache-Control', 'no-store');
   const page = req.method === 'GET' && (SITE_PAGES.has(req.path) || (!/^\/(api|owner|auth|webhooks)\//.test(req.path) && req.accepts(['json', 'html']) === 'html'));
   if (!page) return res.status(503).json({ success: false, error: 'MAINTENANCE', message, maintenance: true });
+  // Sign-in page and Home: the sign-in page with the maintenance announcement over it
+  // (views/announce.js). Signing in is still refused on the server.
+  if (req.path === '/' || req.path === '/home') {
+    if (!loginPage) loginPage = fs.readFileSync(path.join(__dirname, 'views', 'login.html'), 'utf8');
+    const state = JSON.stringify({ maintenance: { message, since: since || null } }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+    return res.status(503).type('html').send(loginPage.replace('</head>', () => `<script>window.__yannzAnnounce=${state}</script>\n</head>`));
+  }
   if (!maintenancePage) maintenancePage = fs.readFileSync(path.join(__dirname, 'views', 'maintenance.html'), 'utf8');
   const safe = String(message).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   return res.status(503).type('html').send(maintenancePage.replace('{{MESSAGE}}', safe));
@@ -347,7 +359,7 @@ app.use(async (req, res, next) => {
   if (MAINTENANCE_SIGN_IN.has(req.path)) {
     const email = typeof req.body?.email === 'string' ? req.body.email : '';
     if (req.method === 'POST' && userService.isOwnerEmail(email)) return next();
-    return sendMaintenance(req, res, m.message);
+    return sendMaintenance(req, res, m.message, m.since);
   }
   // Plugin endpoints called with an API key: the gateway answers MAINTENANCE for every key that
   // is not the owner's.
@@ -359,7 +371,7 @@ app.use(async (req, res, next) => {
   } catch (e) {
     console.error('Maintenance owner check failed:', { code: e?.code || null });
   }
-  return sendMaintenance(req, res, m.message);
+  return sendMaintenance(req, res, m.message, m.since);
 });
 // The owner is shown as "Developer": /developer and /developer-login are aliases of /owner and /owner-login.
 app.get(['/owner-login', '/developer-login'], (req, res) => res.sendFile(path.join(__dirname, 'views', 'login.html')));
@@ -758,6 +770,14 @@ app.get('/auth/config', (req, res) => {
   res.set('Cache-Control', 'no-store');
   if (!GOOGLE_CLIENT_ID) return res.status(503).json({ configured: false, turnstileSiteKey, human });
   res.json({ configured: true, clientId: GOOGLE_CLIENT_ID, turnstileSiteKey, human });
+});
+
+// The announcement cards on the sign-in page and Home (views/announce.js): maintenance and the
+// Developer panel's "Pengumuman Dev".
+app.get('/auth/announce', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try { res.json({ success: true, ...(await maintenance.publicState()) }); }
+  catch { res.json({ success: true, maintenance: null, announcement: null }); }
 });
 
 function issueSession(res, sub, account, provider = 'google') {
