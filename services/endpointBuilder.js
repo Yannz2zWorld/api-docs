@@ -188,7 +188,9 @@ function client() {
   const { key, base } = aiConfig();
   const sdk = require('@anthropic-ai/sdk');
   const Anthropic = sdk.default || sdk;
-  return new Anthropic({ apiKey: key, ...(base ? { baseURL: base } : {}), timeout: AI_TIMEOUT_MS, maxRetries: 1 });
+  // Gateways (AI_BASE_URL, e.g. KryptonLab) authenticate with "Authorization: Bearer <key>"; the key
+  // goes in x-api-key too for gateways that read that one. The official API uses x-api-key only.
+  return new Anthropic({ apiKey: key, ...(base ? { baseURL: base, authToken: key } : {}), timeout: AI_TIMEOUT_MS, maxRetries: 1 });
 }
 
 const SYSTEM = `You convert pasted JavaScript (WhatsApp bot "case" commands, Express routes, scripts, or plugins) into one HTTP endpoint for the Yannz API website.
@@ -392,7 +394,10 @@ async function pingAI() {
     return { ok: true, configured: true, model: cfg.model, host: cfg.host, ms: Date.now() - started, reply: text.slice(0, 40), message: `AI nyambung (${cfg.model} lewat ${cfg.host}, ${Date.now() - started} ms).` };
   } catch (e) {
     const status = e?.status || null;
-    return { ok: false, configured: true, model: cfg.model, host: cfg.host, status, message: status === 401 || status === 403 ? 'API key AI ditolak.' : status === 404 ? `Model ${cfg.model} nggak ketemu. Cek AI_MODEL.` : status === 402 ? 'Saldo AI habis.' : `Gagal nyambung ke AI${status ? ` (HTTP ${status})` : ''}.` };
+    // The provider's own reason helps (wrong key, model not allowed for this key, no credit…); never the key.
+    const why = String(e?.error?.error?.message || e?.error?.message || '').replace(cfg.key, '***').slice(0, 160);
+    const base = status === 401 || status === 403 ? 'API key AI ditolak' : status === 404 ? `Model ${cfg.model} nggak ketemu. Cek AI_MODEL` : status === 402 ? 'Saldo AI habis' : 'Gagal nyambung ke AI';
+    return { ok: false, configured: true, model: cfg.model, host: cfg.host, status, message: `${base}${status ? ` (HTTP ${status}${why ? `: ${why}` : ''})` : ''}.` };
   }
 }
 const aiStatus = () => { const c = aiConfig(); return { configured: Boolean(c.key), model: c.model, host: c.host }; };

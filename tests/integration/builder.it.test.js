@@ -126,6 +126,7 @@ it('code the rules cannot handle goes to the AI (any Anthropic-compatible gatewa
   const call = aiCalls.find(c => c.body.stream);
   assert.equal(call.url, '/v1/messages', 'the gateway base URL may end in /v1');
   assert.equal(call.headers['x-api-key'], 'kl_test_key');
+  assert.equal(call.headers.authorization, 'Bearer kl_test_key', 'gateways such as KryptonLab read the Bearer header');
   assert.equal(call.body.model, 'claude-opus-4.7');
   assert.doesNotMatch(JSON.stringify(call.body), /kunci-rahasia-999/, 'the key in the pasted code is never sent to the AI');
   assert.match(JSON.stringify(call.body), /__SECRET_1__ → process\.env\.EP_127_0_0_KEY/);
