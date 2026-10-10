@@ -1893,6 +1893,10 @@
   [
    "^Maksimal pembayaran (.+) (Rp[\\d.]+)\\.$",
    "The maximum $1 payment is $2."
+  ],
+  [
+   "^(\\d+) dari (\\d+) endpoint · scroll buat lihat lainnya$",
+   "Showing $1 of $2 endpoints · scroll for more"
   ]
  ]
 }
