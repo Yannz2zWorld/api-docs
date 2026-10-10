@@ -17,7 +17,16 @@ test('Backblaze B2 (S3_*): uploads are signed for its endpoint and region, files
   assert.equal(u.origin + u.pathname, 'https://s3.us-west-004.backblazeb2.com/yannz-cdn/abc.mp4');
   assert.match(u.searchParams.get('X-Amz-Credential'), /^kid\/\d{8}\/us-west-004\/s3\/aws4_request$/);
   assert.doesNotMatch(put.url, /secret-not-real/);
-  assert.equal(r2.publicUrl('abc.mp4'), 'https://f004.backblazeb2.com/file/yannz-cdn/abc.mp4');
+  assert.equal(await r2.fileUrl('abc.mp4'), 'https://f004.backblazeb2.com/file/yannz-cdn/abc.mp4');
+}));
+
+test('a private bucket (no S3_PUBLIC_URL, so no card on B2): files are read with a short-lived signed link', () => withEnv({ ...S3, S3_PUBLIC_URL: '' }, async r2 => {
+  assert.equal(r2.isConfigured(), true);
+  const u = new URL(await r2.fileUrl('abc.mp4'));
+  assert.equal(u.origin + u.pathname, 'https://s3.us-west-004.backblazeb2.com/yannz-cdn/abc.mp4');
+  assert.equal(u.searchParams.get('X-Amz-Expires'), '3600');
+  assert.ok(u.searchParams.get('X-Amz-Signature'));
+  assert.doesNotMatch(u.href, /secret-not-real/);
 }));
 
 test('incomplete S3_* settings leave large uploads off', () => withEnv({ ...S3, S3_BUCKET: '' }, async r2 => {
