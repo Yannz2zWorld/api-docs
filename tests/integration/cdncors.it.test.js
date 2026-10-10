@@ -12,7 +12,8 @@ before(async () => {
   if (h.skip) return;
   global.fetch = async (url, opts = {}) => {
     const req = url instanceof Request ? url : new Request(url, opts);
-    if (new URL(req.url).hostname === 's3.us-east-005.backblazeb2.com') {
+    const host = new URL(req.url).hostname;
+    if (host === 's3.us-east-005.backblazeb2.com' || host.endsWith('.backblazeb2.com')) {
       calls.push({ url: req.url, method: req.method, headers: Object.fromEntries(req.headers), body: await req.text() });
       return reply();
     }
@@ -57,4 +58,23 @@ it('a key without bucket rights is explained; only the developer can do this', a
   assert.match(r.json.message, /403: not entitled/);
   reply = () => new Response('', { status: 200 });
   assert.equal((await post(user)).status, 403);
+});
+
+it('a bucket with CORS rules from the B2 web console: replaced through B2\'s own API', async () => {
+  calls = [];
+  reply = () => (calls.length === 1
+    ? new Response('<Error><Code>InvalidRequest</Code><Message>The bucket contains B2 Native CORS rules. Please use B2 Native API instead.</Message></Error>', { status: 400 })
+    : /authorize_account/.test(calls.at(-1).url) ? Response.json({ accountId: 'acc1', authorizationToken: 'tok1', apiInfo: { storageApi: { apiUrl: 'https://api005.backblazeb2.com' } } })
+      : /list_buckets/.test(calls.at(-1).url) ? Response.json({ buckets: [{ bucketName: 'webcdn22', bucketId: 'bkt1' }] })
+        : Response.json({ bucketId: 'bkt1' }));
+  const r = await post();
+  assert.equal(r.status, 200, r.text);
+  assert.deepEqual(calls.map(c => new URL(c.url).pathname.split('/').pop()), ['webcdn22', 'b2_authorize_account', 'b2_list_buckets', 'b2_update_bucket']);
+  assert.equal(calls[1].headers.authorization, 'Basic ' + Buffer.from('kid005:secret-not-real').toString('base64'));
+  const body = JSON.parse(calls[3].body);
+  assert.equal(body.bucketId, 'bkt1');
+  assert.deepEqual(body.corsRules[0].allowedOrigins, ['https://apiz2z.web.id']);
+  assert.ok(body.corsRules[0].allowedOperations.includes('s3_put'));
+  assert.doesNotMatch(r.text, /secret-not-real|tok1/);
+  reply = () => new Response('', { status: 200 });
 });
