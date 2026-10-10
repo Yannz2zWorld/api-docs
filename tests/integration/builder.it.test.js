@@ -12,6 +12,7 @@ const builder = require('../../services/endpointBuilder');
 
 let app, owner, user, upstream, ai, upstreamUrl, aiUrl;
 const aiCalls = [];
+let aiStop = 'end_turn';
 let aiReply = () => ({ name: 'Pins Search', desc: 'Cari pin.', category: 'Search', path: '/api/search/pins-ai', params: [{ name: 'q', required: true, placeholder: 'kucing' }], sample: { q: 'kucing' },
   code: "module.exports = async (req, res) => { if (!req.query.q) return res.status(400).json({ status: false, error: 'PARAM_REQUIRED', message: 'q wajib' }); if (!process.env.EP_TEST_KEY) return res.status(503).json({ status: false, error: 'UPSTREAM_NOT_CONFIGURED', message: 'belum aktif' }); res.json({ status: true, result: [{ title: req.query.q }] }); };" });
 const realFetch = global.fetch;
@@ -35,8 +36,10 @@ before(async () => {
     req.on('end', () => {
       const body = JSON.parse(raw || '{}');
       aiCalls.push({ url: req.url, headers: req.headers, body });
-      const text = body.max_tokens <= 16 ? 'OK' : JSON.stringify(aiReply());
-      const msg = { id: 'msg_1', type: 'message', role: 'assistant', model: body.model, content: [{ type: 'text', text }], stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 10, output_tokens: 10 } };
+      const reply = body.max_tokens <= 16 ? 'OK' : aiReply(body);
+      const text = typeof reply === 'string' ? reply : JSON.stringify(reply);   // a string is the raw reply text
+      const stop = aiStop;
+      const msg = { id: 'msg_1', type: 'message', role: 'assistant', model: body.model, content: [{ type: 'text', text }], stop_reason: stop, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 10 } };
       if (!body.stream) { res.setHeader('content-type', 'application/json'); return res.end(JSON.stringify(msg)); }
       res.writeHead(200, { 'content-type': 'text/event-stream' });
       const ev = (type, data) => res.write(`event: ${type}\ndata: ${JSON.stringify({ type, ...data })}\n\n`);
@@ -44,7 +47,7 @@ before(async () => {
       ev('content_block_start', { index: 0, content_block: { type: 'text', text: '' } });
       ev('content_block_delta', { index: 0, delta: { type: 'text_delta', text } });
       ev('content_block_stop', { index: 0 });
-      ev('message_delta', { delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: 10 } });
+      ev('message_delta', { delta: { stop_reason: stop, stop_sequence: null }, usage: { output_tokens: 10 } });
       ev('message_stop', {});
       res.end();
     });
@@ -137,6 +140,32 @@ it('code the rules cannot handle goes to the AI (any Anthropic-compatible gatewa
   aiReply = () => ({ error: 'Ini bukan kode endpoint.' });
   const r3 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
   assert.deepEqual([r3.status, r3.json.error, r3.json.message], [422, 'NOT_CONVERTIBLE', 'Ini bukan kode endpoint.']);
+  const script = "module.exports = async (req, res) => {\n  // \"pink\" card\n  res.json({ status: true, result: 'iqc ' + (req.query.text || '') });\n};";
+  // The reply format the AI is asked for: metadata, then the script as plain text.
+  aiReply = () => `<meta>{"name": "IQC Pink", "desc": "Bikin gambar iqc pink.", "category": "Maker", "path": "/api/maker/iqc-pink", "params": [{"name": "text", "required": true, "placeholder": "halo"}], "sample": {"text": "halo"}}</meta>\n<code>\n${script}\n</code>`;
+  const r4 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
+  assert.equal(r4.status, 200, r4.text);
+  assert.deepEqual([r4.json.meta.path, r4.json.test.ok], ['/api/maker/iqc-pink', true], r4.text);
+  assert.match(r4.json.code, /"pink" card/);
+  // Old one-object JSON whose code has raw line breaks (invalid JSON as written) is still read.
+  aiReply = () => `{"name": "IQC Pink", "path": "/api/maker/iqc-pink", "sample": {"text": "halo"}, "code": "${script.replace(/"/g, '\\"')}"}`;
+  const r5 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
+  assert.equal(r5.status, 200, r5.text);
+  assert.match(r5.json.code, /"pink" card/);
+  // A gateway whose stream carries no text: the same request without streaming.
+  aiReply = body => (body.stream ? '' : `<meta>{"path": "/api/maker/iqc-pink"}</meta><code>${script}</code>`);
+  const r6 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
+  assert.equal(r6.status, 200, r6.text);
+  assert.equal(aiCalls.at(-1).body.stream, undefined);
+  // Cut off at max_tokens: said plainly, nothing half-written is used.
+  aiStop = 'max_tokens';
+  aiReply = () => `<meta>{"path": "/api/maker/iqc-pink"}</meta><code>module.exports = async (req, res) => {`;
+  const r7 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
+  aiStop = 'end_turn';
+  assert.deepEqual([r7.status, r7.json.error], [502, 'AI_TRUNCATED']);
+  aiReply = () => 'maaf, saya tidak paham';
+  const r8 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
+  assert.deepEqual([r8.status, r8.json.error, r8.json.reply], [502, 'AI_BAD_REPLY', 'maaf, saya tidak paham']);
 });
 
 it('the AI connection test and status', async () => {

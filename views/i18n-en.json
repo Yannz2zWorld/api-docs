@@ -1147,7 +1147,9 @@
   "Reset ke bawaan": "Reset to default",
   "Lagi nyimpen…": "Saving…",
   "Balikin nama, path, deskripsi, dan kategori ke bawaan dari kode?": "Put the name, path, description and category back to the code's own?",
-  "Telah disimpan.": "Saved."
+  "Telah disimpan.": "Saved.",
+  "Jawaban AI:": "AI reply:",
+  "Jawaban AI kepotong karena kodenya kepanjangan. Tempel bagian yang perlu aja (satu case/fungsi), terus coba lagi.": "The AI reply got cut off because the code is too long. Paste only the part you need (one case/function) and try again."
  },
  "patterns": [
   [

@@ -205,28 +205,65 @@ Write a CommonJS handler script that runs on Node.js 20 inside the site's plugin
 - Placeholders like __SECRET_1__ stand for secrets that were removed. Never write them in the code; read process.env.<ENV> for each one, using the env names listed in the request. If an env is missing at runtime answer 503 {"status": false, "error": "UPSTREAM_NOT_CONFIGURED", "message": "Endpoint ini belum aktif. Kuota nggak dipotong."}.
 - Never log secrets. Keep it short and readable.
 
-Reply with one JSON object only, no prose and no code fences:
-{"name": "Short Title", "desc": "One casual Indonesian sentence about what it does", "category": "Search|Download|Tools|AI|Image|Maker|Stalk|Random|Info", "path": "/api/<category-lowercase>/<name-lowercase-with-dashes>", "params": [{"name": "q", "required": true, "placeholder": "example value"}], "sample": {"q": "example value"}, "code": "<the full handler script>"}
-If the code cannot become an endpoint at all, reply {"error": "<why, casual Indonesian>"}.`;
+Reply in exactly this form, nothing before or after it:
+<meta>{"name": "Short Title", "desc": "One casual Indonesian sentence about what it does", "category": "Search|Download|Tools|AI|Image|Maker|Stalk|Random|Info", "path": "/api/<category-lowercase>/<name-lowercase-with-dashes>", "params": [{"name": "q", "required": true, "placeholder": "example value"}], "sample": {"q": "example value"}}</meta>
+<code>
+the full handler script as plain JavaScript (not escaped, no code fences)
+</code>
+If the code cannot become an endpoint at all, reply <error>why, in casual Indonesian</error> instead.`;
 
+// JSON as models sometimes write it: raw line breaks / tabs inside strings are escaped first.
+function looseJson(s) {
+  try { return JSON.parse(s); } catch {}
+  let out = '', inStr = false, esc = false;
+  for (const ch of s) {
+    if (inStr) {
+      if (esc) { esc = false; out += ch; continue; }
+      if (ch === '\\') { esc = true; out += ch; continue; }
+      if (ch === '"') inStr = false;
+      out += ch === '\n' ? '\\n' : ch === '\r' ? '\\r' : ch === '\t' ? '\\t' : ch;
+    } else { if (ch === '"') inStr = true; out += ch; }
+  }
+  try { return JSON.parse(out); } catch { return null; }
+}
 function parseJsonReply(text) {
   const s = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
   const start = s.indexOf('{'), end = s.lastIndexOf('}');
   if (start < 0 || end <= start) return null;
-  try { return JSON.parse(s.slice(start, end + 1)); } catch { return null; }
+  return looseJson(s.slice(start, end + 1));
+}
+// The reply: <meta>{…}</meta> plus <code>…</code> (the code stays plain text, so a long script can't
+// break the JSON around it), or <error>…</error>. A one-object JSON reply is read too.
+function parseReply(text) {
+  const t = String(text || '');
+  const err = /<error>([\s\S]*?)<\/error>/i.exec(t);
+  if (err) return { error: err[1].trim() };
+  const code = /<code>([\s\S]*?)(<\/code>|$)/i.exec(t);
+  if (code) {
+    const meta = /<meta>([\s\S]*?)<\/meta>/i.exec(t);
+    const m = (meta && parseJsonReply(meta[1])) || {};
+    const body = code[1].replace(/^\s*```(?:js|javascript)?\s*\n?/i, '').replace(/\n?```\s*$/, '').trim();
+    return { ...m, code: body, cut: !code[2] };
+  }
+  return parseJsonReply(t);
 }
 
 async function convertByAI(hidden, envs) {
   const { model } = aiConfig();
   const envList = hidden.secrets.length ? hidden.secrets.map(s => `${s.placeholder} → process.env.${envs[s.placeholder]}`).join('\n') : '(no secrets were found)';
   let message;
+  const request = {
+    model,
+    max_tokens: 16000,
+    system: SYSTEM,
+    messages: [{ role: 'user', content: `Env names for the removed secrets:\n${envList}\n\nCode to convert:\n\n${hidden.code.slice(0, 60000)}` }]
+  };
+  const textOf = m => (m?.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
   try {
-    message = await client().messages.stream({
-      model,
-      max_tokens: 16000,
-      system: SYSTEM,
-      messages: [{ role: 'user', content: `Env names for the removed secrets:\n${envList}\n\nCode to convert:\n\n${hidden.code.slice(0, 60000)}` }]
-    }).finalMessage();
+    message = await client().messages.stream(request).finalMessage();
+    // Some gateways answer a streamed request in a form the SDK can't assemble (no text at all);
+    // the same request without streaming then still works.
+    if (!textOf(message).trim() && message.stop_reason !== 'refusal') message = await client().messages.create(request);
   } catch (e) {
     const status = e?.status;
     const why = status === 401 || status === 403 ? 'API key AI ditolak. Cek AI_API_KEY di Vercel.'
@@ -237,9 +274,11 @@ async function convertByAI(hidden, envs) {
     throw new BuildError(502, 'AI_FAILED', why, { aiStatus: status || null });
   }
   if (message.stop_reason === 'refusal') throw new BuildError(422, 'AI_REFUSED', 'AI-nya nolak ngubah kode ini.');
-  const text = (message.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-  const out = parseJsonReply(text);
-  if (!out) throw new BuildError(502, 'AI_BAD_REPLY', 'Jawaban AI-nya nggak kebaca. Coba lagi.');
+  const text = textOf(message);
+  const out = parseReply(text);
+  // Cut off at max_tokens: the script would be incomplete.
+  if (message.stop_reason === 'max_tokens' || out?.cut) throw new BuildError(502, 'AI_TRUNCATED', 'Jawaban AI kepotong karena kodenya kepanjangan. Tempel bagian yang perlu aja (satu case/fungsi), terus coba lagi.');
+  if (!out) throw new BuildError(502, 'AI_BAD_REPLY', 'Jawaban AI-nya nggak kebaca. Coba lagi.', { reply: text.slice(0, 300) });
   if (out.error) throw new BuildError(422, 'NOT_CONVERTIBLE', String(out.error).slice(0, 300));
   if (typeof out.code !== 'string' || !out.code.trim()) throw new BuildError(502, 'AI_BAD_REPLY', 'AI-nya nggak ngasih kode. Coba lagi.');
   let script = out.code;
