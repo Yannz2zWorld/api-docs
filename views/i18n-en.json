@@ -1065,7 +1065,8 @@
   "Pengumuman dihapus.": "Announcement removed.",
   "Belum ada pengumuman.": "No announcement yet.",
   "Isi pesannya dulu. Buat matiin, pakai Hapus pengumuman.": "Write the message first. To turn it off, use Remove announcement.",
-  "Hapus pengumuman? Kartunya nggak muncul lagi di login dan Home.": "Remove the announcement? The card won't show on the sign-in page and Home anymore."
+  "Hapus pengumuman? Kartunya nggak muncul lagi di login dan Home.": "Remove the announcement? The card won't show on the sign-in page and Home anymore.",
+  "Tanggal": "Date"
  },
  "patterns": [
   [

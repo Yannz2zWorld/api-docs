@@ -1,5 +1,5 @@
-// Announcement cards on the sign-in page and Home, in the site's flat style (hard shadows, stripes,
-// no glow):
+// Announcement cards on the sign-in page and Home, drawn as a memo sheet in the site's flat style
+// (ruled lines, hard shadows, no glow):
 //   - Maintenance: "Pengumuman Dev · Mode: Maintenance ON", the developer's message, when maintenance
 //     started (time, date, month, year) and a "Dimengerti" button. Visitors see it on every visit while
 //     maintenance is on; the developer (who can still use the site) once per session.
@@ -13,42 +13,38 @@
   const t = s => (window.YannzI18n ? window.YannzI18n.t(s) : s);
   const en = () => window.YannzI18n?.lang === 'en';
   const ICON = {
-    megaphone: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
-    x: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>',
-    check: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
-    clock: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
-    arrow: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>'
+    x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+    check: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+    arrow: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
   };
+  // A memo sheet: ruled lines with a margin line, a masthead with a double rule and a barcode,
+  // "label ....... value" rows and a tear line above the button. Flat: hard shadows, no glow.
+  const SURF = 'var(--surface,var(--paper,#141416))', EDGE = 'var(--edge,#d4d4d8)', SOFT = 'var(--edge-soft,#3f3f46)', ACC = 'var(--accent,#c8202f)';
   const CSS = `
   .yz-ann-back{position:fixed;inset:0;z-index:600;display:grid;place-items:center;padding:16px;background:rgba(10,10,12,.62);overflow:auto}
-  .yz-ann{width:min(440px,100%);margin:auto;background:var(--surface,var(--paper,#141416));color:var(--ink,#f4f4f5);border:3px solid var(--edge,#d4d4d8);border-radius:18px;box-shadow:8px 8px 0 var(--drop,#3f3f46);overflow:hidden;font:500 14px/1.5 Outfit,system-ui,sans-serif;text-align:left}
-  .yz-ann-tape{height:12px;border-bottom:3px solid var(--edge,#d4d4d8);background:repeating-linear-gradient(-45deg,var(--accent,#c8202f) 0 11px,var(--ink,#f4f4f5) 11px 22px)}
-  .yz-ann-head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:18px;border-bottom:3px solid var(--edge,#d4d4d8);background:repeating-linear-gradient(-45deg,color-mix(in srgb,var(--accent,#c8202f) 15%,var(--surface,var(--paper,#141416))) 0 14px,color-mix(in srgb,var(--accent,#c8202f) 6%,var(--surface,var(--paper,#141416))) 14px 28px)}
-  .yz-ann-ico{width:54px;height:54px;display:grid;place-items:center;border-radius:13px;background:var(--ink,#f4f4f5);color:var(--accent,#c8202f);border:3px solid var(--edge,#d4d4d8);box-shadow:4px 4px 0 var(--drop,#3f3f46)}
-  .yz-ann-head h2{margin:0;font:800 22px/1.05 'Space Grotesk',system-ui,sans-serif;letter-spacing:-.01em;text-transform:uppercase}
-  .yz-ann-head p{margin:5px 0 0;font:700 11px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#a1a1aa)}
-  .yz-ann-head p b{color:var(--ink,#f4f4f5)}
-  .yz-ann-x{width:42px;height:42px;display:grid;place-items:center;padding:0;border:3px solid var(--edge,#d4d4d8);border-radius:11px;background:var(--surface,var(--paper,#141416));color:inherit;box-shadow:3px 3px 0 var(--drop,#3f3f46);cursor:pointer}
-  .yz-ann-body{padding:18px}
-  .yz-ann-card{border:3px solid var(--edge,#d4d4d8);border-radius:14px;padding:14px 16px;background:var(--surface-2,#1b1b1e);box-shadow:5px 5px 0 var(--drop,#3f3f46)}
-  .yz-ann-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:12px;border-bottom:2px dashed var(--edge-soft,#3f3f46)}
-  .yz-ann-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:2px solid var(--edge,#d4d4d8);border-radius:8px;background:var(--accent,#c8202f);color:var(--accent-ink,#fff);font:800 11px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;box-shadow:2px 2px 0 var(--drop,#3f3f46)}
-  .yz-ann-date{font:600 12px 'DM Mono',monospace;color:var(--muted,#a1a1aa);text-align:right}
-  .yz-ann-sec{padding-top:12px}
-  .yz-ann-sec+.yz-ann-sec{margin-top:12px;border-top:2px dashed var(--edge-soft,#3f3f46)}
-  .yz-ann-label{display:block;margin:0 0 4px;font:800 11px 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted,#a1a1aa)}
-  .yz-ann-msg{margin:0;font-size:15px;font-weight:600;white-space:pre-line;overflow-wrap:anywhere}
-  .yz-ann-when{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:10px 12px;border:2px solid var(--edge-soft,#3f3f46);border-radius:10px;background:repeating-linear-gradient(90deg,transparent 0 10px,color-mix(in srgb,var(--edge-soft,#3f3f46) 35%,transparent) 10px 11px)}
-  .yz-ann-when svg{flex:none;margin-top:2px}
-  .yz-ann-when b{display:block;font:800 11px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#a1a1aa)}
-  .yz-ann-when span{font-weight:700}
-  .yz-ann-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;padding:13px 16px;border:3px solid var(--edge,#d4d4d8);border-radius:12px;background:var(--surface,var(--paper,#141416));color:var(--ink,#f4f4f5);font:800 14px 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;box-shadow:4px 4px 0 var(--drop,#3f3f46);cursor:pointer}
-  .yz-ann-btn i{width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:var(--ink,#f4f4f5);color:var(--surface,var(--paper,#141416))}
-  .yz-ann-btn.p{background:var(--accent,#c8202f);color:var(--accent-ink,#fff)}
-  .yz-ann-btn.p i{background:var(--accent-ink,#fff);color:var(--accent,#c8202f)}
-  .yz-ann-btn:active,.yz-ann-x:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--drop,#3f3f46)}
+  .yz-ann{width:min(430px,100%);margin:auto;background:${SURF};color:var(--ink,#f4f4f5);border:3px solid ${EDGE};border-radius:6px;box-shadow:10px 10px 0 var(--drop,#3f3f46);font:500 14px/1.5 Outfit,system-ui,sans-serif;text-align:left}
+  .yz-ann-head{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:14px 14px 12px 16px;border-left:10px solid ${ACC};border-bottom:6px double ${EDGE};background:var(--surface-2,#1b1b1e)}
+  .yz-ann-head h2{margin:0;font:800 15px/1.2 'DM Mono',monospace;letter-spacing:.16em;text-transform:uppercase}
+  .yz-ann-head p{margin:3px 0 0;font:600 11px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#a1a1aa)}
+  .yz-ann-code{width:46px;height:28px;background:repeating-linear-gradient(90deg,var(--ink,#f4f4f5) 0 2px,transparent 2px 4px,var(--ink,#f4f4f5) 4px 5px,transparent 5px 7px,var(--ink,#f4f4f5) 7px 10px,transparent 10px 12px)}
+  .yz-ann-x{width:34px;height:34px;display:grid;place-items:center;padding:0;border:2px solid ${EDGE};border-radius:50%;background:${SURF};color:inherit;cursor:pointer}
+  .yz-ann-x:hover{background:${ACC};color:var(--accent-ink,#fff);border-color:${ACC}}
+  .yz-ann-sheet{padding:10px 18px 14px 40px;line-height:28px;background:linear-gradient(90deg,transparent 26px,${ACC} 26px 28px,transparent 28px),repeating-linear-gradient(180deg,transparent 0 27px,color-mix(in srgb,${SOFT} 70%,transparent) 27px 28px);background-position:0 10px}
+  .yz-ann-row{display:flex;align-items:baseline;gap:8px}
+  .yz-ann-row b,.yz-ann-label{font:800 11px/28px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#a1a1aa);white-space:nowrap}
+  .yz-ann-row i{flex:1;min-width:16px;border-bottom:2px dotted ${SOFT};transform:translateY(-6px)}
+  .yz-ann-row span{font:800 12px/28px 'DM Mono',monospace;letter-spacing:.06em;text-align:right}
+  .yz-ann-row span.on{padding:0 8px;line-height:22px;border:2px solid ${ACC};color:${ACC};text-transform:uppercase}
+  .yz-ann-label{display:block}
+  .yz-ann-msg{margin:0;font-size:15px;font-weight:600;line-height:28px;white-space:pre-line;overflow-wrap:anywhere}
+  .yz-ann-tear{height:0;margin:0 14px;border-top:3px dashed ${SOFT}}
+  .yz-ann-foot{padding:14px 16px 16px}
+  .yz-ann-btn{display:grid;grid-template-columns:48px 1fr auto;align-items:stretch;width:100%;padding:0;border:3px solid ${EDGE};border-radius:6px;background:${SURF};color:var(--ink,#f4f4f5);font:800 13px 'DM Mono',monospace;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;text-align:left;box-shadow:5px 5px 0 var(--drop,#3f3f46);cursor:pointer;overflow:hidden}
+  .yz-ann-btn i{display:grid;place-items:center;background:${ACC};color:var(--accent-ink,#fff);border-right:3px solid ${EDGE}}
+  .yz-ann-btn span{padding:13px 14px}
+  .yz-ann-btn:active,.yz-ann-x:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--drop,#3f3f46)}
   .yz-ann-btn+.yz-ann-btn{margin-top:10px}
-  @media (max-width:380px){.yz-ann-head{grid-template-columns:auto 1fr;}.yz-ann-x{grid-row:1;grid-column:2;justify-self:end}.yz-ann-head h2{font-size:19px}}`;
+  @media (max-width:360px){.yz-ann-code{display:none}.yz-ann-sheet{padding-left:34px;background-position:0 10px}}`;
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function when(iso) {
@@ -70,21 +66,21 @@
     const back = document.createElement('div');
     back.className = 'yz-ann-back';
     back.innerHTML = `<div class="yz-ann" role="dialog" aria-modal="true" aria-labelledby="yz-ann-title" data-kind="${kind}">
-      <div class="yz-ann-tape"></div>
       <div class="yz-ann-head">
-        <div class="yz-ann-ico">${ICON.megaphone}</div>
-        <div><h2 id="yz-ann-title">${esc(t('Pengumuman Dev'))}</h2><p>${kind === 'maintenance' ? `${esc(t('Mode'))} : <b>Maintenance ON</b>` : esc(t('Info dari developer'))}</p></div>
+        <div><h2 id="yz-ann-title">${esc(t('Pengumuman Dev'))}</h2><p>${date ? esc(date) : esc(t('Info dari developer'))}</p></div>
+        <div class="yz-ann-code" aria-hidden="true"></div>
         <button type="button" class="yz-ann-x" aria-label="${esc(t('Tutup'))}">${ICON.x}</button>
       </div>
-      <div class="yz-ann-body">
-        <div class="yz-ann-card">
-          <div class="yz-ann-top"><span class="yz-ann-chip">${ICON.megaphone.replace(/26/g, '14')}${esc(chip)}</span>${date ? `<span class="yz-ann-date">${esc(date)}</span>` : ''}</div>
-          ${sections.map(s => `<div class="yz-ann-sec"><span class="yz-ann-label">${esc(t(s.label))}</span><p class="yz-ann-msg" data-no-i18n>${esc(s.text)}</p></div>`).join('')}
-          ${start ? `<div class="yz-ann-when">${ICON.clock}<div><b>${esc(t('Maintenance dimulai'))}</b><span>${esc(t('Jam'))} ${esc(start.time)} · ${esc(start.date)}</span></div></div>` : ''}
-        </div>
+      <div class="yz-ann-sheet">
+        ${chip ? `<div class="yz-ann-row"><b>${esc(t('Mode'))}</b><i></i><span class="on">${esc(chip)}</span></div>` : ''}
+        ${sections.map(s => `<div class="yz-ann-sec"><span class="yz-ann-label">${esc(t(s.label))}</span><p class="yz-ann-msg" data-no-i18n>${esc(s.text)}</p></div>`).join('')}
+        ${start ? `<div class="yz-ann-row"><b>${esc(t('Maintenance dimulai'))}</b><i></i><span>${esc(t('Jam'))} ${esc(start.time)}</span></div><div class="yz-ann-row"><b>${esc(t('Tanggal'))}</b><i></i><span>${esc(start.date)}</span></div>` : ''}
+      </div>
+      <div class="yz-ann-tear" aria-hidden="true"></div>
+      <div class="yz-ann-foot">
         ${buttons.map(b => b.href
-          ? `<a class="yz-ann-btn p" href="${esc(b.href)}"${/^https?:/i.test(b.href) ? ' target="_blank" rel="noopener noreferrer"' : ''} data-close><span data-no-i18n>${esc(b.label)}</span><i>${ICON.arrow}</i></a>`
-          : `<button type="button" class="yz-ann-btn" data-close><i>${ICON.check}</i>${esc(t(b.label))}</button>`).join('')}
+          ? `<a class="yz-ann-btn p" href="${esc(b.href)}"${/^https?:/i.test(b.href) ? ' target="_blank" rel="noopener noreferrer"' : ''} data-close><i>${ICON.arrow}</i><span data-no-i18n>${esc(b.label)}</span></a>`
+          : `<button type="button" class="yz-ann-btn" data-close><i>${ICON.check}</i><span>${esc(t(b.label))}</span></button>`).join('')}
       </div></div>`;
     const close = () => { back.remove(); document.removeEventListener('keydown', key); open = null; onClose?.(); };
     const key = e => { if (e.key === 'Escape') close(); };
@@ -109,7 +105,7 @@
     const at = a.at ? when(a.at) : null;
     const href = safeUrl(a.buttonUrl || '');
     card({
-      kind: 'dev', chip: 'Info', date: at ? at.short : '',
+      kind: 'dev', chip: '', date: at ? at.short : '',
       sections: [{ label: 'Pesan', text: a.message }, ...(a.message2 ? [{ label: 'Pesan 2', text: a.message2 }] : [])],
       buttons: href ? [{ href, label: a.buttonLabel || t('Buka') }] : [{ label: 'Dimengerti' }],
       onClose: () => { store(localStorage, SEEN, a.id); next?.(); }
