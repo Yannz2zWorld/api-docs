@@ -25,7 +25,22 @@
   .ep-new .file { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; text-transform: none; letter-spacing: 0; }
   .ep-new .actions { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .ep-new .actions p { margin: 0; }
-  @media (max-width: 720px) { .ep-new { grid-template-columns: 1fr; } }
+  .ep-new .inline { display: flex; align-items: center; gap: 8px; }
+  .ai-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ep-preview { display: grid; gap: 12px; padding-top: 12px; border-top: 2px dashed var(--edge-soft); }
+  .ep-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+  .ep-cap { display: block; margin-bottom: 6px; font: 500 11px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .ep-sample { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ep-sample label { display: flex; align-items: center; gap: 6px; text-transform: none; letter-spacing: 0; }
+  .ep-test { border: 2px solid var(--edge); border-radius: 10px; padding: 10px 12px; background: var(--surface); }
+  .ep-test.ok { border-color: var(--ok, #86efac); }
+  .ep-test.bad { border-color: var(--bad, #fca5a5); }
+  .ep-test b { font: 800 13px "DM Mono", monospace; }
+  .ep-test pre { max-height: 260px; overflow: auto; margin: 8px 0 0; font: 11px/1.45 "DM Mono", monospace; white-space: pre-wrap; word-break: break-word; }
+  .ep-notes { margin: 0; padding-left: 18px; }
+  #code-dialog { width: min(820px, 96vw); }
+  #code-dialog textarea { width: 100%; min-height: 340px; font: 12px/1.5 "DM Mono", monospace; tab-size: 2; }
+  @media (max-width: 720px) { .ep-new, .ep-grid { grid-template-columns: 1fr; } }
   .tab-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--bad, #f87171); color: #111; font: 700 10px/1 "DM Mono", monospace; }
   .tab-count[hidden] { display: none; }
   #err-data { display: grid; gap: 12px; }
@@ -137,22 +152,31 @@
     <h2>Endpoint registry</h2>
     <form class="ep-new" id="ep-form">
       <h3>Tambah endpoint</h3>
-      <label><span><b>1</b> Nama endpoint</span><input name="name" placeholder="TikTok Downloader" required maxlength="100"></label>
-      <label><span><b>2</b> Path</span><input name="path" placeholder="/api/kategori/nama" required pattern="/api/[a-z0-9\-]{1,40}/[a-z0-9\-]{1,60}" title="/api/kategori/nama — huruf kecil, angka, tanda -"></label>
-      <label class="full"><span><b>3</b> Script (.js) — upload file atau tempel kodenya</span>
-        <span class="file"><input type="file" id="ep-file" accept=".js,text/javascript,application/javascript"><small class="muted" id="ep-file-info">Maks 200 KB. File langsung di-commit ke folder <code>plugin/</code>.</small></span>
-        <textarea name="code" id="ep-code" required spellcheck="false" placeholder="// req.query berisi parameter, req.apiAuth berisi tier & kuota pemanggil.
-module.exports = async (req, res) =&gt; {
-  const { text } = req.query;
-  if (!text) return res.status(400).json({ status: false, error: 'PARAM_REQUIRED', message: 'Parameter text wajib diisi.' });
-  res.json({ status: true, result: text.toUpperCase() });
-};"></textarea></label>
-      <label class="full"><span><b>4</b> Deskripsi</span><input name="description" placeholder="Endpoint ini buat apa" maxlength="500"></label>
-      <label><span><b>5</b> Tier minimum</span><select name="minimum_tier"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option value="OWNER">DEVELOPER</option></select></label>
-      <div class="actions"><button class="primary" type="submit" id="ep-submit">Tambah &amp; deploy</button>
-        <p class="muted">Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Script jalan di server, jadi cuma upload kode yang kamu percaya.</p></div>
+      <p class="muted full" style="margin:0">Tempel kode apa aja: case bot WA, route Express, script axios/fetch, atau plugin. Web nyesuaiin kodenya sama format website, terus langsung dites. Kalau jalan, cek dulu hasilnya, baru klik <b>Tambah &amp; deploy</b>.</p>
+      <div class="ai-line full"><span id="ai-state" class="muted">AI: lagi dicek…</span><button type="button" class="sm" id="ai-ping">Tes koneksi AI</button><small id="ai-ping-msg" class="muted" aria-live="polite"></small></div>
+      <label class="full"><span><b>1</b> Kode — upload file atau tempel</span>
+        <span class="file"><input type="file" id="ep-file" accept=".js,.txt,text/javascript,application/javascript,text/plain"><small class="muted" id="ep-file-info">Maks 200 KB.</small></span>
+        <textarea id="ep-source" spellcheck="false" placeholder="case 'caristiker': { … axios.get(`https://…?q=${text}`) … }"></textarea></label>
+      <div class="actions"><button type="button" class="primary" id="ep-convert">Sempurnakan &amp; tes</button>
+        <label class="inline">Cara<select id="ep-ai"><option value="auto">Otomatis (aturan dulu, AI kalau perlu)</option><option value="never">Tanpa AI</option><option value="only">Langsung pakai AI</option></select></label>
+        <small class="muted" id="ep-convert-msg" aria-live="polite"></small></div>
+      <div id="ep-preview" class="full ep-preview" hidden>
+        <div id="ep-test" class="ep-test" aria-live="polite"></div>
+        <p id="ep-source-info" class="muted"></p>
+        <ul id="ep-notes" class="ep-notes"></ul>
+        <div class="ep-grid">
+          <label><span><b>2</b> Nama endpoint</span><input name="name" required maxlength="100"></label>
+          <label><span><b>3</b> Path</span><input name="path" required pattern="/api/[a-z0-9\-]{1,40}/[a-z0-9\-]{1,60}" title="/api/kategori/nama — huruf kecil, angka, tanda -"></label>
+          <label class="full"><span><b>4</b> Deskripsi</span><input name="description" maxlength="500"></label>
+          <label><span><b>5</b> Tier minimum</span><select name="minimum_tier"><option>FREE</option><option>SULTAN</option><option>SEPUH</option><option>DEWA</option><option value="OWNER">DEVELOPER</option></select></label>
+          <div class="full"><span class="ep-cap">Input buat tes</span><div id="ep-sample" class="ep-sample"></div></div>
+          <label class="full"><span><b>6</b> Kode hasil (boleh diedit, habis edit tes ulang)</span><textarea name="code" id="ep-code" spellcheck="false"></textarea></label>
+        </div>
+        <div class="actions"><button type="button" id="ep-retest">Tes ulang</button><button class="primary" type="submit" id="ep-submit" disabled>Tambah &amp; deploy</button>
+          <p class="muted">Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Tombol deploy baru bisa diklik kalau tesnya jalan.</p></div>
+      </div>
     </form>
-    <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Tes endpoint theresav</button><small class="muted" id="selftest-note">Ngetes endpoint AI/Downloader/Maker/Image ke theresav dari server. Pakai kuota theresav kamu.</small></div>
+    <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Test/Check All API</button><small class="muted" id="selftest-note">Ngecek semua endpoint ke server sumbernya masing-masing. Pakai kuota tiap server.</small></div>
     <div id="selftest-data"></div>
     <div id="endpoints-data">Lagi dimuat…</div>
   </section>
@@ -270,6 +294,15 @@ module.exports = async (req, res) =&gt; {
   <textarea id="access-input" rows="3" placeholder="email atau ID user, satu per baris" spellcheck="false" style="width:100%"></textarea>
   <div class="row" style="margin-top:10px"><button class="primary" type="button" id="access-add">Tambah</button><button class="danger" type="button" id="access-reset">Reset akses (ganti semua)</button><button type="button" onclick="document.getElementById('access-dialog').close()">Tutup</button></div>
   <p id="access-msg" aria-live="polite"></p>
+</div></dialog>
+<dialog id="code-dialog"><div>
+  <h2>Edit kode endpoint</h2>
+  <p class="muted" id="code-label"></p>
+  <textarea id="code-text" spellcheck="false"></textarea>
+  <div class="ep-sample" id="code-sample" style="margin-top:10px"></div>
+  <div id="code-test" class="ep-test" hidden style="margin-top:10px"></div>
+  <div class="row" style="margin-top:12px"><button type="button" id="code-run">Tes</button><button class="primary" type="button" id="code-save">Tes &amp; simpan</button><button type="button" onclick="document.getElementById('code-dialog').close()">Batal</button></div>
+  <p class="muted"><small>Kode baru dites dulu. Kalau jalan, di-commit ke GitHub dan Vercel deploy ulang otomatis.</small></p>
 </div></dialog>
 <dialog id="user-dialog"><div id="user-detail"></div><div class="row" style="margin-top:14px"><button class="primary" type="button" onclick="document.getElementById('user-dialog').close()">Tutup</button></div></dialog>
 
@@ -534,7 +567,7 @@ $('#access-list').addEventListener('click', async e => {
 // ---------- endpoints
 let selftestResults = [];
 $('#selftest-btn').addEventListener('click', async () => {
-  if (!ask('Tes semua endpoint theresav ke server upstream sekarang? Ini bakal pakai kuota theresav kamu.')) return;
+  if (!ask('Cek semua endpoint ke server sumbernya sekarang? Ini bakal pakai kuota tiap server.')) return;
   const btn = $('#selftest-btn'); btn.disabled = true; btn.textContent = 'Lagi ngetes…';
   $('#selftest-data').innerHTML = '<p class="muted">Lagi ngetes… bisa 1–2 menit.</p>';
   try {
@@ -556,7 +589,7 @@ $('#selftest-btn').addEventListener('click', async () => {
       catch (err) { say(err.message); }
     });
   } catch (e) { $('#selftest-data').innerHTML = `<p class="error">${esc(e.message)}</p>`; }
-  finally { btn.disabled = false; btn.textContent = 'Tes endpoint theresav'; }
+  finally { btn.disabled = false; btn.textContent = 'Test/Check All API'; }
 });
 
 // Catalog label: new (green), hot (red), recommend (yellow); the emoji is the same size as the text.
@@ -569,13 +602,14 @@ loaders.endpoints = async () => {
     const d = await api('/owner/api/endpoints');
     $('#endpoints-data').innerHTML = `<table><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Label</th><th>Status</th><th>Aksi</th></tr>${d.endpoints.map(e => `<tr>
       <td><span data-no-i18n><b>${esc(e.name)}</b><br><small>${esc(e.method)} ${esc(e.path)}</small></span>${e.backups?.length ? `<br><small class="muted">${tr('Cadangan')}: <span data-no-i18n>${e.backups.map(esc).join(', ')}</span></small>` : ''}${e.backup_for?.length ? `<br><small class="muted">${tr('Cadangan buat')}: <span data-no-i18n>${e.backup_for.map(esc).join(', ')}</span></small>` : ''}</td>
-      <td>${e.handler_loaded ? chip('deployed', 'ok') : e.plugin ? chip('nunggu deploy', 'warn') : chip('metadata only', 'warn')}</td>
+      <td>${e.deleted ? chip('dihapus, nunggu deploy', 'warn') : e.handler_loaded ? chip('deployed', 'ok') : e.plugin ? chip('nunggu deploy', 'warn') : chip('metadata only', 'warn')}${e.handler_loaded && e.file ? `<br><small class="muted" data-no-i18n>plugin/${esc(e.file)}${e.file_endpoints > 1 ? ` · ${e.file_endpoints} endpoint` : ''}</small>` : ''}</td>
       <td><select data-ep-tier="${esc(e.id)}">${['FREE', 'SULTAN', 'SEPUH', 'DEWA', 'OWNER'].map(t => `<option value="${t}" ${t === e.minimum_tier ? 'selected' : ''}>${tierName(t)}</option>`).join('')}</select></td>
       <td><select data-ep-badge="${esc(e.id)}" aria-label="Label endpoint">${[['', 'Tanpa label'], ['new', '🍃 New'], ['hot', '🔥 Hot'], ['recommend', '👍 Recommend']].map(([v, l]) => `<option value="${v}" ${v === (e.badge || '') ? 'selected' : ''}>${l}</option>`).join('')}</select> ${epBadge(e.badge)}</td>
       <td>${chip(e.status, e.status === 'active' ? 'ok' : 'bad')} ${e.locked ? chip('locked', 'bad') : chip('open', 'ok')}${e.auto_disabled ? `<br><small class="error">${tr('Disembunyikan otomatis')}: <span data-no-i18n>${esc(e.disabled_reason || '')}</span></small>` : ''}</td>
       <td><button class="sm" data-ep="${e.locked ? 'unlock' : 'lock'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.locked ? 'Unlock' : 'Lock'}</button>
           <button class="sm" data-ep="status" data-status="${e.status === 'active' ? 'disabled' : 'active'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">${e.status === 'active' ? 'Disable' : 'Enable'}</button>
-          ${e.handler_loaded ? '' : `<button class="sm danger" data-ep="delete" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Hapus</button>`}</td></tr>`).join('')}</table>`;
+          ${e.code_editable ? `<button class="sm" data-ep="code" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Edit kode</button>` : ''}
+          ${!e.handler_loaded || e.code_editable ? `<button class="sm danger" data-ep="${e.handler_loaded ? 'delete-code' : 'delete'}" data-id="${esc(e.id)}" data-path="${esc(e.path)}">Hapus</button>` : ''}</td></tr>`).join('')}</table>`;
   } catch (e) { fail('#endpoints-data', e); }
 };
 $('#endpoints-data').addEventListener('change', async e => {
@@ -592,41 +626,127 @@ $('#endpoints-data').addEventListener('change', async e => {
 $('#endpoints-data').addEventListener('click', async e => {
   const b = e.target.closest('button[data-ep]'); if (!b) return;
   const { ep, id, path } = b.dataset;
-  const q = { lock: `Kunci ${path}? Semua user selain developer bakal ditolak (ENDPOINT_LOCKED).`, unlock: `Buka kunci ${path}?`, status: `${b.dataset.status === 'disabled' ? 'Nonaktifkan' : 'Aktifkan'} ${path}?`, delete: `Hapus metadata ${path}?` }[ep];
+  if (ep === 'code') return openCode(id, path);
+  const q = { lock: `Kunci ${path}? Semua user selain developer bakal ditolak (ENDPOINT_LOCKED).`, unlock: `Buka kunci ${path}?`, status: `${b.dataset.status === 'disabled' ? 'Nonaktifkan' : 'Aktifkan'} ${path}?`, delete: `Hapus metadata ${path}?`, 'delete-code': `Hapus endpoint ${path}? File kodenya dihapus dari GitHub dan endpoint-nya langsung dimatiin.` }[ep];
   if (!ask(q)) return;
   try {
     if (ep === 'lock' || ep === 'unlock') await send(`/owner/api/endpoints/${id}/${ep}`);
     if (ep === 'status') await send(`/owner/api/endpoints/${id}`, 'PATCH', { status: b.dataset.status });
     if (ep === 'delete') await send(`/owner/api/endpoints/${id}`, 'DELETE');
+    if (ep === 'delete-code') { const d = await send(`/owner/api/endpoints/${id}`, 'DELETE'); say(d.message || 'Endpoint dihapus.'); }
   } catch (err) { say(err.message); }
   loaders.endpoints();
+});
+// ---------- add endpoint: paste any code → "Sempurnakan & tes" → preview → "Tambah & deploy"
+const ep = { tested: false, params: [] };
+const testBox = (el, t) => {
+  el.hidden = false;
+  el.className = 'ep-test ' + (t.ok ? 'ok' : 'bad');
+  el.innerHTML = `<b>${t.ok ? '✓ Jalan' : '✕ Belum jalan'}</b> <span data-no-i18n>${esc(t.message || '')}</span>${t.ms ? ` <small class="muted">${t.ms} ms</small>` : ''}${t.preview ? `<pre data-no-i18n>${esc(t.preview)}</pre>` : ''}`;
+};
+const sampleInputs = (el, params, sample) => {
+  el.innerHTML = params.length ? params.map(p => `<label>${esc(p.name)}${p.required ? ' *' : ''}<input data-sample="${esc(p.name)}" value="${esc(sample[p.name] ?? '')}" placeholder="${esc(p.placeholder || '')}"></label>`).join('')
+    : `<label>${tr('Query tambahan')}<input data-sample-raw placeholder="q=anime&amp;page=1" value="${esc(new URLSearchParams(sample).toString())}"></label>`;
+};
+const readSample = el => {
+  const raw = el.querySelector('[data-sample-raw]');
+  if (raw) return Object.fromEntries(new URLSearchParams(raw.value.trim()));
+  return Object.fromEntries([...el.querySelectorAll('[data-sample]')].map(i => [i.dataset.sample, i.value.trim()]));
+};
+const setTested = ok => { ep.tested = ok; $('#ep-submit').disabled = !ok; };
+
+loaders.ai = async () => {
+  try {
+    const d = await api('/owner/api/ai');
+    $('#ai-state').textContent = d.ai.configured ? `AI: ${d.ai.model} lewat ${d.ai.host}` : 'AI: belum diatur (isi AI_API_KEY di Vercel). Kode simpel tetap bisa tanpa AI.';
+  } catch { $('#ai-state').textContent = 'AI: nggak kebaca.'; }
+};
+loaders.ai();
+$('#ai-ping').addEventListener('click', async () => {
+  const b = $('#ai-ping'); b.disabled = true; $('#ai-ping-msg').textContent = 'Lagi ngetes…';
+  try { const r = await fetch('/owner/api/ai/ping', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' }).then(x => x.json()); $('#ai-ping-msg').textContent = (r.ok ? '✓ ' : '✕ ') + (r.message || ''); }
+  catch (e) { $('#ai-ping-msg').textContent = '✕ ' + e.message; }
+  b.disabled = false;
 });
 $('#ep-file').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
-  if (f.size > 200 * 1024) { say('Script maksimal 200 KB ya.'); e.target.value = ''; return; }
-  $('#ep-code').value = await f.text();
+  if (f.size > 200 * 1024) { say('Kode maksimal 200 KB ya.'); e.target.value = ''; return; }
+  $('#ep-source').value = await f.text();
   $('#ep-file-info').textContent = `${f.name} · ${(f.size / 1024).toFixed(1)} KB dimuat`;
 });
-// Suggest the path from the name: "TikTok Downloader" → /api/kategori/tiktok-downloader.
-$('#ep-form [name=name]').addEventListener('input', e => {
-  const p = $('#ep-form [name=path]'); if (p.dataset.touched) return;
-  const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
-  p.value = slug ? `/api/kategori/${slug}` : '';
+$('#ep-convert').addEventListener('click', async () => {
+  const code = $('#ep-source').value;
+  if (!code.trim()) { say('Tempel kodenya dulu.'); return; }
+  const btn = $('#ep-convert'); btn.disabled = true; btn.textContent = 'Lagi nyempurnain…';
+  $('#ep-convert-msg').textContent = $('#ep-ai').value === 'never' ? '' : 'Kalau pakai AI bisa sampai 1–2 menit.';
+  try {
+    const d = await send('/owner/api/endpoints/convert', 'POST', { code, ai: $('#ep-ai').value });
+    const f = $('#ep-form');
+    f.name.value = d.meta.name; f.path.value = d.meta.path; f.description.value = d.meta.desc || ''; f.code.value = d.code;
+    ep.params = d.meta.params || [];
+    sampleInputs($('#ep-sample'), ep.params, d.meta.sample || {});
+    $('#ep-source-info').textContent = d.source === 'ai' ? `Disempurnakan pakai AI (${d.model}).` : d.source === 'plugin' ? 'Kode-nya udah format plugin, dipakai apa adanya.' : 'Disempurnakan pakai aturan otomatis (tanpa AI).';
+    const notes = [...(d.notes || []),
+      ...d.secrets.filter(x => !x.known).map(x => `Key di kode kamu (${x.masked}) nggak ditulis di plugin. Isi env ${x.env} di Vercel dengan key itu, terus redeploy.`),
+      ...(d.duplicate ? [`Path ${d.duplicate.path} udah dipakai (${d.duplicate.name}), jadi path-nya diganti ke ${d.meta.path}. Cek dulu, jangan-jangan endpoint-nya udah ada.`] : [])];
+    $('#ep-notes').innerHTML = notes.map(n => `<li data-no-i18n>${esc(n)}</li>`).join('');
+    $('#ep-preview').hidden = false;
+    testBox($('#ep-test'), d.test);
+    setTested(d.test.ok);
+    $('#ep-preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('#ep-convert-msg').textContent = '';
+  } catch (err) { $('#ep-convert-msg').textContent = '✕ ' + err.message; }
+  btn.disabled = false; btn.textContent = 'Sempurnakan & tes';
 });
-$('#ep-form [name=path]').addEventListener('input', e => { e.target.dataset.touched = '1'; });
+const retest = async () => {
+  const f = $('#ep-form');
+  const btn = $('#ep-retest'); btn.disabled = true; btn.textContent = 'Lagi ngetes…';
+  try { const d = await send('/owner/api/endpoints/try', 'POST', { code: f.code.value, path: f.path.value, sample: readSample($('#ep-sample')) }); testBox($('#ep-test'), d.test); setTested(d.test.ok); }
+  catch (err) { testBox($('#ep-test'), { ok: false, message: err.message }); setTested(false); }
+  btn.disabled = false; btn.textContent = 'Tes ulang';
+};
+$('#ep-retest').addEventListener('click', retest);
+['#ep-code', '#ep-sample'].forEach(k => $(k).addEventListener('input', () => setTested(false)));
+$('#ep-form [name=path]').addEventListener('input', () => setTested(false));
 $('#ep-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const body = Object.fromEntries(new FormData(e.target));
+  if (!ep.tested) { say('Tes dulu sampai jalan, baru bisa deploy.'); return; }
+  const f = e.target;
+  const body = { name: f.name.value, path: f.path.value, description: f.description.value, minimum_tier: f.minimum_tier.value, code: f.code.value, params: ep.params, sample: readSample($('#ep-sample')) };
   if (!ask(`Commit script ke plugin/ dan deploy ${body.path} (tier ${body.minimum_tier})?`)) return;
-  const btn = $('#ep-submit'); btn.disabled = true; btn.textContent = 'Lagi commit…';
+  const btn = $('#ep-submit'); btn.disabled = true; btn.textContent = 'Lagi tes & commit…';
   try {
     const d = await send('/owner/api/endpoints', 'POST', body);
-    say(d.message || d.warning || 'Endpoint udah disimpan.');
-    e.target.reset(); delete $('#ep-form [name=path]').dataset.touched;
-    $('#ep-file-info').textContent = 'Maks 200 KB. File langsung di-commit ke folder plugin/.';
-  } catch (err) { say(err.message); }
-  btn.disabled = false; btn.textContent = 'Tambah & deploy';
+    say(d.message || 'Endpoint udah disimpan.');
+    f.reset(); $('#ep-source').value = ''; $('#ep-preview').hidden = true; setTested(false);
+    $('#ep-file-info').textContent = 'Maks 200 KB.';
+  } catch (err) { say(err.message); btn.disabled = false; }
+  btn.textContent = 'Tambah & deploy';
   loaders.endpoints();
+});
+
+// ---------- edit an endpoint's code
+const codeEdit = { id: null, sha: null, mode: null, path: null };
+async function openCode(id, path) {
+  Object.assign(codeEdit, { id, path, sha: null, mode: null });
+  $('#code-label').textContent = path; $('#code-text').value = tr('Lagi dimuat…'); $('#code-test').hidden = true;
+  $('#code-sample').innerHTML = `<label>${tr('Query buat tes')}<input data-sample-raw placeholder="q=anime" style="min-width:220px"></label>`;
+  $('#code-dialog').showModal();
+  try { const d = await api(`/owner/api/endpoints/${id}/code`); Object.assign(codeEdit, { sha: d.sha, mode: d.mode }); $('#code-text').value = d.code; }
+  catch (err) { $('#code-text').value = ''; testBox($('#code-test'), { ok: false, message: err.message }); }
+}
+$('#code-run').addEventListener('click', async () => {
+  try { const d = await send('/owner/api/endpoints/try', 'POST', { code: $('#code-text').value, path: codeEdit.path, sample: readSample($('#code-sample')) }); testBox($('#code-test'), d.test); }
+  catch (err) { testBox($('#code-test'), { ok: false, message: err.message }); }
+});
+$('#code-save').addEventListener('click', async () => {
+  const btn = $('#code-save'); btn.disabled = true; btn.textContent = 'Lagi tes & simpan…';
+  try {
+    const d = await send(`/owner/api/endpoints/${codeEdit.id}/code`, 'PUT', { code: $('#code-text').value, sha: codeEdit.sha, mode: codeEdit.mode, sample: readSample($('#code-sample')) });
+    testBox($('#code-test'), { ...d.test, message: d.message });
+    codeEdit.sha = null;   // a new version is on GitHub now: reopen to edit again
+  } catch (err) { testBox($('#code-test'), { ok: false, message: err.message }); }
+  btn.disabled = false; btn.textContent = 'Tes & simpan';
 });
 
 // ---------- payments

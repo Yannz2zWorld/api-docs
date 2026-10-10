@@ -513,6 +513,9 @@ app.get('/favicon.ico', (req, res) => {
 
 const loadedPluginPaths = new Set();
 app.locals.loadedPluginPaths = loadedPluginPaths;
+// path → plugin file it comes from (Developer panel: edit / delete an endpoint's code).
+const pluginFiles = new Map();
+app.locals.pluginFiles = pluginFiles;
 // path -> run(), so the endpoint checker (services/endpointCheckService.js) can test local plugins.
 const pluginRuns = new Map();
 app.locals.pluginRuns = pluginRuns;
@@ -705,6 +708,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
           app.get(cleanPath, apiGateway(cleanPath, run));
           if (route.upload) { uploadPaths.add(cleanPath); app.post(cleanPath, apiGateway(cleanPath, run)); }
           loadedPluginPaths.add(cleanPath);
+          pluginFiles.set(cleanPath, file);
           pluginRuns.set(cleanPath, run);
           registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
