@@ -1160,7 +1160,13 @@
   "Download": "Download",
   "Download file": "Download file",
   "Koneksi putus": "Connection lost",
-  "Kode endpoint ini belum ke-deploy, jadi belum bisa dites.": "This endpoint's code isn't deployed yet, so it can't be tested."
+  "Kode endpoint ini belum ke-deploy, jadi belum bisa dites.": "This endpoint's code isn't deployed yet, so it can't be tested.",
+  "Penyimpanan file besar": "Large-file storage",
+  "Pasang izin upload": "Allow uploads",
+  "Biar file di atas 4 MB bisa langsung di-upload dari website ke bucket. Cukup sekali, ulangi kalau ganti domain atau bucket.": "Lets files over 4 MB upload straight from the website to the bucket. Once is enough; do it again after changing the domain or bucket.",
+  "belum diisi (maks 4 MB per file).": "not set up (4 MB per file max).",
+  "Lagi masang…": "Setting up…",
+  "Telah disimpan. Upload file besar dari website udah diizinkan.": "Saved. Large uploads from the website are allowed now."
  },
  "patterns": [
   [
