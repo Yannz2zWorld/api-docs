@@ -14,7 +14,7 @@ before(async () => {
   if (h.skip) return;
   global.fetch = async (url, opts = {}) => {
     const u = new URL(String(url));
-    if (['api.botcahx.eu.org', 'api.dongtube.id'].includes(u.hostname)) {
+    if (['api.botcahx.eu.org', 'api.dongtube.id', 'api.nexray.eu.cc'].includes(u.hostname)) {
       calls.push({ host: u.hostname, path: u.pathname, query: Object.fromEntries(u.searchParams) });
       const r = reply(u);
       if (r.image) return new Response(r.image, { status: 200, headers: { 'content-type': 'image/gif' } });

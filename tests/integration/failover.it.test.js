@@ -16,7 +16,7 @@ before(async () => {
   if (h.skip) return;
   global.fetch = async (url, opts = {}) => {
     const u = new URL(String(url));
-    if (['api.theresav.eu', 'api.clutch.web.id', 'api.termai.cc'].includes(u.hostname)) {
+    if (['api.theresav.eu', 'api.clutch.web.id', 'api.termai.cc', 'api.nexray.eu.cc'].includes(u.hostname)) {
       calls.push({ host: u.hostname, path: u.pathname, query: Object.fromEntries(u.searchParams) });
       const r = reply(u);
       return new Response(JSON.stringify(r.json), { status: r.status, headers: { 'content-type': 'application/json' } });
@@ -88,7 +88,7 @@ it('when every member is out of plan the endpoint is hidden; it comes back when 
 
   // The automatic check finds YouTube working again.
   reply = () => ({ status: 200, json: { status: true, result: 'ok' } });
-  for (let i = 0; i < 40; i++) { const c = await app.request('POST', '/api/endpoints/autocheck', { headers: { 'x-yannz-client': 'web' } }); if (!c.json.checked.length) break; }
+  for (let i = 0; i < 200; i++) { const c = await app.request('POST', '/api/endpoints/autocheck', { headers: { 'x-yannz-client': 'web' } }); if (!c.json.checked.length) break; }
   require('../../services/errorLogService').resetHidden();
   assert.equal(await inCatalog('/api/download/youtube'), true);
   assert.equal((await call('/api/download/youtube?url=https://youtu.be/abc')).status, 200);
@@ -101,6 +101,6 @@ it('the monitor shows a group as 200 while a backup works; the panel lists the b
   const ig = (await app.request('GET', '/api/endpoints/status')).json.endpoints.find(e => e.path === '/api/download/instagram');
   assert.deepEqual([ig.code, ig.source], [200, 'backup']);
   const rows = (await app.request('GET', '/owner/api/endpoints', { cookie: owner })).json.endpoints;
-  assert.deepEqual(rows.find(e => e.path === '/api/download/tiktok').backups, ['/api/download/tiktok-v2', '/api/alt/download/tiktok', '/api/download/aio', '/api/alt/download/aio', '/api/alt2/download/tiktok']);
+  assert.deepEqual(rows.find(e => e.path === '/api/download/tiktok').backups, ['/api/download/tiktok-v2', '/api/alt/download/tiktok', '/api/download/aio', '/api/alt/download/aio', '/api/alt2/download/tiktok', '/api/download/tiktok-v3']);
   assert.deepEqual(rows.find(e => e.path === '/api/download/aio').backup_for.sort(), ['/api/download/instagram', '/api/download/tiktok', '/api/download/youtube']);
 });

@@ -91,7 +91,7 @@ it('a WhatsApp bot case calling theresav becomes a theresav proxy endpoint; the 
   assert.deepEqual(r.json.secrets.map(s => [s.env, s.known]), [['THERESAV_API_KEY', true]]);
   assert.equal(r.json.meta.sample.q, 'jomok', 'the example from the bot help text becomes the test input');
   assert.equal(r.json.duplicate.path, '/api/search/stickerly', 'this one already exists on the site');
-  assert.equal(r.json.meta.path, '/api/search/stickerly-v2');
+  assert.equal(r.json.meta.path, '/api/search/stickerly-v3', 'v2 is taken (NexRay)');
   assert.equal(r.json.test.ok, false, 'no THERESAV_API_KEY in the tests: the test run reports it');
   assert.match(r.json.test.message, /belum aktif/);
 });

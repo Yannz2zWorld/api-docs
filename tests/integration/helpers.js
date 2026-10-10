@@ -95,7 +95,8 @@ async function startApp(env = {}) {
     OWNER_EMAIL,
     RATE_LIMIT_PER_MINUTE: '100000',
     AUTH_RATE_LIMIT_PER_15MIN: '100000',
-    HUMAN_CHECK: 'off'   // tests call the catalog directly; tests/integration/humancheck.it.test.js turns it on
+    HUMAN_CHECK: 'off',   // tests call the catalog directly; tests/integration/humancheck.it.test.js turns it on
+    NEXRAY: 'off'         // public upstream used as a backup almost everywhere; tests/integration/nexray.it.test.js turns it on
   }, env);
   const originalLoad = Module._load;
   Module._load = function (request, ...rest) {
