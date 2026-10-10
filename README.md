@@ -340,7 +340,7 @@ review. States: order `pending|paid|rejected|expired`, payment `pending|paid|rej
 Payment methods:
 | Method | How | Settles |
 |---|---|---|
-| QRIS otomatis | Pakasir transaction; the QR payload is rendered as an image by `/api/orders/:id/qr.svg` | webhook + provider lookup (if `PAKASIR_V2_VERIFY_URL` is set), or owner approval |
+| Otomatis (QRIS / VA) | Pakasir API v2 transaction: QRIS (the QR payload is rendered as an image by `/api/orders/:id/qr.svg`) or a Virtual Account number (BRI, BNI, CIMB Niaga, Permata, Maybank, BNC, Artha Graha, Sampoerna; min Rp10.000) | Pakasir status API (via webhook or the buyer's page), or owner approval |
 | QRIS manual | the owner's static QRIS (`views/assets/qris-manual.jpg`); buyer enters the exact amount | owner approval |
 | DANA | transfer to the number set in Owner > Server & Pembayaran | owner approval |
 | GoPay | same, GoPay number | owner approval |
@@ -364,17 +364,22 @@ Payment confirmation (current flow):
   `PAKASIR_PROJECT` and `PAKASIR_API_KEY`; while off, buyers see "Sedang maintenance" and
   `POST /api/orders/:id/pakasir` answers `503 PAYMENT_GATEWAY_MAINTENANCE`.
 
-Pakasir (IMPLEMENTED, NOT VERIFIED against the live provider): transaction creation
-uses `PAKASIR_PROJECT` + `PAKASIR_API_KEY`. Creating a payment never marks it paid. The
-webhook (`POST /webhooks/pakasir`) checks project, `completed` status, order code and
-amount against the database, then requires a server-side provider lookup via
-`PAKASIR_V2_VERIFY_URL` (template with `{project}`, `{order_id}`, `{amount}`, `{api_key}`).
-Pakasir's API documentation has described a transaction-detail lookup of the form
-`https://app.pakasir.com/api/transactiondetail?project={project}&amount={amount}&order_id={order_id}&api_key={api_key}`
-(NOT VERIFIED from the development environment: pakasir.com was unreachable). Confirm
-it in your Pakasir docs and test with a sandbox payment before relying on it. Without the variable automatic settlement is DISABLED (fail-closed,
-`202 PAYMENT_NOT_VERIFIED`) and the owner approves QRIS-gateway payments by hand after
-checking the Pakasir dashboard. Settlement is idempotent (`duplicate: true` on replays).
+Pakasir API v2 (IMPLEMENTED; tested against a mocked provider, routes confirmed live):
+- Create: `POST https://app.pakasir.com/api/v2/create-transaction/{PAKASIR_PROJECT}/{order_id}`
+  with `X-Api-Key: PAKASIR_API_KEY`, body `{method, amount}` → `txn_id` + `qr_string` or
+  `va_number`. Switching method cancels the earlier transaction
+  (`/api/v2/cancel-transaction/...`) and uses `{order_code}-2`, `-3`, … as the Pakasir order id.
+  `payment_link` is not used: buyers stay on this site. Creating a payment never marks it paid.
+- Confirm: a payment counts only when `GET /api/v2/transaction-status/{project}/{txn_id}` says
+  `completed` for the same order id and amount, and not `is_sandbox` (unless
+  `PAKASIR_SANDBOX=on`). This runs on the webhook (`POST /webhooks/pakasir`, which must carry
+  `X-Secret: PAKASIR_WEBHOOK_SECRET` when that is set) and when the billing page polls
+  `GET /api/orders/:id/payment-status` (at most once per 4 s per transaction), so a lost
+  webhook still activates the tier. A payment that arrives after the order expired still counts.
+  Settlement is idempotent (`duplicate: true` on replays; audit action `pakasir_paid`).
+- Developer panel → "Tes Pakasir" (`POST /owner/pakasir/check`) checks that the slug and key
+  are accepted and shows the webhook URL to paste into the Pakasir project.
+- Migration `023_pakasir_v2.sql` adds `payments.gateway_total` (amount + fee).
 
 ## Error contract
 

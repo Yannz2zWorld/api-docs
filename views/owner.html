@@ -14,6 +14,7 @@
 <script src="/assets/i18n.js"></script>
 <style>
   .save-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 1.5em; }
+  #pakasir-state { display: grid; gap: 4px; }
   .save-ok { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 2px solid var(--edge); border-radius: 8px; background: var(--accent); color: var(--accent-ink); font: 800 12px "DM Mono", monospace; letter-spacing: .04em; box-shadow: 2px 2px 0 var(--drop); }
   .save-fail { font-weight: 700; }
   .ep-new { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; margin: 14px 0 22px; padding: 16px; border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); }
@@ -205,6 +206,11 @@
     <div class="row" style="margin-top:10px"><button class="primary" id="save-ann" type="button">Simpan pengumuman</button><button id="clear-ann" type="button">Hapus pengumuman</button></div>
     <p id="ann-state" class="save-note" aria-live="polite"></p>
 
+    <h2 style="margin-top:28px">Payment gateway Pakasir (API v2)</h2>
+    <p class="muted">Pembeli bayar pakai QRIS atau Virtual Account, terus tier-nya aktif otomatis begitu Pakasir konfirmasi pembayarannya (dicek ke API status Pakasir, bukan cuma percaya webhook). Nyala kalau <code>PAYMENT_GATEWAY=on</code>, <code>PAKASIR_PROJECT</code> dan <code>PAKASIR_API_KEY</code> udah diisi di Vercel.</p>
+    <div class="row"><button type="button" class="primary" id="pakasir-check">Tes Pakasir</button></div>
+    <div id="pakasir-state" class="save-note" aria-live="polite"></div>
+
     <h2 style="margin-top:28px">Rekening pembayaran manual</h2>
     <p class="muted">Nomor yang muncul ke pembeli buat DANA / GoPay. Kosongin aja kalau mau nyembunyiin metodenya. QRIS manual pakai gambar <code>views/assets/qris-manual.jpg</code>.</p>
     <div class="row"><input id="dana-number" inputmode="tel" placeholder="Nomor DANA" maxlength="20"><input id="dana-name" placeholder="Nama akun DANA" maxlength="60"></div>
@@ -346,7 +352,7 @@ loaders.status = async () => {
     const s = await api('/owner/status');
     const db = s.database;
     // Optional settings show grey when empty instead of red.
-    const OPTIONAL = new Set(['PAYMENT_GATEWAY', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'GITHUB_TOKEN', 'CORS_ORIGINS', 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL']);
+    const OPTIONAL = new Set(['PAYMENT_GATEWAY', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAKASIR_WEBHOOK_SECRET', 'PAKASIR_SANDBOX', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'GITHUB_TOKEN', 'CORS_ORIGINS', 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL']);
     const cfg = Object.entries(s.config).map(([k, v]) => chip(k + (v || !OPTIONAL.has(k) ? '' : ' (opsional)'), v ? 'ok' : OPTIONAL.has(k) ? '' : 'warn')).join(' ');
     $('#status-data').innerHTML = `
       <h3>Database</h3>${chip(db.connected ? 'connected' : 'disconnected', db.connected ? 'ok' : 'bad')} ${db.ok === undefined ? '' : chip(db.ok ? 'schema ok' : 'migration required', db.ok ? 'ok' : 'bad')}
@@ -813,6 +819,26 @@ $('#save-server').addEventListener('click', async () => {
     const d = await send('/owner/server', 'PATCH', { maintenance_enabled: enabled, maintenance_message: $('#maint-msg').value });
     return `Maintenance Info Website ${d.settings.maintenance_enabled ? 'ON' : 'OFF'}.`;
   });
+});
+
+$('#pakasir-check').addEventListener('click', async () => {
+  const b = $('#pakasir-check'); b.disabled = true; b.textContent = 'Lagi ngecek…';
+  const el = $('#pakasir-state'); el.replaceChildren();
+  try {
+    const r = await fetch('/owner/pakasir/check', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' }).then(x => x.json());
+    const lines = [
+      `${r.ok ? '✓' : '✕'} ${r.message || ''}`,
+      `Gateway: ${r.enabled ? 'ON' : 'maintenance (isi PAYMENT_GATEWAY=on di Vercel buat nyalain)'}`,
+      `Webhook secret: ${r.webhookSecret ? 'udah diisi' : 'belum (isi PAKASIR_WEBHOOK_SECRET dari halaman proyek Pakasir)'}`,
+      `Mode sandbox: ${r.sandbox ? 'pembayaran sandbox diterima (buat ngetes aja)' : 'cuma pembayaran asli yang dihitung'}`
+    ];
+    for (const l of lines) { const p = document.createElement('div'); p.textContent = l; el.append(p); }
+    const hook = document.createElement('div'), url = document.createElement('code');
+    url.textContent = r.webhookUrl || '';
+    hook.append('Webhook URL buat diisi di proyek Pakasir: ', url);
+    el.append(hook);
+  } catch (e) { el.textContent = e.message; }
+  b.disabled = false; b.textContent = 'Tes Pakasir';
 });
 
 const saveAnn = (button, body) => saving(button, $('#ann-state'), async () => {

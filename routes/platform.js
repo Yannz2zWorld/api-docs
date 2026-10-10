@@ -492,7 +492,7 @@ router.get('/api/orders', auth, async (req, res) => {
     duration: tiers.DURATION,
     prices: Object.fromEntries(tiers.purchasable.map(t => [t, tiers.TIERS[t].price])),
     methods: {
-      QRIS_GATEWAY: { available: pakasir.isEnabled(), maintenance: !pakasir.isEnabled(), autoVerified: pakasir.isVerificationConfigured() },
+      QRIS_GATEWAY: { available: pakasir.isEnabled(), maintenance: !pakasir.isEnabled(), autoVerified: pakasir.isVerificationConfigured(), methods: pakasir.METHODS.map(m => ({ id: m, label: pakasir.LABEL[m], minimum: pakasir.MINIMUM[m] })) },
       QRIS: { available: true, image: '/assets/qris-manual.jpg' },
       DANA: { available: Boolean(accounts.DANA), account: accounts.DANA },
       GOPAY: { available: Boolean(accounts.GOPAY), account: accounts.GOPAY }
@@ -512,34 +512,99 @@ async function pendingOrderFor(req) {
   return (await query("SELECT * FROM orders WHERE id=$1 AND user_id=$2 AND status='pending' AND expires_at>now()", [req.params.id, req.account.id]))[0];
 }
 
+// ---------------------------------------------------------------- Pakasir gateway (API v2)
+// Settles a gateway payment that Pakasir confirmed. Late payments count too: if the buyer paid after
+// our order window closed, the money arrived, so the expired order is paid all the same.
+// Idempotent: the payment row is claimed by its id, so webhooks, polls and replays settle it once.
+async function settlePakasir(paymentId, source) {
+  const tx = await query(
+    `WITH upd_p AS (UPDATE payments SET status='paid',verified_at=now(),updated_at=now() WHERE id=$1 AND provider='pakasir' AND status IN ('pending','expired') RETURNING id,order_id,user_id,amount),
+     upd_o AS (UPDATE orders o SET status='paid',paid_at=now(),updated_at=now() FROM upd_p WHERE o.id=upd_p.order_id AND o.status IN ('pending','expired') AND o.amount=upd_p.amount RETURNING o.user_id,o.tier,o.id,o.duration_days),
+     upd_u AS (${orderService.applyPaidOrderSql('upd_o')})
+     INSERT INTO audit_logs(action,target_type,target_id,metadata) SELECT 'pakasir_paid','order',(SELECT id FROM upd_o),jsonb_build_object('payment',$1::text,'source',$2::text) FROM upd_u RETURNING id`,
+    [paymentId, source]
+  );
+  return tx.length > 0;
+}
+// The status API allows one check per transaction every 4 seconds.
+const lastStatusCheck = new Map();
+async function checkPakasirPayment(pay, source) {
+  const last = lastStatusCheck.get(pay.transaction_id) || 0;
+  if (Date.now() - last < 4000) return { checked: false };
+  lastStatusCheck.set(pay.transaction_id, Date.now());
+  if (lastStatusCheck.size > 5000) lastStatusCheck.clear();
+  const v = await pakasir.verifyTransaction({ txnId: pay.transaction_id, orderId: pay.provider_reference, amount: pay.amount });
+  if (v.paid) return { checked: true, status: 'completed', settled: await settlePakasir(pay.id, source) };
+  if (v.status === 'canceled') await query("UPDATE payments SET status='expired',updated_at=now() WHERE id=$1 AND status='pending'", [pay.id]);
+  // "completed" for another order, another amount or a sandbox payment is not this payment.
+  return { checked: true, status: v.status === 'canceled' ? 'canceled' : 'pending' };
+}
+
 router.post('/api/orders/:id/pakasir', sameOrigin, auth, validId('id'), async (req, res) => {
   const method = String(req.body?.method || 'qris');
   if (!pakasir.isEnabled()) return fail(res, 503, 'PAYMENT_GATEWAY_MAINTENANCE', 'Payment gateway lagi maintenance. Bayar manual aja lewat QRIS, DANA atau GoPay, terus upload buktinya.');
+  if (!pakasir.METHODS.includes(method)) return fail(res, 400, 'INVALID_PAYMENT_METHOD', 'Metode pembayaran ini nggak didukung.');
   const order = await pendingOrderFor(req);
   if (!order) return fail(res, 404, 'ORDER_NOT_FOUND', 'Order nggak ketemu atau udah kedaluwarsa.');
-  let data;
+  // Same method again: show the transaction already made. Another method: cancel that one first.
+  const prior = await query("SELECT * FROM payments WHERE order_id=$1 AND provider='pakasir' AND status='pending' ORDER BY created_at DESC", [order.id]);
+  const same = prior.find(p => p.payment_method === method && (!p.gateway_expires_at || new Date(p.gateway_expires_at) > new Date()));
+  if (same) return res.json({ success: true, payment: { id: same.id, status: same.status, provider_reference: same.provider_reference, amount: same.amount }, gateway: { txn_id: same.transaction_id, method, label: pakasir.LABEL[method], qr_string: same.qr_string, va_number: same.va_number, expired_at: same.gateway_expires_at, total_payment: same.gateway_total || order.amount } });
+  for (const p of prior) {
+    await pakasir.cancelTransaction(p.transaction_id);
+    await query("UPDATE payments SET status='expired',updated_at=now() WHERE id=$1 AND status='pending'", [p.id]);
+  }
+  const tries = (await query("SELECT count(*)::int n FROM payments WHERE order_id=$1 AND provider='pakasir'", [order.id]))[0].n;
+  const gatewayOrderId = tries ? `${order.order_code}-${tries + 1}` : order.order_code;
+  let tx;
   try {
-    data = await pakasir.createTransaction(order.order_code, method, order.amount);
+    tx = await pakasir.createTransaction(gatewayOrderId, method, order.amount);
   } catch (e) {
     if (e.code === 'PAYMENT_NOT_CONFIGURED') return fail(res, 503, e.code, 'Pembayaran otomatis belum diatur. Pakai pembayaran manual dulu ya.');
     if (e.code === 'INVALID_PAYMENT_METHOD' || e.code === 'INVALID_PAYMENT_AMOUNT') return fail(res, 400, e.code, e.message);
     console.error('Pakasir create failed:', { status: e?.response?.status || null, code: e?.code || null });
-    return fail(res, 502, 'PAYMENT_PROVIDER_ERROR', 'Gateway pembayaran lagi nggak bisa memproses transaksi.');
+    return fail(res, 502, 'PAYMENT_PROVIDER_ERROR', 'Gateway pembayaran lagi nggak bisa memproses transaksi. Coba lagi bentar, atau pakai pembayaran manual.');
   }
-  const tx = data?.payment || data?.transaction || data?.data || data || {};
-  const txnId = String(tx.txn_id || tx.transaction_id || order.order_code);
-  const ref = String(tx.txn_id || tx.payment_number || tx.transaction_id || tx.reference || order.order_code);
-  const gateway = { txn_id: tx.txn_id || null, payment_link: tx.payment_link || null, qr_string: tx.qr_string || (method === 'qris' ? tx.payment_number : null) || null, va_number: tx.va_number || (method !== 'qris' ? tx.payment_number : null) || null, expired_at: tx.expired_at || null, total_payment: tx.total_payment || order.amount };
-  const gatewayExpires = gateway.expired_at && !Number.isNaN(Date.parse(gateway.expired_at)) ? new Date(gateway.expired_at).toISOString() : null;
+  if (!tx.txn_id || (!tx.qr_string && !tx.va_number)) {
+    console.error('Pakasir create returned no payment details:', { method });
+    return fail(res, 502, 'PAYMENT_PROVIDER_ERROR', 'Gateway pembayaran nggak ngasih QR / nomor VA. Coba lagi bentar.');
+  }
+  const gatewayExpires = tx.expired_at && !Number.isNaN(Date.parse(tx.expired_at)) ? new Date(tx.expired_at).toISOString() : null;
   const payment = (await query(
-    `INSERT INTO payments(order_id,user_id,provider,payment_method,transaction_id,provider_reference,amount,status,payment_url,qr_string,va_number,gateway_expires_at)
-     VALUES($1,$2,'pakasir',$3,$4,$5,$6,'pending',$7,$8,$9,$10)
+    `INSERT INTO payments(order_id,user_id,provider,payment_method,transaction_id,provider_reference,amount,status,qr_string,va_number,gateway_expires_at)
+     VALUES($1,$2,'pakasir',$3,$4,$5,$6,'pending',$7,$8,$9)
      ON CONFLICT(provider,transaction_id) WHERE transaction_id IS NOT NULL
-     DO UPDATE SET payment_url=EXCLUDED.payment_url,qr_string=EXCLUDED.qr_string,va_number=EXCLUDED.va_number,gateway_expires_at=EXCLUDED.gateway_expires_at,updated_at=now()
+     DO UPDATE SET qr_string=EXCLUDED.qr_string,va_number=EXCLUDED.va_number,gateway_expires_at=EXCLUDED.gateway_expires_at,status='pending',updated_at=now()
      RETURNING id,status,provider_reference,amount`,
-    [order.id, req.account.id, method, txnId, ref, order.amount, gateway.payment_link && /^https:\/\//i.test(gateway.payment_link) ? gateway.payment_link : null, gateway.qr_string, gateway.va_number, gatewayExpires]
+    [order.id, req.account.id, method, tx.txn_id, gatewayOrderId, order.amount, tx.qr_string, tx.va_number, gatewayExpires]
   ))[0];
-  res.status(201).json({ success: true, payment, gateway, note: 'Status tetap pending sampai pembayaran diverifikasi server.' });
+  await query('UPDATE payments SET gateway_total=$2 WHERE id=$1', [payment.id, tx.total_payment]).catch(() => {});   // optional column (migration 023)
+  res.status(201).json({ success: true, payment, gateway: { txn_id: tx.txn_id, method, label: pakasir.LABEL[method], qr_string: tx.qr_string, va_number: tx.va_number, expired_at: gatewayExpires, total_payment: tx.total_payment, fee: tx.fee, sandbox: tx.is_sandbox }, note: 'Status tetap pending sampai Pakasir konfirmasi pembayarannya.' });
+});
+
+// The buyer's page asks every few seconds; a paid order is settled right here, so the tier is
+// active even when the webhook is late or never arrives.
+router.get('/api/orders/:id/payment-status', auth, validId('id'), async (req, res) => {
+  const order = (await query('SELECT id,status,order_code FROM orders WHERE id=$1 AND user_id=$2', [req.params.id, req.account.id]))[0];
+  if (!order) return fail(res, 404, 'ORDER_NOT_FOUND', 'Order nggak ketemu.');
+  if (order.status === 'paid') return res.json({ success: true, status: 'paid' });
+  // The newest gateway transaction, also when our order window has closed (a late payment still counts).
+  const pay = (await query("SELECT * FROM payments WHERE order_id=$1 AND provider='pakasir' AND status IN ('pending','expired') AND transaction_id IS NOT NULL ORDER BY created_at DESC LIMIT 1", [order.id]))[0];
+  if (!pay || !pakasir.isConfigured()) return res.json({ success: true, status: order.status });
+  try {
+    const r = await checkPakasirPayment(pay, 'status_check');
+    if (r.status === 'completed') {
+      if (r.settled === false) {   // settled by a webhook at the same moment, or the order cannot take it
+        const now = (await query('SELECT status FROM orders WHERE id=$1', [order.id]))[0];
+        if (now?.status !== 'paid') return res.json({ success: true, status: 'pending' });
+      }
+      return res.json({ success: true, status: 'paid' });
+    }
+    return res.json({ success: true, status: r.status === 'canceled' ? 'canceled' : 'pending' });
+  } catch (e) {
+    console.error('Pakasir status check failed:', { status: e?.response?.status || null, code: e?.code || null });
+    return res.json({ success: true, status: 'pending', checkFailed: true });
+  }
 });
 
 // The gateway's QRIS payload rendered as a scannable image (never leaves our server).
@@ -634,9 +699,9 @@ router.get('/owner/status', auth, owner, async (req, res) => {
     success: true,
     database,
     // Names and presence only; values are never returned.
-    config: Object.fromEntries(['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL', 'AUTH_SECRET', 'OWNER_EMAIL', 'CORS_ORIGINS', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAYMENT_GATEWAY', 'PAKASIR_V2_VERIFY_URL', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'EMAIL_FROM', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY', 'GITHUB_TOKEN', 'BACKUP_EMAIL', 'CRON_SECRET', 'PUBLIC_BASE_URL', 'THERESAV_API_KEY', 'CLUTCH_API_KEY', 'TERMAI_API_KEY', 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL'].map(n => [n, configured(n)])),
+    config: Object.fromEntries(['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL', 'AUTH_SECRET', 'OWNER_EMAIL', 'CORS_ORIGINS', 'PAKASIR_PROJECT', 'PAKASIR_API_KEY', 'PAYMENT_GATEWAY', 'PAKASIR_WEBHOOK_SECRET', 'PAKASIR_SANDBOX', 'MANUAL_PAYMENT_INSTRUCTIONS', 'OWNER_WA', 'EMAIL_FROM', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY', 'GITHUB_TOKEN', 'BACKUP_EMAIL', 'CRON_SECRET', 'PUBLIC_BASE_URL', 'THERESAV_API_KEY', 'CLUTCH_API_KEY', 'TERMAI_API_KEY', 'R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL'].map(n => [n, configured(n)])),
     authConfigured: missingAuthConfig().length === 0,
-    payments: { pakasirConfigured: pakasir.isConfigured(), gateway: pakasir.isEnabled() ? 'on' : 'maintenance', automaticSettlement: pakasir.isVerificationConfigured() ? 'configured_not_verified' : 'disabled_fail_closed' },
+    payments: { pakasirConfigured: pakasir.isConfigured(), gateway: pakasir.isEnabled() ? 'on' : 'maintenance', automaticSettlement: pakasir.isVerificationConfigured() ? 'pakasir_v2_status_api' : 'disabled_fail_closed', webhookSecret: Boolean(process.env.PAKASIR_WEBHOOK_SECRET), sandbox: pakasir.sandboxAllowed() },
     notifications: notifier.status(),
     email: emailService.status(),
     plugins: { loaded, registryWithoutHandler: registry.filter(p => !loaded.includes(p)), handlerWithoutRegistry: loaded.filter(p => !registry.includes(p)) },
@@ -1414,8 +1479,7 @@ router.get('/owner/payments/:id/proof', auth, owner, validId('id'), async (req, 
 
 // Owner settlement is idempotent: only a pending payment on a pending order changes, inside
 // one statement (row locks via FOR UPDATE); a second approve/reject gets 409. Gateway (Pakasir)
-// payments may also be approved by hand, e.g. after checking the Pakasir dashboard, because
-// automatic verification is off until PAKASIR_V2_VERIFY_URL is configured.
+// payments may also be approved by hand, e.g. after checking the Pakasir dashboard.
 async function settleManual(req, res, approve) {
   const row = await query(
     `WITH candidate AS (SELECT p.id,p.order_id,p.user_id,p.amount,p.provider,o.tier FROM payments p JOIN orders o ON o.id=p.order_id WHERE p.id=$1 AND p.provider IN ('manual','pakasir') AND p.status='pending' AND o.status='pending' AND p.amount=o.amount FOR UPDATE),
@@ -1661,36 +1725,41 @@ router.get('/cron/backup', async (req, res) => {
   }
 });
 
-// ---------------------------------------------------------------- Pakasir webhook
-// The webhook body is never trusted on its own: amount/order are checked against the database
-// and the payment must be confirmed by a server-side provider lookup (fail-closed until
-// PAKASIR_V2_VERIFY_URL is configured). Settlement is idempotent, so replays cannot upgrade twice.
+// ---------------------------------------------------------------- Pakasir webhook (API v2)
+// Body: {txn_id, order_id, amount, is_sandbox, status, completed_at}, header X-Secret. The body is
+// never trusted on its own: the payment must exist here with the same amount, and the status API
+// must say "completed" for it. Settlement is idempotent, so replays cannot upgrade twice.
 router.post('/webhooks/pakasir', async (req, res) => {
+  if (!pakasir.webhookSecretOk(req.get('x-secret'))) return fail(res, 401, 'INVALID_SECRET', 'Secret webhook nggak cocok.');
   const b = req.body || {};
+  const txnId = String(b.txn_id || '');
   const code = String(b.order_id || '');
   const amount = Number(b.amount);
-  if (!code || !Number.isFinite(amount) || !process.env.PAKASIR_PROJECT || String(b.project || '') !== process.env.PAKASIR_PROJECT || String(b.status || '').toLowerCase() !== 'completed') {
+  if (!code || !Number.isFinite(amount) || String(b.status || '').toLowerCase() !== 'completed' || (b.project !== undefined && String(b.project) !== String(process.env.PAKASIR_PROJECT || ''))) {
     return fail(res, 400, 'INVALID_PAYMENT', 'Payload transaksi nggak valid.');
   }
-  const order = (await query('SELECT * FROM orders WHERE order_code=$1', [code]))[0];
-  if (!order || Number(order.amount) !== amount) return fail(res, 400, 'INVALID_PAYMENT', 'Order atau nominalnya nggak cocok.');
-  if (order.status === 'paid') return res.json({ success: true, processed: false, duplicate: true });
-  if (order.status !== 'pending') return fail(res, 409, 'ORDER_NOT_PENDING', 'Order ini udah nggak pending.');
+  const pay = (await query(
+    `SELECT p.*,o.amount AS order_amount,o.status AS order_status FROM payments p JOIN orders o ON o.id=p.order_id
+      WHERE p.provider='pakasir' AND (($1<>'' AND p.transaction_id=$1) OR p.provider_reference=$2) ORDER BY p.created_at DESC LIMIT 1`,
+    [txnId, code]
+  ))[0];
+  if (!pay || Number(pay.amount) !== amount || Number(pay.order_amount) !== amount || pay.provider_reference !== code) return fail(res, 400, 'INVALID_PAYMENT', 'Order atau nominalnya nggak cocok.');
+  if (pay.status === 'paid' || pay.order_status === 'paid') return res.json({ success: true, processed: false, duplicate: true });
   let verified = false;
   try {
-    verified = await pakasir.verifyTransaction(code, amount);
+    verified = (await pakasir.verifyTransaction({ txnId: pay.transaction_id, orderId: pay.provider_reference, amount: pay.amount })).paid;
   } catch (e) {
     console.error('Pakasir verification failed:', { status: e?.response?.status || null, code: e?.code || null });
   }
   if (!verified) return fail(res, 202, 'PAYMENT_NOT_VERIFIED', 'Transaksi belum diverifikasi provider.');
-  const tx = await query(
-    `WITH upd_p AS (UPDATE payments SET status='paid',verified_at=now(),updated_at=now() WHERE id=(SELECT id FROM payments WHERE order_id=$1 AND provider='pakasir' AND status='pending' AND amount=$2 ORDER BY created_at DESC LIMIT 1) RETURNING id,order_id,user_id),
-     upd_o AS (UPDATE orders SET status='paid',paid_at=now(),updated_at=now() WHERE id=$1 AND status='pending' AND amount=$2 AND EXISTS(SELECT 1 FROM upd_p) RETURNING user_id,tier,id,duration_days),
-     upd_u AS (${orderService.applyPaidOrderSql('upd_o')})
-     INSERT INTO audit_logs(action,target_type,target_id,metadata) SELECT 'pakasir_webhook_paid','order',$1,jsonb_build_object('amount',$2::int) FROM upd_u RETURNING id`,
-    [order.id, amount]
-  );
-  return res.json({ success: true, processed: tx.length > 0, duplicate: tx.length === 0 });
+  const processed = await settlePakasir(pay.id, 'webhook');
+  return res.json({ success: true, processed, duplicate: !processed });
+});
+
+// Developer panel → "Tes Pakasir": slug + key accepted? webhook secret set?
+router.post('/owner/pakasir/check', sameOrigin, auth, owner, async (req, res) => {
+  const r = await pakasir.check();
+  res.json({ success: r.ok, ...r, webhookUrl: `${(process.env.PUBLIC_BASE_URL || 'https://apiz2z.web.id').replace(/\/+$/, '')}/webhooks/pakasir` });
 });
 
 // Route handlers are async; forward rejections to the error handler below.
