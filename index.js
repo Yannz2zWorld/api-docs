@@ -532,6 +532,9 @@ app.locals.pluginFiles = pluginFiles;
 // path -> run(), so the endpoint checker (services/endpointCheckService.js) can test local plugins.
 const pluginRuns = new Map();
 app.locals.pluginRuns = pluginRuns;
+// path -> the route's parameter list (required, placeholder, file), for the Developer panel's "Tes".
+const pluginParams = new Map();
+app.locals.pluginParams = pluginParams;
 // Backup-only endpoints (name, description, category, parameters): the Developer panel can show one
 // as a version of the endpoint it backs up (services/endpointAliasService.js).
 const backupRoutes = new Map();
@@ -625,9 +628,12 @@ function apiGateway(cleanPath, run) {
       // One round trip: endpoint access rules plus the global maintenance flag.
       endpoint = (await query('SELECT e.id,e.status,e.locked,e.minimum_tier,s.maintenance_enabled,s.maintenance_message FROM endpoints e LEFT JOIN server_settings s ON s.id=1 WHERE e.path=$1 LIMIT 1', [cleanPath]))[0];
       if (!endpoint) return gatewayFail(res, 503, 'ENDPOINT_REGISTRY_NOT_READY', 'Registry endpoint belum tersedia.');
-      if (endpoint.status !== 'active') return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', 'Endpoint ini lagi dinonaktifkan.');
+      // Developer panel → Endpoints → "Tes": the developer, signed in (no API key), can run an
+      // endpoint even while it is disabled or hidden, to see whether it works again.
+      const devTest = owner && !identity.keyId && req.get('x-yannz-test') === '1';
+      if (endpoint.status !== 'active' && !devTest) return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', 'Endpoint ini lagi dinonaktifkan.');
       // Hidden after a plan / quota / key error from its upstream (services/errorLogService.js).
-      if ((await errorLog.hiddenPaths()).has(cleanPath)) return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', errorLog.UNAVAILABLE_MESSAGE);
+      if (!devTest && (await errorLog.hiddenPaths()).has(cleanPath)) return gatewayFail(res, 404, 'ENDPOINT_UNAVAILABLE', errorLog.UNAVAILABLE_MESSAGE);
       if (endpoint.locked && !owner) return gatewayFail(res, 403, 'ENDPOINT_LOCKED', 'Endpoint ini lagi dikunci developer.');
       if (!owner && !canAccess(identity.tier, endpoint.minimum_tier, false)) {
         return gatewayFail(res, 403, 'TIER_RESTRICTED', `Endpoint ini butuh tier ${endpoint.minimum_tier} atau lebih tinggi.`, { requiredTier: endpoint.minimum_tier, currentTier: identity.tier });
@@ -732,6 +738,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
           loadedPluginPaths.add(cleanPath);
           pluginFiles.set(cleanPath, file);
           pluginRuns.set(cleanPath, run);
+          if (Array.isArray(params)) pluginParams.set(cleanPath, params);
           registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
           if (route.backupOnly) { backupRoutes.set(cleanPath, { name, desc, category, path: routePath, ...(Array.isArray(params) ? { params } : {}) }); return; }   // only a backup for another endpoint: not listed on its own

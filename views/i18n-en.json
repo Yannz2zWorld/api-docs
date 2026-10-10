@@ -1149,7 +1149,18 @@
   "Balikin nama, path, deskripsi, dan kategori ke bawaan dari kode?": "Put the name, path, description and category back to the code's own?",
   "Telah disimpan.": "Saved.",
   "Jawaban AI:": "AI reply:",
-  "Jawaban AI kepotong karena kodenya kepanjangan. Tempel bagian yang perlu aja (satu case/fungsi), terus coba lagi.": "The AI reply got cut off because the code is too long. Paste only the part you need (one case/function) and try again."
+  "Jawaban AI kepotong karena kodenya kepanjangan. Tempel bagian yang perlu aja (satu case/fungsi), terus coba lagi.": "The AI reply got cut off because the code is too long. Paste only the part you need (one case/function) and try again.",
+  "Tes endpoint": "Test endpoint",
+  "Dites pakai akun developer kamu, tanpa API key. Tetap jalan walau endpoint-nya lagi dinonaktifkan atau disembunyiin.": "Tested with your developer account, no API key needed. Works even while the endpoint is disabled or hidden.",
+  "Endpoint ini lagi dinonaktifkan, tapi tetap bisa dites di sini.": "This endpoint is disabled, but you can still test it here.",
+  "URL file, atau pilih file di bawah": "File URL, or pick a file below",
+  "Query (opsional)": "Query (optional)",
+  "Parameter wajib belum diisi:": "Required parameters missing:",
+  "Lagi dites…": "Testing…",
+  "Download": "Download",
+  "Download file": "Download file",
+  "Koneksi putus": "Connection lost",
+  "Kode endpoint ini belum ke-deploy, jadi belum bisa dites.": "This endpoint's code isn't deployed yet, so it can't be tested."
  },
  "patterns": [
   [

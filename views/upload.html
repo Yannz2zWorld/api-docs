@@ -189,8 +189,9 @@ async function uploadSmall(file, ttl) {
 // server records the link so the one people share is https://<this domain>/cdn/<id>.<ext>.
 const CATBOX_API = 'https://catbox.moe/user/api.php';
 const CATBOX_BLOCKED = 'yannz-catbox-blocked';
-const catboxBlocked = () => { try { return sessionStorage.getItem(CATBOX_BLOCKED) === '1'; } catch { return false; } };
-const markCatboxBlocked = () => { try { sessionStorage.setItem(CATBOX_BLOCKED, '1'); } catch {} };
+// Remembered for 10 minutes, then tried again (a network that blocks it may not block it later).
+const catboxBlocked = () => { try { return Date.now() - Number(sessionStorage.getItem(CATBOX_BLOCKED) || 0) < 600000; } catch { return false; } };
+const markCatboxBlocked = () => { try { sessionStorage.setItem(CATBOX_BLOCKED, String(Date.now())); } catch {} };
 async function uploadCatbox(file, ttl) {
   const form = () => { const f = new FormData(); f.append('reqtype', 'fileupload'); f.append('fileToUpload', file, file.name); return f; };
   let r = null;
@@ -229,7 +230,9 @@ $('#up-form').addEventListener('submit', async e => {
         result = await uploadSmall(chosen, ttl);   // small files still work through this server
       }
     } else {
-      if (!small) throw Error(`Untuk sekarang file maks ${size(limits.smallMaxBytes)}.`);
+      if (!small) throw Error(limits.mode === 'catbox'
+        ? `Penyimpanan file besar nggak bisa dihubungi dari jaringan/browser ini, jadi untuk sementara maks ${size(limits.smallMaxBytes)} dulu. Coba lagi 10 menit lagi atau pakai jaringan lain.`
+        : `Untuk sekarang file maks ${size(limits.smallMaxBytes)}.`);
       result = await uploadSmall(chosen, ttl);
     }
     show(result);

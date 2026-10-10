@@ -1152,6 +1152,25 @@ router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
   res.json({ success: true, endpoints: rows.map(r => withHandler(req, r)) });
 });
 
+// "Tes": what the panel needs to run an endpoint as the developer (signed in, no API key): the
+// address callers use, its parameters and a sample input. The panel then calls the endpoint itself
+// with "X-Yannz-Test: 1", which lets it run while disabled or hidden (index.js apiGateway).
+router.get('/owner/api/endpoints/:id/test-info', auth, owner, validId('id'), async (req, res) => {
+  const row = (await query('SELECT id,name,path,status FROM endpoints WHERE id=$1', [req.params.id]))[0];
+  if (!row) return fail(res, 404, 'NOT_FOUND', 'Endpoint-nya nggak ketemu.');
+  await Promise.all([aliases.sync(req.app), edits.load()]).catch(() => null);
+  const loaded = req.app.locals.loadedPluginPaths || new Set();
+  if (!loaded.has(row.path)) return fail(res, 409, 'NOT_DEPLOYED', 'Kode endpoint ini belum ke-deploy, jadi belum bisa dites.');
+  // A version shown from a backup runs the backup's code: its parameters and sample are the backup's.
+  const src = (req.app.locals.endpointAliases || new Map()).get(row.path) || row.path;
+  const entry = apiproxy.registry().find(e => e.path === src) || theresav.registry().find(e => e.path === src);
+  const local = endpointChecks.LOCAL_SAMPLES[src];
+  const sample = Object.fromEntries(Object.entries((entry && entry.sample) || (local ? local() : {})).map(([k, v]) => [k, String(v)]));
+  const params = ((req.app.locals.pluginParams || new Map()).get(src) || []).map(p => ({ name: p.name, required: Boolean(p.required), placeholder: p.placeholder || '', type: p.type === 'file' ? 'file' : 'text', accept: p.accept || '' }));
+  const uploads = req.app.locals.uploadPaths || new Set();
+  res.json({ success: true, endpoint: { id: row.id, name: row.name, path: row.path, call_path: edits.publicPath(row.path), status: row.status, upload: uploads.has(src), params, sample } });
+});
+
 // "Edit": name, path, description and category as the site shows them (empty = the code's own).
 // A new path only changes the address; the endpoint (tier, quota, checks, backups) stays the same.
 router.put('/owner/api/endpoints/:id/edit', sameOrigin, auth, owner, validId('id'), async (req, res) => {
