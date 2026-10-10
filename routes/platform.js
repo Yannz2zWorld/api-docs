@@ -27,6 +27,7 @@ const endpointChecks = require('../services/endpointCheckService');
 const errorLog = require('../services/errorLogService');
 
 const aliases = require('../services/endpointAliasService');
+const edits = require('../services/endpointEditService');
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
 const { parseProofImage, parseAvatarImage } = require('../lib/proofImage');
@@ -1132,7 +1133,9 @@ function withHandler(req, row) {
     deleted: String(row.plugin || '').startsWith('deleted:'),
     backups: own ? own.backups.map(b => (typeof b === 'string' ? b : b.path)) : [], backup_for: backupFor,
     // A backup-only endpoint that can be shown as a version, or a version shown from a backup.
-    can_show: (req.app.locals.backupRoutes || new Map()).has(row.path), alias_of: (req.app.locals.endpointAliases || new Map()).get(row.path) || null };
+    can_show: (req.app.locals.backupRoutes || new Map()).has(row.path), alias_of: (req.app.locals.endpointAliases || new Map()).get(row.path) || null,
+    // What the site shows ("Edit"): changed name / path / description / category, else the code's.
+    public_path: edits.publicPath(row.path), shown_name: row.custom_name || row.name };
 }
 
 router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
@@ -1140,13 +1143,31 @@ router.get('/owner/api/endpoints', auth, owner, async (req, res) => {
   const loaded = req.app.locals.loadedPluginPaths || new Set();
   const gone = (await query("SELECT id,path FROM endpoints WHERE plugin LIKE 'deleted:%'")).filter(r => !loaded.has(r.path)).map(r => r.id);
   if (gone.length) await query('DELETE FROM endpoints WHERE id = ANY($1::uuid[])', [gone]);
-  await aliases.sync(req.app, true).catch(() => null);
+  await Promise.all([aliases.sync(req.app, true), edits.load(true)]).catch(() => null);
   // A shown version stands in for its backup's row; a hidden version's row is left out.
   const all = await aliases.rows().catch(() => []);
   const shownBackups = new Set(all.filter(a => a.shown).map(a => a.backup_path));
   const hiddenVersions = new Set(all.filter(a => !a.shown).map(a => a.public_path));
   const rows = (await query('SELECT * FROM endpoints ORDER BY name')).filter(r => !shownBackups.has(r.path) && !hiddenVersions.has(r.path));
   res.json({ success: true, endpoints: rows.map(r => withHandler(req, r)) });
+});
+
+// "Edit": name, path, description and category as the site shows them (empty = the code's own).
+// A new path only changes the address; the endpoint (tier, quota, checks, backups) stays the same.
+router.put('/owner/api/endpoints/:id/edit', sameOrigin, auth, owner, validId('id'), async (req, res) => {
+  const row = (await query('SELECT * FROM endpoints WHERE id=$1', [req.params.id]))[0];
+  if (!row) return fail(res, 404, 'NOT_FOUND', 'Endpoint nggak ketemu.');
+  try {
+    const before = { name: row.custom_name || null, description: row.custom_description || null, path: row.custom_path || null, category: row.custom_category || null };
+    const after = await edits.save(req.app, row, req.body || {});
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_edit', targetType: 'endpoint', targetId: row.id, metadata: { path: row.path, before, after }, ipAddress: ip(req) });
+    require('../services/endpointStatusService').reset();
+    res.json({ success: true, endpoint: withHandler(req, { ...row, custom_name: after.name, custom_description: after.description, custom_path: after.path, custom_category: after.category }), message: 'Telah disimpan.' });
+  } catch (e) {
+    if (edits.missing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Jalankan migrasi 025_endpoint_edits.sql dulu di Neon.');
+    if (e.status) return fail(res, e.status, e.code, e.message);
+    throw e;
+  }
 });
 
 // "Tampilkan": a backup-only endpoint listed as the next version of the endpoint it backs up
@@ -1265,7 +1286,9 @@ router.post('/owner/api/selftest', sameOrigin, auth, owner, async (req, res) => 
 // Public: the latest real status of every endpoint, for the ~/endpoints monitor on the dashboard.
 router.get('/api/endpoints/status', async (req, res) => {
   try {
-    const data = await endpointStatus.list(req.app.locals.loadedPluginPaths);
+    const listed = await endpointStatus.list(req.app.locals.loadedPluginPaths);
+    await edits.load().catch(() => null);
+    const data = { ...listed, endpoints: listed.endpoints.map(e => ({ ...e, path: edits.publicPath(e.path) })) };   // paths changed in the Developer panel
     res.set('Cache-Control', 'no-store');   // right after a check the new codes must show
     return res.json({ success: true, ...data });
   } catch (e) {
@@ -1286,7 +1309,8 @@ router.post('/api/endpoints/autocheck', async (req, res) => {
   try {
     const f = endpointChecks.FORCE_AFTER_MS;
     const checked = await endpointChecks.checkStale(req.app, 6, force ? { okAfterMs: f, failAfterMs: f } : undefined);
-    return res.json({ success: true, checked });
+    await edits.load().catch(() => null);
+    return res.json({ success: true, checked: checked.map(c => ({ ...c, path: edits.publicPath(c.path) })) });
   } catch (e) {
     console.error('Automatic endpoint check failed:', { code: e?.code || null });
     return fail(res, 503, 'CHECK_UNAVAILABLE', 'Cek endpoint lagi nggak bisa jalan.');

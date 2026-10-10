@@ -14,6 +14,7 @@ const userService = require('./services/userService');
 const { query } = require('./lib/db');
 const platformRouter = require('./routes/platform');
 const endpointAliases = require('./services/endpointAliasService');
+const endpointEdits = require('./services/endpointEditService');
 const apiKeyService = require('./services/apiKeyService');
 const usageService = require('./services/usageService');
 const turnstile = require('./services/turnstileService');
@@ -150,7 +151,12 @@ const uploadPaths = new Set();   // theresav file endpoints accept a raw uploade
 // 30 s on each running instance, before the request is routed (and before an upload body is read).
 app.use((req, res, next) => {
   if (!/^\/(api|owner)\//.test(req.path) || !app.locals.pluginRuns) return next();
-  endpointAliases.sync(app).catch(() => null).finally(next);
+  Promise.all([endpointAliases.sync(app), endpointEdits.load()]).catch(() => null).finally(() => {
+    // An upload endpoint whose path was changed takes its file at the new path too.
+    const original = endpointEdits.originalOf(req.path);
+    if (original && uploadPaths.has(original)) uploadPaths.add(req.path);
+    next();
+  });
 });
 uploadPaths.add('/cdn/upload');   // CDN upload page (routes/platform.js)
 const smallJson = express.json({ limit: '100kb' });
@@ -603,6 +609,9 @@ async function resolveIdentity(req) {
 // the daily quota counts successful fetches only.
 function apiGateway(cleanPath, run) {
   return async (req, res) => {
+    // Path changed in the Developer panel: the old address says where it went.
+    const moved = endpointEdits.movedTo(cleanPath);
+    if (moved && req.path !== moved) return gatewayFail(res, 404, 'ENDPOINT_MOVED', `Endpoint ini udah pindah ke ${moved}.`, { path: moved });
     let identity;
     let endpoint;
     let quota;
@@ -753,16 +762,17 @@ const registryReady = Promise.allSettled(registrySyncTasks);
 
 // Backups shown as versions (Developer panel → Endpoints → "Tampilkan"): served under their own path
 // by the backup's code, through the same gateway (tier, lock, quota, errors) as every endpoint.
-const aliasGateways = new Map();
-const serveAlias = async (req, res, next) => {
-  const backup = app.locals.endpointAliases?.get(req.path);
-  const run = backup && pluginRuns.get(backup);
-  if (!run) return next();
-  if (!aliasGateways.has(req.path)) aliasGateways.set(req.path, apiGateway(req.path, (q, r) => pluginRuns.get(app.locals.endpointAliases.get(req.path) || backup)(q, r)));
-  return aliasGateways.get(req.path)(req, res, next);
+// Paths changed in the Developer panel ("Edit") are served the same way, by the endpoint behind them.
+const extraGateways = new Map();
+const serveExtra = async (req, res, next) => {
+  const target = endpointEdits.originalOf(req.path) || req.path;
+  if (target === req.path && !app.locals.endpointAliases?.has(req.path)) return next();
+  if (!pluginRuns.has(target)) return next();
+  if (!extraGateways.has(target)) extraGateways.set(target, apiGateway(target, (q, r) => pluginRuns.get(target)(q, r)));
+  return extraGateways.get(target)(req, res, next);
 };
-app.get(/^\/api\//, serveAlias);
-app.post(/^\/api\//, (req, res, next) => (uploadPaths.has(req.path) ? serveAlias(req, res, next) : next()));
+app.get(/^\/api\//, serveExtra);
+app.post(/^\/api\//, (req, res, next) => (uploadPaths.has(req.path) ? serveExtra(req, res, next) : next()));
 // The catalog with the shown versions in their endpoint's category.
 function catalogWithAliases() {
   const shown = app.locals.endpointAliases;
@@ -788,8 +798,29 @@ const sortedEndpoints = Object.keys(rawEndpoints)
   }, {});
 
 app.get('/api/endpoints', async (req, res) => {
-  try { await endpointAliases.sync(app).catch(() => null); const sortedEndpoints = catalogWithAliases(); const totalRoutes = routeCount() + (app.locals.endpointAliases?.size || 0); const [rows,registry]=await Promise.all([query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),query('SELECT path,method,status,locked,minimum_tier,description,badge FROM endpoints').catch(e=>{if(e.code!=='42703')throw e;return query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints');})]); const meta=Object.fromEntries(registry.map(x=>[x.path,x])); const hidden=await errorLog.hiddenPaths().catch(()=>new Set());const visible=item=>{const m=meta[item.cleanPath];return (!m||!m.status||m.status==='active')&&!hidden.has(item.cleanPath);};/* disabled or auto-hidden endpoints (see services/errorLogService.js) are not listed */ const catalog=Object.fromEntries(Object.entries(sortedEndpoints).map(([category,items])=>[category,items.filter(visible).map(item=>({...item,access:meta[item.cleanPath]||null}))]).filter(([,items])=>items.length)); return res.json({total:totalRoutes,totalRequests:rows[0].n,endpoints:catalog}); }
-  catch { return res.status(503).json({success:false,error:'ENDPOINTS_UNAVAILABLE',message:'Katalog lagi nggak tersedia.'}); }
+  try {
+    await Promise.all([endpointAliases.sync(app), endpointEdits.load()]).catch(() => null);
+    const [rows, registry] = await Promise.all([
+      query('SELECT COALESCE(sum(request_count),0)::int AS n FROM api_usage'),
+      query('SELECT path,method,status,locked,minimum_tier,description,badge FROM endpoints').catch(e => { if (e.code !== '42703') throw e; return query('SELECT path,method,status,locked,minimum_tier,description FROM endpoints'); })
+    ]);
+    const meta = Object.fromEntries(registry.map(x => [x.path, x]));
+    const hidden = await errorLog.hiddenPaths().catch(() => new Set());
+    // disabled or auto-hidden endpoints (see services/errorLogService.js) are not listed
+    const visible = item => { const m = meta[item.cleanPath]; return (!m || !m.status || m.status === 'active') && !hidden.has(item.cleanPath); };
+    // Name, path, description and category changed in the Developer panel ("Edit") are what the site shows.
+    const catalog = {};
+    for (const [category, items] of Object.entries(catalogWithAliases())) {
+      for (const item of items.filter(visible)) {
+        const edit = endpointEdits.metaOf(item.cleanPath) || {}, moved = endpointEdits.movedTo(item.cleanPath);
+        const q = item.path.includes('?') ? item.path.slice(item.path.indexOf('?')) : '';
+        const cat = edit.category || category;
+        (catalog[cat] || (catalog[cat] = [])).push({ ...item, name: edit.name || item.name, desc: edit.desc || item.desc, path: moved ? moved + q : item.path, cleanPath: moved || item.cleanPath, access: meta[item.cleanPath] || null });
+      }
+    }
+    const sorted = Object.fromEntries(Object.keys(catalog).sort((a, b) => a.localeCompare(b)).map(c => [c, catalog[c].sort((a, b) => a.name.localeCompare(b.name))]));
+    return res.json({ total: routeCount() + (app.locals.endpointAliases?.size || 0), totalRequests: rows[0].n, endpoints: sorted });
+  } catch { return res.status(503).json({ success: false, error: 'ENDPOINTS_UNAVAILABLE', message: 'Katalog lagi nggak tersedia.' }); }
 });
 
 

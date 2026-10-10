@@ -1138,7 +1138,16 @@
   "Lanjutkan dengan Google": "Continue with Google",
   "Versi dari cadangan": "Version of the backup",
   "Tampilkan": "Show",
-  "Sembunyikan": "Hide"
+  "Sembunyikan": "Hide",
+  "Edit endpoint": "Edit endpoint",
+  "Path (lokasi)": "Path (location)",
+  "Kategori": "Category",
+  "Path asli": "Original path",
+  "Kosongin = balik ke bawaan dari kode. Ganti path cuma ganti alamatnya: path lama bakal bilang endpoint-nya udah pindah, tier, kuota, cek otomatis, dan cadangannya tetap jalan.": "Leave empty to use the code's own. A new path only changes the address: the old path says the endpoint moved, and tier, quota, automatic checks and backups keep working.",
+  "Reset ke bawaan": "Reset to default",
+  "Lagi nyimpen…": "Saving…",
+  "Balikin nama, path, deskripsi, dan kategori ke bawaan dari kode?": "Put the name, path, description and category back to the code's own?",
+  "Telah disimpan.": "Saved."
  },
  "patterns": [
   [
