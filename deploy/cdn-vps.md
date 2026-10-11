@@ -62,7 +62,7 @@ Simpan (Ctrl+O, Enter, Ctrl+X), terus:
 chmod 600 .env
 pm2 start cdn-server.js --name yannz-cdn
 pm2 save && pm2 startup     # jalankan perintah yang muncul, biar nyala lagi habis reboot
-curl http://127.0.0.1:3000/  # harus keluar {"status":true,"service":"cdn","database":true}
+curl http://127.0.0.1:3000/health  # harus keluar {"status":true,"service":"cdn","database":true}
 ```
 
 ## 4. Cloudflare Tunnel (gratis, tanpa buka port)
