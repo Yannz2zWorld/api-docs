@@ -406,7 +406,7 @@ Tanpa VPS pun sudah jalan: file besar dikirim Vercel per potongan 4 MB (video te
 
 | Yang diganti | Di mana |
 |---|---|
-| Nama web, kreator, link WA/IG/Telegram/GitHub, email | `settings.js` |
+| Nama web, kreator, link WA/IG/Telegram/GitHub, email, channel WA (tombol logo WhatsApp di kiri bawah: `whatsappChannelLink`) | `settings.js` |
 | Favicon & logo | `views/assets/favicon.png`, `apple-touch-icon.png` |
 | Warna, font, tema | `views/theme.css`, `views/ui-theme.js` |
 | Teks halaman | file `views/*.html` |

@@ -210,6 +210,13 @@ app.get('/assets/music.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
   res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'music.js'));
 });
+// WhatsApp channel button (views/channel.js), linked to settings.whatsappChannelLink.
+const channelJs = fs.readFileSync(path.join(__dirname, 'views', 'channel.js'), 'utf8');
+app.get('/assets/channel.js', (req, res) => {
+  const link = /^https:\/\//.test(settings.whatsappChannelLink || '') ? settings.whatsappChannelLink : '';
+  res.set('Cache-Control', 'no-cache');
+  res.type('application/javascript').send(channelJs.replace('__CHANNEL_URL__', () => JSON.stringify(link).replace(/</g, '\\u003c')));
+});
 // Announcement cards (maintenance, Pengumuman Dev) for the sign-in page and Home.
 app.get('/assets/announce.js', (req, res) => {
   res.set('Cache-Control', 'no-cache');
