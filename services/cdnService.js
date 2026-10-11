@@ -207,10 +207,24 @@ async function fetchFile(id) {
 }
 
 // Hapus semua file yang sudah kedaluwarsa (best effort). Mengembalikan jumlah terhapus.
+// A deleted row's file in the bucket (R2/B2) is deleted too, so the storage really shrinks.
+const missingStorageColumn = e => e?.code === '42703' || e?.cause?.code === '42703';
+async function deleteRows(where, params) {
+  let rows;
+  try { rows = await query(`DELETE FROM cdn_files WHERE ${where} RETURNING id, name, size, storage`, params); }
+  catch (e) { if (!missingStorageColumn(e)) throw e; rows = await query(`DELETE FROM cdn_files WHERE ${where} RETURNING id, name, size`, params); }
+  await Promise.all(rows.filter(r => r.storage === 'r2').map(r => r2.remove(r.id)));
+  return rows;
+}
+
+// Developer panel → CDN → "Hapus". Returns the deleted row or null.
+async function removeFile(id) {
+  return (await deleteRows('id = $1', [id]))[0] || null;
+}
+
 async function purgeExpired() {
   try {
-    const rows = await query('DELETE FROM cdn_files WHERE expires_at IS NOT NULL AND expires_at < now() RETURNING id');
-    return rows.length;
+    return (await deleteRows('expires_at IS NOT NULL AND expires_at < now()', [])).length;
   } catch { return 0; }
 }
 
@@ -218,10 +232,12 @@ function isValidId(id) { return typeof id === 'string' && /^[a-f0-9]{32}\.[a-z0-
 
 // URL publik absolut untuk sebuah id. Pakai PUBLIC_BASE_URL kalau diset, selain itu
 // dibangun dari request (proto + host).
+// CDN_PUBLIC_URL (e.g. https://cdn.apiz2z.web.id, a VPS running cdn-server.js) gives new links on
+// that address; /cdn/<id> on the website keeps working too.
 function absoluteUrl(req, id) {
-  const base = (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '') ||
+  const base = (process.env.CDN_PUBLIC_URL || '').trim().replace(/\/+$/, '') || (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '') ||
     `${(req && req.protocol) || 'https'}://${(req && req.get && req.get('host')) || 'localhost'}`;
   return `${base}/cdn/${id}`;
 }
 
-module.exports = { kindOf, store, startLarge, finishLarge, registerCatbox, catboxEnabled, accountUsage, fetchFile, purgeExpired, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };
+module.exports = { kindOf, store, startLarge, finishLarge, registerCatbox, catboxEnabled, accountUsage, fetchFile, purgeExpired, removeFile, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };
