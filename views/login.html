@@ -235,6 +235,11 @@
   if(oauthParam==='denied'){message.className='message';message.textContent='Login Google dibatalin.'}
   if(oauthParam==='error'){message.className='message';message.textContent='Login Google gagal. Cek konfigurasi Google OAuth.'}
   const authParam=new URLSearchParams(location.search).get('auth');
+  // Sent here from a page that needs an account (?next=/upload ...): say why, and go back there after sign-in.
+  const nextPage=(p=>/^\/[a-z0-9][a-z0-9/_-]{0,60}$/i.test(p||'')?p:'')(new URLSearchParams(location.search).get('next'));
+  const afterLogin=fallback=>nextPage||fallback||'/home';
+  const NEEDS_LOGIN=['/home','/keys','/profile','/upload','/custom-ui','/billing','/owner'];
+  if(nextPage)$('#google-fallback').href='/auth/google?next='+encodeURIComponent(nextPage);
   if(authParam==='restricted'){message.className='message';message.textContent='Akun ini lagi dibatasi. Hubungi developer ya.'}
   if(authParam==='account_missing'){message.className='message';message.textContent='Sesi kamu nggak valid. Login lagi ya.'}
   if(authParam==='maintenance'){message.className='message';message.textContent='Website lagi maintenance. Selama maintenance, cuma developer yang bisa masuk.'}
@@ -262,7 +267,7 @@
       const data=await r.json().catch(()=>({}));
       if(!r.ok) throw new Error((data.message||'Login Google gagal.')+(data.error?` (${data.error})`:''));
       startGoogleLoading();
-      setTimeout(()=>{location.href=data.redirect||'/home'},700);
+      setTimeout(()=>{location.href=afterLogin(data.redirect)},700);
     }catch(err){showGoogleError(err.message||'Login Google gagal.');}
   }
   // The GSI script loads async; wait for it instead of failing on first paint.
@@ -309,6 +314,8 @@
     forgot:['Lupa sandi?','Masukin email akun kamu. Nanti kami kirim kode reset dari YannApi.'],
     reset:['Bikin sandi baru.','Kodenya berlaku 15 menit dan cuma bisa dipakai sekali.']
   };
+  // Sent here from a page that needs an account: the line under the title says so.
+  if(nextPage){TITLES.login[1]=nextPage==='/upload'?'Login pakai Google dulu buat akses CDN.':'Login dulu buat buka halaman itu.';$('#panel-sub').textContent=TITLES.login[1];}
   let pendingEmail='';
   function say(text,ok){message.className='message'+(ok?' ok':'');message.textContent=text||'';}
   function show(view,opts={}){
@@ -337,15 +344,18 @@
     if(!ts.enabled)return;
     e.preventDefault();
     if(!ts.token)return showGoogleError('Selesain verifikasi Cloudflare dulu ya.');
-    location.href='/auth/google?ts='+encodeURIComponent(ts.token);
+    location.href='/auth/google?ts='+encodeURIComponent(ts.token)+(nextPage?'&next='+encodeURIComponent(nextPage):'');
   });
   authConfig.then(cfg=>{
     if(cfg.human&&cfg.human.enabled){
       human.enabled=true;human.passed=Boolean(cfg.human.passed);tsLock();
       if(!human.passed)YannzHuman.box($('#human-box'),cfg.human.check).then(()=>{
-        human.passed=true;tsLock();say('');
-        // Came here from another page (API Docs, Playground, ...): back there now.
+        human.passed=true;tsLock();
+        // Came here from another page (API Docs, Playground, ...): back there now. Pages that need an
+        // account (CDN, API Keys, ...) wait for sign-in instead, and the note saying so stays.
         const next=new URLSearchParams(location.search).get('next');
+        if(nextPage&&NEEDS_LOGIN.includes(nextPage))return;
+        say('');
         if(next&&/^\/(?!\/)/.test(next))location.href=next;
       });
       return;   // the entry check covers sign-in too: no second Cloudflare box
@@ -381,7 +391,7 @@
     const btn=form.querySelector('.submit');btn.setAttribute('aria-busy','true');btn.disabled=true;
     try{await fn();}catch{say('Koneksinya bermasalah. Coba lagi ya.');}finally{btn.removeAttribute('aria-busy');btn.disabled=false;}
   }
-  function enter(data){startGoogleLoading();setTimeout(()=>{location.href=data.redirect||'/home'},700);}
+  function enter(data){startGoogleLoading();setTimeout(()=>{location.href=afterLogin(data.redirect)},700);}
   const strong=p=>p.length>=8&&/[A-Za-z]/.test(p)&&/[0-9]/.test(p);
   const validEmail=e=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
 
@@ -439,7 +449,7 @@
 
   const start=location.hash.slice(1);
   if(start==='register'||start==='forgot')show(start);
-  if(!window.__yannzAnnounce)fetch('/auth/me',{credentials:'same-origin',cache:'no-store'}).then(r=>{if(r.ok)location.replace('/home')}).catch(()=>{});
+  if(!window.__yannzAnnounce)fetch('/auth/me',{credentials:'same-origin',cache:'no-store'}).then(r=>{if(r.ok)location.replace(afterLogin())}).catch(()=>{});
 
 </script>
 <script src="/assets/music.js" defer></script>

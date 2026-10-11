@@ -79,10 +79,10 @@ function decryptSession(token) {
   }
 }
 function setCookie(res, name, value, maxAge) {
-  res.setHeader('Set-Cookie', `${name}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`);
+  res.append('Set-Cookie', `${name}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`);
 }
 function clearCookie(res, name) {
-  res.setHeader('Set-Cookie', `${name}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax`);
+  res.append('Set-Cookie', `${name}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax`);
 }
 function parseCookies(req) {
   const header = req.headers.cookie || '';
@@ -933,11 +933,15 @@ app.post('/auth/google/credential', turnstile.guard(), async (req, res) => {
   return res.json({ success: true, redirect: '/home' });
 });
 
+// Where to go after sign-in (?next= from the login page): only a page on this site.
+const safeNext = p => (typeof p === 'string' && /^\/[a-z0-9][a-z0-9/_-]{0,60}$/i.test(p) ? p : '');
+
 app.get('/auth/google', turnstile.redirectGuard(), (req, res) => {
   try {
     const state = randomState();
     const client = createOAuthClient(req);
     setCookie(res, 'oauth_state', state, 600);
+    if (safeNext(req.query.next)) setCookie(res, 'oauth_next', safeNext(req.query.next), 600);
     const url = client.generateAuthUrl({
       access_type: 'online',
       scope: ['openid', 'email', 'profile'],
@@ -957,6 +961,7 @@ app.get('/auth/google/callback', async (req, res) => {
     const { code, state, error } = req.query;
     const cookies = parseCookies(req);
     clearCookie(res, 'oauth_state');
+    clearCookie(res, 'oauth_next');
 
     if (error) return res.redirect('/?oauth=denied');
     if (!code || !state || !cookies.oauth_state || !safeEqual(state,cookies.oauth_state)) {
@@ -992,7 +997,7 @@ app.get('/auth/google/callback', async (req, res) => {
     if (sv !== null) account.sessionVersion = sv;
     issueSession(res, profile.sub, account);
     await auditService.writeAudit({actorUserId:account.id,action:'login',targetType:'session'}).catch(()=>{});
-    res.redirect('/home');
+    res.redirect(safeNext(cookies.oauth_next) || '/home');
   } catch (err) {
     const stage = err?.isDatabaseError ? classifyDatabaseError(err).error : 'OAUTH_EXCHANGE_FAILED';
     console.error('Google OAuth callback failed:', { stage, code: err?.code || null, status: err?.response?.status || null, oauthError: typeof err?.response?.data?.error === 'string' ? err.response.data.error : null });

@@ -123,7 +123,7 @@ it('upload needs a signed-in account and is limited to 30 per hour per account',
 it('the /upload page is served to signed-in users, sends others to the login page, and sits in the menu under 3D Scythe', async () => {
   const anon = await app.request('GET', '/upload', {});
   assert.equal(anon.status, 302);
-  assert.equal(anon.headers.location, '/');
+  assert.equal(anon.headers.location, '/?next=%2Fupload', 'to the login page, then back here');
   const page = await app.request('GET', '/upload', app.asBrowser(user));
   assert.equal(page.status, 200);
   assert.match(page.text, /Upload File/);
