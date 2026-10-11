@@ -9,6 +9,6 @@ module.exports = {
   githubLink: "https://github.com/Yannz2z",
   instagramLink: "https://www.instagram.com/yannznms10?igsh=OXRlc2g1MHIydGky",
   telegramLink: "https://t.me/Yannz2z",
-  whatsappChannelLink: "https://whatsapp.com/channel/0029VbCBj0N3LdQTosP3Hj0T",
+  whatsappChannelLink: "https://whatsapp.com/channel/0029VbEfBtoG8l55wjEVkp1p",
   emailAddress: "yannzworld@gmail.com"
 };
