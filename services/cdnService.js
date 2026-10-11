@@ -232,8 +232,10 @@ function isValidId(id) { return typeof id === 'string' && /^[a-f0-9]{32}\.[a-z0-
 
 // URL publik absolut untuk sebuah id. Pakai PUBLIC_BASE_URL kalau diset, selain itu
 // dibangun dari request (proto + host).
+// CDN_PUBLIC_URL (e.g. https://cdn.apiz2z.web.id, a VPS running cdn-server.js) gives new links on
+// that address; /cdn/<id> on the website keeps working too.
 function absoluteUrl(req, id) {
-  const base = (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '') ||
+  const base = (process.env.CDN_PUBLIC_URL || '').trim().replace(/\/+$/, '') || (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '') ||
     `${(req && req.protocol) || 'https'}://${(req && req.get && req.get('host')) || 'localhost'}`;
   return `${base}/cdn/${id}`;
 }
