@@ -1167,7 +1167,9 @@
   "belum diisi (maks 4 MB per file).": "not set up (4 MB per file max).",
   "Lagi masang…": "Setting up…",
   "Telah disimpan. Upload file besar dari website udah diizinkan.": "Saved. Large uploads from the website are allowed now.",
-  "Saluran WhatsApp": "WhatsApp channel"
+  "Saluran WhatsApp": "WhatsApp channel",
+  "Login pakai Google dulu buat akses CDN.": "Sign in with Google first to use the CDN.",
+  "Login dulu buat buka halaman itu.": "Sign in first to open that page."
  },
  "patterns": [
   [

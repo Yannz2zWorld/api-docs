@@ -70,10 +70,11 @@ function auth(req, res, next) {
   }).catch(next);
 }
 
-// HTML pages: send unauthenticated visitors to the login page instead of a JSON error.
+// HTML pages: send unauthenticated visitors to the login page instead of a JSON error. The page
+// they wanted goes along as ?next=, so the login page says why and comes back there after sign-in.
 function pageAuth(req, res, next) {
   loadAccount(req).then(r => {
-    if (r.error) return res.redirect(r.error[1] === 'ACCOUNT_RESTRICTED' ? '/?auth=restricted' : '/');
+    if (r.error) return res.redirect(r.error[1] === 'ACCOUNT_RESTRICTED' ? '/?auth=restricted' : `/?next=${encodeURIComponent(req.path)}`);
     req.account = r.user;
     next();
   }).catch(next);
