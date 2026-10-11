@@ -157,3 +157,26 @@ it('large upload needs a signed-in account', async () => {
   assert.equal((await app.request('POST', '/cdn/upload/start', { body: { name: 'x.mp4', size: 10 }, headers: { origin: app.origin } })).status, 401);
   assert.equal((await app.request('GET', '/cdn/upload/config', {})).status, 401);
 });
+
+it('deleting a file (Developer panel, or when it expires) deletes it from the bucket too, so the storage shrinks', async () => {
+  const owner = await app.login(h.OWNER_EMAIL);
+  const upload = async name => {
+    const s = await post('/cdn/upload/start', { name, type: 'video/mp4', size: 5 * 1024 * 1024 });
+    await browserPut(s.json.upload, Buffer.alloc(5 * 1024 * 1024));
+    assert.equal((await post('/cdn/upload/finish', { id: s.json.id })).status, 200);
+    return s.json.id;
+  };
+  const a = await upload('hapus.mp4');
+  assert.ok(objects.has(a));
+  calls = [];
+  const del = await app.request('DELETE', '/owner/cdn/' + a, { cookie: owner, headers: { origin: app.origin } });
+  assert.equal(del.status, 200, del.text);
+  assert.ok(calls.some(c => c.method === 'DELETE' && c.key === a && c.signed), 'a signed DELETE to the bucket');
+  assert.ok(!objects.has(a), 'gone from the bucket');
+  assert.equal((await app.request('GET', '/cdn/' + a, {})).status, 404);
+
+  const b = await upload('sementara.mp4');
+  await h.db().query("UPDATE cdn_files SET expires_at = now() - interval '1 minute' WHERE id = $1", [b]);
+  await require('../../services/cdnService').purgeExpired();
+  assert.ok(!objects.has(b), 'an expired file leaves the bucket too');
+});

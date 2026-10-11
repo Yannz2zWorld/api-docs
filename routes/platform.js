@@ -1654,10 +1654,10 @@ router.get('/owner/cdn', auth, owner, async (req, res) => {
 });
 router.delete('/owner/cdn/:id', sameOrigin, auth, owner, async (req, res) => {
   if (!cdn.isValidId(req.params.id)) return fail(res, 400, 'INVALID_ID', 'ID file nggak valid.');
-  const r = await query('DELETE FROM cdn_files WHERE id = $1 RETURNING id, name, size', [req.params.id]);
-  if (!r.length) return fail(res, 404, 'NOT_FOUND', 'File-nya nggak ketemu.');
-  await audit.writeAudit({ actorUserId: req.account.id, action: 'cdn_delete', targetType: 'cdn_file', targetId: r[0].id, metadata: { name: r[0].name, size: r[0].size }, ipAddress: ip(req) });
-  return res.json({ success: true, deleted: r[0].id });
+  const f = await cdn.removeFile(req.params.id);   // the file in the bucket goes too
+  if (!f) return fail(res, 404, 'NOT_FOUND', 'File-nya nggak ketemu.');
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'cdn_delete', targetType: 'cdn_file', targetId: f.id, metadata: { name: f.name, size: f.size }, ipAddress: ip(req) });
+  return res.json({ success: true, deleted: f.id });
 });
 
 // ---------------------------------------------------------------- owner: server, audit, backup

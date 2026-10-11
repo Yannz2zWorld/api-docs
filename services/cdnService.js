@@ -207,10 +207,24 @@ async function fetchFile(id) {
 }
 
 // Hapus semua file yang sudah kedaluwarsa (best effort). Mengembalikan jumlah terhapus.
+// A deleted row's file in the bucket (R2/B2) is deleted too, so the storage really shrinks.
+const missingStorageColumn = e => e?.code === '42703' || e?.cause?.code === '42703';
+async function deleteRows(where, params) {
+  let rows;
+  try { rows = await query(`DELETE FROM cdn_files WHERE ${where} RETURNING id, name, size, storage`, params); }
+  catch (e) { if (!missingStorageColumn(e)) throw e; rows = await query(`DELETE FROM cdn_files WHERE ${where} RETURNING id, name, size`, params); }
+  await Promise.all(rows.filter(r => r.storage === 'r2').map(r => r2.remove(r.id)));
+  return rows;
+}
+
+// Developer panel → CDN → "Hapus". Returns the deleted row or null.
+async function removeFile(id) {
+  return (await deleteRows('id = $1', [id]))[0] || null;
+}
+
 async function purgeExpired() {
   try {
-    const rows = await query('DELETE FROM cdn_files WHERE expires_at IS NOT NULL AND expires_at < now() RETURNING id');
-    return rows.length;
+    return (await deleteRows('expires_at IS NOT NULL AND expires_at < now()', [])).length;
   } catch { return 0; }
 }
 
@@ -224,4 +238,4 @@ function absoluteUrl(req, id) {
   return `${base}/cdn/${id}`;
 }
 
-module.exports = { kindOf, store, startLarge, finishLarge, registerCatbox, catboxEnabled, accountUsage, fetchFile, purgeExpired, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };
+module.exports = { kindOf, store, startLarge, finishLarge, registerCatbox, catboxEnabled, accountUsage, fetchFile, purgeExpired, removeFile, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };
