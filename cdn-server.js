@@ -3,6 +3,8 @@
 // without Vercel's ~4.5 MB answer limit. Files stay where the website keeps them (Postgres for small
 // ones, the R2/B2 bucket for big ones); this server only reads them. Uploads still go through the
 // website. Needs DATABASE_URL and the bucket settings (S3_* or R2_*) in .env; PORT (default 3000).
+// Opening the CDN address itself (https://cdn.<domain>/) goes to the website's CDN page
+// (PUBLIC_BASE_URL + /upload, default https://apiz2z.web.id/upload); /health shows the server status.
 require('dotenv').config({ quiet: true });
 const express = require('express');
 const cdnHttp = require('./services/cdnHttp');
@@ -13,7 +15,9 @@ app.disable('x-powered-by');
 app.set('trust proxy', true);
 app.use((req, res, next) => { res.set('Access-Control-Allow-Origin', '*'); next(); });
 app.get('/cdn/:id', cdnHttp.handler({ pieces: false }));
-app.get('/', async (req, res) => {
+const SITE = (process.env.PUBLIC_BASE_URL || 'https://apiz2z.web.id').replace(/\/+$/, '');
+app.get('/', (req, res) => res.redirect(302, `${SITE}/upload`));
+app.get('/health', async (req, res) => {
   let db = false;
   try { db = Boolean(await healthCheck()); } catch {}
   res.json({ status: true, service: 'cdn', database: db });

@@ -68,5 +68,10 @@ it('a small file kept in the database is served by the VPS too; unknown ids are 
   assert.equal(r.status, 200);
   assert.equal(r.headers.get('content-type'), 'image/png');
   assert.equal((await realFetch(`${vpsUrl}/cdn/${'0'.repeat(32)}.png`)).status, 404);
-  assert.equal((await realFetch(`${vpsUrl}/`)).status, 200);
+  const health = await realFetch(`${vpsUrl}/health`);
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), { status: true, service: 'cdn', database: true });
+  const home = await realFetch(`${vpsUrl}/`, { redirect: 'manual' });
+  assert.equal(home.status, 302, 'the CDN address itself opens the website\'s CDN page');
+  assert.equal(home.headers.get('location'), `${(process.env.PUBLIC_BASE_URL || 'https://apiz2z.web.id').replace(/\/+$/, '')}/upload`);
 });

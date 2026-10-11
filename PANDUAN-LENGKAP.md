@@ -393,7 +393,7 @@ Tanpa VPS pun sudah jalan: file besar dikirim Vercel per potongan 4 MB (video te
    ```
    lalu `chmod 600 .env`.
 5. Jalankan: `pm2 start cdn-server.js --name yannz-cdn && pm2 save && pm2 startup`.
-   Cek `curl http://127.0.0.1:3000/` → `{"status":true,"service":"cdn","database":true}`.
+   Cek `curl http://127.0.0.1:3000/health` → `{"status":true,"service":"cdn","database":true}`.
 6. DNS: tambah record **A** `cdn` → IP publik VPS (di Vercel → Domains → DNS Records kalau nameserver Vercel).
 7. Panel VPS → **Managed Domain**: `cdn.<domain>` → port `3000` (SSL otomatis).
    VPS tanpa fitur ini: pakai Cloudflare Tunnel (lihat `deploy/cdn-vps.md`).
