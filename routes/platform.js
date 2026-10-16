@@ -296,7 +296,7 @@ router.get('/api/profile', auth, async (req, res) => {
 });
 
 // Custom UI saved on the account (migration 021): the look and colour follow the user to any device.
-const UI_STYLES = new Set(['default', 'cream', 'pop', 'neon', 'glass', 'minimal', 'terminal', 'pastel', 'paper',
+const UI_STYLES = new Set(['default', 'classic', 'cream', 'pop', 'neon', 'glass', 'minimal', 'terminal', 'pastel', 'paper',
   'lemon', 'mint', 'sky', 'peach', 'lilac', 'bubblegum', 'coral', 'lime', 'ocean', 'sand', 'comic', 'newsprint', 'matcha',
   'blueprint', 'forest', 'wine', 'mocha', 'slate', 'noir', 'arcade']);
 const UI_HEX = /^#[0-9a-f]{6}$/;

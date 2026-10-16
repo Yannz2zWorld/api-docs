@@ -1,130 +1,403 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0b0b0c">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#120e12">
   <title>Yannz API</title><link rel="icon" id="favicon" type="image/png" href="/assets/favicon.png?v=2"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js">document.querySelector('#logout')?.addEventListener('click',async()=>{try{await fetch('/auth/logout',{method:'POST',credentials:'same-origin'})}finally{location.href='/';}});
-</script>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:ital,wght@0,400;0,700;1,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Home in the comic look (Default in Custom UI, views/ui-theme.js): dark comic panels, black
+       outlines, hard shadows without blur, cyan as the only bright colour. Every colour comes from the
+       theme tokens, so another look from Custom UI restyles this page too. -->
   <style>
-    :root{--blood:#c8202f;--blood-deep:#a3172a;--bg:#0b0b0c;--paper:#141416;--ink:#f4f4f5;--yellow:#c8202f;--blue:#a1a1aa;--green:#d4d4d8;--red:#fca5a5;--muted:#a1a1aa;--line:3px solid #d4d4d8;--shadow:7px 8px 0 #3f3f46;--edge:#d4d4d8;--drop:#3f3f46;--accent-ink:#ffffff;--surface-2:#1b1b1e}
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Outfit,sans-serif;background-image:radial-gradient(#1f1f23 1.1px,transparent 1.1px);background-size:22px 22px;overflow-x:hidden}a{text-decoration:none;color:inherit}button,input{font:inherit}
-    .shell{width:min(1180px,calc(100% - 36px));margin:auto}.topbar{position:sticky;top:0;z-index:40;border-bottom:var(--line);background:rgba(11,11,12,.86);backdrop-filter:blur(14px);box-shadow:0 4px 0 var(--drop)}.nav{height:74px;display:flex;align-items:center;justify-content:space-between;gap:18px}.brand{display:flex;align-items:center;gap:11px;font:700 17px 'Space Grotesk';letter-spacing:-.04em}.mark{width:42px;height:42px;border:var(--line);border-radius:11px;background:var(--yellow);box-shadow:3px 3px 0 var(--drop);display:grid;place-items:center}.mark svg{width:21px}.navlinks{display:flex;align-items:center;gap:7px}.navlinks a,.logout{padding:10px 13px;border:2px solid transparent;border-radius:9px;font:500 10px 'DM Mono';text-transform:uppercase;letter-spacing:.08em}.navlinks a:hover{border-color:var(--ink);background:var(--paper);box-shadow:2px 2px 0 var(--drop)}.status{display:flex;align-items:center;gap:7px;padding:8px 10px;border:2px solid var(--edge);background:var(--surface-2);border-radius:999px;font:500 9px 'DM Mono';box-shadow:2px 2px 0 var(--drop)}.status i{width:9px;height:9px;color:#d4d4d8;fill:#d4d4d8}.logout{border-color:var(--ink);background:var(--paper);cursor:pointer}.logout:hover{background:var(--yellow);box-shadow:2px 2px 0 var(--drop)}.account-menu{position:relative}.account-menu summary{list-style:none;cursor:pointer;border:2px solid var(--edge);background:var(--yellow);padding:9px 12px;font:700 10px 'DM Mono';box-shadow:3px 3px var(--drop)}.account-menu summary::-webkit-details-marker{display:none}.account-pop{position:absolute;right:0;top:43px;min-width:175px;background:var(--paper);border:2px solid var(--edge);box-shadow:5px 5px var(--drop);padding:8px;display:grid;gap:4px}.account-pop a,.account-pop button{padding:9px;text-align:left;border:1px solid transparent;background:var(--paper);font:500 10px 'DM Mono';cursor:pointer}.account-pop a:hover,.account-pop button:hover{background:var(--yellow);border-color:var(--ink)}
-    .hero{padding:64px 0 50px;display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center}.hero-copy .eyebrow,.section-kicker{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border:2px solid var(--edge);border-radius:999px;background:var(--paper);box-shadow:3px 3px 0 var(--drop);font:500 9px 'DM Mono';letter-spacing:.13em;text-transform:uppercase}.eyebrow i,.section-kicker i{width:13px;height:13px}.hero h1{font:700 clamp(52px,7vw,88px)/.9 'Space Grotesk';letter-spacing:-.075em;margin:20px 0}.hero h1 span{background:var(--yellow);padding:0 .08em;border:3px solid var(--edge);box-shadow:5px 5px 0 var(--drop);display:inline-block;transform:rotate(-1deg)}.hero p{font-size:15px;line-height:1.65;color:var(--muted);max-width:640px}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}.btn{display:inline-flex;align-items:center;gap:9px;height:49px;padding:0 17px;border:var(--line);border-radius:11px;background:var(--yellow);box-shadow:5px 6px 0 var(--drop);font:700 10px 'DM Mono';letter-spacing:.08em;text-transform:uppercase;transition:.18s}.btn:hover{transform:translate(-2px,-2px);box-shadow:7px 8px 0 var(--drop);background:var(--paper)}.btn.secondary{background:var(--paper)}.btn i{width:16px}.hero-visual{min-height:380px;position:relative;perspective:900px;display:grid;place-items:center}.hero-visual .panel3d{width:270px;height:270px;border:var(--line);background:var(--paper);box-shadow:12px 13px 0 var(--drop);transform:rotateX(55deg) rotateZ(-18deg);position:relative;animation:heroFloat 5.5s ease-in-out infinite}.panel3d:before{content:"";position:absolute;inset:22px;border:2px dashed var(--edge)}.panel3d:after{content:"";position:absolute;width:76px;height:76px;background:var(--yellow);border:var(--line);left:50%;top:50%;transform:translate(-50%,-50%) rotate(15deg);box-shadow:5px 5px 0 var(--drop)}.scan{position:absolute;left:0;right:0;height:3px;background:var(--edge);top:35%;animation:scan 3.5s ease-in-out infinite}.orbit{position:absolute;width:370px;height:140px;border:2px solid var(--edge);border-radius:50%;transform:rotateX(67deg) rotateZ(16deg);animation:orbit 8s linear infinite}.orbit.two{width:300px;height:110px;transform:rotateY(65deg) rotateZ(-25deg);border-style:dashed;animation-duration:11s;animation-direction:reverse}.hero-dot{position:absolute;width:12px;height:12px;border:2px solid var(--edge);border-radius:50%;background:var(--yellow);box-shadow:2px 2px 0 var(--drop);animation:bob 3s ease-in-out infinite}.hero-dot.a{left:8%;top:22%}.hero-dot.b{right:12%;bottom:21%;animation-delay:-1.2s}
-    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:12px 0 62px}.metric{background:var(--paper);border:var(--line);box-shadow:var(--shadow);border-radius:14px;padding:18px;min-height:130px;transition:.18s}.metric:hover{transform:translate(-2px,-2px);box-shadow:10px 11px 0 var(--drop)}.metric-top{display:flex;justify-content:space-between;align-items:center;font:500 9px 'DM Mono';text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}.metric-top i{width:16px}.metric-value{font:700 31px 'Space Grotesk';letter-spacing:-.06em;margin-top:20px}.metric-note{font:500 9px 'DM Mono';color:#8b8b93;margin-top:5px}
-    .section{padding:8px 0 62px}.section-head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:22px}.section-head h2{font:700 38px/1 'Space Grotesk';letter-spacing:-.06em;margin:10px 0 0}.section-head p{max-width:470px;color:var(--muted);font-size:12px;line-height:1.55;margin:0}.workspace{display:grid;grid-template-columns:1fr 1fr;gap:16px}.feature{border:var(--line);background:var(--paper);box-shadow:var(--shadow);border-radius:15px;padding:23px;min-height:215px;position:relative;overflow:hidden;transition:.18s}.feature:hover{transform:translate(-2px,-2px);box-shadow:10px 11px 0 var(--drop)}.feature.blue{background:#17171a}.feature.yellow{background:#1d1d21}.feature.green{background:#141416}.feature h3{font:700 23px 'Space Grotesk';letter-spacing:-.05em;margin:40px 0 7px}.feature p{font-size:12px;color:#a1a1aa;line-height:1.55;max-width:470px}.feature .icon{position:absolute;top:20px;right:20px;width:42px;height:42px;border:2px solid var(--edge);background:var(--paper);border-radius:10px;display:grid;place-items:center;box-shadow:3px 3px 0 var(--drop)}.feature .index{font:500 9px 'DM Mono';letter-spacing:.12em}.feature a{display:inline-flex;align-items:center;gap:7px;font:700 9px 'DM Mono';text-transform:uppercase;margin-top:13px;text-decoration:underline;text-underline-offset:4px}.feature a i{width:13px}
-    .endpoints{border:var(--line);background:#0f0f11;color:#fff;border-radius:15px;box-shadow:var(--shadow);padding:24px}.endpoint-head{display:flex;justify-content:space-between;gap:15px;align-items:center}.endpoint-head h3{font:700 22px 'Space Grotesk';letter-spacing:-.04em;margin:0}.endpoint-head span{font:500 9px 'DM Mono';color:#aaa;text-transform:uppercase}.endpoint-list{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:18px}.endpoint{border:2px solid #444;background:#181818;border-radius:9px;padding:12px;min-width:0}.endpoint b{font:700 10px 'DM Mono';display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.endpoint small{display:block;font:400 8px 'DM Mono';color:#999;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.empty{font:500 10px 'DM Mono';color:#999;padding:20px 0}.footer{border-top:3px solid #27272a;background:#070708;color:#fff;padding:34px 0}.footer-row{display:flex;justify-content:space-between;gap:25px;align-items:flex-start}.footer-brand{font:700 17px 'Space Grotesk'}.footer p{color:#999;font-size:11px;line-height:1.6;max-width:450px}.footer-links{display:flex;gap:8px;flex-wrap:wrap}.footer-links a{border:2px solid #444;border-radius:8px;padding:9px 11px;color:#ccc;font:500 9px 'DM Mono'}.footer-links a:hover{border-color:var(--yellow);color:#fff;background:#1c1c1c}.copyright{border-top:1px solid #333;margin-top:24px;padding-top:18px;color:#8b8b93;font:500 8px 'DM Mono';display:flex;justify-content:space-between}
-    .boot{position:fixed;inset:0;background:var(--bg);z-index:100;display:grid;place-items:center;opacity:0;visibility:hidden;transition:.35s}.boot.show{opacity:1;visibility:visible}.boot-card{text-align:center;width:min(90vw,480px)}.boot-scene{height:230px;position:relative;perspective:900px}.boot-cube{position:absolute;left:50%;top:50%;width:72px;height:72px;transform:translate(-50%,-50%);transform-style:preserve-3d;animation:cube 2.6s linear infinite}.boot-cube i{position:absolute;inset:0;border:3px solid var(--edge);background:rgba(255,255,255,.07)}.boot-cube i:nth-child(2){transform:rotateX(60deg)}.boot-cube i:nth-child(3){transform:rotateY(60deg)}.boot-ring{position:absolute;left:50%;top:50%;border:2px solid var(--edge);border-radius:50%;width:270px;height:88px;transform:translate(-50%,-50%) rotateX(65deg);animation:orbit 3.4s linear infinite}.boot-ring.two{width:220px;height:70px;transform:translate(-50%,-50%) rotateY(65deg);animation-duration:4.3s;animation-direction:reverse}.boot-card h3{font:700 26px 'Space Grotesk';letter-spacing:-.04em;margin:0}.boot-card p{font:500 9px 'DM Mono';text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:8px 0 18px}.bar{height:9px;border:2px solid var(--edge);background:var(--paper);box-shadow:3px 3px 0 var(--drop)}.bar i{display:block;width:0;height:100%;background:var(--yellow);animation:load .85s cubic-bezier(.2,.8,.2,1) forwards}.boot-status{font:500 9px 'DM Mono';color:#8b8b93;margin-top:10px;min-height:14px}
-    @keyframes heroFloat{50%{transform:rotateX(52deg) rotateZ(-14deg) translateY(-15px)}}@keyframes orbit{to{transform:rotateX(67deg) rotateZ(376deg)}}@keyframes bob{50%{transform:translate(18px,-20px) scale(1.2)}}@keyframes cube{to{transform:translate(-50%,-50%) rotateX(360deg) rotateY(360deg)}}@keyframes scan{50%{top:72%}}@keyframes load{to{width:100%}}
-    @media(max-width:900px){.hero{grid-template-columns:1fr}.hero-visual{min-height:310px}.metrics{grid-template-columns:repeat(2,1fr)}.endpoint-list{grid-template-columns:repeat(2,1fr)}.navlinks{display:none}}
-    @media(max-width:620px){.shell{width:min(100% - 24px,1180px)}.nav{height:65px}.status{display:none}.hero{padding:42px 0 35px}.hero h1{font-size:49px}.hero p{font-size:13px}.hero-visual{min-height:260px}.hero-visual .panel3d{width:190px;height:190px}.orbit{width:270px;height:100px}.orbit.two{width:230px;height:80px}.metrics{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:46px}.metric{min-height:118px;padding:14px}.metric-value{font-size:25px}.workspace{grid-template-columns:1fr}.section-head{display:block}.section-head h2{font-size:31px}.section-head p{margin-top:10px}.endpoint-list{grid-template-columns:1fr}.footer-row,.copyright{display:block}.footer-links{margin-top:18px}.copyright div+div{margin-top:10px}.actions .btn{flex:1;justify-content:center}.brand{font-size:15px}.mark{width:37px;height:37px}.navlinks{display:none}}
-    @media(max-width:380px){.hero h1{font-size:42px}.metrics{grid-template-columns:1fr}.hero-visual{min-height:220px}}
-    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
-  
-    :root{color-scheme:dark}::selection{background:#fafafa;color:#0b0b0c}
-    :focus-visible{outline:2px solid #fafafa;outline-offset:3px}
-    ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#0b0b0c}::-webkit-scrollbar-thumb{background:#3f3f46;border-radius:8px}
-    a,button,summary{transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s cubic-bezier(.2,.8,.2,1),background .16s cubic-bezier(.2,.8,.2,1),color .16s cubic-bezier(.2,.8,.2,1),border-color .16s cubic-bezier(.2,.8,.2,1)}
-    @keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    :root{--bg:#120e12;--surface:#241b22;--accent:#3dd6ff;--accent-ink:#000;--ink:#fff6e8;--muted:#e2d6cf;--edge:#000;--drop:#000;color-scheme:dark;
+      --panel:var(--surface);--cyan:var(--accent);--on-cyan:var(--accent-ink,#000);--krem:#fff6e8;--teks:var(--ink);--teks2:var(--muted);--hitam:var(--edge,#000);--bayang:var(--drop,#000);--kode-bg:#0b080b;
+      --head:Bangers,'Comic Neue',cursive;--body:'Comic Neue','Comic Sans MS',cursive;--mono:'JetBrains Mono',ui-monospace,monospace}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}
+    body{margin:0;min-height:100vh;overflow-x:hidden;overflow-x:clip;color:var(--teks);font:700 16px/1.5 var(--body);background-color:var(--bg);background-image:radial-gradient(rgba(61,214,255,.14) 1.6px,transparent 1.9px);background-size:12px 12px}
+    html[data-ui]:not([data-ui=default]) body{background-image:radial-gradient(var(--dot) 1.6px,transparent 1.9px)}
+    a{color:inherit;text-decoration:none}button,input{font:inherit}img,svg{display:block}
+    .shell{width:min(1180px,calc(100% - 32px));margin:0 auto}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+    .k-head{font-family:var(--head);font-weight:400;text-transform:uppercase;letter-spacing:1px}
+    .halftone{background-color:var(--cyan);background-image:radial-gradient(rgba(0,0,0,.3) 1.6px,transparent 1.9px);background-size:9px 9px;color:var(--on-cyan)}
+    .k-panel{background:var(--panel);border:5px solid var(--hitam);border-radius:20px;box-shadow:8px 8px 0 var(--bayang)}
+    :focus-visible{outline:4px solid var(--cyan);outline-offset:3px}
+    ::selection{background:var(--cyan);color:var(--on-cyan)}
 
-    .mark,.btn,.account-menu summary,.hero h1 span,.hero-dot,.bar i{color:var(--accent-ink)}
-    .mark{border-color:var(--yellow)}
-    .btn:hover{background:#e4e4e7}.btn.secondary{background:var(--paper);color:var(--ink)}.btn.secondary:hover{background:var(--surface-2);color:#fff}
-    .account-menu summary{border-color:var(--yellow)}
-    .account-pop a:hover,.account-pop button:hover,.logout:hover{color:var(--accent-ink)}
-    .account-pop{border-radius:10px}.account-pop a,.account-pop button{border-radius:6px;color:var(--ink)}
-    .navlinks a{color:var(--muted)}.navlinks a:hover{color:var(--ink);background:var(--surface-2)}
-    .hero h1 span{border-color:var(--yellow)}
-    .metric a,.feature a{color:var(--ink)}
-    .hero-copy,.metrics,.section{animation:enter .5s cubic-bezier(.2,.8,.2,1) both}.metrics{animation-delay:.06s}.section{animation-delay:.1s}
-    .endpoint{transition:border-color .16s,transform .16s}.endpoint:hover{border-color:#a1a1aa;transform:translateY(-2px)}
-    .footer-links a:hover{border-color:#fafafa}
+    /* buttons: real <a>/<button>, pill, 44px+ high, hard 4px shadow */
+    :root .k-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border:4px solid var(--hitam);border-radius:999px;box-shadow:4px 4px 0 var(--bayang);font:400 20px/1 var(--head);letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:transform .12s,box-shadow .12s;white-space:nowrap}
+    :root .k-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--bayang)}
+    :root .k-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--bayang)}
+    :root .k-btn.krem,:root .k-btn.krem:hover{background:var(--krem);color:#000}
+    :root .k-btn.cyan,:root .k-btn.cyan:hover{background:var(--cyan);color:var(--on-cyan)}
+    :root .k-btn.ink,:root .k-btn.ink:hover{background:#000;color:var(--krem);box-shadow:4px 4px 0 var(--krem)}
+    :root .k-btn.ink:hover{box-shadow:6px 6px 0 var(--krem)}
+    .k-btn svg{width:20px;height:20px}
 
-    .scene3d{position:absolute;inset:-40px -30px;z-index:2;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse 72% 68% at 50% 46%,#000 52%,transparent 100%);mask-image:radial-gradient(ellipse 72% 68% at 50% 46%,#000 52%,transparent 100%)}@media(max-width:900px){.scene3d{inset:-30px 0}}
-    .scene3d canvas{display:block;width:100%!important;height:100%!important;opacity:0;transition:opacity 1.1s cubic-bezier(.2,.8,.2,1)}
-    .scene3d.is-ready canvas{opacity:1}
-    .hero-visual .orbit,.hero-visual .panel3d,.hero-visual .hero-dot{transition:opacity .8s ease}
-    html.webgl-stack .hero-visual .orbit,html.webgl-stack .hero-visual .panel3d,html.webgl-stack .hero-visual .hero-dot{opacity:0;visibility:hidden}
-    /* Calm CSS fallback: no bobbing slab, moving scan line or dashed spinning ring. */
-    .hero-visual .panel3d,.hero-dot{animation:none}.scan{display:none}.orbit.two{border-style:solid}.orbit{animation-duration:30s}
+    /* icons: line SVG (black, stroke 2.8, round ends) in a 60px cream circle */
+    .k-ico{flex:none;width:60px;height:60px;border:4px solid var(--hitam);border-radius:50%;background:var(--krem);display:grid;place-items:center}
+    .k-ico svg,.k-svg{width:30px;height:30px;fill:none;stroke:#000;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+    .k-ico.sm{width:48px;height:48px}.k-ico.sm svg{width:24px;height:24px}
 
-    /* crimson accent, used sparingly */
-    ::selection{background:var(--blood);color:#fff}:focus-visible{outline-color:var(--blood)}.mark{box-shadow:3px 3px 0 var(--drop)}.hero h1 span{box-shadow:5px 5px 0 var(--drop)}.status i{color:var(--blood);fill:var(--blood)}.btn:not(.secondary):hover{background:var(--blood-deep);color:#fff;border-color:var(--edge)}.eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--blood)}
-  
-    .mark,.account-menu summary,.hero h1 span{border-color:var(--edge)}.account-menu summary:hover{background:var(--blood-deep)}
-  .ep-badge{display:inline-flex;align-items:center;gap:3px;vertical-align:middle;margin-left:6px;padding:1px 7px;border-radius:999px;border:1.5px solid currentColor;font:700 10px/1.4 "DM Mono",ui-monospace,monospace;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}.ep-badge-ic{font-size:1em;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}.ep-badge--new{color:#4ade80;background:rgba(74,222,128,.1)}.ep-badge--hot{color:var(--ui-bad,#f87171);background:color-mix(in srgb,var(--ui-bad,#f87171) 12%,transparent)}.ep-badge--recommend{color:#facc15;background:rgba(250,204,21,.1)}
-  .account-pop .lang-switch{display:grid;gap:6px;padding:9px 9px 6px;margin-top:2px;border-top:1px solid #3f3f46}.account-pop .lang-switch-label{font:500 9px 'DM Mono';letter-spacing:.12em}.account-pop .lang-switch-opts{display:grid;grid-template-columns:1fr 1fr;width:100%}.account-pop .lang-switch-opts button{padding:6px 4px;text-align:center;border:0;border-radius:0;background:transparent;color:var(--ink);font:500 10px 'DM Mono';letter-spacing:.04em}.account-pop .lang-switch-opts button:hover{background:var(--surface-2);color:var(--ink)}
-  .epm-section{padding-top:10px}.epm-section .section-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}.epm-section h3{margin:0;font:700 clamp(24px,3vw,34px) 'Space Grotesk';letter-spacing:-.04em}.epm-summary{font:500 11px 'DM Mono';color:var(--muted)}.epm{border:var(--line);border-radius:14px;background:#070708;box-shadow:var(--shadow);overflow:hidden}.epm-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:2px solid #27272a;font:500 11px 'DM Mono';color:#d4d4d8}.epm-dots{display:flex;gap:6px}.epm-dots i{width:10px;height:10px;border-radius:50%;background:var(--accent,#ef4444)}.epm-dots i:nth-child(2){background:#eab308}.epm-dots i:nth-child(3){background:#22c55e}.epm-title{flex:1}.epm-clock{padding:3px 9px;border:1px solid #3f3f46;border-radius:999px;color:#a1a1aa}.epm-refresh{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1.5px solid #d4d4d8;border-radius:999px;background:#18181b;color:#fafafa;font:600 11px 'DM Mono',ui-monospace,monospace;cursor:pointer;box-shadow:none}.epm-refresh:hover{background:var(--blood);border-color:var(--blood)}.epm-refresh:disabled{opacity:.7;cursor:progress}.epm-refresh.spin .epm-ic{display:inline-block;animation:epm-spin 1s linear infinite}@keyframes epm-spin{to{transform:rotate(360deg)}}.epm-wrap{position:relative}.epm-jump{position:absolute;right:14px;bottom:12px;padding:6px 12px;border:1.5px solid #d4d4d8;border-radius:999px;background:#18181b;color:#fafafa;font:600 11px 'DM Mono',ui-monospace,monospace;cursor:pointer}.epm-jump[hidden]{display:none}.epm-body{height:300px;overflow-y:auto;overscroll-behavior:contain;padding:12px 14px;font:12px/1.75 'DM Mono',ui-monospace,monospace;color:#d4d4d8}.epm-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:epm-in .25s ease}.epm-arrow{color:#71717a}.epm-method{color:#e4e4e7;font-weight:600}.epm-path{color:#fafafa}.epm-ms{color:#71717a}.epm-code{font-weight:600}.epm-code[data-state=ok]{color:#4ade80}.epm-code[data-state=down]{color:var(--ui-bad,#f87171)}.epm-code[data-state=pending]{color:#71717a}.epm-desc[data-state=down]{color:var(--ui-bad,#fca5a5)}.epm-cmd{color:#fafafa;margin-top:6px}.epm-sys{color:#a1a1aa}.epm-err{color:var(--ui-bad,#f87171)}.epm-ready{color:#4ade80}.epm-note{margin:12px 0 0;color:var(--muted);font-size:13px}.epm-note .epm-ok{color:#4ade80}.epm-note .epm-bad{color:var(--ui-bad,#f87171)}@keyframes epm-in{from{opacity:0;transform:translateY(3px)}}@media (max-width:640px){.epm-body{height:240px;font-size:11px}}@media (prefers-reduced-motion:reduce){.epm-line{animation:none}}
+    /* [A] header */
+    .topbar{position:sticky;top:12px;z-index:120;margin-top:12px}
+    .nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 14px 10px 12px;background:var(--panel);border:5px solid var(--hitam);border-radius:18px;box-shadow:8px 8px 0 var(--bayang)}
+    .brand{display:flex;align-items:center;gap:10px;min-width:0}
+    .brand-burst{position:relative;width:58px;height:58px;flex:none}.brand-burst svg{width:100%;height:100%}
+    .brand-burst b{position:absolute;inset:0;display:grid;place-items:center;font:400 28px/1 var(--head);color:var(--on-cyan);padding-top:2px}
+    .brand-name{font:400 34px/1 var(--head);letter-spacing:1px;text-transform:uppercase;color:var(--teks);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .nav-right{display:flex;align-items:center;gap:8px}
+    .navlinks{display:flex;align-items:center;gap:4px}
+    :root .navlinks a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:3px solid transparent;border-radius:999px;font:400 20px/1 var(--head);letter-spacing:1px;text-transform:uppercase;color:var(--teks)}
+    :root .navlinks a:hover,:root .navlinks a[aria-current=page]{border-color:var(--hitam);background:var(--cyan);color:var(--on-cyan)}
+    .account-menu{position:relative}
+    .account-menu summary{list-style:none;cursor:pointer;width:48px;height:48px;display:grid;place-items:center;border:4px solid var(--hitam);border-radius:12px;box-shadow:4px 4px 0 var(--bayang)}
+    .account-menu summary::-webkit-details-marker{display:none}
+    .account-menu summary svg{width:26px;height:26px;fill:none;stroke:var(--on-cyan);stroke-width:3;stroke-linecap:round}
+    .account-menu[open] summary{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--bayang)}
+    .account-pop{position:absolute;right:0;top:60px;width:230px;max-height:calc(100vh - 110px);overflow:auto;background:var(--krem);color:#000;border:4px solid var(--hitam);border-radius:20px;box-shadow:8px 8px 0 var(--bayang);padding:10px;display:grid;gap:4px}
+    :root .account-pop a,:root .account-pop button{display:flex;align-items:center;min-height:44px;padding:0 14px;border:3px solid transparent;border-radius:999px;background:transparent;color:#000;font:700 16px var(--body);text-align:left;cursor:pointer;text-transform:none;letter-spacing:0;box-shadow:none}
+    :root .account-pop a:hover,:root .account-pop button:hover{border-color:var(--hitam);background:var(--cyan);color:var(--on-cyan)}
+    .account-pop .only-phone{display:none}
+    .account-pop hr{border:0;border-top:3px solid #000;margin:4px 0;width:100%}
+    .account-pop .lang-switch{display:grid;gap:6px;padding:8px 6px 4px;border-top:3px solid #000;margin-top:4px}
+    .account-pop .lang-switch-label{font:400 16px var(--head);letter-spacing:1px;text-transform:uppercase}
+    .account-pop .lang-switch-opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    :root .account-pop .lang-switch-opts button{justify-content:center;border-color:#000;background:var(--krem);font-size:14px;padding:0 6px}
+    :root .account-pop .lang-switch-opts button[aria-pressed=true]{background:var(--cyan);color:var(--on-cyan)}
+
+    /* [B] hero */
+    .hero{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:26px;margin:40px 0 0}.hero>*,.hero-side>*{min-width:0}
+    .hero-main{position:relative;padding:34px 34px 38px;border:5px solid var(--hitam);border-radius:20px;box-shadow:8px 8px 0 var(--bayang)}
+    .caption{display:inline-block;max-width:calc(100% - 120px);padding:8px 14px;background:var(--krem);color:#000;border:4px solid #000;font:italic 700 17px/1.3 var(--body);transform:rotate(-1.5deg)}
+    .hero h1{margin:22px 0 22px;font:400 96px/.92 var(--head);letter-spacing:1px;text-transform:uppercase;color:var(--krem);-webkit-text-stroke:3px #000;paint-order:stroke fill;text-shadow:6px 6px 0 #000}
+    .hero-box{max-width:560px;margin:0;padding:14px 18px;background:var(--krem);color:#000;border:4px solid #000;border-radius:20px;box-shadow:4px 4px 0 #000;font-size:18px}
+    .hero-actions{display:flex;flex-wrap:wrap;gap:14px;margin-top:24px}
+    .pow{position:absolute;top:-26px;right:-18px;width:132px;height:132px;transform:rotate(12deg);pointer-events:none}
+    .pow svg{width:100%;height:100%}.pow b{position:absolute;inset:0;display:grid;place-items:center;font:400 34px/1 var(--head);letter-spacing:1px;color:#000}
+    .hero-side{display:grid;grid-template-rows:1fr auto;gap:22px}
+    .mascot{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:14px;padding:22px;background:var(--krem);color:#000;border:5px solid #000;border-radius:20px;box-shadow:8px 8px 0 var(--bayang)}
+    .mascot svg{width:132px;height:auto}
+    .bubble{position:relative;padding:14px 16px;background:#fff;border:4px solid #000;border-radius:20px;font:700 18px/1.3 var(--body)}
+    .bubble::before{content:'';position:absolute;left:-17px;top:24px;border:12px solid transparent;border-right:14px solid #000;border-left:0}
+    .bubble::after{content:'';position:absolute;left:-10px;top:27px;border:9px solid transparent;border-right:10px solid #fff;border-left:0}
+    .term{padding:18px 20px}
+    .term-cap{margin:0 0 10px;font:italic 700 16px var(--body);color:var(--teks2)}
+    .code{margin:0;padding:14px 16px;background:var(--kode-bg);color:var(--krem);border:4px solid #000;border-radius:14px;font:700 14px/1.6 var(--mono);overflow-x:auto;white-space:pre}
+    .code .p{color:var(--cyan)}.code .c{color:var(--teks2)}
+
+    /* section titles */
+    .section{margin:64px 0 0}
+    .title{margin:0 0 20px;font:400 56px/1 var(--head);letter-spacing:1px;text-transform:uppercase;color:var(--krem);text-shadow:5px 5px 0 var(--cyan)}
+    .title.big{font-size:72px}
+    .lead{margin:-6px 0 22px;color:var(--teks2);max-width:640px}
+
+    /* [C] three feature cards */
+    .perks{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:40px}
+    .perk{padding:22px;border:5px solid var(--hitam);border-radius:20px;box-shadow:8px 8px 0 var(--bayang)}
+    .perk h2{margin:16px 0 6px;font:400 32px/1 var(--head);letter-spacing:1px;text-transform:uppercase;color:var(--on-cyan)}
+    .perk p{margin:0;font-size:17px;color:var(--on-cyan)}
+
+    /* account summary */
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+    .metric{padding:18px;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center}
+    .metric .k-ico{grid-row:span 2}
+    .metric-top{font:400 18px var(--head);letter-spacing:1px;text-transform:uppercase;color:var(--teks2)}
+    .metric-value{font:400 clamp(26px,2.6vw,34px)/1.05 var(--head);letter-spacing:1px;color:var(--cyan);overflow-wrap:anywhere}
+    .metric-note{grid-column:1/-1;margin-top:8px;font-size:14px;color:var(--teks2)}
+    :root .metric-note a,:root .empty a,:root .epm-note a{color:var(--cyan);text-decoration:underline;text-underline-offset:3px}
+
+    /* [D] endpoint catalog */
+    .search{display:block;max-width:620px}
+    .search-label{display:block;margin:0 0 8px 6px;font:400 22px var(--head);letter-spacing:1px;text-transform:uppercase}
+    .search-box{display:flex;align-items:center;gap:10px;min-height:56px;padding:0 20px;background:var(--krem);border:4px solid #000;border-radius:999px;box-shadow:4px 4px 0 var(--bayang)}
+    .search-box svg{width:26px;height:26px;flex:none}
+    :root .search-box input{flex:1;min-width:0;min-height:48px;border:0;background:transparent;color:#000;font:700 18px var(--body);outline:0;box-shadow:none;padding:0}
+    .search-box input::placeholder{color:#5c534f}
+    .search-box:focus-within{outline:4px solid var(--cyan);outline-offset:3px}
+    .filters{display:flex;gap:10px;margin:20px 0 26px;padding:2px 8px 8px 2px;flex-wrap:wrap}
+    :root .chip{min-height:44px;padding:0 18px;border:4px solid #000;border-radius:999px;background:var(--krem);color:#000;box-shadow:4px 4px 0 var(--bayang);font:400 19px/1 var(--head);letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+    :root .chip:hover{transform:translate(-1px,-1px);color:#000}
+    :root .chip[aria-pressed=true]{background:var(--cyan);color:var(--on-cyan)}
+    .count{margin:-12px 0 18px 4px;color:var(--teks2);font-size:15px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    .card{display:flex;flex-direction:column;overflow:hidden;min-width:0}
+    .card-top{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:5px solid #000}
+    .card-label{font:400 24px/1 var(--head);letter-spacing:1px;text-transform:uppercase;color:var(--on-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .card-body{display:flex;flex-direction:column;gap:12px;padding:16px 18px 20px;flex:1}
+    .card-name{margin:0;font:700 19px/1.25 var(--body);color:var(--teks)}
+    .route{display:flex;align-items:center;gap:8px;min-width:0}
+    .method{flex:none;padding:3px 11px;background:var(--krem);color:#000;border:3px solid #000;border-radius:999px;font:700 13px/1.3 var(--mono)}
+    .path{min-width:0;font:700 14px/1.3 var(--mono);color:var(--cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .card-desc{margin:0;color:var(--teks2);font-size:15px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .card .k-btn{margin-top:auto;align-self:flex-start}
+    .more{display:flex;justify-content:center;margin-top:30px}
+    .empty{padding:22px;color:var(--teks2)}
+
+    /* recent endpoints + status monitor */
+    .recent{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    :root .recent-item{display:block;padding:14px 16px;background:var(--panel);border:4px solid #000;border-radius:20px;box-shadow:4px 4px 0 var(--bayang);min-width:0;color:var(--teks)}
+    :root .recent-item:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--bayang);color:var(--teks)}
+    .recent-item b{display:block;font:700 16px var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .recent-item small{display:block;margin-top:4px;font:700 12px var(--mono);color:var(--teks2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ep-badge{display:inline-block;vertical-align:middle;margin-left:6px;padding:0 8px;border:3px solid #000;border-radius:999px;background:var(--cyan);color:var(--on-cyan);font:400 13px/1.4 var(--head);letter-spacing:1px;text-transform:uppercase}
+    .epm-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+    .epm-summary{color:var(--teks2);font-size:15px}
+    .epm{overflow:hidden}
+    .epm-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:4px solid #000;background:var(--krem);color:#000;font:700 13px var(--mono)}
+    .epm-title{flex:1}.epm-clock{padding:2px 10px;border:3px solid #000;border-radius:999px}
+    :root .epm-refresh,:root .epm-jump{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border:4px solid #000;border-radius:999px;background:var(--cyan);color:var(--on-cyan);box-shadow:3px 3px 0 #000;font:400 18px/1 var(--head);letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+    .epm-refresh:disabled{opacity:.7;cursor:progress}.epm-refresh.spin .epm-ic{display:inline-block;animation:epm-spin 1s linear infinite}@keyframes epm-spin{to{transform:rotate(360deg)}}
+    .epm-wrap{position:relative}.epm-jump{position:absolute;right:14px;bottom:12px}.epm-jump[hidden]{display:none}
+    .epm-body{height:300px;overflow-y:auto;overscroll-behavior:contain;padding:12px 16px;background:var(--kode-bg);font:700 12px/1.8 var(--mono);color:var(--krem)}
+    .epm-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .epm-arrow,.epm-ms,.epm-sys{color:var(--teks2)}.epm-method{color:var(--krem)}.epm-path{color:var(--krem)}
+    .epm-code{padding:0 6px;border-radius:6px}.epm-code[data-state=ok]{background:var(--cyan);color:var(--on-cyan)}
+    .epm-code[data-state=down]{background:var(--krem);color:#000;text-decoration:line-through;text-decoration-thickness:2px}
+    .epm-code[data-state=pending]{color:var(--teks2)}
+    .epm-desc[data-state=down],.epm-err{color:var(--krem);text-decoration:underline wavy;text-underline-offset:3px}
+    .epm-cmd{color:var(--cyan);margin-top:6px}.epm-ready{color:var(--cyan)}
+    .epm-note{margin:14px 4px 0;color:var(--teks2);font-size:15px}
+    .epm-note .epm-ok{padding:0 6px;border-radius:6px;background:var(--cyan);color:var(--on-cyan);font-family:var(--mono)}
+    .epm-note .epm-bad{padding:0 6px;border-radius:6px;background:var(--krem);color:#000;text-decoration:line-through;font-family:var(--mono)}
+
+    /* [E] footer */
+    .footer{margin:70px auto 28px;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;padding:18px 22px;border-radius:18px}
+    .footer-brand{font:400 26px/1.1 var(--head);letter-spacing:1px;text-transform:uppercase}
+    .footer-links{display:flex;gap:10px;flex-wrap:wrap}
+
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition:none!important;scroll-behavior:auto!important}}
+    @media(max-width:1020px){.navlinks a{padding:0 8px;font-size:18px}.brand-name{font-size:28px}.hero h1{font-size:76px}.metrics{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:900px){.hero{grid-template-columns:1fr}.hero-side{grid-template-rows:auto}.grid,.recent{grid-template-columns:repeat(2,1fr)}:root .navlinks,:root .nav-key{display:none}.account-pop .only-phone{display:flex}.account-pop hr.only-phone{display:block}}
+    @media(max-width:600px){
+      .shell{width:calc(100% - 24px)}
+      .topbar{top:8px;margin-top:8px}.nav{padding:8px 10px}.brand-burst{width:48px;height:48px}.brand-burst b{font-size:24px}.brand-name{font-size:24px}
+      .hero{margin-top:28px;gap:22px}.hero-main{padding:24px 18px 26px}.caption{max-width:calc(100% - 70px);font-size:15px}
+      .hero h1{font-size:58px;-webkit-text-stroke:2.5px #000;text-shadow:5px 5px 0 #000}
+      .hero-box{font-size:16px}.hero-actions{flex-direction:column}.hero-actions .k-btn,.more .k-btn{width:100%}
+      .pow{width:96px;height:96px;top:-22px;right:-10px}.pow b{font-size:25px}
+      .mascot{grid-template-columns:1fr;justify-items:center;text-align:center}.mascot svg{width:110px}
+      .bubble::before{left:50%;top:-17px;transform:translateX(-50%);border:12px solid transparent;border-bottom:14px solid #000;border-top:0}
+      .bubble::after{left:50%;top:-10px;transform:translateX(-50%);border:9px solid transparent;border-bottom:10px solid #fff;border-top:0}
+      .perks,.metrics,.grid,.recent{grid-template-columns:1fr}
+      .title{font-size:42px}.title.big{font-size:46px}
+      .filters{flex-wrap:nowrap;overflow-x:auto;margin-left:-12px;margin-right:-12px;padding:2px 12px 10px;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}
+      .footer{flex-direction:column;align-items:flex-start}.footer-links{width:100%}.footer-links .k-btn{flex:1}
+    }
   </style>
   <script src="/assets/i18n.js"></script>
-  <link rel="preload" href="/assets/scythe.glb" as="fetch" type="model/gltf-binary" crossorigin>
-  <!-- Hide the CSS fallback while the 3D scythe loads; scene3d.js brings it back if 3D fails. -->
-  <script>document.documentElement.classList.add('scene-pending');setTimeout(function(){document.documentElement.classList.remove('scene-pending')},20000)</script>
-  <style>html.scene-pending .hero-visual .orbit,html.scene-pending .hero-visual .panel3d,html.scene-pending .hero-visual .hero-dot{opacity:0;visibility:hidden}</style>
-  <style>#slash-intro{position:fixed;inset:0;z-index:300;background:#0b0b0c;pointer-events:none;animation:slash-fallback .4s ease 2.8s forwards}@keyframes slash-fallback{to{opacity:0;visibility:hidden}}@media (prefers-reduced-motion:reduce){#slash-intro{display:none}}</style>
-  <script defer src="/assets/aura-intro.js?v=2"></script>
+  <script src="/assets/ui-theme.js"></script>
+  <script src="/assets/scythe-color.js"></script>
   <script defer src="/assets/chat.js?v=3"></script>
-  <script defer src="/assets/scene3d.js?v=9"></script>
-<script src="/assets/ui-theme.js"></script>
-<script src="/assets/scythe-color.js"></script>
-<script defer src="/assets/announce.js"></script>
+  <script defer src="/assets/announce.js"></script>
 </head>
 <body>
-<div id="slash-intro" aria-hidden="true"></div>
-<header class="topbar"><div class="shell nav"><a class="brand" href="/home"><span class="mark"><i data-lucide="orbit"></i></span><span id="web-title">Yannz API</span></a><nav class="navlinks"><a href="#workspace">Workspace</a><a href="/api">API Docs</a><a href="/api/playground">Playground</a><a href="/3d">3D</a></nav><div style="display:flex;align-items:center;gap:9px"><span class="status"><i data-lucide="circle"></i> Gateway online</span><details class="account-menu"><summary>☰ MENU</summary><div class="account-pop"><a href="/profile">Profile</a><a href="/home">Home</a><a href="/pricing">Price List</a><a href="/keys">API Keys</a><a href="/home#usage">Usage</a><a href="/billing">Payments</a><a href="/3d">3D Scythe</a><a href="/upload">Upload CDN</a><a href="/custom-ui">Custom UI</a><a href="/owner" id="owner-link" hidden>Developer Panel</a><div data-lang-switch></div><button id="logout">Logout</button></div></details></div></div></header>
-<main class="shell">
-  <section class="hero" id="profile"><div class="hero-copy"><span class="eyebrow"><i data-lucide="terminal"></i> Api Workspace</span><h1>API kamu.<br><span>Satu tempat, rapi.</span></h1><p>Cari API yang kamu butuhin, cobain langsung, terus pantau pemakaiannya. Semuanya ada di sini, nggak perlu bolak-balik.</p><div class="actions"><a class="btn" href="/api/playground">Buka Playground <i data-lucide="arrow-up-right"></i></a><a class="btn secondary" href="/api">Baca dokumentasi <i data-lucide="book-open"></i></a><a class="btn secondary" href="/pricing">Upgrade paket</a></div></div><div class="hero-visual" aria-hidden="true"><div class="scene3d" data-scene3d="stack"></div><div class="orbit"></div><div class="orbit two"></div><div class="panel3d"><div class="scan"></div></div><span class="hero-dot a"></span><span class="hero-dot b"></span></div></section>
-  <section class="metrics" id="usage" aria-live="polite"><article class="metric"><div class="metric-top"><span>Paket</span><i data-lucide="crown"></i></div><div class="metric-value" id="plan-value">—</div><div class="metric-note" id="plan-note">Lagi memuat akun…</div></article><article class="metric"><div class="metric-top"><span>Request hari ini</span><i data-lucide="bar-chart-3"></i></div><div class="metric-value" id="request-value">—</div><div class="metric-note" id="request-note">Reset jam 00:00 UTC</div></article><article class="metric"><div class="metric-top"><span>API keys</span><i data-lucide="key-round"></i></div><div class="metric-value" id="keys-value">—</div><div class="metric-note" id="keys-note"><a href="/keys">Kelola key</a></div></article><article class="metric"><div class="metric-top"><span>Gateway</span><i data-lucide="activity"></i></div><div class="metric-value" id="gateway-value">—</div><div class="metric-note" id="endpoint-value">Lagi ngecek…</div></article></section>
-  <section class="section epm-section" aria-label="Status endpoint"><div class="section-head"><h3>Status endpoint</h3><span class="epm-summary">Memuat…</span></div>
-<div class="epm" id="ep-monitor"><div class="epm-bar"><span class="epm-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="epm-title" data-no-i18n>&gt;_ ~/endpoints</span><span class="epm-clock" data-no-i18n>--:--:--</span><button type="button" class="epm-refresh" title="Cek ulang semua endpoint sekarang"><span class="epm-ic" aria-hidden="true">↻</span> Refresh</button></div><div class="epm-wrap"><div class="epm-body" role="log" aria-live="off"></div><button type="button" class="epm-jump" hidden>↓ Terbaru</button></div></div>
-<p class="epm-note">Semua endpoint dicek otomatis: <b class="epm-ok" data-no-i18n>200 OK</b> hijau artinya jalan, kode merah artinya lagi bermasalah (misal <b class="epm-bad" data-no-i18n>503</b> server lagi nggak tersedia). Kodenya diambil dari cek otomatis dan request asli 24 jam terakhir.</p></section>
-<section class="section" id="workspace"><div class="section-head"><div><span class="section-kicker"><i data-lucide="layout-grid"></i> Workspace</span><h2>Semua yang kamu butuhin, tanpa ribet.</h2></div><p>Dari nyobain API sampai ngecek pemakaian, semuanya bisa dari sini. Fitur baru juga bakal terus nambah.</p></div><div class="workspace"><article class="feature blue"><span class="index">01 / EXPLORE</span><span class="icon"><i data-lucide="terminal"></i></span><h3>Coba langsung</h3><p>Pilih API, isi datanya, langsung lihat hasilnya. Bisa dari HP atau laptop.</p><a href="/api/playground">Buka Playground <i data-lucide="arrow-up-right"></i></a></article><article class="feature yellow"><span class="index">02 / DOCUMENT</span><span class="icon"><i data-lucide="book-open"></i></span><h3>Daftar API</h3><p>Lihat semua API yang ada, lengkap sama cara pakainya.</p><a href="/api">Buka daftar API <i data-lucide="arrow-up-right"></i></a></article><article class="feature green"><span class="index">03 / MONITOR</span><span class="icon"><i data-lucide="pulse"></i></span><h3>Pantau pemakaian</h3><p>Lihat berapa kali kamu udah pakai API hari ini dan sisa kuotamu.</p><a href="#usage">Lihat pemakaian <i data-lucide="arrow-down"></i></a></article><article class="feature"><span class="index">04 / EXTEND</span><span class="icon"><i data-lucide="blocks"></i></span><h3>Selalu ada yang baru</h3><p>API baru rutin ditambahin, jadi cek lagi sesekali biar nggak ketinggalan.</p><a href="/api">Lihat semua API <i data-lucide="list"></i></a></article></div></section>
-  <section class="section"><div class="endpoints"><div class="endpoint-head"><h3>Endpoint terakhir dibuka</h3><span id="endpoint-summary">Lagi memuat…</span></div><div class="endpoint-list" id="endpoint-list"><div class="empty">Lagi memuat…</div></div></div></section>
+<!-- Line icons, used with <svg><use href="#i-…"/></svg>. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></symbol>
+  <symbol id="i-ai" viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><path d="M9.5 13v1.5M14.5 13v1.5"/><path d="M2.5 13v3M21.5 13v3"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5L6 20"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></symbol>
+  <symbol id="i-tools" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3.5 17.3a1.8 1.8 0 0 0 2.6 2.6l5.8-5.8a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.4-.4-2.4z"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-braces" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1"/><path d="M16 3h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-1"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9"/><path d="m17 6 3 3"/><path d="m14 9 2 2"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5"/><path d="m16 7 5 5-5 5"/><path d="m14 4-4 16"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2 12h4l3-8 4 16 3-8h6"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 10h16"/><path d="M10 4v16"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+</svg>
+<div class="shell">
+<header class="topbar"><div class="nav">
+  <a class="brand" href="/home" aria-label="Yannz API, Home">
+    <span class="brand-burst" aria-hidden="true"><svg viewBox="0 0 100 100"><polygon points="50,2 60,22 82,10 78,34 98,40 82,56 94,76 70,74 66,98 50,82 34,98 30,74 6,76 18,56 2,40 22,34 18,10 40,22" fill="var(--cyan)" stroke="#000" stroke-width="5" stroke-linejoin="round"/></svg><b>Y</b></span>
+    <span class="brand-name" id="web-title" data-no-i18n>Yannz API</span>
+  </a>
+  <div class="nav-right">
+    <nav class="navlinks" aria-label="Menu utama"><a href="/home" aria-current="page">Home</a><a href="#katalog">Endpoint</a><a href="/api">Dokumentasi</a></nav>
+    <a class="k-btn krem nav-key" href="/keys">Ambil API key</a>
+    <details class="account-menu"><summary class="halftone" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary><div class="account-pop"><a class="only-phone" href="#katalog">Endpoint</a><a class="only-phone" href="/api">Dokumentasi</a><a class="only-phone" href="/keys">Ambil API key</a><hr class="only-phone"><a href="/profile">Profile</a><a href="/home">Home</a><a href="/pricing">Price List</a><a href="/keys">API Keys</a><a href="/home#usage">Usage</a><a href="/billing">Payments</a><a href="/3d">3D Scythe</a><a href="/upload">Upload CDN</a><a href="/custom-ui">Custom UI</a><a href="/api/playground">Playground</a><a href="/owner" id="owner-link" hidden>Developer Panel</a><div data-lang-switch></div><button id="logout" type="button">Logout</button></div></details>
+  </div>
+</div></header>
+
+<main>
+  <!-- [B] hero -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-main halftone">
+      <span class="pow" aria-hidden="true"><svg viewBox="0 0 100 100"><polygon points="50,4 58,26 80,12 74,36 98,42 78,56 92,78 68,74 62,98 50,80 38,98 32,74 8,78 22,56 2,42 26,36 20,12 42,26" fill="#fff6e8" stroke="#000" stroke-width="5" stroke-linejoin="round"/></svg><b>POW!</b></span>
+      <p class="caption">Episode #1 — Bot-mu butuh tenaga super</p>
+      <h1 id="hero-title">Satu API, banyak jurus!</h1>
+      <p class="hero-box">Downloader, AI, olah gambar, pencarian dan tools — semua dalam respon JSON yang rapi.</p>
+      <div class="hero-actions"><a class="k-btn ink" href="#katalog">Lihat endpoint</a><a class="k-btn krem" href="/api">Dokumentasi</a></div>
+    </div>
+    <div class="hero-side">
+      <div class="mascot">
+        <svg viewBox="0 0 120 130" role="img" aria-label="Maskot robot Yannz API">
+          <line x1="60" y1="28" x2="60" y2="8" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="60" cy="8" r="7" fill="var(--cyan)" stroke="#000" stroke-width="4"/>
+          <rect x="10" y="28" width="100" height="84" rx="22" fill="#fff6e8" stroke="#000" stroke-width="5"/>
+          <rect x="4" y="56" width="8" height="26" rx="4" fill="#fff6e8" stroke="#000" stroke-width="4"/>
+          <rect x="108" y="56" width="8" height="26" rx="4" fill="#fff6e8" stroke="#000" stroke-width="4"/>
+          <rect x="24" y="42" width="72" height="50" rx="12" fill="#000"/>
+          <circle cx="45" cy="64" r="8" fill="var(--cyan)"/><circle cx="75" cy="64" r="8" fill="var(--cyan)"/>
+          <path d="M48 80q12 7 24 0" fill="none" stroke="var(--cyan)" stroke-width="4" stroke-linecap="round"/>
+          <rect x="40" y="112" width="40" height="14" rx="5" fill="#fff6e8" stroke="#000" stroke-width="4"/>
+        </svg>
+        <p class="bubble">Halo! Mau request apa hari ini?</p>
+      </div>
+      <div class="k-panel term">
+        <p class="term-cap">Sementara itu, di terminal…</p>
+        <pre class="code" data-no-i18n><span class="p">$</span> curl <span id="curl-url">https://apiz2z.web.id/api/tools/ping</span> \
+  -H "Authorization: Bearer &lt;key&gt;"
+<span class="c">{ "status": true, "result": { "pong": true } }</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- [C] three perks -->
+  <section class="perks" aria-label="Keunggulan">
+    <article class="perk halftone"><span class="k-ico"><svg aria-hidden="true"><use href="#i-braces"/></svg></span><h2>Zap! JSON rapi</h2><p>Struktur respon konsisten di semua endpoint.</p></article>
+    <article class="perk halftone"><span class="k-ico"><svg aria-hidden="true"><use href="#i-key"/></svg></span><h2>Bam! Satu key</h2><p>Daftar sekali, pakai untuk semua fitur.</p></article>
+    <article class="perk halftone"><span class="k-ico"><svg aria-hidden="true"><use href="#i-code"/></svg></span><h2>Wham! Contoh kode</h2><p>Salin, tempel, langsung jalan.</p></article>
+  </section>
+
+  <!-- account summary -->
+  <section class="section" id="usage" aria-labelledby="usage-title">
+    <h2 class="title" id="usage-title">Markas kamu</h2>
+    <div class="metrics" aria-live="polite">
+      <article class="metric k-panel"><span class="k-ico sm"><svg aria-hidden="true"><use href="#i-crown"/></svg></span><span class="metric-top">Paket</span><div class="metric-value" id="plan-value">—</div><div class="metric-note" id="plan-note">Lagi memuat akun…</div></article>
+      <article class="metric k-panel"><span class="k-ico sm"><svg aria-hidden="true"><use href="#i-chart"/></svg></span><span class="metric-top">Request hari ini</span><div class="metric-value" id="request-value">—</div><div class="metric-note" id="request-note">Reset jam 00:00 UTC</div></article>
+      <article class="metric k-panel"><span class="k-ico sm"><svg aria-hidden="true"><use href="#i-key"/></svg></span><span class="metric-top">API keys</span><div class="metric-value" id="keys-value">—</div><div class="metric-note" id="keys-note"><a href="/keys">Kelola key</a></div></article>
+      <article class="metric k-panel"><span class="k-ico sm"><svg aria-hidden="true"><use href="#i-pulse"/></svg></span><span class="metric-top">Gateway</span><div class="metric-value" id="gateway-value">—</div><div class="metric-note" id="endpoint-value">Lagi ngecek…</div></article>
+    </div>
+  </section>
+
+  <!-- [D] endpoint catalog -->
+  <section class="section" id="katalog" aria-labelledby="katalog-title">
+    <h2 class="title big" id="katalog-title">Katalog endpoint</h2>
+    <div class="search"><label class="search-label" for="ep-search">Cari endpoint</label>
+      <div class="search-box"><svg class="k-svg" aria-hidden="true"><use href="#i-search"/></svg><input id="ep-search" type="search" autocomplete="off" placeholder="tiktok, gambar, cuaca…"></div></div>
+    <div class="filters" role="group" aria-label="Filter kategori" id="ep-filters">
+      <button type="button" class="chip" data-group="" aria-pressed="true">Semua</button>
+      <button type="button" class="chip" data-group="downloader" aria-pressed="false">Downloader</button>
+      <button type="button" class="chip" data-group="ai" aria-pressed="false">AI</button>
+      <button type="button" class="chip" data-group="gambar" aria-pressed="false">Gambar</button>
+      <button type="button" class="chip" data-group="pencarian" aria-pressed="false">Pencarian</button>
+      <button type="button" class="chip" data-group="tools" aria-pressed="false">Tools</button>
+    </div>
+    <p class="count" id="ep-count" aria-live="polite">Lagi memuat katalog…</p>
+    <div class="grid" id="ep-grid"></div>
+    <div class="more"><button type="button" class="k-btn krem" id="ep-more" hidden>Bersambung… muat lagi</button></div>
+  </section>
+
+  <!-- recently opened -->
+  <section class="section" aria-labelledby="recent-title">
+    <h2 class="title" id="recent-title">Endpoint terakhir dibuka</h2>
+    <p class="lead" id="endpoint-summary">Lagi memuat…</p>
+    <div class="recent" id="endpoint-list"><div class="empty">Lagi memuat…</div></div>
+  </section>
+
+  <!-- endpoint status monitor (views/endpoint-monitor.js) -->
+  <section class="section epm-section" id="status" aria-label="Status endpoint">
+    <div class="epm-head"><h2 class="title">Status endpoint</h2><span class="epm-summary">Memuat…</span></div>
+    <div class="epm k-panel" id="ep-monitor"><div class="epm-bar"><span class="epm-title" data-no-i18n>&gt;_ ~/endpoints</span><span class="epm-clock" data-no-i18n>--:--:--</span><button type="button" class="epm-refresh" title="Cek ulang semua endpoint sekarang"><span class="epm-ic" aria-hidden="true">↻</span> Refresh</button></div><div class="epm-wrap"><div class="epm-body" role="log" aria-live="off"></div><button type="button" class="epm-jump" hidden>↓ Terbaru</button></div></div>
+    <p class="epm-note">Semua endpoint dicek otomatis: kode <b class="epm-ok" data-no-i18n>200 OK</b> cyan artinya jalan, kode yang dicoret (misal <b class="epm-bad" data-no-i18n>503</b>) artinya lagi bermasalah. Kodenya diambil dari cek otomatis dan request asli 24 jam terakhir.</p>
+  </section>
 </main>
-<footer class="footer"><div class="shell"><div class="footer-row"><div><div class="footer-brand" id="footer-brand">Yannz API</div><p>Kumpulan API siap pakai buat project kamu. Gampang dicoba, gampang dipakai.</p></div><div class="footer-links"><a id="wa" href="#" target="_blank">WhatsApp</a><a id="tg" href="#" target="_blank">Telegram</a><a id="mail" href="#">Email</a></div></div><div class="copyright"><div>© 2026 <span id="creator">Yannz2z</span>. Hak cipta dilindungi.</div><div><a href="/api">Dokumentasi</a> · <a href="/api/playground">Playground</a></div></div></div></footer>
-<div class="boot" id="boot"><div class="boot-card"><div class="boot-scene"><div class="boot-ring"></div><div class="boot-ring two"></div><div class="boot-cube"><i></i><i></i><i></i></div></div><h3>Lagi buka workspace</h3><p id="boot-copy">Nyiapin tampilan</p><div class="bar"><i></i></div><div class="boot-status" id="boot-status">Lagi nyiapin dashboard...</div></div></div>
+
+<!-- [E] footer -->
+<footer class="footer k-panel"><div class="footer-brand"><span id="footer-brand" data-no-i18n>Yannz API</span> © 2026 — Tamat</div>
+  <nav class="footer-links" aria-label="Link bawah"><a class="k-btn krem" href="/api">Dokumentasi</a><a class="k-btn krem" href="#status">Status</a><a class="k-btn cyan" id="wa" href="#" target="_blank" rel="noopener">Kontak</a></nav></footer>
+</div>
 <script>
-const $=s=>document.querySelector(s);window.lucide?.createIcons();
+const $=s=>document.querySelector(s);
+const fmt=n=>Number(n).toLocaleString('id-ID');
+const tr=m=>(window.YannzI18n?window.YannzI18n.t(String(m)):m);
+function escapeHtml(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+$('#curl-url').textContent=location.origin+'/api/tools/ping';
 async function verifySession(){
   try{
     const r=await fetch('/auth/me',{credentials:'same-origin',cache:'no-store'});
     if(!r.ok){location.replace('/');return false;}
     const data=await r.json();
-    if(data?.user?.name){
-      const accountName=document.querySelector('#account-name');
-      if(accountName) accountName.textContent=data.user.name;
-      const ownerLink=document.querySelector('#owner-link');if(ownerLink&&data.user.isOwner)ownerLink.hidden=false;
-      const tier=document.querySelector('#tier-label');if(tier)tier.textContent=data.user.isOwner?'DEVELOPER':data.user.tier;
-    }
+    if(data?.user?.isOwner)$('#owner-link').hidden=false;
     return true;
-  }catch{
-    location.replace('/');
-    return false;
-  }
+  }catch{location.replace('/');return false;}
 }
 // Each request is independent and retried on a dropped connection, so one slow/failed request on a
 // weak mobile network does not mark the whole dashboard (and the gateway) as down.
 async function fetchRetry(url,opts={},tries=3){for(let i=0;i<tries;i++){try{const r=await fetch(url,opts);if(r.status<500||i===tries-1)return r;}catch(e){if(i===tries-1)return null;}await new Promise(ok=>setTimeout(ok,800*(i+1)));}return null;}
-const okRes=r=>(r&&r.ok?r:null);
-async function loadDashboard(){const fmt=n=>Number(n).toLocaleString('id-ID');try{const [statsRes,setRes,endRes,dashRes]=(await Promise.all([fetchRetry('/api/stats',{cache:'no-store'}),fetchRetry('/api/set'),fetchRetry('/api/endpoints'),fetchRetry('/api/dashboard',{credentials:'same-origin',cache:'no-store'})])).map(r=>r||{ok:false,status:0,json:async()=>({})});const settings=setRes.ok?await setRes.json().catch(()=>({})):{};$('#web-title').textContent=settings.webName||'Yannz API';$('#footer-brand').textContent=settings.webName||'Yannz API';$('#creator').textContent=settings.creatorName||'Yannz2z';$('#wa').href=settings.whatsappLink||'#';$('#tg').href=settings.telegramLink||'#';$('#mail').href=settings.emailAddress?`mailto:${settings.emailAddress}`:'#';document.title=settings.apiTitle||settings.webName||'Yannz API';
-if(dashRes.ok){const dash=await dashRes.json();const u=dash.usage,k=dash.apiKeys;$('#plan-value').textContent=dash.user.isOwner?'DEVELOPER':dash.user.tier;$('#plan-note').innerHTML=dash.user.isOwner?'Developer · tanpa batas':(dash.user.tierExpiresAt?'Aktif sampai '+new Date(dash.user.tierExpiresAt).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})+' · <a href="/billing?tier='+dash.user.tier+'">Perpanjang</a>':(dash.user.tier==='DEWA'?'Paket berbayar tertinggi':'<a href="/pricing">Upgrade paket</a>'));
-$('#request-value').textContent=u.limit==null?fmt(u.used):`${fmt(u.used)} / ${fmt(u.limit)}`;$('#request-note').textContent=u.limit==null?'Tanpa batas · reset jam 00:00 UTC':(u.remaining>0?`Sisa ${fmt(u.remaining)} · reset jam 00:00 UTC`:'Kuota habis · reset jam 00:00 UTC');if(u.limit!=null&&u.remaining===0)$('#request-value').style.color='var(--red)';
-$('#keys-value').textContent=k.limit==null?`${fmt(k.used)} / ∞`:`${fmt(k.used)} / ${fmt(k.limit)}`;$('#keys-note').innerHTML=k.limit===0?'FREE: belum bisa bikin custom key · pakai <a href="/api">API Docs</a> dengan login kamu':'<a href="/keys">Kelola key</a>';}
-else{$('#plan-value').textContent='—';$('#plan-note').textContent=dashRes.status?'Data akun lagi nggak tersedia':'Koneksi putus — muat ulang halaman';$('#request-value').textContent='—';$('#request-note').textContent='Data pemakaian lagi nggak tersedia';$('#keys-value').textContent='—';}
-const stats=statsRes.ok?await statsRes.json().catch(()=>null):null;const data=endRes.ok?await endRes.json().catch(()=>({})):{};
-// No answer at all = the visitor's connection, not the gateway; a 5xx answer = the gateway/database.
-const offline=!statsRes.status;$('#gateway-value').textContent=stats?'Online':offline?'Offline':'Terganggu';if(!stats)$('#gateway-value').style.color='var(--red)';$('#endpoint-value').textContent=stats?`${fmt(data.total||0)} endpoint siap dipakai`:offline?'Koneksi kamu putus — muat ulang halaman':`Server/database lagi bermasalah (${statsRes.status})`;
-loadRecent(data)}catch(e){$('#gateway-value').textContent='Terganggu';$('#gateway-value').style.color='var(--red)';$('#endpoint-value').textContent='Gagal memuat — muat ulang halaman';$('#endpoint-summary').textContent='Data gateway lagi nggak tersedia';if(/^(Lagi memuat|Loading)/.test($('#plan-note').textContent))$('#plan-note').textContent='Gagal memuat — muat ulang halaman';}}
+async function loadDashboard(){
+  try{
+    const [statsRes,setRes,endRes,dashRes]=(await Promise.all([fetchRetry('/api/stats',{cache:'no-store'}),fetchRetry('/api/set'),fetchRetry('/api/endpoints'),fetchRetry('/api/dashboard',{credentials:'same-origin',cache:'no-store'})])).map(r=>r||{ok:false,status:0,json:async()=>({})});
+    const settings=setRes.ok?await setRes.json().catch(()=>({})):{};
+    const name=settings.webName||'Yannz API';$('#web-title').textContent=name;$('#footer-brand').textContent=name;document.title=settings.apiTitle||name;
+    $('#wa').href=settings.whatsappLink||(settings.emailAddress?`mailto:${settings.emailAddress}`:'#');
+    if(dashRes.ok){
+      const dash=await dashRes.json();const u=dash.usage,k=dash.apiKeys;
+      $('#plan-value').textContent=dash.user.isOwner?'DEVELOPER':dash.user.tier;
+      $('#plan-note').innerHTML=dash.user.isOwner?'Developer · tanpa batas':(dash.user.tierExpiresAt?'Aktif sampai '+new Date(dash.user.tierExpiresAt).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})+' · <a href="/billing?tier='+dash.user.tier+'">Perpanjang</a>':(dash.user.tier==='DEWA'?'Paket berbayar tertinggi':'<a href="/pricing">Upgrade paket</a>'));
+      $('#request-value').textContent=u.limit==null?fmt(u.used):`${fmt(u.used)} / ${fmt(u.limit)}`;
+      $('#request-note').textContent=u.limit==null?'Tanpa batas · reset jam 00:00 UTC':(u.remaining>0?`Sisa ${fmt(u.remaining)} · reset jam 00:00 UTC`:'Kuota habis · reset jam 00:00 UTC');
+      $('#keys-value').textContent=k.limit==null?`${fmt(k.used)} / ∞`:`${fmt(k.used)} / ${fmt(k.limit)}`;
+      $('#keys-note').innerHTML=k.limit===0?'FREE: belum bisa bikin custom key · pakai <a href="/api">API Docs</a> dengan login kamu':'<a href="/keys">Kelola key</a>';
+    }else{$('#plan-value').textContent='—';$('#plan-note').textContent=dashRes.status?'Data akun lagi nggak tersedia':'Koneksi putus — muat ulang halaman';$('#request-value').textContent='—';$('#request-note').textContent='Data pemakaian lagi nggak tersedia';$('#keys-value').textContent='—';}
+    const stats=statsRes.ok?await statsRes.json().catch(()=>null):null;const data=endRes.ok?await endRes.json().catch(()=>({})):{};
+    // No answer at all = the visitor's connection, not the gateway; a 5xx answer = the gateway/database.
+    const offline=!statsRes.status;
+    $('#gateway-value').textContent=stats?'Online':offline?'Offline':'Terganggu';
+    $('#endpoint-value').textContent=stats?`${fmt(data.total||0)} endpoint siap dipakai`:offline?'Koneksi kamu putus — muat ulang halaman':`Server/database lagi bermasalah (${statsRes.status})`;
+    catalog(endRes.ok?data:null);
+    loadRecent(data);
+  }catch(e){$('#gateway-value').textContent='Terganggu';$('#endpoint-value').textContent='Gagal memuat — muat ulang halaman';$('#endpoint-summary').textContent='Data gateway lagi nggak tersedia';catalog(null);if(/^(Lagi memuat|Loading)/.test($('#plan-note').textContent))$('#plan-note').textContent='Gagal memuat — muat ulang halaman';}
+}
+
+// Endpoint catalog: the site's real endpoints (GET /api/endpoints), searched and filtered here.
+// The five filters gather the site's categories; everything else is under "Semua".
+const GROUPS={downloader:['downloader','download'],ai:['ai'],gambar:['image','canvas','maker','textpro','ephoto'],pencarian:['search','stalk'],tools:['tools','check']};
+const ICONS={downloader:'download',ai:'ai',gambar:'image',pencarian:'search',tools:'tools'};
+const groupOf=c=>Object.keys(GROUPS).find(g=>GROUPS[g].includes(String(c).toLowerCase()))||'';
+const ep={all:[],group:'',q:'',shown:0};
+const STEP=9;
+function catalog(data){
+  if(!data||!data.endpoints){$('#ep-count').textContent='Katalog lagi nggak bisa dimuat. Muat ulang halamannya ya.';$('#ep-grid').innerHTML='';return;}
+  ep.all=Object.entries(data.endpoints).flatMap(([category,items])=>items.map(x=>({...x,category,group:groupOf(category),hay:`${x.name} ${x.desc||''} ${x.cleanPath} ${category}`.toLowerCase()})));
+  draw(true);
+}
+function visible(){const words=ep.q.toLowerCase().split(/\s+/).filter(Boolean);return ep.all.filter(x=>(!ep.group||x.group===ep.group)&&words.every(w=>x.hay.includes(w)));}
+function draw(reset){
+  const list=visible();
+  if(reset)ep.shown=Math.min(STEP,list.length);
+  const grid=$('#ep-grid');
+  $('#ep-count').textContent=list.length?`${fmt(list.length)} endpoint ketemu`:'Nggak ada endpoint yang cocok. Coba kata lain atau filter Semua.';
+  grid.innerHTML=list.slice(0,ep.shown).map((x,i)=>{
+    const icon=ICONS[x.group]||'box',label=`#${String(i+1).padStart(2,'0')} ${x.category}`,method=(x.access&&x.access.method)||'GET';
+    return `<article class="card k-panel" data-no-i18n><div class="card-top halftone"><span class="k-ico sm"><svg aria-hidden="true"><use href="#i-${icon}"/></svg></span><span class="card-label">${escapeHtml(label)}</span></div>
+      <div class="card-body"><h3 class="card-name">${escapeHtml(x.name)}${epBadge(x.access&&x.access.badge||x.badge)}</h3><div class="route"><span class="method">${escapeHtml(method)}</span><span class="path" title="${escapeHtml(x.cleanPath)}">${escapeHtml(x.cleanPath)}</span></div>
+      <p class="card-desc">${escapeHtml(x.desc||'')}</p><a class="k-btn cyan" href="/api?endpoint=${encodeURIComponent(x.cleanPath)}">${escapeHtml(tr('Coba!'))}</a></div></article>`;
+  }).join('');
+  $('#ep-more').hidden=ep.shown>=list.length;
+}
+$('#ep-search').addEventListener('input',e=>{ep.q=e.target.value.trim();draw(true);});
+$('#ep-filters').addEventListener('click',e=>{const b=e.target.closest('[data-group]');if(!b)return;ep.group=b.dataset.group;document.querySelectorAll('#ep-filters [data-group]').forEach(c=>c.setAttribute('aria-pressed',String(c===b)));draw(true);});
+$('#ep-more').addEventListener('click',()=>{const before=ep.shown;ep.shown=Math.min(ep.shown+STEP*2,visible().length);draw(false);$('#ep-grid').children[before]?.querySelector('a')?.focus({preventScroll:true});});
+addEventListener('yannz:lang',()=>{if(ep.all.length)draw(false);});
+
 // Last opened endpoints: what this account called most recently (API Docs, Playground or its API keys).
-async function loadRecent(data){const list=$('#endpoint-list');const byPath=new Map(Object.entries(data.endpoints||{}).flatMap(([category,items])=>items.map(x=>[x.cleanPath,{...x,category}])));let recent=[];try{const r=await fetch('/api/me/recent-endpoints',{credentials:'same-origin'});if(r.ok)recent=(await r.json()).endpoints||[];}catch{}
-const items=recent.map(x=>({...x,category:byPath.get(x.path)?.category||'',name:byPath.get(x.path)?.name||x.name}));$('#endpoint-summary').textContent=items.length?`${items.length} endpoint terakhir yang kamu buka`:`Belum ada endpoint yang kamu buka`;
-list.innerHTML=items.length?items.map(x=>`<a class="endpoint" data-no-i18n href="/api?endpoint=${encodeURIComponent(x.path)}"><b>${escapeHtml(x.name||x.path)} ${epBadge(x.badge)}</b><small>${escapeHtml(x.category||'API')} · ${escapeHtml(x.path)} · ${escapeHtml(x.locked?'LOCKED':(x.minimumTier||'FREE'))}</small></a>`).join(''):'<div class="empty">Endpoint yang kamu buka nanti muncul di sini. Coba dulu di <a href="/api/playground">Playground</a> atau <a href="/api">API Docs</a>.</div>'}
-function epBadge(b){const m={new:['🍃','New'],hot:['🔥','Hot'],recommend:['👍','Recommend']}[b];return m?`<span class="ep-badge ep-badge--${b}"><span class="ep-badge-ic" aria-hidden="true">${m[0]}</span>${m[1]}</span>`:''}
-function escapeHtml(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-// Intro animation: once per browser session and short, so navigation back to the dashboard is instant.
-function boot(){let seen=false;try{seen=sessionStorage.getItem('yannz_boot_seen')==='1';sessionStorage.setItem('yannz_boot_seen','1')}catch{}if(seen||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const b=$('#boot');b.classList.add('show');const copy=$('#boot-copy'),status=$('#boot-status');[['Nyiapin tampilan','Masang workspace...'],['Sinkron gateway','Baca status layanan...'],['Bentar lagi','Workspace siap.']].forEach((x,i)=>setTimeout(()=>{copy.textContent=x[0];status.textContent=x[1]},i*280));setTimeout(()=>b.classList.remove('show'),900)}
-verifySession().then(ok=>{if(ok){loadDashboard();boot();}});
+async function loadRecent(data){
+  const list=$('#endpoint-list');const byPath=new Map(Object.entries(data.endpoints||{}).flatMap(([category,items])=>items.map(x=>[x.cleanPath,{...x,category}])));
+  let recent=[];try{const r=await fetch('/api/me/recent-endpoints',{credentials:'same-origin'});if(r.ok)recent=(await r.json()).endpoints||[];}catch{}
+  const items=recent.map(x=>({...x,category:byPath.get(x.path)?.category||'',name:byPath.get(x.path)?.name||x.name}));
+  $('#endpoint-summary').textContent=items.length?`${items.length} endpoint terakhir yang kamu buka`:`Belum ada endpoint yang kamu buka`;
+  list.innerHTML=items.length?items.map(x=>`<a class="recent-item" data-no-i18n href="/api?endpoint=${encodeURIComponent(x.path)}"><b>${escapeHtml(x.name||x.path)} ${epBadge(x.badge)}</b><small>${escapeHtml(x.category||'API')} · ${escapeHtml(x.path)} · ${escapeHtml(x.locked?'LOCKED':(x.minimumTier||'FREE'))}</small></a>`).join(''):'<div class="empty">Endpoint yang kamu buka nanti muncul di sini. Coba dulu di <a href="#katalog">Katalog endpoint</a> atau <a href="/api">API Docs</a>.</div>';
+}
+function epBadge(b){const m={new:'New',hot:'Hot',recommend:'Recommend'}[b];return m?`<span class="ep-badge">${m}</span>`:''}
+// The menu closes after picking a link on the same page, and with Escape.
+document.querySelectorAll('.account-pop a[href^="#"]').forEach(a=>a.addEventListener('click',()=>$('.account-menu').open=false));
+addEventListener('keydown',e=>{if(e.key==='Escape')$('.account-menu').open=false;});
+verifySession().then(ok=>{if(ok)loadDashboard();});
 document.querySelector('#logout')?.addEventListener('click',async()=>{try{await fetch('/auth/logout',{method:'POST',credentials:'same-origin'})}finally{location.href='/';}});
 </script>
 <script src="/assets/endpoint-monitor.js" defer></script>

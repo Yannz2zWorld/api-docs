@@ -27,7 +27,6 @@
   "Reset": "Reset",
   "Warna efek dipakai juga buat semua skill.": "The effect colour is used for every skill too.",
   "3. Warna scythe": "3. Scythe colours",
-  "Atur warna pegangan, kepala, dan efek scythe. Warna efek dipakai juga buat semua skill di game 3D. Bisa juga dengan klik scythe-nya langsung di Home atau di game 3D.": "Set the colours of the scythe's handle, head and effects. The effect colour is used for every skill in the 3D game too. You can also just tap the scythe on Home or in the 3D game.",
   "Geser buat muter · klik buat ganti warna": "Drag to turn · tap to change colours",
   "Balik ke warna asli scythe": "Back to the original scythe colours",
   "Warna scythe disimpan.": "Scythe colours saved.",
@@ -1175,7 +1174,39 @@
   "Path harus kayak /api/kategori/nama (huruf kecil, angka, tanda -; kategori maks 40, nama maks 60 huruf).": "The path must look like /api/category/name (lowercase letters, digits, -; category up to 40, name up to 60 characters).",
   "Kode hasilnya kosong.": "The resulting code is empty.",
   "Yakin? Klik lagi buat deploy": "Sure? Click again to deploy",
-  "Lagi ngetes ulang terus commit ke GitHub…": "Testing again, then committing to GitHub…"
+  "Lagi ngetes ulang terus commit ke GitHub…": "Testing again, then committing to GitHub…",
+  "Ambil API key": "Get an API key",
+  "Episode #1 — Bot-mu butuh tenaga super": "Episode #1 — Your bot needs superpowers",
+  "Satu API, banyak jurus!": "One API, many moves!",
+  "Downloader, AI, olah gambar, pencarian dan tools — semua dalam respon JSON yang rapi.": "Downloaders, AI, image tools, search and utilities — all in tidy JSON responses.",
+  "Lihat endpoint": "See endpoints",
+  "Halo! Mau request apa hari ini?": "Hi! What do you want to request today?",
+  "Sementara itu, di terminal…": "Meanwhile, in the terminal…",
+  "Zap! JSON rapi": "Zap! Tidy JSON",
+  "Struktur respon konsisten di semua endpoint.": "The same response structure on every endpoint.",
+  "Bam! Satu key": "Bam! One key",
+  "Daftar sekali, pakai untuk semua fitur.": "Sign up once, use it for every feature.",
+  "Wham! Contoh kode": "Wham! Code samples",
+  "Salin, tempel, langsung jalan.": "Copy, paste, it just runs.",
+  "Markas kamu": "Your HQ",
+  "tiktok, gambar, cuaca…": "tiktok, image, weather…",
+  "Gambar": "Images",
+  "Pencarian": "Search",
+  "Lagi memuat katalog…": "Loading the catalog…",
+  "Bersambung… muat lagi": "To be continued… load more",
+  "Coba!": "Try it!",
+  "Katalog lagi nggak bisa dimuat. Muat ulang halamannya ya.": "The catalog can't be loaded right now. Please reload the page.",
+  "Nggak ada endpoint yang cocok. Coba kata lain atau filter Semua.": "No matching endpoints. Try another word or the All filter.",
+  "Semua endpoint dicek otomatis: kode": "Every endpoint is checked automatically: a",
+  "cyan artinya jalan, kode yang dicoret (misal": "code in cyan means it works, a struck-out code (for example",
+  ") artinya lagi bermasalah. Kodenya diambil dari cek otomatis dan request asli 24 jam terakhir.": ") means it has a problem. The codes come from automatic checks and real requests in the last 24 hours.",
+  "© 2026 — Tamat": "© 2026 — The End",
+  "Maskot robot Yannz API": "Yannz API robot mascot",
+  "Menu utama": "Main menu",
+  "Link bawah": "Footer links",
+  "Filter kategori": "Category filter",
+  "Keunggulan": "Highlights",
+  "Atur warna pegangan, kepala, dan efek scythe. Warna efek dipakai juga buat semua skill di game 3D. Bisa juga dengan klik scythe-nya langsung di halaman depan atau di game 3D.": "Set the colours of the scythe's handle, head and effects. The effect colour is used for every skill in the 3D game too. You can also just tap the scythe on the front page or in the 3D game."
  },
  "patterns": [
   [
@@ -1957,6 +1988,10 @@
   [
    "^Commit script ke plugin/ dan deploy (\\S+) \\(tier (\\S+)\\)\\.$",
    "Commit the script to plugin/ and deploy $1 (tier $2)."
+  ],
+  [
+   "^([\\d.,]+) endpoint ketemu$",
+   "$1 endpoints found"
   ]
  ]
 }

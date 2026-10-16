@@ -11,8 +11,17 @@
   const KEY = 'yannz-ui';
 
   // Each look: base colours, border width, corner radius, shadow offset, dot pattern, default accent.
+  // Optional: font (text), head (headings and buttons, in capitals), mono (code and paths), weight
+  // (text weight), dots ([dot, fade, gap] in px), pill (round buttons and fields), fonts (Google
+  // Fonts families the look needs; loaded when it is used).
   const STYLES = {
-    default: { name: 'Default', desc: 'Gelap, garis tegas, aksen merah. Tampilan bawaan.', dark: true,
+    // The comic look (Yannz API brief): dark comic panels, black outlines, hard shadows, cyan only.
+    default: { name: 'Default', desc: 'Komik gelap, garis hitam tebal, bayangan kotak, aksen cyan. Tampilan bawaan.', dark: true,
+      bg: '#120e12', dot: 'rgba(61,214,255,.14)', surface: '#241b22', surface2: '#1b141a', surface3: '#2e232b', ink: '#fff6e8', muted: '#e2d6cf', faint: '#b8aaa2',
+      edge: '#000000', edgeSoft: '#000000', drop: '#000000', border: 4, radius: 20, shadow: [8, 8], accent: '#3dd6ff',
+      font: "'Comic Neue', 'Comic Sans MS', cursive", weight: 700, head: "Bangers, 'Comic Neue', cursive", mono: "'JetBrains Mono', ui-monospace, monospace",
+      dots: [1.6, 1.9, 12], pill: true, fonts: 'family=Bangers&family=Comic+Neue:wght@400;700&family=JetBrains+Mono:wght@500;700' },
+    classic: { name: 'Classic', desc: 'Gelap, garis tegas, aksen merah. Tampilan lama.', dark: true,
       bg: '#0b0b0c', dot: '#1f1f23', surface: '#141416', surface2: '#1b1b1e', surface3: '#232327', ink: '#f4f4f5', muted: '#a1a1aa', faint: '#71717a',
       edge: '#d4d4d8', edgeSoft: '#3f3f46', drop: '#3f3f46', border: 2, radius: 12, shadow: [6, 6], accent: '#c8202f' },
     cream: { name: 'Brutal Cream', desc: 'Krem bertitik, garis hitam tebal, bayangan kotak, aksen kuning.', dark: false,
@@ -114,7 +123,7 @@
   let uid = null;   // the signed-in account, once known
   const same = (a, b) => a.style === b.style && (a.accent || '') === (b.accent || '') && Boolean(a.rgb) === Boolean(b.rgb);
   const sameScythe = (a, b) => JSON.stringify(a.scythe || null) === JSON.stringify(b.scythe || null);
-  const custom = p => p.style !== 'default' || p.accent || p.rgb || p.scythe;
+  const custom = p => p.style !== 'default' || p.accent || p.rgb || p.scythe;   // chosen by the visitor (not just the default)
   const scytheChanged = p => window.dispatchEvent(new CustomEvent('yannz:scythe', { detail: p.scythe || { handle: '#f2ebe0', head: '#b8b4bc', fx: '#ff1a2c' } }));
 
   // The account's choice wins. An account without one takes this browser's choice, but only one
@@ -155,15 +164,20 @@
     // Flat, hard-edged shadows only: no glow, no blur.
     const shadow = `${s.shadow[0]}px ${s.shadow[1]}px 0 var(--drop)`;
     const R = 'html[data-ui]';
+    const [dot, fade, gap] = s.dots || [1.2, 1.2, 22];
+    const small = Math.min(s.radius, 14);
     return `${R}{--bg:${s.bg};--dot:${s.dot};--surface:${s.surface};--surface-2:${s.surface2};--surface-3:${s.surface3};--ink:${s.ink};--muted:${s.muted};--faint:${s.faint};
 --edge:${edge};--edge-soft:${s.edgeSoft};--drop:${drop};--radius:${s.radius}px;--line:${s.border}px solid var(--edge);--shadow:${shadow};
 --red:var(--accent);--red-deep:color-mix(in srgb,var(--accent) 78%,#000);--paper:var(--surface);--cream:var(--bg);--login-bg:var(--surface);--yellow:var(--accent);--blood:var(--accent);--blood-deep:var(--red-deep);--blue:var(--muted);--green:var(--edge);
 --ui-bad:var(--bad);--ui-deep:var(--red-deep);--ok:${s.dark ? '#86efac' : '#15803d'};--bad:${s.dark ? 'color-mix(in srgb,var(--accent) 62%,#fff)' : 'color-mix(in srgb,var(--accent) 80%,#000)'};--warn:${s.dark ? '#e4e4e7' : '#3f3f46'};color-scheme:${s.dark ? 'dark' : 'light'}}
-${R} body{background-color:var(--bg);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.2px);background-size:22px 22px;color:var(--ink)${s.font ? `;font-family:${s.font}` : ''}}
-${s.font ? `${R} h1,${R} h2,${R} h3,${R} .brand,${R} .hero h1,${R} .section-head h2,${R} .metric-value{font-family:${s.font}}` : ''}
+${R} body{background-color:var(--bg);background-image:radial-gradient(var(--dot) ${dot}px,transparent ${fade}px);background-size:${gap}px ${gap}px;color:var(--ink)${s.font ? `;font-family:${s.font}` : ''}${s.weight ? `;font-weight:${s.weight}` : ''}}
+${s.font && !s.head ? `${R} h1,${R} h2,${R} h3,${R} .brand,${R} .hero h1,${R} .section-head h2,${R} .metric-value{font-family:${s.font}}` : ''}
+${s.head ? `${R} h1,${R} h2,${R} h3,${R} .brand,${R} .hero h1,${R} .section-head h2,${R} .metric-value,${R} button:not([class^=ys-]),${R} .btn{font-family:${s.head};font-weight:400;text-transform:uppercase;letter-spacing:1px}` : ''}
+${s.mono ? `${R} code,${R} pre,${R} kbd,${R} samp,${R} .mono,${R} .path{font-family:${s.mono};font-weight:700}` : ''}
 ${R} .topbar{background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom-color:var(--edge-soft)}
 ${R} a:hover,${R} button:hover,${R} .btn:hover{color:var(--ink)}
-${R} button,${R} .btn,${R} input,${R} select,${R} textarea{border-radius:${Math.min(s.radius, 14)}px}
+${R} button,${R} .btn,${R} input,${R} select,${R} textarea{border-radius:${small}px}
+${s.pill ? `${R} button,${R} .btn,${R} input:not([type=checkbox]):not([type=radio]):not([type=range]),${R} select{border-radius:999px}` : ''}
 ${R} button,${R} .btn{border-width:${s.border}px}
 ${R} .panel,${R} .card,${R} dialog,${R} .metric,${R} .feature,${R} .endpoints{border-width:${s.border}px;border-radius:var(--radius)}
 ${R} input:hover,${R} select:hover,${R} textarea:hover{border-color:var(--edge)}
@@ -203,20 +217,19 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
     const s = STYLES[pref.style] || STYLES.default;
     const html = document.documentElement;
     clearTimeout(rgbTimer); rgbTimer = null; rgbOn = false;
-    const custom = pref.style !== 'default' || pref.accent || pref.rgb;
-    // Pages with their own design (the /3d game) keep their layout but take the chosen colour, so
-    // none of the original red is left once the UI is customised.
+    // Pages with their own design (the /3d game) keep their layout but take the look's colour, so
+    // none of the original red is left (the default look is cyan).
     if (html.hasAttribute('data-no-theme')) {
       const st = html.style, a = pref.accent || s.accent;
-      if (custom) { setAccent(a); st.setProperty('--red', a); st.setProperty('--red-deep', 'color-mix(in srgb,' + a + ' 78%,#000)'); st.setProperty('--red-ink', inkOn(a)); st.setProperty('--bad', 'color-mix(in srgb,' + a + ' 62%,#fff)'); st.setProperty('--ui-bad', 'var(--bad)'); }
+      if (a) { setAccent(a); st.setProperty('--red', a); st.setProperty('--red-deep', 'color-mix(in srgb,' + a + ' 78%,#000)'); st.setProperty('--red-ink', inkOn(a)); st.setProperty('--bad', 'color-mix(in srgb,' + a + ' 62%,#fff)'); st.setProperty('--ui-bad', 'var(--bad)'); }
       else ['--accent', '--accent-ink', '--red', '--red-deep', '--red-ink', '--bad', '--ui-bad'].forEach(k => st.removeProperty(k));
       return changed();
     }
     let tag = document.getElementById('yannz-ui-style');
-    if (!custom) {
-      html.removeAttribute('data-ui'); tag?.remove();
-      html.style.removeProperty('--accent'); html.style.removeProperty('--accent-ink');
-      return changed();
+    if (s.fonts && !document.getElementById('yannz-ui-fonts')) {
+      const link = document.createElement('link');
+      link.id = 'yannz-ui-fonts'; link.rel = 'stylesheet'; link.href = `https://fonts.googleapis.com/css2?${s.fonts}&display=swap`;
+      (document.head || html).append(link);
     }
     if (!tag) { tag = document.createElement('style'); tag.id = 'yannz-ui-style'; (document.head || html).append(tag); }
     tag.textContent = css(s);
@@ -228,10 +241,10 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
     }
     changed();
   }
-  // The colour the whole site uses now: the chosen one, the look's own, or null for the original.
+  // The colour the whole site uses now: the chosen one or the look's own.
   function accentOf(pref = load()) {
     const s = STYLES[pref.style] || STYLES.default;
-    return pref.style !== 'default' || pref.accent || pref.rgb ? pref.accent || s.accent : null;
+    return pref.accent || s.accent;
   }
   // Tell the rest of the page (scythe colours follow the UI colour while they are not customised).
   function changed() { try { window.dispatchEvent(new CustomEvent('yannz:ui')); } catch { /* old browsers */ } }
