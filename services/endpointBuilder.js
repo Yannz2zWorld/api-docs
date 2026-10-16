@@ -339,7 +339,7 @@ async function convert(code, { useAI = 'auto' } = {}) {
       desc: /\bdesc(?:ription)?\s*:\s*['"`]([^'"`]{1,500})/.exec(code)?.[1] || '',
       category: /\bcategory\s*:\s*['"`]([^'"`]{1,40})/.exec(code)?.[1] || 'Tools',
       path: (/\bpath\s*:\s*['"`](\/api\/[a-z0-9-]+\/[a-z0-9-]+)/.exec(code)?.[1]) || '',
-      params: [], sample: {}
+      ...queryParams(code)
     };
     if (!meta.path) meta.path = `/api/${slug(meta.category) || 'tools'}/${slug(meta.name) || 'endpoint'}`;
     out = { source: 'plugin', meta, script, notes: ['Kode ini udah berbentuk plugin, dipakai apa adanya.'] };
@@ -396,6 +396,21 @@ function fakeReqRes(query, wantPath) {
 }
 
 const isEmpty = v => v == null || (Array.isArray(v) && !v.length) || (typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length) || v === '';
+
+// Inputs a ready plugin reads: req.query.x, req.query['x'] and const { x, y } = req.query. A name the
+// code answers PARAM_REQUIRED for (or checks with !x) is required; the test form gets one box each.
+function queryParams(code) {
+  const names = new Set();
+  for (const m of code.matchAll(/req\.query\.([A-Za-z_]\w{0,30})|req\.query\[\s*['"`]([A-Za-z_][\w-]{0,30})['"`]\s*\]/g)) names.add(m[1] || m[2]);
+  for (const m of code.matchAll(/\{([^{}]{1,300})\}\s*=\s*req\.query\b/g)) {
+    for (const part of m[1].split(',')) { const n = /^\s*([A-Za-z_]\w{0,30})/.exec(part)?.[1]; if (n) names.add(n); }
+  }
+  const params = [...names].slice(0, 8).map(name => {
+    const required = new RegExp(`['"\`]${name}['"\`][^\n]{0,40}wajib|!\\s*${name}\\b|!\\s*req\\.query\\.${name}\\b`).test(code);
+    return { name, required, placeholder: DEFAULT_SAMPLES[name] || `Masukkan ${name}` };
+  });
+  return { params, sample: Object.fromEntries(params.map(p => [p.name, DEFAULT_SAMPLES[p.name] || ''])) };
+}
 
 async function tryScript(script, { path: wantPath, sample = {} }) {
   let run;
