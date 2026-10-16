@@ -5,7 +5,9 @@
 // on the server would not survive the request.)
 //
 // Config (Vercel env): GITHUB_TOKEN — fine-grained token with "Contents: read and write" on this
-// repository only; GITHUB_REPO (owner/name, default below); GITHUB_BRANCH (default main).
+// repository only; GITHUB_REPO (owner/name, default below); GITHUB_BRANCH (default main);
+// VERCEL_DEPLOY_HOOK (optional) — the project's Deploy Hook URL. A commit made through the API does not
+// always start a Vercel build by itself, so after each commit the hook is called to build the branch.
 // The token is sent only to api.github.com and is never logged or returned.
 const vm = require('vm');
 
@@ -100,6 +102,25 @@ async function gh(method, url, body) {
   }
 }
 
+// Starts a Vercel build of the branch through the project's Deploy Hook (only https://api.vercel.com
+// URLs). Never throws: the commit is already done, so a failed call only changes the message shown.
+async function triggerDeploy() {
+  const hook = process.env.VERCEL_DEPLOY_HOOK || '';
+  let url;
+  try { url = new URL(hook); } catch { return { via: 'git', ok: null }; }
+  if (url.protocol !== 'https:' || url.hostname !== 'api.vercel.com') return { via: 'git', ok: null };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  try {
+    const r = await fetch(url, { method: 'POST', signal: controller.signal });
+    return { via: 'hook', ok: r.ok, status: r.status };
+  } catch {
+    return { via: 'hook', ok: false };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function githubFailure(status) {
   if (status === 401 || status === 403) return new PluginError(502, 'GITHUB_AUTH', 'GITHUB_TOKEN ditolak GitHub. Cek token-nya masih berlaku dan punya izin Contents: read and write di repo ini.');
   if (status === 404) return new PluginError(502, 'GITHUB_REPO_NOT_FOUND', 'Repo/branch GitHub nggak ketemu. Cek GITHUB_REPO dan GITHUB_BRANCH.');
@@ -120,7 +141,7 @@ async function commitPlugin({ file, content, message }) {
   const r = await gh('PUT', contentsUrl(repo, file), { message, content: Buffer.from(content, 'utf8').toString('base64'), branch });
   if (r.status !== 201 && r.status !== 200) throw githubFailure(r.status);
   const commit = (r.json && r.json.commit) || {};
-  return { sha: commit.sha || null, url: commit.html_url || null, file };
+  return { sha: commit.sha || null, url: commit.html_url || null, file, deploy: await triggerDeploy() };
 }
 
 // A plugin file made by the owner panel keeps the uploaded script between two markers.
@@ -152,7 +173,7 @@ async function updateFile({ file, content, sha, message }) {
   if (r.status === 409) throw new PluginError(409, 'PLUGIN_CHANGED', 'File plugin-nya baru diubah dari tempat lain. Buka lagi editornya terus ulangi.');
   if (r.status !== 200 && r.status !== 201) throw githubFailure(r.status);
   const commit = (r.json && r.json.commit) || {};
-  return { sha: commit.sha || null, url: commit.html_url || null, file };
+  return { sha: commit.sha || null, url: commit.html_url || null, file, deploy: await triggerDeploy() };
 }
 
 async function deleteFile({ file, sha, message }) {
@@ -162,7 +183,7 @@ async function deleteFile({ file, sha, message }) {
   if (r.status === 409) throw new PluginError(409, 'PLUGIN_CHANGED', 'File plugin-nya baru diubah dari tempat lain. Coba lagi.');
   if (r.status !== 200) throw githubFailure(r.status);
   const commit = (r.json && r.json.commit) || {};
-  return { sha: commit.sha || null, url: commit.html_url || null, file };
+  return { sha: commit.sha || null, url: commit.html_url || null, file, deploy: await triggerDeploy() };
 }
 
-module.exports = { PluginError, isConfigured, parsePath, validateCode, buildPluginFile, commitPlugin, splitPluginFile, getFile, updateFile, deleteFile, MAX_CODE_BYTES };
+module.exports = { PluginError, isConfigured, triggerDeploy, parsePath, validateCode, buildPluginFile, commitPlugin, splitPluginFile, getFile, updateFile, deleteFile, MAX_CODE_BYTES };

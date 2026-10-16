@@ -196,11 +196,11 @@
           <div class="full"><span class="ep-cap">Input buat tes</span><div id="ep-sample" class="ep-sample"></div></div>
           <label class="full"><span><b>6</b> Kode hasil (boleh diedit, habis edit tes ulang)</span><textarea name="code" id="ep-code" spellcheck="false"></textarea></label>
         </div>
-        <div class="actions"><button type="button" id="ep-retest">Tes ulang</button><button class="primary" type="submit" id="ep-submit" disabled>Tambah &amp; deploy</button>
+        <div class="actions"><button type="button" id="ep-retest">Tes ulang</button><button class="primary" type="submit" id="ep-submit" disabled>Tambah &amp; deploy</button> <small class="muted" id="ep-submit-why" aria-live="polite"></small>
           <p class="muted">Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Tombol deploy baru bisa diklik kalau tesnya jalan.</p></div>
       </div>
     </form>
-    <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Test/Check All API</button><small class="muted" id="selftest-note">Ngecek semua endpoint ke server sumbernya masing-masing. Pakai kuota tiap server.</small></div>
+    <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Test/Check All API</button><button type="button" class="sm" id="deploy-btn">Deploy ulang</button><small class="muted" id="selftest-note">Ngecek semua endpoint ke server sumbernya masing-masing. Pakai kuota tiap server.</small></div>
     <div id="selftest-data"></div>
     <div class="ep-find">
       <input type="search" id="ep-search" placeholder="Cari endpoint: nama, path, kategori, file…" aria-label="Cari endpoint" autocomplete="off">
@@ -386,7 +386,12 @@ async function api(url, opts = {}) {
   const r = await fetch(url, { credentials: 'same-origin', ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
   if (r.status === 401) { location.replace('/'); throw Error('Sesi kamu udah habis.'); }
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw Error(`${d.message || 'Request-nya gagal.'} (${d.error || r.status})${d.reply ? ` ${tr('Jawaban AI:')} "${String(d.reply).slice(0, 160)}"` : ''}`);
+  if (!r.ok) {
+    const why = d.message || (r.status === 504 ? 'Server kelamaan (timeout Vercel). Coba lagi atau pakai input yang lebih ringan.' : r.status >= 500 ? 'Server lagi error.' : 'Request-nya gagal.');
+    const err = Error(`${why} (${d.error || r.status})${d.reply ? ` ${tr('Jawaban AI:')} "${String(d.reply).slice(0, 160)}"` : ''}`);
+    Object.assign(err, { status: r.status, code: d.error || (r.status === 504 ? 'TIMEOUT' : undefined), test: d.test });
+    throw err;
+  }
   return d;
 }
 const send = (url, method = 'POST', body) => api(url, { method, body: body === undefined ? undefined : JSON.stringify(body) });
@@ -944,11 +949,33 @@ $('#ep-try-form').addEventListener('submit', async e => {
 $('#ep-try-dialog').addEventListener('close', tryReset);
 // ---------- add endpoint: paste any code → "Sempurnakan & tes" → preview → "Tambah & deploy"
 const ep = { tested: false, params: [] };
+// The test result box never stays silent: "running" while waiting, then OK or the reason it failed
+// with a hint on what to do, the HTTP code and the time of the test.
+const TEST_HINTS = {
+  UPSTREAM_NOT_CONFIGURED: 'Key/env server sumbernya belum diisi di Vercel. Isi env-nya, redeploy, terus tes ulang.',
+  PARAM_REQUIRED: 'Ada parameter wajib yang kosong. Isi kolom "Input buat tes" dulu.',
+  TIMEOUT: 'Server sumber nggak jawab. Coba lagi nanti atau ganti server sumber.',
+  UPSTREAM_TIMEOUT: 'Server sumber kelamaan jawab. Coba lagi nanti.',
+  UPSTREAM_ERROR: 'Server sumber lagi error atau nolak request-nya. Cek URL/key server sumber.',
+  NO_RESPONSE: 'Kodenya nggak ngirim jawaban. Pastikan ada res.json(...) atau res.send(...).',
+  SCRIPT_ERROR: 'Kodenya error. Cek pesan di atas, betulin kodenya, terus tes ulang.',
+  EMPTY_RESULT: 'Jawabannya kosong. Coba input tes lain.',
+  NETWORK: 'Panel nggak bisa nyambung ke server. Cek koneksi internet, terus tes ulang.'
+};
+const testHint = t => TEST_HINTS[t.error] || (t.status >= 500 ? TEST_HINTS.UPSTREAM_ERROR : t.status >= 400 ? 'Request-nya ditolak. Cek input tes dan kodenya.' : '');
 const testBox = (el, t) => {
   el.hidden = false;
+  if (t.running) { el.className = 'ep-test'; el.innerHTML = '<b>⏳ Lagi ngetes…</b> <span class="muted">Nunggu jawaban server (maks 30 detik).</span>'; return; }
+  const hint = t.ok ? '' : testHint(t);
+  const meta = [t.status ? `HTTP ${t.status}` : '', t.error && !t.ok ? t.error : '', t.ms ? `${t.ms} ms` : '', new Date().toLocaleTimeString('id-ID')].filter(Boolean).join(' · ');
   el.className = 'ep-test ' + (t.ok ? 'ok' : 'bad');
-  el.innerHTML = `<b>${t.ok ? '✓ Jalan' : '✕ Belum jalan'}</b> <span data-no-i18n>${esc(t.message || '')}</span>${t.ms ? ` <small class="muted">${t.ms} ms</small>` : ''}${t.preview ? `<pre data-no-i18n>${esc(t.preview)}</pre>` : ''}`;
+  el.innerHTML = `<b>${t.ok ? '✓ Jalan' : '✕ Gagal'}</b> <span data-no-i18n>${esc(t.message || (t.ok ? '' : 'Nggak ada keterangan dari server.'))}</span>`
+    + (hint ? `<p class="muted" style="margin:6px 0 0">💡 ${esc(hint)}</p>` : '')
+    + `<br><small class="muted" data-no-i18n>${esc(meta)}</small>`
+    + (t.preview ? `<pre data-no-i18n>${esc(t.preview)}</pre>` : '');
 };
+// Network/HTTP failures of the panel call itself become a readable failed test.
+const failedTest = err => ({ ok: false, error: err.code || (err.status ? `HTTP_${err.status}` : 'NETWORK'), status: err.status, message: err.message || 'Gagal ngetes.' , ...(err.test || {}) });
 const sampleInputs = (el, params, sample) => {
   el.innerHTML = params.length ? params.map(p => `<label>${esc(p.name)}${p.required ? ' *' : ''}<input data-sample="${esc(p.name)}" value="${esc(sample[p.name] ?? '')}" placeholder="${esc(p.placeholder || '')}"></label>`).join('')
     : `<label>${tr('Query tambahan')}<input data-sample-raw placeholder="q=anime&amp;page=1" value="${esc(new URLSearchParams(sample).toString())}"></label>`;
@@ -958,7 +985,10 @@ const readSample = el => {
   if (raw) return Object.fromEntries(new URLSearchParams(raw.value.trim()));
   return Object.fromEntries([...el.querySelectorAll('[data-sample]')].map(i => [i.dataset.sample, i.value.trim()]));
 };
-const setTested = ok => { ep.tested = ok; $('#ep-submit').disabled = !ok; };
+const setTested = ok => {
+  ep.tested = ok; $('#ep-submit').disabled = !ok;
+  $('#ep-submit-why').textContent = ok ? '' : 'Tombol deploy aktif setelah tesnya berhasil (✓ Jalan).';
+};
 
 loaders.ai = async () => {
   try {
@@ -1000,14 +1030,15 @@ $('#ep-convert').addEventListener('click', async () => {
     setTested(d.test.ok);
     $('#ep-preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
     $('#ep-convert-msg').textContent = '';
-  } catch (err) { $('#ep-convert-msg').textContent = '✕ ' + err.message; }
+  } catch (err) { $('#ep-convert-msg').textContent = '✕ ' + err.message; $('#ep-preview').hidden || testBox($('#ep-test'), failedTest(err)); }
   btn.disabled = false; btn.textContent = 'Sempurnakan & tes';
 });
 const retest = async () => {
   const f = $('#ep-form');
   const btn = $('#ep-retest'); btn.disabled = true; btn.textContent = 'Lagi ngetes…';
-  try { const d = await send('/owner/api/endpoints/try', 'POST', { code: f.code.value, path: f.path.value, sample: readSample($('#ep-sample')) }); testBox($('#ep-test'), d.test); setTested(d.test.ok); }
-  catch (err) { testBox($('#ep-test'), { ok: false, message: err.message }); setTested(false); }
+  testBox($('#ep-test'), { running: true });
+  try { const d = await send('/owner/api/endpoints/try', 'POST', { code: f.code.value, path: f.path.value, sample: readSample($('#ep-sample')) }); testBox($('#ep-test'), d.test || { ok: false, message: 'Server nggak ngirim hasil tes.' }); setTested(Boolean(d.test?.ok)); }
+  catch (err) { testBox($('#ep-test'), failedTest(err)); setTested(false); }
   btn.disabled = false; btn.textContent = 'Tes ulang';
 };
 $('#ep-retest').addEventListener('click', retest);
@@ -1023,11 +1054,41 @@ $('#ep-form').addEventListener('submit', async e => {
   try {
     const d = await send('/owner/api/endpoints', 'POST', body);
     say(d.message || 'Endpoint udah disimpan.');
+    watchLive(body.path);
     f.reset(); $('#ep-source').value = ''; $('#ep-preview').hidden = true; setTested(false);
     $('#ep-file-info').textContent = 'Maks 200 KB.';
-  } catch (err) { say(err.message); btn.disabled = false; }
+  } catch (err) { say(err.message); testBox($('#ep-test'), failedTest(err)); btn.disabled = false; }
   btn.textContent = 'Tambah & deploy';
   loaders.endpoints();
+});
+
+// After a commit the new code is live only once Vercel has deployed it: the panel asks every 15 s
+// (for up to 5 minutes) whether the server now has a handler for the path, and says so.
+function watchLive(path) {
+  const note = $('#ep-convert-msg');
+  const started = Date.now();
+  note.textContent = `⏳ ${path} lagi nunggu deploy Vercel…`;
+  const tick = async () => {
+    try {
+      const d = await api('/owner/api/endpoints');
+      if (d.endpoints.some(e => e.path === path && e.handler_loaded && !e.deleted)) {
+        note.textContent = `✓ ${path} udah live dan bisa dipakai.`;
+        say(`${path} udah live ✓`);
+        if (!$('#tab-endpoints').hidden) loaders.endpoints();
+        return;
+      }
+    } catch { /* try again next round */ }
+    if (Date.now() - started > 5 * 60 * 1000) { note.textContent = `✕ ${path} belum live setelah 5 menit. Klik "Deploy ulang" atau cek tab Deployments di Vercel.`; return; }
+    setTimeout(tick, 15000);
+  };
+  setTimeout(tick, 20000);
+}
+$('#deploy-btn').addEventListener('click', async () => {
+  if (!ask('Mulai deploy ulang website di Vercel sekarang?')) return;
+  const btn = $('#deploy-btn'); btn.disabled = true;
+  try { const d = await send('/owner/api/deploy', 'POST', {}); say(d.message); }
+  catch (err) { say(err.message); }
+  btn.disabled = false;
 });
 
 // ---------- edit an endpoint's code
@@ -1041,8 +1102,9 @@ async function openCode(id, path) {
   catch (err) { $('#code-text').value = ''; testBox($('#code-test'), { ok: false, message: err.message }); }
 }
 $('#code-run').addEventListener('click', async () => {
+  testBox($('#code-test'), { running: true });
   try { const d = await send('/owner/api/endpoints/try', 'POST', { code: $('#code-text').value, path: codeEdit.path, sample: readSample($('#code-sample')) }); testBox($('#code-test'), d.test); }
-  catch (err) { testBox($('#code-test'), { ok: false, message: err.message }); }
+  catch (err) { testBox($('#code-test'), failedTest(err)); }
 });
 $('#code-save').addEventListener('click', async () => {
   const btn = $('#code-save'); btn.disabled = true; btn.textContent = 'Lagi tes & simpan…';

@@ -1436,9 +1436,25 @@ async function createPluginEndpoint(req, res) {
     success: true,
     endpoint: withHandler(req, r[0]),
     commit,
-    message: `Script udah di-commit ke ${commit.file}. Vercel bakal deploy ulang (biasanya 20–60 detik), habis itu endpoint-nya aktif.`
+    message: `Script udah di-commit ke ${commit.file}. ${deployNote(commit.deploy)}`
   });
 }
+
+// What the owner sees after a commit: whether a Vercel build was actually started.
+function deployNote(d) {
+  if (d && d.via === 'hook' && d.ok) return 'Deploy Vercel udah dimulai (biasanya 30–90 detik), panel bakal ngabarin kalau endpoint-nya udah live.';
+  if (d && d.via === 'hook') return 'Commit-nya masuk, tapi Deploy Hook Vercel gagal dipanggil. Cek VERCEL_DEPLOY_HOOK, atau klik Redeploy di Vercel.';
+  return 'Nunggu Vercel deploy otomatis dari GitHub. Kalau 2 menit belum live, isi VERCEL_DEPLOY_HOOK di env Vercel biar deploy-nya pasti jalan.';
+}
+
+// Manual "Deploy ulang" from the endpoints tab: builds the branch again through the Deploy Hook.
+router.post('/owner/api/deploy', sameOrigin, auth, owner, async (req, res) => {
+  const d = await pluginService.triggerDeploy();
+  if (d.via !== 'hook') return fail(res, 503, 'DEPLOY_HOOK_NOT_CONFIGURED', 'VERCEL_DEPLOY_HOOK belum diisi di Environment Variables Vercel.');
+  if (!d.ok) return fail(res, 502, 'DEPLOY_HOOK_FAILED', `Deploy Hook Vercel nolak${d.status ? ` (HTTP ${d.status})` : ''}. Cek URL-nya.`);
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'deploy_trigger', targetType: 'site', targetId: null, metadata: {}, ipAddress: ip(req) });
+  res.json({ success: true, message: 'Deploy Vercel udah dimulai. Biasanya 30–90 detik.' });
+});
 
 const ENDPOINT_BADGES = ['new', 'hot', 'recommend'];
 router.patch('/owner/api/endpoints/:id', sameOrigin, auth, owner, validId('id'), async (req, res) => {
@@ -1511,7 +1527,7 @@ router.put('/owner/api/endpoints/:id/code', sameOrigin, auth, owner, validId('id
     }
     const commit = await pluginService.updateFile({ file: t.file, content, sha: b.sha, message: `Update endpoint ${t.row.path} from the owner panel` });
     await audit.writeAudit({ actorUserId: req.account.id, action: 'endpoint_code_update', targetType: 'endpoint', targetId: t.row.id, metadata: { path: t.row.path, file: t.file, commit: commit.sha }, ipAddress: ip(req) });
-    res.json({ success: true, commit, test, message: `Kode baru udah di-commit ke ${t.file}. Vercel deploy ulang (biasanya 20–60 detik), habis itu versi barunya aktif.` });
+    res.json({ success: true, commit, test, message: `Kode baru udah di-commit ke ${t.file}. ${deployNote(commit.deploy)}` });
   } catch (e) { return buildFail(res, e); }
 });
 
