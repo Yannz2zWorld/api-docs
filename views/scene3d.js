@@ -312,10 +312,16 @@ function mount(el) {
     renderer.render(scene, camera);
     if (raf) adaptResolution(raw);
   }
-  function loop() {
+  // Phones and weaker machines draw about 30 frames a second: the slow sway still looks smooth and
+  // the CPU/GPU (and battery) work is halved.
+  const MIN_FRAME = LITE ? 1000 / 31 : 0;
+  let lastDraw = 0;
+  function loop(now) {
     raf = 0;
     if (!visible || document.hidden || lost) return;
     raf = requestAnimationFrame(loop);
+    if (MIN_FRAME && now - lastDraw < MIN_FRAME) return;
+    lastDraw = now;
     frame();
   }
   function start() { if (!raf && !REDUCED && !lost && model) { clock.getDelta(); raf = requestAnimationFrame(loop); } }
@@ -424,6 +430,12 @@ function boot() {
   }, e => { console.warn('3D scene unavailable:', e.message); note(e.message); fallback(); });
 }
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-else boot();
+// The page first: text and buttons are usable before three.js and the model are fetched and
+// parsed (once the page has loaded and the browser is idle, at most ~2 s later).
+function bootWhenIdle() {
+  const idle = window.requestIdleCallback || (fn => setTimeout(fn, 300));
+  idle(boot, { timeout: 2000 });
+}
+if (document.readyState === 'complete') bootWhenIdle();
+else addEventListener('load', bootWhenIdle, { once: true });
 })();

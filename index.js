@@ -806,6 +806,8 @@ app.get('/api/endpoints', async (req, res) => {
       }
     }
     const sorted = Object.fromEntries(Object.keys(catalog).sort((a, b) => a.localeCompare(b)).map(c => [c, catalog[c].sort((a, b) => a.name.localeCompare(b.name))]));
+    // Same for everyone: the browser may reuse it for 30 s while moving between pages.
+    res.set('Cache-Control', 'private, max-age=30');
     return res.json({ total: routeCount() + (app.locals.endpointAliases?.size || 0), totalRequests: rows[0].n, endpoints: sorted });
   } catch { return res.status(503).json({ success: false, error: 'ENDPOINTS_UNAVAILABLE', message: 'Katalog lagi nggak tersedia.' }); }
 });
