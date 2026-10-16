@@ -13,8 +13,8 @@
   // Each look: base colours, border width, corner radius, shadow offset, dot pattern, default accent.
   // Optional: font (text), weight (text weight), head (headings and buttons) with headWeight and
   // caps (in capitals), mono (code and paths), dots ([dot, fade, gap] in px), pill (round buttons
-  // and fields), ok / bad (status colours), fonts (Google Fonts families the look needs; loaded
-  // when it is used).
+  // and fields), ok / bad (status colours), paper (torn paper sheets and tape in the background,
+  // see paperCss), fonts (Google Fonts families the look needs; loaded when it is used).
   const STYLES = {
     // The cartoon look, kept clean: light dotted paper, white panels, thick black outlines, hard
     // shadows, rounded cartoon type, pastel yellow as the one accent. Same values as views/theme.css.
@@ -22,7 +22,7 @@
       bg: '#f6f4ee', dot: '#dcd7c9', surface: '#ffffff', surface2: '#fbf8ef', surface3: '#f3efe2', ink: '#141414', muted: '#4a4a4a', faint: '#7a7a7a',
       edge: '#141414', edgeSoft: '#e4dfd1', drop: '#141414', border: 3, radius: 18, shadow: [5, 5], accent: '#ffd966', ok: '#141414', bad: '#141414',
       font: "Nunito, 'Trebuchet MS', sans-serif", weight: 600, head: "Fredoka, Nunito, 'Trebuchet MS', sans-serif", headWeight: 600, mono: "'JetBrains Mono', ui-monospace, Menlo, monospace",
-      dots: [1.2, 1.2, 24], fonts: 'family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700' },
+      dots: [1.2, 1.2, 24], paper: true, fonts: 'family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700' },
     classic: { name: 'Classic', desc: 'Gelap, garis tegas, aksen merah. Tampilan lama.', dark: true,
       bg: '#0b0b0c', dot: '#1f1f23', surface: '#141416', surface2: '#1b1b1e', surface3: '#232327', ink: '#f4f4f5', muted: '#a1a1aa', faint: '#71717a',
       edge: '#d4d4d8', edgeSoft: '#3f3f46', drop: '#3f3f46', border: 2, radius: 12, shadow: [6, 6], accent: '#c8202f' },
@@ -160,6 +160,44 @@
   }
   const hsl = h => { const f = n => { const k = (n + h / 30) % 12, a = .9 * Math.min(.55, 1 - .55); return Math.round(255 * (.55 - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, '0'); }; return `#${f(0)}${f(8)}${f(4)}`; };
 
+  // Torn paper in the background (looks with paper: true): two tilted sheets with torn edges, one
+  // in the top right and one in the bottom left, each held by a strip of the accent-coloured tape.
+  // Drawn once as SVG on two fixed layers behind the page: nothing moves, nothing repaints on
+  // scroll. Soft outlines and shadows only, so text in front stays easy to read.
+  function paperCss(R) {
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    // Points along one edge; a torn edge zigzags inwards by up to `depth`.
+    const edge = (x1, y1, x2, y2, torn, depth = 9) => {
+      const pts = [], n = torn ? Math.round(Math.hypot(x2 - x1, y2 - y1) / 13) : 1;
+      const nx = -(y2 - y1) / Math.hypot(x2 - x1, y2 - y1), ny = (x2 - x1) / Math.hypot(x2 - x1, y2 - y1);
+      for (let i = 0; i < n; i++) {
+        const t = i / n, d = torn && i ? (i % 2 ? depth * (.45 + rnd() * .55) : rnd() * depth * .3) : 0;
+        pts.push([x1 + (x2 - x1) * t + nx * d, y1 + (y2 - y1) * t + ny * d]);
+      }
+      return pts;
+    };
+    // A sheet w×h; torn = which sides are torn [top, right, bottom, left].
+    const sheet = (w, h, torn) => [...edge(0, 0, w, 0, torn[0]), ...edge(w, 0, w, h, torn[1]), ...edge(w, h, 0, h, torn[2]), ...edge(0, h, 0, 0, torn[3])]
+      .map(p => p.map(v => v.toFixed(1)).join(',')).join(' ');
+    const tape = (w, h) => [...edge(0, 0, w, 0, false), ...edge(w, 0, w, h, true, 5), ...edge(w, h, 0, h, false), ...edge(0, h, 0, 0, true, 5)]
+      .map(p => p.map(v => v.toFixed(1)).join(',')).join(' ');
+    const lines = (x, y0, w, h, gap) => Array.from({ length: Math.floor((h - y0) / gap) }, (_, i) => `<path d="M${x} ${y0 + i * gap}H${w - 18}" stroke="#f1ecdf" stroke-width="2"/>`).join('');
+    const svg = (w, h, body) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">${body}</svg>`)}")`;
+    const A = sheet(560, 380, [false, false, true, true]), B = sheet(520, 360, [true, true, false, false]);
+    const a = svg(600, 440, `<g transform="translate(14 30)"><polygon points="${A}" fill="#e7e1d1" transform="translate(9 9)"/><polygon points="${A}" fill="#fffdf8" stroke="#ddd6c4" stroke-width="2.5" stroke-linejoin="round"/>${lines(34, 64, 560, 370, 34)}<path d="M64 0V380" stroke="#f6e6b4" stroke-width="2"/></g>`
+      + `<g transform="translate(52 6) rotate(-8)"><polygon points="${tape(150, 38)}" fill="#ffd966" fill-opacity=".78" stroke="#e8c65a" stroke-width="1.5"/></g>`);
+    const b = svg(560, 420, `<g transform="translate(14 44)"><polygon points="${B}" fill="#e7e1d1" transform="translate(9 9)"/><polygon points="${B}" fill="#fffdf8" stroke="#ddd6c4" stroke-width="2.5" stroke-linejoin="round"/>`
+      + Array.from({ length: 9 }, (_, i) => Array.from({ length: 13 }, (_, j) => `<circle cx="${40 + j * 36}" cy="${40 + i * 34}" r="2.2" fill="#e4ddcb"/>`).join('')).join('') + '</g>'
+      + `<g transform="translate(330 22) rotate(10)"><polygon points="${tape(130, 34)}" fill="#ffd966" fill-opacity=".78" stroke="#e8c65a" stroke-width="1.5"/></g>`);
+    return `${R} body::before,${R} body::after{content:"";position:fixed;z-index:-1;pointer-events:none;background:no-repeat center/contain;transform:translateZ(0)}
+${R} body::before{top:96px;right:-70px;width:min(520px,42vw);aspect-ratio:600/440;background-image:${a};rotate:6deg}
+${R} body::after{bottom:-50px;left:-100px;width:min(500px,42vw);aspect-ratio:560/420;background-image:${b};rotate:-7deg}
+${R} .topbar{background:var(--bg)}
+@media (max-width:700px){${R} body::before{width:78vw;right:-36vw;top:120px;opacity:.8}${R} body::after{width:76vw;left:-38vw;bottom:-30px;opacity:.8}}
+@media print{${R} body::before,${R} body::after{display:none}}`;
+  }
+
   function css(s) {
     const edge = s.edge === 'accent' ? 'var(--accent)' : s.edge;
     const drop = s.drop;
@@ -194,7 +232,8 @@ ${R} .feature p,${R} .metric-note,${R} .endpoint small,${R} .endpoint-head span,
 ${R} .endpoints{background:var(--surface);color:var(--ink)}${R} .endpoint{background:var(--surface-2);border-color:var(--edge-soft)}
 ${R} .footer{background:var(--surface);color:var(--ink);border-top-color:var(--edge-soft)}${R} .footer-links a{border-color:var(--edge-soft);color:var(--ink)}${R} .footer-links a:hover{background:var(--surface-2)}${R} .copyright{border-top-color:var(--edge-soft)}
 ${R} .hero h1 span,${R} .mark,${R} .account-menu summary,${R} .shell .btn:not(.secondary){color:var(--accent-ink)}
-${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-pop button:hover,${R} .logout:hover{color:var(--accent-ink)}`;
+${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-pop button:hover,${R} .logout:hover{color:var(--accent-ink)}
+${s.paper ? paperCss(R) : ''}`;
   }
 
   // RGB: every colour change makes the browser restyle the whole page. So the colour steps are
