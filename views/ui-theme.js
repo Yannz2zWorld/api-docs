@@ -20,7 +20,7 @@
     // shadows, rounded cartoon type, pastel yellow as the one accent. Same values as views/theme.css.
     default: { name: 'Default', desc: 'Kartun terang yang clean: kertas bertitik, kartu putih, garis hitam tebal, aksen kuning pastel. Tampilan bawaan.', dark: false,
       bg: '#f6f4ee', dot: '#dcd7c9', surface: '#ffffff', surface2: '#fbf8ef', surface3: '#f3efe2', ink: '#141414', muted: '#4a4a4a', faint: '#7a7a7a',
-      edge: '#141414', edgeSoft: '#e4dfd1', drop: '#141414', border: 3, radius: 18, shadow: [5, 5], accent: '#ffd966', ok: '#15803d', bad: '#b45309',
+      edge: '#141414', edgeSoft: '#e4dfd1', drop: '#141414', border: 3, radius: 18, shadow: [5, 5], accent: '#ffd966', ok: '#141414', bad: '#141414',
       font: "Nunito, 'Trebuchet MS', sans-serif", weight: 600, head: "Fredoka, Nunito, 'Trebuchet MS', sans-serif", headWeight: 600, mono: "'JetBrains Mono', ui-monospace, Menlo, monospace",
       dots: [1.2, 1.2, 24], fonts: 'family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700' },
     classic: { name: 'Classic', desc: 'Gelap, garis tegas, aksen merah. Tampilan lama.', dark: true,

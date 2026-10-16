@@ -8,11 +8,11 @@
   if (!url) return;
 
   const css = `
-  .ych-btn{position:fixed;left:18px;bottom:18px;z-index:88;display:grid;place-items:center;width:50px;height:50px;padding:0;border:2px solid var(--edge,#d4d4d8);border-radius:50%;background:#111113;box-shadow:4px 4px 0 var(--drop,#3f3f46);transition:transform .15s,box-shadow .15s}
+  .ych-btn{position:fixed;left:18px;bottom:18px;z-index:88;display:grid;place-items:center;width:50px;height:50px;padding:0;border:2px solid var(--edge,#d4d4d8);border-radius:50%;background:var(--surface,#111113);color:var(--ink,#25d366);box-shadow:4px 4px 0 var(--drop,#3f3f46);transition:transform .15s,box-shadow .15s}
   .ych-btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--drop,#3f3f46)}
   .ych-btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--drop,#3f3f46)}
-  .ych-btn:focus-visible{outline:2px solid #f4f4f5;outline-offset:3px}
-  .ych-btn svg{width:26px;height:26px;fill:#25d366}
+  .ych-btn:focus-visible{outline:2px solid var(--ink,#f4f4f5);outline-offset:3px}
+  .ych-btn svg{width:26px;height:26px;fill:currentColor}
   @media (max-width:520px){.ych-btn{left:12px;bottom:12px;width:46px;height:46px}.ych-btn svg{width:24px;height:24px}}
   @media print{.ych-btn{display:none}}`;
 

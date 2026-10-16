@@ -62,7 +62,7 @@
   #ep-edit .field input, #ep-edit .field textarea { width: 100%; }
   #code-dialog textarea { width: 100%; min-height: 340px; font: 12px/1.5 "DM Mono", monospace; tab-size: 2; }
   @media (max-width: 720px) { .ep-new, .ep-grid { grid-template-columns: 1fr; } }
-  .tab-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--bad, #f87171); color: #111; font: 700 10px/1 "DM Mono", monospace; }
+  .tab-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); border: 2px solid var(--edge); font: 700 10px/1 "DM Mono", monospace; }
   .tab-count[hidden] { display: none; }
   #err-data { display: grid; gap: 12px; }
   .err-card { border: 2px solid var(--edge-soft); border-radius: 12px; background: var(--surface-2); padding: 14px 16px; }
@@ -418,7 +418,7 @@ loaders.status = async () => {
     $('#status-data').innerHTML = `
       <h3>Database</h3>${chip(db.connected ? 'connected' : 'disconnected', db.connected ? 'ok' : 'bad')} ${db.ok === undefined ? '' : chip(db.ok ? 'schema ok' : 'migration required', db.ok ? 'ok' : 'bad')}
       ${db.missing?.length ? `<p class="error">Yang kurang: ${db.missing.map(esc).join(', ')}</p>` : ''}${db.error ? `<p class="error">${esc(db.error)}</p>` : ''}
-      <h3>Environment</h3><p>${cfg}</p><small>Hijau = udah diisi, putih = kosong. Nilainya nggak pernah ditampilin.</small>
+      <h3>Environment</h3><p>${cfg}</p><small>Tanda penuh = udah diisi, polos = kosong. Nilainya nggak pernah ditampilin.</small>
       <h3>Pembayaran</h3><p>Manual (QRIS, DANA, GoPay + bukti): ${chip('aktif', 'ok')} Payment gateway (Pakasir): ${chip(s.payments.gateway === 'on' ? 'aktif' : 'maintenance', s.payments.gateway === 'on' ? 'ok' : 'warn')}</p>
       <small>${s.payments.gateway === 'on' ? s.payments.automaticSettlement === 'disabled_fail_closed' ? 'Gateway aktif. Settlement otomatis: mati — tier diaktifin lewat Approve di tab Payments.' : 'Gateway aktif. Settlement otomatis: udah dikonfigurasi.' : 'Gateway lagi maintenance: pembeli cuma bisa bayar manual terus upload bukti. Buat nyalain lagi, isi PAYMENT_GATEWAY=on (plus PAKASIR_PROJECT dan PAKASIR_API_KEY) di Vercel.'}</small>
       <h3>Email (verifikasi &amp; reset sandi)</h3><p>${chip(s.email.configured ? 'provider: ' + s.email.provider : 'belum diatur', s.email.configured ? 'ok' : 'warn')} Pengirim: ${chip(s.email.senderName)}</p>

@@ -9,7 +9,7 @@
   const css = `
   .yc-fab{position:fixed;right:18px;bottom:18px;z-index:90;display:flex;align-items:center;gap:8px;padding:12px 16px;border:2px solid var(--edge,#d4d4d8);border-radius:999px;background:var(--blood,#c8202f);color:var(--accent-ink,#fff);font:700 12px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;box-shadow:4px 4px 0 var(--drop,#3f3f46);cursor:pointer}
   .yc-fab:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--drop,#3f3f46)}
-  .yc-fab .yc-dot{width:8px;height:8px;border-radius:50%;background:#86efac;box-shadow:0 0 0 3px rgba(134,239,172,.25)}
+  .yc-fab .yc-dot{width:8px;height:8px;border-radius:50%;background:var(--ok,#86efac);box-shadow:0 0 0 2px var(--surface,#161618)}
   .yc-badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#fff;color:var(--ui-deep,#a3172a);display:inline-grid;place-items:center;font-size:11px}
   .yc-badge[hidden]{display:none}
   .yc-panel{position:fixed;right:18px;bottom:76px;z-index:91;width:min(360px,calc(100vw - 24px));height:min(520px,calc(100vh - 110px));display:flex;flex-direction:column;border:2px solid var(--edge,#d4d4d8);border-radius:16px;background:#111113;box-shadow:6px 6px 0 var(--drop,#3f3f46);overflow:hidden;color:#f4f4f5}

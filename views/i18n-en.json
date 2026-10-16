@@ -616,7 +616,6 @@
   "email atau ID user, satu per baris": "user email or ID, one per line",
   "Tambah": "Add",
   "Reset akses (ganti semua)": "Reset access (replace all)",
-  "Hijau = udah diisi, putih = kosong. Nilainya nggak pernah ditampilin.": "Green = set, white = empty. Values are never shown.",
   "Pembayaran": "Payments",
   "Manual (QRIS, DANA, GoPay + bukti):": "Manual (QRIS, DANA, GoPay + proof):",
   "Gateway aktif. Settlement otomatis: mati — tier diaktifin lewat Approve di tab Payments.": "Gateway is on. Automatic settlement: off — tiers are activated via Approve in the Payments tab.",
@@ -1175,7 +1174,8 @@
   "Lagi ngetes ulang terus commit ke GitHub…": "Testing again, then committing to GitHub…",
   "Atur warna pegangan, kepala, dan efek scythe. Warna efek dipakai juga buat semua skill di game 3D. Bisa juga dengan klik scythe-nya langsung di Home atau di game 3D.": "Set the colours of the scythe's handle, head and effects. The effect colour is used for every skill in the 3D game too. You can also just tap the scythe on Home or in the 3D game.",
   "Kontak": "Contact",
-  "kuning artinya jalan, kode yang dicoret artinya lagi bermasalah (misal": "in yellow means it works, a struck-out code means a problem (for example"
+  "kuning artinya jalan, kode yang dicoret artinya lagi bermasalah (misal": "in yellow means it works, a struck-out code means a problem (for example",
+  "Tanda penuh = udah diisi, polos = kosong. Nilainya nggak pernah ditampilin.": "Filled = set, plain = empty. The values are never shown."
  },
  "patterns": [
   [

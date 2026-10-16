@@ -1,5 +1,6 @@
 /* Yannz API — shared cartoon theme, kept clean: light dotted paper, white panels, thick black
-   outlines, hard offset shadows, rounded cartoon type, pastel yellow as the one accent. The Default look in Custom UI
+   outlines, hard offset shadows, rounded cartoon type, pastel yellow as the one accent. Status
+   colours are neutral too: OK = a yellow sticker, a problem = dashed and hollow. The Default look in Custom UI
    (views/ui-theme.js) uses the same values. Animations move only transform / opacity. */
 :root {
   --bg: #f6f4ee;
@@ -16,8 +17,8 @@
   --accent-ink: #141414;
   --red: var(--accent);
   --red-deep: color-mix(in srgb, var(--accent) 78%, #000);
-  --ok: #15803d;
-  --bad: #b45309;
+  --ok: #141414;
+  --bad: #141414;
   --warn: #4a4a4a;
   --radius: 18px;
   --line: 3px solid var(--edge);
@@ -128,13 +129,13 @@ button:disabled, button[disabled], .btn[disabled] { opacity: .45; cursor: not-al
 /* ---------- content */
 .chip { display: inline-flex; align-items: center; gap: 5px; border: 2px solid var(--edge-soft); border-radius: 999px; padding: 1px 10px; font: 700 11px var(--f-body); color: var(--muted); background: var(--surface-2); margin: 1px 2px 1px 0; white-space: nowrap; }
 .chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .8; }
-.chip.ok, .chip.active, .chip.paid { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.chip.ok, .chip.active, .chip.paid { color: var(--ok); border-color: var(--edge); background: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
 .chip.bad, .chip.rejected, .chip.banned { color: var(--bad); border-style: dashed; border-color: var(--faint); }
 .chip.bad::before, .chip.rejected::before, .chip.banned::before { background: transparent; border: 2px solid currentColor; }
 .chip.warn, .chip.pending { color: var(--accent-ink); background: var(--accent); border-color: var(--edge); }
 .chip.revoked, .chip.expired, .chip.cancelled { color: var(--faint); }
 .notice, .box { border: 3px dashed var(--edge-soft); border-radius: 14px; background: var(--surface-2); padding: 12px 14px; margin: 12px 0; color: var(--ink); }
-.error { color: var(--bad); font-weight: 800; }
+.error { color: var(--bad); font-weight: 800; text-decoration: underline wavy var(--faint); text-underline-offset: 4px; }
 code { font: 500 12.5px var(--f-mono); background: var(--surface-3); border: 1px solid var(--edge-soft); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
 pre { margin: 0; background: #1b1a17; color: #fbf8ef; border: var(--line); border-radius: 14px; padding: 14px; overflow: auto; font: 500 12.5px/1.6 var(--f-mono); }
 .secret { overflow-wrap: anywhere; font: 700 14px var(--f-mono); background: var(--accent); color: var(--accent-ink); padding: 14px; border: var(--line); border-radius: 14px; margin: 10px 0; }

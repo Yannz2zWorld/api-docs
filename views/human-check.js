@@ -14,7 +14,7 @@
   .hc-tick{flex:none;width:28px;height:28px;border:2px solid var(--muted,#a1a1aa);border-radius:6px;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0;color:inherit}
   .hc-tick:focus-visible{outline:2px solid var(--accent,#c8202f);outline-offset:2px}
   .hc-tick[data-state=busy]{border-color:transparent;border-top-color:var(--accent,#c8202f);border-radius:50%;animation:hc-spin .8s linear infinite;cursor:wait}
-  .hc-tick[data-state=ok]{border-color:#16a34a;background:#16a34a;color:#fff}
+  .hc-tick[data-state=ok]{border-color:var(--ok,#16a34a);background:var(--ok,#16a34a);color:var(--bg,#fff)}
   .hc-text{flex:1;min-width:0}
   .hc-text b{display:block;font-weight:600}
   .hc-text small{display:block;color:var(--muted,#a1a1aa);font-size:12px;margin-top:2px}

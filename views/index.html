@@ -12,7 +12,7 @@
        yellow as the one accent.
        All colours are theme tokens, so another look from Custom UI restyles this page too.
        Animations move only transform / opacity. */
-    :root{--bg:#f6f4ee;--surface:#fff;--surface-2:#fbf8ef;--surface-3:#f3efe2;--ink:#141414;--muted:#4a4a4a;--faint:#7a7a7a;--edge:#141414;--edge-soft:#e4dfd1;--drop:#141414;--accent:#ffd966;--accent-ink:#141414;--ok:#15803d;--bad:#b45309;
+    :root{--bg:#f6f4ee;--surface:#fff;--surface-2:#fbf8ef;--surface-3:#f3efe2;--ink:#141414;--muted:#4a4a4a;--faint:#7a7a7a;--edge:#141414;--edge-soft:#e4dfd1;--drop:#141414;--accent:#ffd966;--accent-ink:#141414;--ok:#141414;--bad:#141414;
       --paper:var(--surface);--yellow:var(--accent);--blood:var(--accent);--blood-deep:color-mix(in srgb,var(--accent) 78%,#000);--red:var(--bad);
       --line:3px solid var(--edge);--shadow:5px 5px 0 var(--drop);--radius:18px;--term:#1b1a17;--term-ink:#fbf8ef;--term-dim:#b9b3a3;
       --f-head:Fredoka,Nunito,'Trebuchet MS',sans-serif;--f-body:Nunito,'Trebuchet MS',sans-serif;--f-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;color-scheme:light}
@@ -37,7 +37,7 @@
     .navlinks a{padding:8px 14px;border:3px solid transparent;border-radius:12px;font:600 15px var(--f-head);color:var(--muted)}
     .navlinks a:hover{color:var(--ink);border-color:var(--edge);background:var(--surface);box-shadow:3px 3px 0 var(--drop)}
     .status{display:flex;align-items:center;gap:8px;padding:7px 12px;border:var(--line);border-radius:999px;background:var(--surface);box-shadow:3px 3px 0 var(--drop);font:700 12px var(--f-body)}
-    .status i,.status svg{width:10px;height:10px;color:var(--ok);fill:var(--ok)}
+    .status i,.status svg{width:10px;height:10px;color:var(--accent);fill:var(--accent);stroke:var(--edge)}
     .account-menu{position:relative}
     .account-menu summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;padding:9px 16px;border:var(--line);border-radius:12px;background:var(--accent);color:var(--accent-ink);box-shadow:3px 3px 0 var(--drop);font:600 15px var(--f-head);transition:transform .15s}
     .account-menu summary::-webkit-details-marker{display:none}
