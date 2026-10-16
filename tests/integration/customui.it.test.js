@@ -67,9 +67,9 @@ it('looks and colours: many looks, any colour, readable text on it, RGB mode', (
   assert.equal(root.style.props['--accent'], '#123456');
   assert.deepEqual(JSON.parse(store['yannz-ui']), { style: 'cream', accent: '#123456', rgb: false, scythe: null, uid: null }, 'kept in the browser (account not known in this sandbox)');
   UI.set({ style: 'default', accent: '', rgb: false });
-  assert.equal(root.attrs['data-ui'], 'default', 'the default look is the comic one, applied like any other');
-  assert.equal(root.style.props['--accent'], '#3dd6ff', 'cyan');
-  assert.equal(UI.STYLES.default.bg, '#120e12');
+  assert.equal(root.attrs['data-ui'], 'default', 'the default look is the cartoon one, applied like any other');
+  assert.equal(root.style.props['--accent'], '#ffd966', 'pastel yellow');
+  assert.equal(UI.STYLES.default.bg, '#f6f4ee');
   assert.equal(UI.STYLES.classic.accent, '#c8202f', 'the old dark red look is still there');
   store['yannz-ui'] = '{"style":"nope","accent":"red"}';
   assert.deepEqual({ ...UI.load() }, { style: 'default', accent: '', rgb: false, scythe: null }, 'bad saved values fall back');

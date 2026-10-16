@@ -101,7 +101,8 @@ it('the shared theme stylesheet is served for the account pages', async () => {
   const r = await app.request('GET', '/assets/theme.css');
   assert.equal(r.status, 200);
   assert.match(r.headers['content-type'], /text\/css/);
-  assert.match(r.text, /--bg:\s*#0b0b0c/);
+  assert.match(r.text, /--bg:\s*#f6f4ee/);
+  assert.match(r.text, /--accent:\s*#ffd966/, 'cartoon look: pastel yellow accent');
 });
 
 it('the WebGL scene script is served as JavaScript', async () => {

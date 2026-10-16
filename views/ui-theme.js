@@ -11,16 +11,18 @@
   const KEY = 'yannz-ui';
 
   // Each look: base colours, border width, corner radius, shadow offset, dot pattern, default accent.
-  // Optional: font (text), head (headings and buttons, in capitals), mono (code and paths), weight
-  // (text weight), dots ([dot, fade, gap] in px), pill (round buttons and fields), fonts (Google
-  // Fonts families the look needs; loaded when it is used).
+  // Optional: font (text), weight (text weight), head (headings and buttons) with headWeight and
+  // caps (in capitals), mono (code and paths), dots ([dot, fade, gap] in px), pill (round buttons
+  // and fields), ok / bad (status colours), fonts (Google Fonts families the look needs; loaded
+  // when it is used).
   const STYLES = {
-    // The comic look (Yannz API brief): dark comic panels, black outlines, hard shadows, cyan only.
-    default: { name: 'Default', desc: 'Komik gelap, garis hitam tebal, bayangan kotak, aksen cyan. Tampilan bawaan.', dark: true,
-      bg: '#120e12', dot: 'rgba(61,214,255,.14)', surface: '#241b22', surface2: '#1b141a', surface3: '#2e232b', ink: '#fff6e8', muted: '#e2d6cf', faint: '#b8aaa2',
-      edge: '#000000', edgeSoft: '#000000', drop: '#000000', border: 4, radius: 20, shadow: [8, 8], accent: '#3dd6ff',
-      font: "'Comic Neue', 'Comic Sans MS', cursive", weight: 700, head: "Bangers, 'Comic Neue', cursive", mono: "'JetBrains Mono', ui-monospace, monospace",
-      dots: [1.6, 1.9, 12], pill: true, fonts: 'family=Bangers&family=Comic+Neue:wght@400;700&family=JetBrains+Mono:wght@500;700' },
+    // The cartoon look, kept clean: light dotted paper, white panels, thick black outlines, hard
+    // shadows, rounded cartoon type, pastel yellow as the one accent. Same values as views/theme.css.
+    default: { name: 'Default', desc: 'Kartun terang yang clean: kertas bertitik, kartu putih, garis hitam tebal, aksen kuning pastel. Tampilan bawaan.', dark: false,
+      bg: '#f6f4ee', dot: '#dcd7c9', surface: '#ffffff', surface2: '#fbf8ef', surface3: '#f3efe2', ink: '#141414', muted: '#4a4a4a', faint: '#7a7a7a',
+      edge: '#141414', edgeSoft: '#e4dfd1', drop: '#141414', border: 3, radius: 18, shadow: [5, 5], accent: '#ffd966', ok: '#15803d', bad: '#b45309',
+      font: "Nunito, 'Trebuchet MS', sans-serif", weight: 600, head: "Fredoka, Nunito, 'Trebuchet MS', sans-serif", headWeight: 600, mono: "'JetBrains Mono', ui-monospace, Menlo, monospace",
+      dots: [1.2, 1.2, 24], fonts: 'family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700' },
     classic: { name: 'Classic', desc: 'Gelap, garis tegas, aksen merah. Tampilan lama.', dark: true,
       bg: '#0b0b0c', dot: '#1f1f23', surface: '#141416', surface2: '#1b1b1e', surface3: '#232327', ink: '#f4f4f5', muted: '#a1a1aa', faint: '#71717a',
       edge: '#d4d4d8', edgeSoft: '#3f3f46', drop: '#3f3f46', border: 2, radius: 12, shadow: [6, 6], accent: '#c8202f' },
@@ -169,11 +171,11 @@
     return `${R}{--bg:${s.bg};--dot:${s.dot};--surface:${s.surface};--surface-2:${s.surface2};--surface-3:${s.surface3};--ink:${s.ink};--muted:${s.muted};--faint:${s.faint};
 --edge:${edge};--edge-soft:${s.edgeSoft};--drop:${drop};--radius:${s.radius}px;--line:${s.border}px solid var(--edge);--shadow:${shadow};
 --red:var(--accent);--red-deep:color-mix(in srgb,var(--accent) 78%,#000);--paper:var(--surface);--cream:var(--bg);--login-bg:var(--surface);--yellow:var(--accent);--blood:var(--accent);--blood-deep:var(--red-deep);--blue:var(--muted);--green:var(--edge);
---ui-bad:var(--bad);--ui-deep:var(--red-deep);--ok:${s.dark ? '#86efac' : '#15803d'};--bad:${s.dark ? 'color-mix(in srgb,var(--accent) 62%,#fff)' : 'color-mix(in srgb,var(--accent) 80%,#000)'};--warn:${s.dark ? '#e4e4e7' : '#3f3f46'};color-scheme:${s.dark ? 'dark' : 'light'}}
+--ui-bad:var(--bad);--ui-deep:var(--red-deep);--ok:${s.ok || (s.dark ? '#86efac' : '#15803d')};--bad:${s.bad || (s.dark ? 'color-mix(in srgb,var(--accent) 62%,#fff)' : 'color-mix(in srgb,var(--accent) 80%,#000)')};--warn:${s.dark ? '#e4e4e7' : '#3f3f46'};color-scheme:${s.dark ? 'dark' : 'light'}}
 ${R} body{background-color:var(--bg);background-image:radial-gradient(var(--dot) ${dot}px,transparent ${fade}px);background-size:${gap}px ${gap}px;color:var(--ink)${s.font ? `;font-family:${s.font}` : ''}${s.weight ? `;font-weight:${s.weight}` : ''}}
 ${s.font && !s.head ? `${R} h1,${R} h2,${R} h3,${R} .brand,${R} .hero h1,${R} .section-head h2,${R} .metric-value{font-family:${s.font}}` : ''}
-${s.head ? `${R} h1,${R} h2,${R} h3,${R} .brand,${R} .hero h1,${R} .section-head h2,${R} .metric-value,${R} button:not([class^=ys-]),${R} .btn{font-family:${s.head};font-weight:400;text-transform:uppercase;letter-spacing:1px}` : ''}
-${s.mono ? `${R} code,${R} pre,${R} kbd,${R} samp,${R} .mono,${R} .path{font-family:${s.mono};font-weight:700}` : ''}
+${s.head ? `${R} h1,${R} h2,${R} h3,${R} .brand,${R} .hero h1,${R} .section-head h2,${R} .metric-value,${R} button:not([class^=ys-]),${R} .btn{font-family:${s.head};font-weight:${s.headWeight || 400}${s.caps ? ';text-transform:uppercase;letter-spacing:1px' : ''}}` : ''}
+${s.mono ? `${R} code,${R} pre,${R} kbd,${R} samp,${R} .mono,${R} .path{font-family:${s.mono}}` : ''}
 ${R} .topbar{background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom-color:var(--edge-soft)}
 ${R} a:hover,${R} button:hover,${R} .btn:hover{color:var(--ink)}
 ${R} button,${R} .btn,${R} input,${R} select,${R} textarea{border-radius:${small}px}
@@ -192,7 +194,7 @@ ${R} .feature p,${R} .metric-note,${R} .endpoint small,${R} .endpoint-head span,
 ${R} .endpoints{background:var(--surface);color:var(--ink)}${R} .endpoint{background:var(--surface-2);border-color:var(--edge-soft)}
 ${R} .footer{background:var(--surface);color:var(--ink);border-top-color:var(--edge-soft)}${R} .footer-links a{border-color:var(--edge-soft);color:var(--ink)}${R} .footer-links a:hover{background:var(--surface-2)}${R} .copyright{border-top-color:var(--edge-soft)}
 ${R} .hero h1 span,${R} .mark,${R} .account-menu summary,${R} .shell .btn:not(.secondary){color:var(--accent-ink)}
-${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-pop button:hover,${R} .logout:hover{color:var(--ink)}`;
+${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-pop button:hover,${R} .logout:hover{color:var(--accent-ink)}`;
   }
 
   // RGB: every colour change makes the browser restyle the whole page. So the colour steps are
@@ -218,7 +220,7 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
     const html = document.documentElement;
     clearTimeout(rgbTimer); rgbTimer = null; rgbOn = false;
     // Pages with their own design (the /3d game) keep their layout but take the look's colour, so
-    // none of the original red is left (the default look is cyan).
+    // none of the original red is left (the default look is pastel yellow).
     if (html.hasAttribute('data-no-theme')) {
       const st = html.style, a = pref.accent || s.accent;
       if (a) { setAccent(a); st.setProperty('--red', a); st.setProperty('--red-deep', 'color-mix(in srgb,' + a + ' 78%,#000)'); st.setProperty('--red-ink', inkOn(a)); st.setProperty('--bad', 'color-mix(in srgb,' + a + ' 62%,#fff)'); st.setProperty('--ui-bad', 'var(--bad)'); }
@@ -234,6 +236,7 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
     if (!tag) { tag = document.createElement('style'); tag.id = 'yannz-ui-style'; (document.head || html).append(tag); }
     tag.textContent = css(s);
     html.setAttribute('data-ui', pref.style);
+    html.setAttribute('data-ui-tone', s.dark ? 'dark' : 'light');   // light or dark look, for page details that differ
     setAccent(pref.accent || s.accent);
     if (pref.rgb && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       rgbOn = true; rgbHue = 0;
