@@ -2,7 +2,8 @@
 // Automatic endpoint checks for the ~/endpoints monitor and the developer's self-test.
 //   - theresav and third-party server endpoints: lib/theresav.js / lib/apiproxy.js probe() (run with
 //     a sample input, or, without one, see whether the upstream answers properly);
-//   - local plugins (ping, fake call, TikTok): their own run() with a sample request.
+//   - local plugins (ping, fake call, TikTok, endpoints added from the Developer panel): their own
+//     run() with a sample request.
 // Results are stored in endpoint_checks with the HTTP code: 200 when it works, else the error code.
 // checkStale() picks the endpoints whose last check is old (OK after 6 hours, failures after 30
 // minutes), claims them so two visitors never check the same one at once, and checks a few.
@@ -69,6 +70,16 @@ function checkable(app) {
   const map = new Map();
   for (const e of [...theresav.registry(), ...apiproxy.registry()]) if (loaded.has(e.path)) map.set(e.path, { path: e.path, name: e.name, category: e.category, kind: 'proxy', entry: e });
   for (const [path, sample] of Object.entries(LOCAL_SAMPLES)) if (loaded.has(path) && runs.has(path) && !map.has(path)) map.set(path, { path, name: path.split('/').pop(), category: 'Local', kind: 'local', run: runs.get(path), sample });
+  // Endpoints added from the Developer panel: run with each parameter's example. One that needs a file,
+  // or a required parameter without an example, can't be checked like this.
+  const params = app.locals.pluginParams || new Map();
+  for (const path of app.locals.panelPluginPaths || new Set()) {
+    if (!loaded.has(path) || !runs.has(path) || map.has(path)) continue;
+    const list = params.get(path) || [];
+    if (list.some(p => p.type === 'file' || (p.required && !p.placeholder))) continue;
+    const sample = Object.fromEntries(list.filter(p => p.placeholder).map(p => [p.name, String(p.placeholder)]));
+    map.set(path, { path, name: path.split('/').pop(), category: 'Local', kind: 'local', run: runs.get(path), sample: () => ({ ...sample }) });
+  }
   // Backups shown as versions (services/endpointAliasService.js): checked with their backup's sample,
   // the result kept under the version's own path.
   for (const [pub, backup] of app.locals.endpointAliases || new Map()) {

@@ -296,7 +296,7 @@ router.get('/api/profile', auth, async (req, res) => {
 });
 
 // Custom UI saved on the account (migration 021): the look and colour follow the user to any device.
-const UI_STYLES = new Set(['default', 'cream', 'pop', 'neon', 'glass', 'minimal', 'terminal', 'pastel', 'paper',
+const UI_STYLES = new Set(['default', 'classic', 'cream', 'pop', 'neon', 'glass', 'minimal', 'terminal', 'pastel', 'paper',
   'lemon', 'mint', 'sky', 'peach', 'lilac', 'bubblegum', 'coral', 'lime', 'ocean', 'sand', 'comic', 'newsprint', 'matcha',
   'blueprint', 'forest', 'wine', 'mocha', 'slate', 'noir', 'arcade']);
 const UI_HEX = /^#[0-9a-f]{6}$/;
@@ -1238,7 +1238,9 @@ async function duplicateOf(req, p) {
 }
 async function freePath(req, p) {
   if (!(await duplicateOf(req, p))) return p;
-  for (let i = 2; i < 20; i++) { const c = `${p}-v${i}`; if (!(await duplicateOf(req, c))) return c; }
+  // The name part stays within 60 characters (the path rule), so a long name is cut to fit "-vN".
+  const [, cat, nm] = /^\/api\/([^/]+)\/(.+)$/.exec(p) || [null, 'tools', 'endpoint'];
+  for (let i = 2; i < 20; i++) { const v = `-v${i}`, c = `/api/${cat}/${nm.slice(0, 60 - v.length).replace(/-+$/, '')}${v}`; if (!(await duplicateOf(req, c))) return c; }
   return p;
 }
 const buildLimiter = { running: 0 };

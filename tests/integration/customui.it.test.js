@@ -67,7 +67,10 @@ it('looks and colours: many looks, any colour, readable text on it, RGB mode', (
   assert.equal(root.style.props['--accent'], '#123456');
   assert.deepEqual(JSON.parse(store['yannz-ui']), { style: 'cream', accent: '#123456', rgb: false, scythe: null, uid: null }, 'kept in the browser (account not known in this sandbox)');
   UI.set({ style: 'default', accent: '', rgb: false });
-  assert.equal(root.attrs['data-ui'], undefined, 'the original look needs no override');
+  assert.equal(root.attrs['data-ui'], 'default', 'the default look is the cartoon one, applied like any other');
+  assert.equal(root.style.props['--accent'], '#ffd966', 'pastel yellow');
+  assert.equal(UI.STYLES.default.bg, '#f6f4ee');
+  assert.equal(UI.STYLES.classic.accent, '#c8202f', 'the old dark red look is still there');
   store['yannz-ui'] = '{"style":"nope","accent":"red"}';
   assert.deepEqual({ ...UI.load() }, { style: 'default', accent: '', rgb: false, scythe: null }, 'bad saved values fall back');
 });
@@ -127,14 +130,14 @@ it('RGB mode is paced by the page size and waits while the visitor scrolls or ta
   assert.equal(props['--accent'], before, 'still while the tab is hidden');
 });
 
-it('29 looks, the same list on the page and on the server', async () => {
+it('30 looks, the same list on the page and on the server', async () => {
   const store = {};
   const sandbox = { window: {}, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; } },
     document: { documentElement: { style: { setProperty() {}, removeProperty() {} }, setAttribute() {}, removeAttribute() {}, hasAttribute: () => false }, head: { append() {} }, getElementById: () => null, createElement: () => ({}) },
     matchMedia: () => ({ matches: false }), addEventListener() {}, dispatchEvent() {}, CustomEvent: class {}, setInterval: () => 1, clearInterval() {}, setTimeout: () => 1, clearTimeout() {}, performance: { now: () => 0 }, fetch: async () => ({ ok: false }) };
   vm.runInNewContext(view('ui-theme.js'), sandbox);
   const ids = Object.keys(sandbox.window.YannzUI.STYLES);
-  assert.equal(ids.length, 29);
+  assert.equal(ids.length, 30);
   const put = body => app.request('PUT', '/api/profile/ui', { cookie: user, headers: { origin: app.origin }, body });
   for (const id of ids) assert.equal((await put({ style: id })).status, 200, id);
 });

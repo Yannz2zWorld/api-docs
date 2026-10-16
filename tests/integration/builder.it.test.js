@@ -142,24 +142,24 @@ it('code the rules cannot handle goes to the AI (any Anthropic-compatible gatewa
   assert.deepEqual([r3.status, r3.json.error, r3.json.message], [422, 'NOT_CONVERTIBLE', 'Ini bukan kode endpoint.']);
   const script = "module.exports = async (req, res) => {\n  // \"pink\" card\n  res.json({ status: true, result: 'iqc ' + (req.query.text || '') });\n};";
   // The reply format the AI is asked for: metadata, then the script as plain text.
-  aiReply = () => `<meta>{"name": "IQC Pink", "desc": "Bikin gambar iqc pink.", "category": "Maker", "path": "/api/maker/iqc-pink", "params": [{"name": "text", "required": true, "placeholder": "halo"}], "sample": {"text": "halo"}}</meta>\n<code>\n${script}\n</code>`;
+  aiReply = () => `<meta>{"name": "IQC Pink", "desc": "Bikin gambar iqc pink.", "category": "Maker", "path": "/api/maker/iqc-demo", "params": [{"name": "text", "required": true, "placeholder": "halo"}], "sample": {"text": "halo"}}</meta>\n<code>\n${script}\n</code>`;
   const r4 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
   assert.equal(r4.status, 200, r4.text);
-  assert.deepEqual([r4.json.meta.path, r4.json.test.ok], ['/api/maker/iqc-pink', true], r4.text);
+  assert.deepEqual([r4.json.meta.path, r4.json.test.ok], ['/api/maker/iqc-demo', true], r4.text);
   assert.match(r4.json.code, /"pink" card/);
   // Old one-object JSON whose code has raw line breaks (invalid JSON as written) is still read.
-  aiReply = () => `{"name": "IQC Pink", "path": "/api/maker/iqc-pink", "sample": {"text": "halo"}, "code": "${script.replace(/"/g, '\\"')}"}`;
+  aiReply = () => `{"name": "IQC Pink", "path": "/api/maker/iqc-demo", "sample": {"text": "halo"}, "code": "${script.replace(/"/g, '\\"')}"}`;
   const r5 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
   assert.equal(r5.status, 200, r5.text);
   assert.match(r5.json.code, /"pink" card/);
   // A gateway whose stream carries no text: the same request without streaming.
-  aiReply = body => (body.stream ? '' : `<meta>{"path": "/api/maker/iqc-pink"}</meta><code>${script}</code>`);
+  aiReply = body => (body.stream ? '' : `<meta>{"path": "/api/maker/iqc-demo"}</meta><code>${script}</code>`);
   const r6 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
   assert.equal(r6.status, 200, r6.text);
   assert.equal(aiCalls.at(-1).body.stream, undefined);
   // Cut off at max_tokens: said plainly, nothing half-written is used.
   aiStop = 'max_tokens';
-  aiReply = () => `<meta>{"path": "/api/maker/iqc-pink"}</meta><code>module.exports = async (req, res) => {`;
+  aiReply = () => `<meta>{"path": "/api/maker/iqc-demo"}</meta><code>module.exports = async (req, res) => {`;
   const r7 = await o('POST', '/owner/api/endpoints/convert', { code, ai: 'only' });
   aiStop = 'end_turn';
   assert.deepEqual([r7.status, r7.json.error], [502, 'AI_TRUNCATED']);
@@ -248,7 +248,11 @@ it('the panel: paste → Sempurnakan & tes → preview → deploy; Test/Check Al
   for (const id of ['ep-source', 'ep-convert', 'ep-ai', 'ep-preview', 'ep-test', 'ep-code', 'ep-retest', 'ep-submit', 'ai-ping', 'code-dialog', 'code-save']) assert.match(html, new RegExp(`id="${id}"`), id);
   assert.match(html, />Test\/Check All API</);
   assert.doesNotMatch(html, /Tes endpoint theresav/);
-  assert.match(html, /id="ep-submit" disabled/, 'deploy stays off until a test passes');
+  // The server tests again before committing (TEST_FAILED), so the button is never locked by the page.
+  assert.match(html, /id="ep-submit">/, 'the deploy button can always be clicked');
+  assert.doesNotMatch(html, /id="ep-submit" disabled/);
+  assert.match(html, /id="ep-form" novalidate/, 'no silent browser validation bubble: the panel says what is wrong');
+  assert.doesNotMatch(html.slice(html.indexOf("$('#ep-form').addEventListener('submit'")).split('\n// ')[0], /ask\(/, 'no confirm() (blocked dialogs made the button do nothing)');
   assert.match(html, /data-ep="code"/);
   assert.match(html, /data-ep="\$\{e\.handler_loaded \? 'delete-code' : 'delete'\}"/);
 });

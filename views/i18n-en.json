@@ -27,7 +27,6 @@
   "Reset": "Reset",
   "Warna efek dipakai juga buat semua skill.": "The effect colour is used for every skill too.",
   "3. Warna scythe": "3. Scythe colours",
-  "Atur warna pegangan, kepala, dan efek scythe. Warna efek dipakai juga buat semua skill di game 3D. Bisa juga dengan klik scythe-nya langsung di Home atau di game 3D.": "Set the colours of the scythe's handle, head and effects. The effect colour is used for every skill in the 3D game too. You can also just tap the scythe on Home or in the 3D game.",
   "Geser buat muter · klik buat ganti warna": "Drag to turn · tap to change colours",
   "Balik ke warna asli scythe": "Back to the original scythe colours",
   "Warna scythe disimpan.": "Scythe colours saved.",
@@ -337,7 +336,6 @@
   "Coba →": "Try it →",
   "Coba kata kunci lain.": "Try a different keyword.",
   "Katalog lagi nggak bisa dibuka. Coba muat ulang halamannya.": "The catalog isn't available right now. Try reloading the page.",
-  "Kontak": "Contact",
   "Saluran WA": "WA Channel",
   "Bikin key baru": "Create a new key",
   "Jenis key": "Key type",
@@ -980,7 +978,6 @@
   "sama key kamu dari halaman API Keys, dan": "with your key from the API Keys page, and",
   "sama isi parameternya.": "with the parameter values.",
   "Semua endpoint dicek otomatis:": "Every endpoint is checked automatically:",
-  "hijau artinya jalan, kode merah artinya lagi bermasalah (misal": "in green means it works, a red code means it's having trouble (e.g.",
   "server lagi nggak tersedia). Kodenya diambil dari cek otomatis dan request asli 24 jam terakhir.": "the server is unavailable right now). Codes come from the automatic checks and real requests in the last 24 hours.",
   "Backup database (.sql dan JSON) dikirim jadi lampiran ke email developer. File web dikirim berupa link, soalnya Gmail nolak lampiran yang isinya file .js.": "The database backups (.sql and JSON) are sent as attachments to the developer's email. Web files are sent as a link, because Gmail refuses attachments that contain .js files.",
   "dikirim berupa link": "sent as a link",
@@ -1086,7 +1083,6 @@
   "Kode hasil (boleh diedit, habis edit tes ulang)": "Resulting code (you can edit it; test again after editing)",
   "Tes ulang": "Test again",
   "Lagi tes & commit…": "Testing & committing…",
-  "Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Tombol deploy baru bisa diklik kalau tesnya jalan.": "The script is committed to GitHub, Vercel redeploys automatically (about 20–60 seconds), then the endpoint goes live. The deploy button only works once the test passes.",
   "Test/Check All API": "Test/Check All API",
   "Ngecek semua endpoint ke server sumbernya masing-masing. Pakai kuota tiap server.": "Checks every endpoint against its source server. Uses each server's quota.",
   "Edit kode endpoint": "Edit endpoint code",
@@ -1104,7 +1100,6 @@
   "AI: belum diatur (isi AI_API_KEY di Vercel). Kode simpel tetap bisa tanpa AI.": "AI: not set up (fill in AI_API_KEY on Vercel). Simple code still works without AI.",
   "Kalau pakai AI bisa sampai 1–2 menit.": "With AI this can take 1–2 minutes.",
   "Tempel kodenya dulu.": "Paste the code first.",
-  "Tes dulu sampai jalan, baru bisa deploy.": "Test it until it works, then you can deploy.",
   "dihapus, nunggu deploy": "deleted, waiting for deploy",
   "Kode maksimal 200 KB ya.": "Code is limited to 200 KB.",
   "Endpoint dihapus.": "Endpoint deleted.",
@@ -1169,7 +1164,18 @@
   "Telah disimpan. Upload file besar dari website udah diizinkan.": "Saved. Large uploads from the website are allowed now.",
   "Saluran WhatsApp": "WhatsApp channel",
   "Login pakai Google dulu buat akses CDN.": "Sign in with Google first to use the CDN.",
-  "Login dulu buat buka halaman itu.": "Sign in first to open that page."
+  "Login dulu buat buka halaman itu.": "Sign in first to open that page.",
+  "Waktu deploy kodenya dites sekali lagi pakai input di atas. Kalau jalan, script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Kalau gagal, nggak ada yang di-deploy.": "On deploy the code is tested once more with the input above. If it works, the script is committed to GitHub, Vercel redeploys automatically (about 20–60 seconds), then the endpoint goes live. If it fails, nothing is deployed.",
+  "✓ Kode & input ini udah lolos tes.": "✓ This code and input passed the test.",
+  "Belum dites dengan kode/input yang sekarang: dites otomatis waktu deploy.": "Not tested with the current code/input yet: it is tested automatically on deploy.",
+  "Nama endpoint wajib diisi.": "The endpoint name is required.",
+  "Path harus kayak /api/kategori/nama (huruf kecil, angka, tanda -; kategori maks 40, nama maks 60 huruf).": "The path must look like /api/category/name (lowercase letters, digits, -; category up to 40, name up to 60 characters).",
+  "Kode hasilnya kosong.": "The resulting code is empty.",
+  "Yakin? Klik lagi buat deploy": "Sure? Click again to deploy",
+  "Lagi ngetes ulang terus commit ke GitHub…": "Testing again, then committing to GitHub…",
+  "Atur warna pegangan, kepala, dan efek scythe. Warna efek dipakai juga buat semua skill di game 3D. Bisa juga dengan klik scythe-nya langsung di Home atau di game 3D.": "Set the colours of the scythe's handle, head and effects. The effect colour is used for every skill in the 3D game too. You can also just tap the scythe on Home or in the 3D game.",
+  "Kontak": "Contact",
+  "kuning artinya jalan, kode yang dicoret artinya lagi bermasalah (misal": "in yellow means it works, a struck-out code means a problem (for example"
  },
  "patterns": [
   [
@@ -1947,6 +1953,10 @@
   [
    "^(.+) disembunyiin lagi, sekarang cuma jadi cadangan\\.$",
    "$1 is hidden again; it is a backup only now."
+  ],
+  [
+   "^Commit script ke plugin/ dan deploy (\\S+) \\(tier (\\S+)\\)\\.$",
+   "Commit the script to plugin/ and deploy $1 (tier $2)."
   ]
  ]
 }

@@ -5,62 +5,69 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Playground — Yannz API</title>
 <link rel="icon" type="image/png" href="/assets/favicon.png?v=2"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
-<meta name="theme-color" content="#0b0b0c">
+<meta name="theme-color" content="#f6f4ee">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/theme.css">
 <script src="/assets/i18n.js"></script>
 <script src="/assets/human-check.js"></script>
 <style>
+  /* Endpoint catalog in the cartoon look (views/theme.css): one list, categories on the left. */
   .hero-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
-  .counter { font: 700 13px "DM Mono", monospace; color: var(--muted); margin: 0; }
-  .counter b { color: var(--ink); font-size: 22px; font-family: "Space Grotesk", sans-serif; }
+  .counter { display: inline-flex; align-items: baseline; gap: 8px; margin: 0; padding: 10px 18px; border: var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); font: 700 14px var(--f-body); color: var(--muted); transform: rotate(1.5deg); }
+  .counter b { padding: 0 8px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font: 700 30px/1.15 var(--f-head); }
   /* catalog: categories on the left, endpoints on the right (one column on phones) */
-  .cat-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 22px; align-items: start; margin-top: 18px; }
-  .cats { position: sticky; top: 84px; display: grid; gap: 4px; max-height: calc(100vh - 110px); overflow-y: auto; padding: 4px; scrollbar-width: thin; }
-  .cats button { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: 1.5px solid transparent; border-radius: 10px; background: transparent; color: var(--muted); font: 600 13.5px "Outfit", sans-serif; text-align: left; text-transform: none; letter-spacing: 0; box-shadow: none; cursor: pointer; }
-  .cats button:hover { color: var(--ink); background: var(--surface); }
-  .cats button[aria-pressed="true"] { color: var(--accent-ink); background: var(--accent); }
-  .cats button small { font: 600 11px "DM Mono", monospace; opacity: .75; }
-  .finder { position: sticky; top: 62px; z-index: 5; display: grid; gap: 10px; padding: 12px 0 10px; background: linear-gradient(var(--bg) 82%, transparent); }
-  .finder input[type=search] { width: 100%; font-size: 15px; padding: 12px 14px 12px 40px; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E") no-repeat 13px 50% / 18px; }
-  .tiers { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .tiers span { font: 600 11px "DM Mono", monospace; color: var(--muted); margin-right: 4px; text-transform: uppercase; letter-spacing: .06em; }
-  .tiers button { padding: 5px 10px; font: 600 11px "DM Mono", monospace; border-radius: 999px; box-shadow: none; }
-  .tiers button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  .result-info { font: 500 12px "DM Mono", monospace; color: var(--muted); }
-  .eplist { display: grid; border: var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
-  .grp { padding: 10px 18px; font: 700 12px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); border-bottom: 1.5px solid var(--edge-soft); }
-  .ep { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: center; padding: 13px 18px; border-bottom: 1.5px solid var(--edge-soft); content-visibility: auto; contain-intrinsic-size: auto 86px; }
+  .cat-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 26px; align-items: start; margin-top: 22px; }
+  .cats { position: sticky; top: 86px; display: grid; gap: 4px; max-height: calc(100vh - 110px); overflow-y: auto; padding: 10px; border: var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); scrollbar-width: thin; }
+  .cats button { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 7px 12px; border: 2px solid transparent; border-radius: 12px; background: transparent; color: var(--muted); font: 600 15px var(--f-head); text-align: left; box-shadow: none; cursor: pointer; }
+  .cats button:hover { color: var(--ink); background: var(--surface-3); transform: none; }
+  .cats button[aria-pressed="true"] { color: var(--accent-ink); background: var(--accent); border-color: var(--edge); }
+  .cats button small { min-width: 30px; padding: 0 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font: 700 12px/1.6 var(--f-body); text-align: center; }
+  .cats button[aria-pressed="true"] small { background: var(--surface); color: var(--ink); }
+  .finder { position: sticky; top: 66px; z-index: 5; display: grid; gap: 12px; padding: 14px 0 12px; background: var(--bg); }
+  .finder input[type=search] { width: 100%; min-height: 50px; font: 700 16px var(--f-body); padding: 10px 16px 10px 46px; border-radius: 16px; box-shadow: 3px 3px 0 var(--drop); background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23141414' stroke-width='2.6' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E") no-repeat 15px 50% / 20px; }
+  .tiers { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .tiers span { font: 700 13px var(--f-body); color: var(--muted); margin-right: 2px; }
+  .tiers button { min-height: 34px; padding: 3px 13px; font: 600 13px var(--f-head); border-width: 2px; border-radius: 999px; background: var(--surface); box-shadow: 2px 2px 0 var(--drop); }
+  .tiers button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .result-info { font: 700 13px var(--f-body); color: var(--muted); }
+  .eplist { display: grid; border: var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+  .grp { display: flex; align-items: center; gap: 10px; padding: 10px 18px; font: 600 16px var(--f-head); color: var(--ink); background: var(--surface-3); border-bottom: 3px solid var(--edge); }
+  .grp::before { content: ""; width: 12px; height: 12px; border: 2px solid var(--edge); border-radius: 4px; background: var(--accent); transform: rotate(45deg); }
+  .ep { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 18px; align-items: center; padding: 14px 18px; border-bottom: 2px solid var(--edge-soft); content-visibility: auto; contain-intrinsic-size: auto 96px; }
   .ep:last-child { border-bottom: 0; }
   .ep:hover { background: var(--surface-2); }
   .ep-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
-  .ep-top b { font: 600 15px "Outfit", sans-serif; }
-  .ep p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.45; grid-column: 1; }
+  .ep-top b { font: 600 17px var(--f-head); }
+  .ep p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; grid-column: 1; }
   .ep-path { grid-column: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .ep-path .m { flex: none; font: 700 10px "DM Mono", monospace; padding: 2px 6px; border-radius: 5px; background: color-mix(in srgb, #22c55e 18%, transparent); color: #4ade80; }
-  .ep-path code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; background: none; padding: 0; border: 0; color: var(--ink); opacity: .85; }
-  .ep-path .cp { flex: none; padding: 2px 8px; font: 600 10px "DM Mono", monospace; box-shadow: none; border-radius: 6px; }
-  .ep-side { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-  .ep-side .btn { padding: 8px 14px; font-size: 11px; box-shadow: 3px 3px 0 var(--drop); white-space: nowrap; }
-  .ep .chip { font-size: 10px; }
-  .more { display: flex; justify-content: center; padding: 14px; }
+  .ep-path .m { flex: none; padding: 1px 8px; border: 2px solid var(--edge); border-radius: 8px; background: var(--accent); color: var(--accent-ink); font: 700 11px var(--f-mono); }
+  .ep-path code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; background: none; padding: 0; border: 0; color: var(--ink); }
+  .ep-path .cp { flex: none; min-height: 28px; padding: 1px 10px; font-size: 12px; border-width: 2px; border-radius: 9px; box-shadow: none; background: var(--surface-2); }
+  .ep-side { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+  .ep-side .btn { min-height: 40px; padding: 6px 16px; font-size: 15px; box-shadow: 3px 3px 0 var(--drop); white-space: nowrap; }
+  .ep .chip { font-size: 11px; }
+  .more { display: flex; justify-content: center; padding: 16px; }
+  .more button { background: var(--surface-3); }
   .empty { text-align: center; padding: 40px 10px; color: var(--muted); }
+  .empty b { display: block; margin-bottom: 4px; font: 600 20px var(--f-head); color: var(--ink); }
   @media (max-width: 860px) {
     .cat-layout { grid-template-columns: 1fr; gap: 0; }
-    .cats { position: static; display: flex; overflow-x: auto; max-height: none; gap: 6px; padding: 2px 0 8px; scrollbar-width: none; }
+    .cats { position: static; display: flex; overflow-x: auto; max-height: none; gap: 8px; padding: 2px 2px 10px; border: 0; background: none; box-shadow: none; scrollbar-width: none; }
     .cats::-webkit-scrollbar { display: none; }
-    .cats button { flex: none; width: auto; padding: 7px 12px; border: 1.5px solid var(--edge-soft); background: var(--surface); }
+    .cats button { flex: none; width: auto; border: 2px solid var(--edge); background: var(--surface); }
     .finder { top: 104px; }
   }
   @media (max-width: 560px) {
-    .ep { grid-template-columns: 1fr; padding: 13px 14px; }
+    .counter { transform: none; }
+    .ep { grid-template-columns: 1fr; padding: 14px; }
     .ep-side { grid-column: 1; grid-row: auto; flex-direction: row; justify-content: space-between; align-items: center; }
   }
-  .site-foot { border-top: 2px solid var(--edge-soft); margin-top: 40px; padding: 26px 16px 40px; }
+  .site-foot { border-top: var(--line); background: var(--surface); margin-top: 48px; padding: 26px 16px 40px; }
   .site-foot .inner { max-width: 1180px; margin: auto; display: flex; flex-wrap: wrap; gap: 14px 22px; justify-content: space-between; align-items: center; color: var(--muted); font-size: 14px; }
   .site-foot nav { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+  .site-foot nav a { font: 600 15px var(--f-head); text-decoration: none; }
 </style>
 <script src="/assets/ui-theme.js"></script>
 </head>
@@ -94,7 +101,7 @@
 </div></footer>
 <script>
 const $ = s => document.querySelector(s);
-const epBadge = b => { const m = { new: ['🍃', 'New'], hot: ['🔥', 'Hot'], recommend: ['👍', 'Recommend'] }[b]; return m ? `<span class="ep-badge ep-badge--${b}"><span class="ep-badge-ic" aria-hidden="true">${m[0]}</span>${m[1]}</span>` : ''; };
+const epBadge = b => { const m = { new: 'New', hot: 'Hot', recommend: 'Recommend' }[b]; return m ? `<span class="ep-badge ep-badge--${b}">${m}</span>` : ''; };
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let catalog = {}, cat = '', tier = '', shown = 60;
 const PAGE = 60;
