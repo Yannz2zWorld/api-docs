@@ -85,6 +85,9 @@
   .backup-card p { flex: 1; margin: 0; }
   .backup-checks { margin: 6px 0 0; padding-left: 0; list-style: none; display: grid; gap: 6px; }
   #backup-msg .ok { color: var(--ok); font-weight: 600; }
+  .ep-find { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; background: var(--bg); }
+  .ep-find input[type=search] { flex: 1 1 260px; min-width: 0; }
+  .ep-find select { flex: 0 0 auto; }
 </style>
 <script src="/assets/ui-theme.js"></script>
 </head>
@@ -199,6 +202,12 @@
     </form>
     <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Test/Check All API</button><small class="muted" id="selftest-note">Ngecek semua endpoint ke server sumbernya masing-masing. Pakai kuota tiap server.</small></div>
     <div id="selftest-data"></div>
+    <div class="ep-find">
+      <input type="search" id="ep-search" placeholder="Cari endpoint: nama, path, kategori, file…" aria-label="Cari endpoint" autocomplete="off">
+      <select id="ep-f-status" aria-label="Filter status"><option value="">Semua status</option><option value="active">Aktif</option><option value="disabled">Nonaktif</option><option value="locked">Terkunci</option><option value="auto">Disembunyikan otomatis</option><option value="pending">Nunggu deploy</option></select>
+      <select id="ep-f-tier" aria-label="Filter tier"><option value="">Semua tier</option><option value="FREE">FREE</option><option value="SULTAN">SULTAN</option><option value="SEPUH">SEPUH</option><option value="DEWA">DEWA</option><option value="OWNER">DEVELOPER</option></select>
+      <small class="muted" id="ep-count" aria-live="polite"></small>
+    </div>
     <div id="endpoints-data">Lagi dimuat…</div>
   </section>
 
@@ -688,13 +697,37 @@ loaders.endpoints = async () => {
     const d = await api('/owner/api/endpoints');
     epData.clear();
     d.endpoints.forEach(e => epData.set(String(e.id), e));
-    epList = d.endpoints; epShown = 0;
-    epMoreWatch.disconnect();
-    $('#endpoints-data').innerHTML = '<table><colgroup><col style="width:28%"><col style="width:17%"><col style="width:14%"><col style="width:15%"><col style="width:11%"><col style="width:15%"></colgroup><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Label</th><th>Status</th><th>Aksi</th></tr></table><p class="muted ep-more" hidden></p>';
-    epAppend();
-    epMoreWatch.observe($('#endpoints-data .ep-more'));
+    epAll = d.endpoints;
+    epFilter();
   } catch (e) { fail('#endpoints-data', e); }
 };
+// Search + filters only change which rows are listed; the table is then redrawn from the first chunk.
+let epAll = [];
+function epFilter() {
+  const words = $('#ep-search').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const st = $('#ep-f-status').value, tier = $('#ep-f-tier').value;
+  epList = epAll.filter(e => {
+    if (tier && e.minimum_tier !== tier) return false;
+    if (st === 'active' && e.status !== 'active') return false;
+    if (st === 'disabled' && e.status === 'active') return false;
+    if (st === 'locked' && !e.locked) return false;
+    if (st === 'auto' && !e.auto_disabled) return false;
+    if (st === 'pending' && (e.handler_loaded && !e.deleted)) return false;
+    const hay = [e.shown_name, e.name, e.path, e.public_path, e.category, e.file, e.alias_of, ...(e.backups || [])].filter(Boolean).join(' ').toLowerCase();
+    return words.every(w => hay.includes(w));
+  });
+  epShown = 0;
+  $('#ep-count').textContent = epList.length === epAll.length ? `${epAll.length} endpoint` : `${epList.length} dari ${epAll.length} endpoint`;
+  epMoreWatch.disconnect();
+  if (!epList.length) { $('#endpoints-data').innerHTML = '<p class="muted">Nggak ada endpoint yang cocok.</p>'; return; }
+  $('#endpoints-data').innerHTML = '<table><colgroup><col style="width:28%"><col style="width:17%"><col style="width:14%"><col style="width:15%"><col style="width:11%"><col style="width:15%"></colgroup><tr><th>Endpoint</th><th>Handler</th><th>Tier minimum</th><th>Label</th><th>Status</th><th>Aksi</th></tr></table><p class="muted ep-more" hidden></p>';
+  epAppend();
+  epMoreWatch.observe($('#endpoints-data .ep-more'));
+}
+let epTyping;
+$('#ep-search').addEventListener('input', () => { clearTimeout(epTyping); epTyping = setTimeout(epFilter, 150); });
+$('#ep-f-status').addEventListener('change', epFilter);
+$('#ep-f-tier').addEventListener('change', epFilter);
 // Redraws one row with `changes` applied (none: puts the row back as it was, e.g. a cancelled change).
 function epUpdate(id, changes = {}) {
   const e = epData.get(String(id));
