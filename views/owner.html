@@ -200,7 +200,7 @@
           <p class="muted">Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Tombol deploy baru bisa diklik kalau tesnya jalan.</p></div>
       </div>
     </form>
-    <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Test/Check All API</button><small class="muted" id="selftest-note">Ngecek semua endpoint ke server sumbernya masing-masing. Pakai kuota tiap server.</small></div>
+    <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Test/Check All API</button><button type="button" class="sm" id="deploy-btn">Deploy ulang</button><small class="muted" id="selftest-note">Ngecek semua endpoint ke server sumbernya masing-masing. Pakai kuota tiap server.</small></div>
     <div id="selftest-data"></div>
     <div class="ep-find">
       <input type="search" id="ep-search" placeholder="Cari endpoint: nama, path, kategori, file…" aria-label="Cari endpoint" autocomplete="off">
@@ -1023,11 +1023,41 @@ $('#ep-form').addEventListener('submit', async e => {
   try {
     const d = await send('/owner/api/endpoints', 'POST', body);
     say(d.message || 'Endpoint udah disimpan.');
+    watchLive(body.path);
     f.reset(); $('#ep-source').value = ''; $('#ep-preview').hidden = true; setTested(false);
     $('#ep-file-info').textContent = 'Maks 200 KB.';
   } catch (err) { say(err.message); btn.disabled = false; }
   btn.textContent = 'Tambah & deploy';
   loaders.endpoints();
+});
+
+// After a commit the new code is live only once Vercel has deployed it: the panel asks every 15 s
+// (for up to 5 minutes) whether the server now has a handler for the path, and says so.
+function watchLive(path) {
+  const note = $('#ep-convert-msg');
+  const started = Date.now();
+  note.textContent = `⏳ ${path} lagi nunggu deploy Vercel…`;
+  const tick = async () => {
+    try {
+      const d = await api('/owner/api/endpoints');
+      if (d.endpoints.some(e => e.path === path && e.handler_loaded && !e.deleted)) {
+        note.textContent = `✓ ${path} udah live dan bisa dipakai.`;
+        say(`${path} udah live ✓`);
+        if (!$('#tab-endpoints').hidden) loaders.endpoints();
+        return;
+      }
+    } catch { /* try again next round */ }
+    if (Date.now() - started > 5 * 60 * 1000) { note.textContent = `✕ ${path} belum live setelah 5 menit. Klik "Deploy ulang" atau cek tab Deployments di Vercel.`; return; }
+    setTimeout(tick, 15000);
+  };
+  setTimeout(tick, 20000);
+}
+$('#deploy-btn').addEventListener('click', async () => {
+  if (!ask('Mulai deploy ulang website di Vercel sekarang?')) return;
+  const btn = $('#deploy-btn'); btn.disabled = true;
+  try { const d = await send('/owner/api/deploy', 'POST', {}); say(d.message); }
+  catch (err) { say(err.message); }
+  btn.disabled = false;
 });
 
 // ---------- edit an endpoint's code

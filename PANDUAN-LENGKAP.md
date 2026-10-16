@@ -216,6 +216,7 @@ Yang rahasia centang **Sensitive**. Setelah menambah/mengubah, **Redeploy**.
 | `BACKUP_EMAIL` | Gmail penerima backup harian |
 | `GITHUB_TOKEN` | Token GitHub (Contents: Read & Write) — tambah/edit endpoint dari panel — **Sensitive** |
 | `GITHUB_REPO`, `GITHUB_BRANCH` | Repo `owner/nama` & branch (default repo ini, `main`) |
+| `VERCEL_DEPLOY_HOOK` | URL Deploy Hook Vercel (Settings → Git → Deploy Hooks, branch `main`). Dipanggil tiap endpoint ditambah/diedit/dihapus dari panel + tombol "Deploy ulang" — **Sensitive** |
 | `AI_API_KEY` | Key AI untuk "Tambah endpoint pakai AI" — **Sensitive** |
 | `AI_BASE_URL` | Gateway AI (kosong = Anthropic langsung; mis. `https://api.kryptonlab.id`) |
 | `AI_MODEL` | Nama model di gateway |
