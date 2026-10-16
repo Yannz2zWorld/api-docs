@@ -1,25 +1,25 @@
-/* Yannz API — shared neo-brutalist theme: dark neutral surfaces with a crimson primary accent. */
+/* Yannz API — shared comic-panel theme: dark panels, thick black outlines, hard offset shadows, cyan accent. */
 :root {
-  --bg: #0b0b0c;
-  --surface: #141416;
-  --surface-2: #1b1b1e;
-  --surface-3: #232327;
-  --ink: #f4f4f5;
-  --muted: #a1a1aa;
-  --faint: #71717a;
-  --edge: #d4d4d8;
-  --edge-soft: #3f3f46;
-  --drop: #3f3f46;
-  --accent: #c8202f;
-  --accent-ink: #ffffff;
+  --bg: #120e12;
+  --surface: #241b22;
+  --surface-2: #2c2129;
+  --surface-3: #362832;
+  --ink: #fff6e8;
+  --muted: #e2d6cf;
+  --faint: #b8aaa3;
+  --edge: #000000;
+  --edge-soft: #000000;
+  --drop: #000000;
+  --accent: #3dd6ff;
+  --accent-ink: #000000;
   --red: #c8202f;
   --red-deep: #a3172a;
   --ok: #86efac;
   --bad: #fca5a5;
   --warn: #e4e4e7;
-  --radius: 12px;
-  --line: 2px solid var(--edge);
-  --shadow: 6px 6px 0 var(--drop);
+  --radius: 20px;
+  --line: 4px solid var(--edge);
+  --shadow: 8px 8px 0 var(--drop);
   --ease: cubic-bezier(.2, .8, .2, 1);
   color-scheme: dark;
 }
@@ -29,10 +29,10 @@ body {
   margin: 0;
   min-height: 100vh;
   background: var(--bg);
-  background-image: radial-gradient(#1f1f23 1.1px, transparent 1.1px);
-  background-size: 22px 22px;
+  background-image: radial-gradient(rgba(61, 214, 255, .14) 1.6px, transparent 1.9px);
+  background-size: 12px 12px;
   color: var(--ink);
-  font: 15px/1.55 Outfit, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 700 15px/1.55 "Comic Neue", Outfit, system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 ::selection { background: var(--accent); color: var(--accent-ink); }
@@ -206,3 +206,7 @@ button.primary:hover, .btn.primary:hover { background: var(--red-deep); color: #
 .ep-badge--new { color: #4ade80; background: rgba(74, 222, 128, .1); }
 .ep-badge--hot { color: var(--ui-bad, #f87171); background: color-mix(in srgb, var(--ui-bad, #f87171) 12%, transparent); }
 .ep-badge--recommend { color: #facc15; background: rgba(250, 204, 21, .1); }
+
+/* Comic panel type: Bangers for titles, buttons and labels. */
+h1, h2, h3, .btn, button, .chip, .eyebrow, .nav a { font-family: Bangers, "Space Grotesk", system-ui, sans-serif; letter-spacing: 1.5px; font-weight: 400; }
+code, pre, kbd { font-family: "JetBrains Mono", "DM Mono", ui-monospace, monospace; }
