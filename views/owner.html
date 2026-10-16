@@ -174,7 +174,7 @@
 
   <section class="panel" id="tab-endpoints" hidden>
     <h2>Endpoint registry</h2>
-    <form class="ep-new" id="ep-form">
+    <form class="ep-new" id="ep-form" novalidate>
       <h3>Tambah endpoint</h3>
       <p class="muted full" style="margin:0">Tempel kode apa aja: case bot WA, route Express, script axios/fetch, atau plugin. Web nyesuaiin kodenya sama format website, terus langsung dites. Kalau jalan, cek dulu hasilnya, baru klik <b>Tambah &amp; deploy</b>.</p>
       <div class="ai-line full"><span id="ai-state" class="muted">AI: lagi dicek…</span><button type="button" class="sm" id="ai-ping">Tes koneksi AI</button><small id="ai-ping-msg" class="muted" aria-live="polite"></small></div>
@@ -196,8 +196,8 @@
           <div class="full"><span class="ep-cap">Input buat tes</span><div id="ep-sample" class="ep-sample"></div></div>
           <label class="full"><span><b>6</b> Kode hasil (boleh diedit, habis edit tes ulang)</span><textarea name="code" id="ep-code" spellcheck="false"></textarea></label>
         </div>
-        <div class="actions"><button type="button" id="ep-retest">Tes ulang</button><button class="primary" type="submit" id="ep-submit" disabled>Tambah &amp; deploy</button> <small class="muted" id="ep-submit-why" aria-live="polite"></small>
-          <p class="muted">Script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Tombol deploy baru bisa diklik kalau tesnya jalan.</p></div>
+        <div class="actions"><button type="button" id="ep-retest">Tes ulang</button><button class="primary" type="submit" id="ep-submit">Tambah &amp; deploy</button> <small class="muted" id="ep-submit-why" aria-live="polite"></small>
+          <p class="muted">Waktu deploy kodenya dites sekali lagi pakai input di atas. Kalau jalan, script di-commit ke GitHub, Vercel deploy ulang otomatis (±20–60 detik), terus endpoint-nya aktif. Kalau gagal, nggak ada yang di-deploy.</p></div>
       </div>
     </form>
     <div class="row" style="margin:6px 0 2px;gap:8px;flex-wrap:wrap"><button type="button" class="sm primary" id="selftest-btn">Test/Check All API</button><button type="button" class="sm" id="deploy-btn">Deploy ulang</button><small class="muted" id="selftest-note">Ngecek semua endpoint ke server sumbernya masing-masing. Pakai kuota tiap server.</small></div>
@@ -985,10 +985,18 @@ const readSample = el => {
   if (raw) return Object.fromEntries(new URLSearchParams(raw.value.trim()));
   return Object.fromEntries([...el.querySelectorAll('[data-sample]')].map(i => [i.dataset.sample, i.value.trim()]));
 };
-const setTested = ok => {
-  ep.tested = ok; $('#ep-submit').disabled = !ok;
-  $('#ep-submit-why').textContent = ok ? '' : 'Tombol deploy aktif setelah tesnya berhasil (✓ Jalan).';
+// The deploy button is never locked by the page: the server runs the test again before it commits
+// anything (POST /owner/api/endpoints → TEST_FAILED), so a failing script is never deployed. A lock
+// here kept the button dead after a passing test whenever an input event fired without a real
+// change (autofill, a phone keyboard). The note only says whether the current code and input have
+// passed a test yet.
+const whatIsTested = () => { const f = $('#ep-form'); return JSON.stringify([f.code.value, f.path.value.trim(), readSample($('#ep-sample'))]); };
+const showWhy = () => {
+  const passed = ep.tested && ep.passed === whatIsTested();
+  $('#ep-submit-why').textContent = passed ? '✓ Kode & input ini udah lolos tes.' : 'Belum dites dengan kode/input yang sekarang: dites otomatis waktu deploy.';
 };
+const setTested = ok => { ep.tested = ok; ep.passed = ok ? whatIsTested() : null; showWhy(); };
+const PATH_OK = /^\/api\/[a-z0-9-]{1,40}\/[a-z0-9-]{1,60}$/;
 
 loaders.ai = async () => {
   try {
@@ -1042,23 +1050,44 @@ const retest = async () => {
   btn.disabled = false; btn.textContent = 'Tes ulang';
 };
 $('#ep-retest').addEventListener('click', retest);
-['#ep-code', '#ep-sample'].forEach(k => $(k).addEventListener('input', () => setTested(false)));
-$('#ep-form [name=path]').addEventListener('input', () => setTested(false));
+['#ep-code', '#ep-sample'].forEach(k => $(k).addEventListener('input', showWhy));
+$('#ep-form [name=path]').addEventListener('input', showWhy);
+// Confirmed with a second click on the button itself: confirm() returns false without asking in
+// browsers that block dialogs (in-app browsers, "don't let this page create more dialogs"), which
+// made the button do nothing at all.
+let armed = null;
+const disarm = () => { clearTimeout(armed); armed = null; const b = $('#ep-submit'); if (!b.disabled) b.textContent = 'Tambah & deploy'; };
 $('#ep-form').addEventListener('submit', async e => {
   e.preventDefault();
-  if (!ep.tested) { say('Tes dulu sampai jalan, baru bisa deploy.'); return; }
-  const f = e.target;
-  const body = { name: f.name.value, path: f.path.value, description: f.description.value, minimum_tier: f.minimum_tier.value, code: f.code.value, params: ep.params, sample: readSample($('#ep-sample')) };
-  if (!ask(`Commit script ke plugin/ dan deploy ${body.path} (tier ${body.minimum_tier})?`)) return;
-  const btn = $('#ep-submit'); btn.disabled = true; btn.textContent = 'Lagi tes & commit…';
+  const f = e.target, why = $('#ep-submit-why');
+  const body = { name: f.name.value.trim(), path: f.path.value.trim(), description: f.description.value, minimum_tier: f.minimum_tier.value, code: f.code.value, params: ep.params, sample: readSample($('#ep-sample')) };
+  const bad = !body.name ? ['name', 'Nama endpoint wajib diisi.'] : !PATH_OK.test(body.path) ? ['path', 'Path harus kayak /api/kategori/nama (huruf kecil, angka, tanda -; kategori maks 40, nama maks 60 huruf).'] : !body.code.trim() ? ['code', 'Kode hasilnya kosong.'] : null;
+  if (bad) { disarm(); why.textContent = '✕ ' + tr(bad[1]); f[bad[0]].focus(); return; }
+  const btn = $('#ep-submit');
+  if (!armed) {
+    btn.textContent = tr('Yakin? Klik lagi buat deploy');
+    why.textContent = tr(`Commit script ke plugin/ dan deploy ${body.path} (tier ${tierName(body.minimum_tier)}).`);
+    armed = setTimeout(() => { disarm(); showWhy(); }, 8000);
+    return;
+  }
+  clearTimeout(armed); armed = null;
+  btn.disabled = true; btn.textContent = 'Lagi tes & commit…';
+  why.textContent = tr('Lagi ngetes ulang terus commit ke GitHub…');
   try {
     const d = await send('/owner/api/endpoints', 'POST', body);
-    say(d.message || 'Endpoint udah disimpan.');
+    const msg = d.message || 'Endpoint udah disimpan.';
+    say(msg);
     watchLive(body.path);
     f.reset(); $('#ep-source').value = ''; $('#ep-preview').hidden = true; setTested(false);
     $('#ep-file-info').textContent = 'Maks 200 KB.';
-  } catch (err) { say(err.message); testBox($('#ep-test'), failedTest(err)); btn.disabled = false; }
-  btn.textContent = 'Tambah & deploy';
+    $('#ep-convert-msg').textContent = '✓ ' + tr(msg);
+  } catch (err) {
+    // The server's test failed: its result replaces the old one. Anything else (GitHub, network) is
+    // said next to the button and the last test result stays.
+    if (err.test) { testBox($('#ep-test'), failedTest(err)); setTested(false); }
+    why.textContent = '✕ ' + err.message;
+  }
+  btn.disabled = false; btn.textContent = 'Tambah & deploy';
   loaders.endpoints();
 });
 

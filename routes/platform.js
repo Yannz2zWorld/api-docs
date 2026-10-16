@@ -1238,7 +1238,9 @@ async function duplicateOf(req, p) {
 }
 async function freePath(req, p) {
   if (!(await duplicateOf(req, p))) return p;
-  for (let i = 2; i < 20; i++) { const c = `${p}-v${i}`; if (!(await duplicateOf(req, c))) return c; }
+  // The name part stays within 60 characters (the path rule), so a long name is cut to fit "-vN".
+  const [, cat, nm] = /^\/api\/([^/]+)\/(.+)$/.exec(p) || [null, 'tools', 'endpoint'];
+  for (let i = 2; i < 20; i++) { const v = `-v${i}`, c = `/api/${cat}/${nm.slice(0, 60 - v.length).replace(/-+$/, '')}${v}`; if (!(await duplicateOf(req, c))) return c; }
   return p;
 }
 const buildLimiter = { running: 0 };

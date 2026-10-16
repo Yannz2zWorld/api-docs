@@ -248,7 +248,11 @@ it('the panel: paste → Sempurnakan & tes → preview → deploy; Test/Check Al
   for (const id of ['ep-source', 'ep-convert', 'ep-ai', 'ep-preview', 'ep-test', 'ep-code', 'ep-retest', 'ep-submit', 'ai-ping', 'code-dialog', 'code-save']) assert.match(html, new RegExp(`id="${id}"`), id);
   assert.match(html, />Test\/Check All API</);
   assert.doesNotMatch(html, /Tes endpoint theresav/);
-  assert.match(html, /id="ep-submit" disabled/, 'deploy stays off until a test passes');
+  // The server tests again before committing (TEST_FAILED), so the button is never locked by the page.
+  assert.match(html, /id="ep-submit">/, 'the deploy button can always be clicked');
+  assert.doesNotMatch(html, /id="ep-submit" disabled/);
+  assert.match(html, /id="ep-form" novalidate/, 'no silent browser validation bubble: the panel says what is wrong');
+  assert.doesNotMatch(html.slice(html.indexOf("$('#ep-form').addEventListener('submit'")).split('\n// ')[0], /ask\(/, 'no confirm() (blocked dialogs made the button do nothing)');
   assert.match(html, /data-ep="code"/);
   assert.match(html, /data-ep="\$\{e\.handler_loaded \? 'delete-code' : 'delete'\}"/);
 });
