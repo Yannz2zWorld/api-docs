@@ -27,6 +27,8 @@ before(async () => {
     if (u.pathname === '/assets/check-sample.png') return new Response(PNG, { status: 200, headers: { 'content-type': 'image/png' } });
     // Fake Call's background picture (any real picture will do here).
     if (u.hostname === 'cdn-alip.clutch.web.id') return new Response(PNG, { status: 200, headers: { 'content-type': 'image/png' } });
+    // IQC Pink (plugin/maker-iqc-pink.js, added from the Developer panel) returns its server's picture.
+    if (u.hostname === 'api-moondrowend.web.id') return new Response(PNG, { status: 200, headers: { 'content-type': 'image/png' } });
     return realFetch(url, opts);
   };
   // The TikTok plugin talks to tikwm through axios.

@@ -515,6 +515,10 @@ app.locals.pluginRuns = pluginRuns;
 // path -> the route's parameter list (required, placeholder, file), for the Developer panel's "Tes".
 const pluginParams = new Map();
 app.locals.pluginParams = pluginParams;
+// Endpoints added from the Developer panel (services/githubPluginService.js buildPluginFile): the
+// endpoint checker tests them with their parameters' examples.
+const panelPluginPaths = new Set();
+app.locals.panelPluginPaths = panelPluginPaths;
 // Backup-only endpoints (name, description, category, parameters): the Developer panel can show one
 // as a version of the endpoint it backs up (services/endpointAliasService.js).
 const backupRoutes = new Map();
@@ -707,6 +711,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
     try {
       const routes = require(fullPath);
       const handlers = Array.isArray(routes) ? routes : [routes];
+      const fromPanel = fs.readFileSync(fullPath, 'utf8').startsWith('// Endpoint added from the owner panel.');
 
       handlers.forEach(route => {
         const { name, desc, category, path: routePath, run, params } = route;
@@ -719,6 +724,7 @@ fs.readdirSync(pluginFolder).forEach(file => {
           pluginFiles.set(cleanPath, file);
           pluginRuns.set(cleanPath, run);
           if (Array.isArray(params)) pluginParams.set(cleanPath, params);
+          if (fromPanel) panelPluginPaths.add(cleanPath);
           registrySyncTasks.push(query(`INSERT INTO endpoints(name,path,description,method,minimum_tier,locked,status,plugin) VALUES($1,$2,$3,$4,$5,false,'active',$6) ON CONFLICT(path) DO NOTHING`, [name,cleanPath,desc,'GET','FREE',file.replace(/\.js$/,'')]).catch(e=>{console.error('Endpoint registry sync failed:',e.code||'DATABASE_ERROR');return null;}));
 
           if (route.backupOnly) { backupRoutes.set(cleanPath, { name, desc, category, path: routePath, ...(Array.isArray(params) ? { params } : {}) }); return; }   // only a backup for another endpoint: not listed on its own
