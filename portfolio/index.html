@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Yannz Portfolio</title>
+<meta name="description" content="Portfolio Yannz: website, bot, REST API, dan game.">
+<style>:root{box-sizing:border-box}body{margin:0;padding:0}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" id="pf-style" href="style.css">
+</head>
+<body>
+<div id="app"></div>
+
+<script type="application/json" id="pf-data">{
+  "name": "Yannz",
+  "nickname": "Yannz",
+  "tagline": "Aku bikin website, bot, dan hal-hal seru lain. *Kadang juga main game.*",
+  "bio": "Ini tempat aku ngumpulin semua yang pernah aku bikin dan aku tekuni. Isinya bisa apa aja: proyek coding, game, desain, atau hobi lain.",
+  "intro": "Aku nggak cuma nulis kode. Aku suka membangun sesuatu dari nol, merapikannya sampai enak dipakai orang, lalu lanjut ke ide berikutnya.",
+  "about": "Halo, aku Yannz dari Indonesia. Aku paling banyak belajar dengan langsung bikin sesuatu sendiri.\n\nSelain ngoding, aku juga suka game dan hal-hal kreatif lainnya. Kalau kamu mau kenalan, kerja sama, atau sekadar ngobrol, langsung kontak aja.",
+  "location": "Indonesia",
+  "status": "Terbuka untuk kerja sama",
+  "focus": "Kreator",
+  "photo": "",
+  "look": {"base": "abu", "accent": "#d6d6d6", "mode": "dark", "fx": "halus", "type": "sinema", "corner": "bulat", "motion": "penuh"},
+  "labels": {"about": "Tentang aku", "work": "Karya pilihan", "skills": "Keahlian & hobi", "journey": "Perjalanan aku", "services": "Yang bisa aku bantu", "play": "Putar dan warnai", "process": "Cara aku kerja", "tools": "Alat andalan", "games": "Game yang aku mainkan", "specs": "Spesifikasi aku", "principles": "Prinsip aku", "testimonials": "Kata mereka", "faq": "Sering ditanya", "now": "Lagi ngapain sekarang", "contact": "Yuk ngobrol", "contactText": "Mau kenalan, kerja sama, atau mabar? Pilih salah satu di bawah, aku balas secepatnya."},
+  "stats": [
+    {"value": "100+", "label": "endpoint di Yannz API"},
+    {"value": "3", "label": "karya di portfolio ini"},
+    {"value": "2", "label": "website yang lagi live"},
+    {"value": "∞", "label": "ide berikutnya"}
+  ],
+  "journey": [
+    {"year": "Kini", "title": "Membangun YS-Digital", "desc": "Toko produk digital dengan pembayaran QRIS dan pengiriman otomatis."},
+    {"year": "Lalu", "title": "Merilis Yannz API", "desc": "Platform REST API dengan ratusan endpoint, API key, dan kuota harian."},
+    {"year": "Awal", "title": "Mulai dari bot WhatsApp", "desc": "Dari sini aku belajar backend, server, dan cara bikin sesuatu yang dipakai banyak orang."}
+  ],
+  "services": [
+    {"title": "Website & toko online", "desc": "Dari halaman profil sampai toko lengkap dengan checkout dan pembayaran."},
+    {"title": "REST API & bot", "desc": "API yang rapi, bot WhatsApp, dan integrasi webhook."},
+    {"title": "Mabar & konten game", "desc": "Cari teman main atau kolaborasi konten? Ajak aja."}
+  ],
+  "socials": {"whatsapp": "", "telegram": "", "instagram": "", "tiktok": "", "x": ""},
+  "projects": [
+    {"title": "Yannz API", "category": "Coding", "desc": "Platform REST API dengan ratusan endpoint: downloader, AI, pencarian, dan tools.", "tech": "Node.js, PostgreSQL, Vercel", "link": "https://apiz2z.web.id", "status": "Live", "image": ""},
+    {"title": "YS-Digital", "category": "Coding", "desc": "Toko produk digital dengan pembayaran QRIS dan pengiriman otomatis.", "tech": "Node.js, PostgreSQL", "link": "https://ys-digital.store", "status": "Live", "image": ""},
+    {"title": "Game favorit", "category": "Game", "desc": "Ganti kartu ini dengan game yang kamu mainkan, rank, atau pencapaianmu.", "tech": "", "link": "", "status": "Contoh", "image": ""}
+  ],
+  "skills": "Coding, Bot WhatsApp, Website, REST API, Game, Desain, Node.js, PostgreSQL",
+  "process": [
+    {"title": "Dengerin dulu", "desc": "Aku mulai dari tujuannya: masalahnya apa, siapa yang bakal pakai, dan hasil seperti apa yang dibutuhkan."},
+    {"title": "Rancang yang simpel", "desc": "Alur, tampilan, dan data disusun serapi mungkin sebelum mulai nulis kode."},
+    {"title": "Bangun dan uji", "desc": "Dikerjakan bertahap, dites di HP dan laptop, lalu dicek ulang sampai jalan mulus."},
+    {"title": "Rilis dan rawat", "desc": "Setelah live, aku pantau, perbaiki, dan kembangkan sesuai kebutuhan."}
+  ],
+  "tools": [
+    {"name": "Node.js", "desc": "Mesin utama hampir semua backend yang aku bikin."},
+    {"name": "PostgreSQL", "desc": "Database buat data yang harus rapi dan aman."},
+    {"name": "Vercel", "desc": "Tempat deploy website dan API supaya cepat diakses."},
+    {"name": "GitHub", "desc": "Semua kode disimpan dan dilacak di sini."},
+    {"name": "Bot WhatsApp", "desc": "Otomatisasi chat buat grup dan pelanggan."},
+    {"name": "QRIS Pakasir", "desc": "Pembayaran otomatis di toko online."}
+  ],
+  "games": [
+    {"name": "Game favorit 1", "note": "Ganti dengan game yang kamu mainkan"},
+    {"name": "Game favorit 2", "note": "Tulis rank atau role kamu"},
+    {"name": "Game favorit 3", "note": "Atau pencapaian terbaikmu"},
+    {"name": "Game favorit 4", "note": "Bisa ditambah sebanyak apa pun"},
+    {"name": "Game favorit 5", "note": "Atur di Pengaturan, bagian Game"},
+    {"name": "Game favorit 6", "note": "Kartu ini muter dalam 3D"}
+  ],
+  "specs": [
+    {"label": "Asal", "value": "Indonesia"},
+    {"label": "Fokus utama", "value": "Backend & bot"},
+    {"label": "Website live", "value": "2"},
+    {"label": "Endpoint API", "value": "100+"},
+    {"label": "Status", "value": "Terbuka"}
+  ],
+  "principles": "Rapi, Cepat, Jujur, Terus belajar",
+  "testimonials": [],
+  "faq": [
+    {"q": "Gimana cara ngajak kerja sama?", "a": "Kirim pesan lewat salah satu kontak di bagian bawah. Ceritain singkat idemu, nanti kita bahas bareng."},
+    {"q": "Bisa bantu bikin website atau bot?", "a": "Bisa. Lihat bagian Layanan buat contoh hal yang biasa aku kerjain."},
+    {"q": "Mau mabar, ID-nya apa?", "a": "Tanya aja lewat kontak, nanti aku kirim."}
+  ],
+  "now": [
+    {"text": "Ngembangin fitur baru di YS-Digital"},
+    {"text": "Merapikan endpoint di Yannz API"},
+    {"text": "Bikin portfolio ini makin keren"}
+  ]
+}</script>
+
+<script id="pf-three" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script id="pf-gltf" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script id="pf-room" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
+<script id="pf-app" src="app.js"></script>
+</body>
+</html>
