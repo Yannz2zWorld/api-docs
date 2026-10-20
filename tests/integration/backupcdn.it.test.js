@@ -1,6 +1,6 @@
 'use strict';
 // "Kirim ke Gmail" with large-file storage (B2/R2) set up: what cannot be an attachment (the web zip,
-// anything past the email size) goes to this site's own CDN as a 72-hour link. R2, GitHub and the mail
+// anything past the email size) goes to this site's own CDN as a 30-day link. R2, GitHub and the mail
 // provider are never contacted: fetch and emailService.sendMail are stubbed.
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
@@ -54,7 +54,7 @@ const it = (name, fn) => test(name, { skip: h.skip }, fn);
 const email = parts => app.request('POST', '/owner/backup/email', { cookie: owner, headers: { origin: app.origin }, body: parts ? { parts } : {} });
 const cdnRow = url => h.db().query("SELECT storage, ready, owner_id, data, expires_at FROM cdn_files WHERE id=$1", [url.split('/cdn/')[1]]).then(r => r.rows[0]);
 
-it('the web zip goes as a link to the site\'s own CDN, stored in the bucket, expiring in 72 hours', async () => {
+it('the web zip goes as a link to the site\'s own CDN, stored in the bucket, expiring in 30 days', async () => {
   const st = await app.request('GET', '/owner/backup/status', { cookie: owner });
   assert.equal(st.json.cdn.configured, true);
   const r = await email();
@@ -65,7 +65,7 @@ it('the web zip goes as a link to the site\'s own CDN, stored in the bucket, exp
   const row = await cdnRow(web.cdn);
   assert.deepEqual([row.storage, row.ready, row.owner_id, row.data], ['r2', true, null, null], 'in the bucket, not in the database');
   const hours = (new Date(row.expires_at) - Date.now()) / 3600e3;
-  assert.ok(hours > 71 && hours <= 72, String(hours));
+  assert.ok(hours > 719 && hours <= 720, String(hours));
   const m = sent[0];
   assert.deepEqual(m.attachments.map(a => a.filename.replace(/\d{4}-\d{2}-\d{2}/, 'D')), ['yannz-db-D.sql', 'yannz-db-D.json']);
   assert.match(m.text, /File web \(\.zip\): yannz-web-.*\.zip .*unduh lewat CDN, berlaku sampai .* WIB: https:\/\/apiz2z\.test\/cdn\//);
