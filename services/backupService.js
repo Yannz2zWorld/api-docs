@@ -138,7 +138,7 @@ const pickParts = list => (list == null ? PART_KEYS.slice() : PART_KEYS.filter(k
 // What cannot go as an attachment (the web zip, anything past the email size) is put on this site's
 // own CDN and sent as a link that expires after CDN_TTL_HOURS. Always through the storage bucket
 // (B2/R2), never into the database, so tomorrow's database backup does not carry today's backup.
-const CDN_TTL_HOURS = 72;
+const CDN_TTL_HOURS = 24 * 30;   // 30 days
 const cdnReady = () => cdn.largeEnabled();
 const cdnBase = () => (process.env.CDN_PUBLIC_URL || process.env.PUBLIC_BASE_URL || 'https://apiz2z.web.id').trim().replace(/\/+$/, '');
 async function putOnCdn({ filename, contentType, content }) {
