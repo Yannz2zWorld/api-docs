@@ -180,3 +180,18 @@ it('deleting a file (Developer panel, or when it expires) deletes it from the bu
   await require('../../services/cdnService').purgeExpired();
   assert.ok(!objects.has(b), 'an expired file leaves the bucket too');
 });
+
+it('server uploads (CDN_SERVER_TOKEN) take the large route too: start, PUT, finish, owned by no account', async () => {
+  process.env.CDN_SERVER_TOKEN = 'server-upload-token-'.padEnd(40, 'x');
+  try {
+    const auth = { authorization: `Bearer ${process.env.CDN_SERVER_TOKEN}` };
+    const started = await app.request('POST', '/cdn/server/start', { body: { name: 'ys-web-2026-10-20.zip', type: 'application/zip', size: 6 * 1024 * 1024, ttlHours: 72 }, headers: auth });
+    assert.equal(started.status, 200, started.text);
+    assert.equal((await browserPut(started.json.upload, Buffer.alloc(6 * 1024 * 1024, 1))).status, 200);
+    const done = await app.request('POST', '/cdn/server/finish', { body: { id: started.json.id }, headers: auth });
+    assert.equal(done.status, 200, done.text);
+    assert.equal(done.json.result.size, 6 * 1024 * 1024);
+    assert.ok(done.json.result.expiresAt, 'expires');
+    assert.equal((await app.request('POST', '/cdn/server/finish', { body: { id: started.json.id } })).status, 401, 'finish needs the token too');
+  } finally { delete process.env.CDN_SERVER_TOKEN; }
+});
