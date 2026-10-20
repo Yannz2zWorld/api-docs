@@ -5,14 +5,15 @@
 //   json      yannz-db-<date>.json     the same data as JSON: easy to open and read, not for restoring.
 //   web       yannz-web-<date>.zip     the website's source code (the GitHub repo: GITHUB_TOKEN,
 //                                      GITHUB_REPO, GITHUB_BRANCH as for the plugin upload).
-// sendToOwner() emails all three as attachments to BACKUP_EMAIL (default: OWNER_EMAIL) through
-// services/emailService.js.
+// sendToOwner() emails the picked ones to BACKUP_EMAIL (default: OWNER_EMAIL) through
+// services/emailService.js: attached when they fit, else as an expiring link on this site's CDN.
 // API keys are only ever stored as hashes, so no backup contains a usable key; it does contain
 // password hashes and account data, so it is only for the developer.
 const zlib = require('zlib');
 const { promisify } = require('util');
 const { query } = require('../lib/db');
 const emailService = require('./emailService');
+const cdn = require('./cdnService');
 const gzip = promisify(zlib.gzip);
 
 const DEFAULT_REPO = 'Yannz2zWorld/api-docs';
@@ -129,49 +130,103 @@ const EMAIL_LIMIT = 15 * 1024 * 1024;
 const ATTACH_PLAIN_LIMIT = 4 * 1024 * 1024;   // bigger files are attached gzipped (.gz)
 const mb = n => `${(n / 1024 / 1024).toFixed(2)} MB`;
 
-// Builds all three backups and emails them to backupRecipient(). A part that fails (e.g. GitHub not set
-// up) is reported in the email and the result instead of stopping the others.
+// The parts the developer can pick in the panel (all three when nothing is said, e.g. the daily cron).
+const PARTS = { database: 'Database (.sql)', json: 'Database (JSON)', web: 'File web (.zip)' };
+const PART_KEYS = Object.keys(PARTS);
+const pickParts = list => (list == null ? PART_KEYS.slice() : PART_KEYS.filter(k => [].concat(list).map(String).includes(k)));
+
+// What cannot go as an attachment (the web zip, anything past the email size) is put on this site's
+// own CDN and sent as a link that expires after CDN_TTL_HOURS. Always through the storage bucket
+// (B2/R2), never into the database, so tomorrow's database backup does not carry today's backup.
+const CDN_TTL_HOURS = 72;
+const cdnReady = () => cdn.largeEnabled();
+const cdnBase = () => (process.env.CDN_PUBLIC_URL || process.env.PUBLIC_BASE_URL || 'https://apiz2z.web.id').trim().replace(/\/+$/, '');
+async function putOnCdn({ filename, contentType, content }) {
+  const started = await cdn.startLarge({ name: filename, type: contentType, size: content.length, ownerId: null, isOwner: true, ttlHours: CDN_TTL_HOURS });
+  let put;
+  try { put = await fetch(started.upload.url, { method: 'PUT', headers: started.upload.headers, body: content, signal: AbortSignal.timeout(120000) }); } catch { put = null; }
+  if (!put?.ok) {
+    await cdn.removeFile(started.id).catch(() => {});
+    throw webError(502, 'CDN_UPLOAD_FAILED', 'Upload ke penyimpanan CDN gagal.');
+  }
+  const f = await cdn.finishLarge({ id: started.id, ownerId: null });
+  return { url: `${cdnBase()}/cdn/${f.id}`, expiresAt: f.expiresAt };
+}
+const NO_CDN = 'Penyimpanan file besar (B2/R2) belum diatur di tab CDN, jadi nggak bisa dikirim lewat link.';
+
+// Builds the picked backups and emails them to backupRecipient(). A part that fails (e.g. GitHub not
+// set up) is reported in the email and the result instead of stopping the others.
 // Where backups go: BACKUP_EMAIL if set, else the developer's OWNER_EMAIL.
 const backupRecipient = () => String(process.env.BACKUP_EMAIL || process.env.OWNER_EMAIL || '').trim();
 
-async function sendToOwner({ reason = 'manual' } = {}) {
+async function sendToOwner({ reason = 'manual', parts: picked } = {}) {
+  const keys = pickParts(picked);
+  if (!keys.length) throw webError(400, 'NO_PARTS', 'Pilih minimal satu: database (.sql), JSON atau file web.');
   const to = backupRecipient();
   if (!to) throw webError(503, 'OWNER_EMAIL_MISSING', 'Isi BACKUP_EMAIL (atau OWNER_EMAIL) dulu di Environment Variables.');
   if (!emailService.isConfigured()) throw webError(503, 'EMAIL_NOT_CONFIGURED', 'Email belum aktif: isi EMAIL_FROM + SMTP (Gmail App Password) atau RESEND_API_KEY di Vercel.');
 
-  const parts = [];
-  let db = null;
-  try { db = await readDatabase(); } catch { db = null; }
-  const fromDb = make => async () => { if (!db) throw new Error('db'); return make(db); };
-  for (const [label, make] of [['Database (.sql)', fromDb(databaseBackup)], ['Database (JSON)', fromDb(jsonBackup)]]) {
-    try { parts.push({ label, ...(await make()) }); } catch (e) { parts.push({ label, error: e.status ? e.message : 'Gagal dibuat.' }); }
-  }
-  // Web files go as a link, not an attachment: Gmail refuses any email whose attachment contains
-  // .js files, even inside a zip, and the website is mostly .js.
   const { repo, branch } = github();
   const site = (process.env.PUBLIC_BASE_URL || 'https://apiz2z.web.id').replace(/\/+$/, '');
-  parts.push({ label: 'File web', link: `${site}/owner/backup/web`, note: `Unduh lewat link (Gmail nggak ngizinin file .js di lampiran): ${site}/owner/backup/web — atau langsung dari GitHub: https://github.com/${repo}/archive/refs/heads/${branch}.zip` });
+  const webLink = p => Object.assign(p, { link: `${site}/owner/backup/web`, note: `unduh lewat link: ${site}/owner/backup/web, atau langsung dari GitHub: https://github.com/${repo}/archive/refs/heads/${branch}.zip` });
+  let db = null;
+  if (keys.includes('database') || keys.includes('json')) { try { db = await readDatabase(); } catch { db = null; } }
+  const parts = [];
+  for (const key of keys) {
+    const p = { key, label: PARTS[key] };
+    parts.push(p);
+    if (key === 'web') {
+      // Web files never go as an attachment: Gmail refuses any email whose attachment contains .js
+      // files, even inside a zip, and the website is mostly .js.
+      if (!cdnReady()) { webLink(p); continue; }
+      try { Object.assign(p, await webBackup(), { toCdn: true }); } catch { webLink(p); }
+      continue;
+    }
+    if (!db) { p.error = 'Gagal dibuat.'; continue; }
+    try { Object.assign(p, await (key === 'database' ? databaseBackup : jsonBackup)(db)); } catch (e) { p.error = e.status ? e.message : 'Gagal dibuat.'; }
+  }
   let total = 0;
   for (const p of parts) {
-    if (p.error || p.link) continue;
+    if (p.error || p.link || !p.raw) continue;
     p.content = p.raw;
     if (!p.zipped && p.raw.length > ATTACH_PLAIN_LIMIT) { p.content = await gzip(p.raw, { level: 9 }); p.filename += '.gz'; p.contentType = 'application/gzip'; }
-    if (total + p.content.length > EMAIL_LIMIT) { p.error = `Kebesaran buat lampiran email (${mb(p.content.length)}), unduh langsung dari Developer Panel.`; continue; }
+    if (p.toCdn) continue;
+    if (total + p.content.length > EMAIL_LIMIT) { p.toCdn = true; continue; }
     total += p.content.length;
     p.attached = true;
   }
-  const attached = parts.filter(p => p.attached);
-  if (!attached.length) throw webError(502, 'BACKUP_FAILED', 'Semua backup gagal dibuat: ' + parts.map(p => `${p.label}: ${p.error}`).join(' · '));
+  const upload = async p => {
+    if (!cdnReady()) { p.error = `Kebesaran buat lampiran email (${mb(p.content.length)}). ${NO_CDN}`; return; }
+    try { const r = await putOnCdn(p); p.cdn = r.url; p.expiresAt = r.expiresAt; }
+    catch { if (p.key === 'web') { webLink(p); delete p.content; } else p.error = `Kebesaran buat lampiran email (${mb(p.content.length)}) dan upload ke CDN gagal.`; }
+    p.toCdn = false;
+  };
+  for (const p of parts.filter(x => x.toCdn)) await upload(p);
+  if (!parts.some(p => p.attached || p.cdn || p.link)) throw webError(502, 'BACKUP_FAILED', 'Semua backup gagal dibuat: ' + parts.map(p => `${p.label}: ${p.error}`).join(' · '));
 
   const when = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'full', timeStyle: 'short' });
-  const lines = parts.map(p => (p.attached ? `✔ ${p.label}: ${p.filename} (${mb(p.content.length)}${p.rows != null ? `, ${p.tables} tabel, ${p.rows} baris` : ''})` : p.link ? `↗ ${p.label}: ${p.note}` : `✘ ${p.label}: ${p.error}`));
-  const text = [`Halo! Ini backup Yannz API ${reason === 'cron' ? 'otomatis harian' : 'yang kamu minta dari Developer Panel'}.`, `Dibuat: ${when} WIB`, '', ...lines, '',
-    'Cara balikin database kalau ada apa-apa:', '1. Bikin database baru (mis. project Neon baru), jalankan semua migrations/*.sql dari file web (link di atas).', '2. Jalankan isi yannz-db-*.sql (kalau .sql.gz, ekstrak dulu) di SQL Editor Neon.', '3. Ganti DATABASE_URL di Vercel ke database baru, lalu redeploy.', '',
-    'Simpan email ini baik-baik dan jangan diteruskan ke siapa pun: isinya data akun.', '— YannApi'].join('\n');
+  const until = iso => new Date(iso).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' });
   const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const html = `<div style="font-family:Arial,Helvetica,sans-serif;line-height:1.55;color:#111">${text.split('\n').map(l => (l ? esc(l) : '&nbsp;')).join('<br>')}</div>`;
-  await emailService.sendMail({ to, subject: `Backup Yannz API — ${today()}`, text, html, attachments: attached.map(p => ({ filename: p.filename, content: p.content, contentType: p.contentType })) });
-  return { to, parts: parts.map(p => ({ label: p.label, filename: p.filename || null, size: p.content?.length || 0, attached: !!p.attached, link: p.link || null, error: p.error || null })) };
+  const compose = () => {
+    const size = p => `${mb(p.content.length)}${p.rows != null ? `, ${p.tables} tabel, ${p.rows} baris` : ''}`;
+    const lines = parts.map(p => (p.attached ? `✔ ${p.label}: ${p.filename} (${size(p)}), terlampir`
+      : p.cdn ? `↗ ${p.label}: ${p.filename} (${size(p)}), unduh lewat CDN, berlaku sampai ${until(p.expiresAt)} WIB: ${p.cdn}`
+      : p.link ? `↗ ${p.label}: ${p.note}` : `✘ ${p.label}: ${p.error}`));
+    const text = [`Halo! Ini backup Yannz API ${reason === 'cron' ? 'otomatis harian' : 'yang kamu minta dari Developer Panel'}.`, `Dibuat: ${when} WIB`, '', ...lines, '',
+      'Cara balikin database kalau ada apa-apa:', '1. Bikin database baru (mis. project Neon baru), jalankan semua migrations/*.sql dari file web.', '2. Jalankan isi yannz-db-*.sql (kalau .sql.gz, ekstrak dulu) di SQL Editor Neon.', '3. Ganti DATABASE_URL di Vercel ke database baru, lalu redeploy.', '',
+      'Simpan email ini baik-baik dan jangan diteruskan ke siapa pun: isinya data akun, dan link CDN-nya bisa dibuka siapa aja yang punya link sampai kedaluwarsa.', '— YannApi'].join('\n');
+    const html = `<div style="font-family:Arial,Helvetica,sans-serif;line-height:1.55;color:#111">${text.split('\n').map(l => (l ? esc(l).replace(/https:\/\/[^\s<]+/g, u => `<a href="${u}">${u}</a>`) : '&nbsp;')).join('<br>')}</div>`;
+    return { to, subject: `Backup Yannz API — ${today()}`, text, html, attachments: parts.filter(p => p.attached).map(p => ({ filename: p.filename, content: p.content, contentType: p.contentType })) };
+  };
+  try { await emailService.sendMail(compose()); }
+  catch (e) {
+    // The mail server refused the attachments (too big, or flagged): send every file as a CDN link instead.
+    const attached = parts.filter(p => p.attached);
+    if (e.code !== 'EMAIL_SEND_FAILED' || !attached.length || !cdnReady()) throw e;
+    for (const p of attached) { p.attached = false; await upload(p); }
+    await emailService.sendMail(compose());
+  }
+  return { to, parts: parts.map(p => ({ key: p.key, label: p.label, filename: p.filename || null, size: p.content?.length || 0, attached: !!p.attached, cdn: p.cdn || null, expiresAt: p.expiresAt || null, link: p.link || null, error: p.error || null })) };
 }
 
-module.exports = { backupRecipient, readDatabase, toSql, toJson, databaseBackup, jsonBackup, webZipUrl, webBackup, sendToOwner, gzip, EMAIL_LIMIT };
+module.exports = { PART_KEYS, pickParts, backupRecipient, readDatabase, toSql, toJson, databaseBackup, jsonBackup, webZipUrl, webBackup, sendToOwner, gzip, EMAIL_LIMIT };

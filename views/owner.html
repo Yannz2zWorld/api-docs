@@ -295,7 +295,12 @@
       </div>
     </div>
     <h3 style="margin-top:26px">Kirim ke Gmail</h3>
-    <p class="muted"><small>Backup database (.sql dan JSON) dikirim jadi lampiran ke email developer. File web dikirim berupa link, soalnya Gmail nolak lampiran yang isinya file .js.</small></p>
+    <p class="muted"><small>Pilih yang mau dikirim ke email developer. Yang muat dikirim jadi lampiran; file web (Gmail nolak lampiran yang isinya file .js) dan file yang kegedean dikirim berupa link CDN yang berlaku 3 hari.</small></p>
+    <div class="row" id="backup-parts" style="gap:16px;flex-wrap:wrap">
+      <label><input type="checkbox" value="database" checked> Database (.sql)</label>
+      <label><input type="checkbox" value="json" checked> Database (JSON)</label>
+      <label><input type="checkbox" value="web" checked> File web (.zip)</label>
+    </div>
     <div id="backup-status" class="muted"><small>Lagi dimuat…</small></div>
     <div class="row" style="margin-top:10px"><button class="primary" type="button" id="backup-email">Kirim backup ke Gmail sekarang</button></div>
     <p id="backup-msg" aria-live="polite"></p>
@@ -1384,7 +1389,8 @@ loaders.backup = async () => {
     $('#backup-status').innerHTML = `<ul class="backup-checks">${[
       ok(d.email.configured && d.email.to, `Email aktif, backup dikirim ke <b data-no-i18n>${esc(d.email.to)}</b>`, d.email.to ? 'Email belum aktif: isi <code>EMAIL_FROM</code> + <code>SMTP_HOST/SMTP_USER/SMTP_PASS</code> (Gmail App Password) atau <code>RESEND_API_KEY</code> di Vercel.' : 'Isi <code>OWNER_EMAIL</code> di Vercel.'),
       ok(d.daily.enabled, 'Backup otomatis tiap hari jam 02.00 WIB nyala', 'Backup otomatis harian belum nyala: isi <code>CRON_SECRET</code> (teks acak bebas) di Vercel terus redeploy.'),
-      ok(d.github.token, `File web diambil dari GitHub <code>${esc(d.github.repo)}</code> (${esc(d.github.branch)})`, `Backup file web butuh <code>GITHUB_TOKEN</code> kalau repo <code>${esc(d.github.repo)}</code> private.`)
+      ok(d.github.token, `File web diambil dari GitHub <code>${esc(d.github.repo)}</code> (${esc(d.github.branch)})`, `Backup file web butuh <code>GITHUB_TOKEN</code> kalau repo <code>${esc(d.github.repo)}</code> private.`),
+      ok(d.cdn?.configured, 'File yang nggak muat di lampiran dikirim lewat link CDN', 'Link CDN butuh penyimpanan file besar (B2/R2) di tab CDN. Tanpa itu, file web dikirim berupa link ke panel dan file yang kegedean nggak ikut terkirim.')
     ].join('')}</ul>`;
   } catch (e) { fail('#backup-status', e); }
 };
@@ -1408,10 +1414,13 @@ document.querySelectorAll('[data-backup]').forEach(btn => btn.addEventListener('
 }));
 $('#backup-email').addEventListener('click', async () => {
   const btn = $('#backup-email'), msg = $('#backup-msg');
+  const parts = [...document.querySelectorAll('#backup-parts input:checked')].map(i => i.value);
+  if (!parts.length) { msg.innerHTML = `<span class="error">${esc(tr('Pilih minimal satu yang mau dikirim.'))}</span>`; return; }
   btn.disabled = true; msg.textContent = 'Lagi bikin backup & ngirim email… (bisa sampai semenit)';
   try {
-    const d = await send('/owner/backup/email');
-    msg.innerHTML = `<span class="ok">Terkirim ke ${esc(d.to)}.</span><ul class="backup-checks">${d.parts.map(p => `<li>${p.attached ? '✅' : p.link ? '🔗' : '⚠️'} ${esc(p.label)}: ${p.attached ? `${esc(p.filename)} (${(p.size / 1048576).toFixed(2)} MB)` : p.link ? tr('dikirim berupa link') : esc(p.error)}</li>`).join('')}</ul>`;
+    const d = await send('/owner/backup/email', 'POST', { parts });
+    const mbs = p => `${esc(p.filename)} (${(p.size / 1048576).toFixed(2)} MB)`;
+    msg.innerHTML = `<span class="ok">Terkirim ke ${esc(d.to)}.</span><ul class="backup-checks">${d.parts.map(p => `<li>${p.attached ? '✅' : p.cdn || p.link ? '🔗' : '⚠️'} ${esc(p.label)}: ${p.attached ? mbs(p) : p.cdn ? `${mbs(p)}, ${tr('dikirim berupa link CDN')}` : p.link ? tr('dikirim berupa link') : esc(p.error)}</li>`).join('')}</ul>`;
   } catch (e) { msg.innerHTML = `<span class="error">${esc(e.message)}</span>`; }
   finally { btn.disabled = false; }
 });

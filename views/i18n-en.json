@@ -1175,7 +1175,12 @@
   "Lagi ngetes ulang terus commit ke GitHub…": "Testing again, then committing to GitHub…",
   "Atur warna pegangan, kepala, dan efek scythe. Warna efek dipakai juga buat semua skill di game 3D. Bisa juga dengan klik scythe-nya langsung di Home atau di game 3D.": "Set the colours of the scythe's handle, head and effects. The effect colour is used for every skill in the 3D game too. You can also just tap the scythe on Home or in the 3D game.",
   "Kontak": "Contact",
-  "kuning artinya jalan, kode yang dicoret artinya lagi bermasalah (misal": "in yellow means it works, a struck-out code means a problem (for example"
+  "kuning artinya jalan, kode yang dicoret artinya lagi bermasalah (misal": "in yellow means it works, a struck-out code means a problem (for example",
+  "Pilih yang mau dikirim ke email developer. Yang muat dikirim jadi lampiran; file web (Gmail nolak lampiran yang isinya file .js) dan file yang kegedean dikirim berupa link CDN yang berlaku 3 hari.": "Pick what to send to the developer's email. What fits goes as an attachment; web files (Gmail refuses attachments that contain .js files) and files that are too big go as a CDN link that works for 3 days.",
+  "Pilih minimal satu yang mau dikirim.": "Pick at least one to send.",
+  "dikirim berupa link CDN": "sent as a CDN link",
+  "File yang nggak muat di lampiran dikirim lewat link CDN": "Files that don't fit as attachments are sent as a CDN link",
+  "Link CDN butuh penyimpanan file besar (B2/R2) di tab CDN. Tanpa itu, file web dikirim berupa link ke panel dan file yang kegedean nggak ikut terkirim.": "CDN links need large-file storage (B2/R2) in the CDN tab. Without it, web files are sent as a link to the panel and files that are too big are not sent."
  },
  "patterns": [
   [

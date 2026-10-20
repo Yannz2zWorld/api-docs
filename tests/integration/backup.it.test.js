@@ -135,11 +135,28 @@ it('"Kirim ke Gmail" emails the database backups to OWNER_EMAIL; web files go as
   assert.match(m.subject, /^Backup Yannz API/);
   assert.deepEqual(m.attachments.map(a => a.filename.replace(/\d{4}-\d{2}-\d{2}/, 'D')), ['yannz-db-D.sql', 'yannz-db-D.json']);
   assert.ok(!m.attachments.some(a => /\.zip$/.test(a.filename)), 'no zip full of .js files');
-  assert.match(m.text, /File web: Unduh lewat link .*\/owner\/backup\/web/);
+  assert.match(m.text, /File web \(\.zip\): unduh lewat link: .*\/owner\/backup\/web/, 'no B2/R2 here, so the panel link');
   assert.match(m.attachments[0].content.toString(), /INSERT INTO "users"/);
   assert.equal(JSON.parse(m.attachments[1].content.toString()).version, 2);
   assert.equal(gh.length, 0, 'GitHub is not even contacted for the email');
-  assert.deepEqual(r.json.parts.map(p => [p.attached, !!p.link]), [[true, false], [true, false], [false, true]]);
+  assert.deepEqual(r.json.parts.map(p => [p.key, p.attached, !!p.link]), [['database', true, false], ['json', true, false], ['web', false, true]]);
+  assert.equal(st.json.cdn.configured, false);
+});
+
+it('only the picked parts are sent; nothing picked is refused', async () => {
+  const r = await app.request('POST', '/owner/backup/email', { cookie: owner, headers: { origin: app.origin }, body: { parts: ['json'] } });
+  assert.equal(r.status, 200, r.text);
+  assert.deepEqual(r.json.parts.map(p => p.key), ['json']);
+  assert.deepEqual(sent[0].attachments.map(a => a.filename.replace(/\d{4}-\d{2}-\d{2}/, 'D')), ['yannz-db-D.json']);
+  assert.doesNotMatch(sent[0].text, /Database \(\.sql\)|File web/);
+
+  const web = await app.request('POST', '/owner/backup/email', { cookie: owner, headers: { origin: app.origin }, body: { parts: ['web'] } });
+  assert.equal(web.status, 200, 'a link only is still an email worth sending');
+  assert.equal(sent[1].attachments.length, 0);
+
+  const none = await app.request('POST', '/owner/backup/email', { cookie: owner, headers: { origin: app.origin }, body: { parts: [] } });
+  assert.deepEqual([none.status, none.json.error], [400, 'NO_PARTS']);
+  assert.equal(sent.length, 2);
 });
 
 it('when the email provider refuses, the developer sees why', async () => {
