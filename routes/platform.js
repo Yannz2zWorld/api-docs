@@ -1827,7 +1827,8 @@ router.get('/owner/backup/status', auth, owner, (req, res) => res.json({
   success: true,
   email: { configured: emailService.isConfigured(), to: backups.backupRecipient() ? backups.backupRecipient().replace(/^(.{2}).*(@.*)$/, '$1***$2') : null },
   github: { token: !!process.env.GITHUB_TOKEN, repo: process.env.GITHUB_REPO || 'Yannz2zWorld/api-docs', branch: process.env.GITHUB_BRANCH || 'main' },
-  daily: { enabled: !!process.env.CRON_SECRET }
+  daily: { enabled: !!process.env.CRON_SECRET },
+  cdn: { configured: cdn.largeEnabled() }
 }));
 
 router.get(['/owner/backup', '/owner/backup/json'], auth, owner, async (req, res) => {
@@ -1860,8 +1861,8 @@ router.get('/owner/backup/web', auth, owner, async (req, res) => {
 
 router.post('/owner/backup/email', auth, owner, async (req, res) => {
   try {
-    const result = await backups.sendToOwner({ reason: 'manual' });
-    await audit.writeAudit({ actorUserId: req.account.id, action: 'backup_email', targetType: 'backup', metadata: { parts: result.parts.map(p => ({ label: p.label, attached: p.attached })) }, ipAddress: ip(req) });
+    const result = await backups.sendToOwner({ reason: 'manual', parts: req.body?.parts });
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'backup_email', targetType: 'backup', metadata: { parts: result.parts.map(p => ({ label: p.label, attached: p.attached, cdn: !!p.cdn })) }, ipAddress: ip(req) });
     return res.json({ success: true, ...result });
   } catch (e) { return backupFail(res, e); }
 });
@@ -1876,7 +1877,7 @@ router.get('/cron/backup', async (req, res) => {
   if (given.length !== want.length || !crypto.timingSafeEqual(given, want)) return fail(res, 401, 'UNAUTHORIZED', 'Unauthorized.');
   try {
     const result = await backups.sendToOwner({ reason: 'cron' });
-    await audit.writeAudit({ actorUserId: null, action: 'backup_email', targetType: 'backup', metadata: { auto: true, parts: result.parts.map(p => ({ label: p.label, attached: p.attached })) }, ipAddress: ip(req) });
+    await audit.writeAudit({ actorUserId: null, action: 'backup_email', targetType: 'backup', metadata: { auto: true, parts: result.parts.map(p => ({ label: p.label, attached: p.attached, cdn: !!p.cdn })) }, ipAddress: ip(req) });
     return res.json({ success: true, parts: result.parts });
   } catch (e) {
     console.error('Daily backup failed:', { code: e.code || null });
