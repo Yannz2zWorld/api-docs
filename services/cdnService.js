@@ -126,7 +126,7 @@ async function startLarge({ name, type, size, ownerId, isOwner = false, ttlHours
 
 async function finishLarge({ id, ownerId }) {
   if (!isValidId(id)) throw fail('NOT_FOUND');
-  const row = (await query("SELECT name, mime, size, expires_at, ready FROM cdn_files WHERE id=$1 AND owner_id=$2 AND storage='r2' LIMIT 1", [id, ownerId]))[0];
+  const row = (await query("SELECT name, mime, size, expires_at, ready FROM cdn_files WHERE id=$1 AND owner_id IS NOT DISTINCT FROM $2 AND storage='r2' LIMIT 1", [id, ownerId]))[0];
   if (!row) throw fail('NOT_FOUND');
   const ext = extOf(id);
   const result = () => ({ id, name: row.name || null, mime: String(row.mime), size: Number(row.size), expiresAt: iso(row.expires_at), inline: INLINE.has(ext) });

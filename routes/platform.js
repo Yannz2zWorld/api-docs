@@ -198,6 +198,42 @@ router.post('/cdn/upload/finish', sameOrigin, auth, async (req, res) => {
   } catch (e) { return cdnFail(res, e); }
 });
 
+// ---------------------------------------------------------------- CDN uploads from the developer's other servers
+// Server to server, no login: "Authorization: Bearer <CDN_SERVER_TOKEN>" (same value set on the other
+// site, e.g. YS-Digital's APIZ2Z_CDN_TOKEN, at least 32 characters). Used for backups that cannot go
+// as email attachments. Files belong to no account, always expire (default 72 hours, max 30 days),
+// and are served like any other /cdn/<id> link (random 128-bit id).
+//   <= 4 MB: POST /cdn/server/upload?name=<file>&ttlHours=<h> with the raw file as body
+//   larger : POST /cdn/server/start {name,type,size,ttlHours} -> PUT the file to upload.url -> POST /cdn/server/finish {id}
+const SERVER_TTL_DEFAULT = 72, SERVER_TTL_MAX = 24 * 30;
+const serverTtl = v => Math.max(1, Math.min(SERVER_TTL_MAX, Number(v) || SERVER_TTL_DEFAULT));
+function serverToken(req, res, next) {
+  const want = String(process.env.CDN_SERVER_TOKEN || '');
+  if (want.length < 32) return fail(res, 503, 'CDN_SERVER_DISABLED', 'Upload antar server belum aktif: isi CDN_SERVER_TOKEN (minimal 32 karakter) di Vercel.');
+  const given = Buffer.from(String(req.get('authorization') || '')), expected = Buffer.from(`Bearer ${want}`);
+  if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) return fail(res, 401, 'UNAUTHORIZED', 'Token upload salah.');
+  next();
+}
+router.post('/cdn/server/upload', serverToken, async (req, res) => {
+  const buf = Buffer.isBuffer(req.body) && req.body.length ? req.body : null;
+  if (!buf) return fail(res, 400, 'NO_FILE', 'File-nya kosong.');
+  try {
+    const saved = await cdn.store({ buffer: buf, name: typeof req.query.name === 'string' ? req.query.name : null, type: req.get('content-type'), ownerId: null, ttlHours: serverTtl(req.query.ttlHours) });
+    return res.json(resultJson(req, saved));
+  } catch (e) { return cdnFail(res, e); }
+});
+router.post('/cdn/server/start', serverToken, async (req, res) => {
+  const b = req.body || {};
+  try {
+    const started = await cdn.startLarge({ name: typeof b.name === 'string' ? b.name : null, type: typeof b.type === 'string' ? b.type : null, size: b.size, ownerId: null, isOwner: true, ttlHours: serverTtl(b.ttlHours) });
+    return res.json({ success: true, id: started.id, upload: started.upload });
+  } catch (e) { return cdnFail(res, e); }
+});
+router.post('/cdn/server/finish', serverToken, async (req, res) => {
+  try { return res.json(resultJson(req, await cdn.finishLarge({ id: String(req.body?.id || ''), ownerId: null }))); }
+  catch (e) { return cdnFail(res, e); }
+});
+
 // ---------------------------------------------------------------- last opened endpoints (dashboard)
 // The endpoints this account called most recently (Sandbox, Playground or its API keys), newest
 // first, from activity_log (migration 009). Endpoints since removed from the registry are skipped.

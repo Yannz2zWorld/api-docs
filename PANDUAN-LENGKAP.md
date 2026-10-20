@@ -206,6 +206,7 @@ Yang rahasia centang **Sensitive**. Setelah menambah/mengubah, **Redeploy**.
 | `CDN_PUBLIC_URL` | Alamat CDN VPS, mis. `https://cdn.apiz2z.web.id` (kosong = pakai domain utama) |
 | `CDN_ACCOUNT_LIMIT_MB` | Batas file aktif per akun (default 2048, `0` = tanpa batas) |
 | `CDN_CATBOX` | `off` (catbox sudah tidak menerima upload) |
+| `CDN_SERVER_TOKEN` | Token rahasia (≥ 32 karakter) buat upload dari server lain, mis. backup YS-Digital. Isi nilai yang **sama** di `APIZ2Z_CDN_TOKEN` toko — **Sensitive** |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL` | Alternatif: Cloudflare R2 (butuh kartu) |
 
 ### Fitur lain

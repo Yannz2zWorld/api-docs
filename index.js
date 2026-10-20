@@ -159,6 +159,7 @@ app.use((req, res, next) => {
   });
 });
 uploadPaths.add('/cdn/upload');   // CDN upload page (routes/platform.js)
+uploadPaths.add('/cdn/server/upload');   // uploads from the developer's other servers (routes/platform.js)
 const smallJson = express.json({ limit: '100kb' });
 const proofJson = express.json({ limit: '3mb' });
 const pluginJson = express.json({ limit: '768kb' });   // owner panel .js upload (max 200 KB of code), profile picture (max 512 KB image)
