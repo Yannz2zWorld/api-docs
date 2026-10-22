@@ -191,10 +191,13 @@ app.use(limiter);
 const authLimiter=rateLimit({windowMs:15*60*1000,max:Number(process.env.AUTH_RATE_LIMIT_PER_15MIN)||20,standardHeaders:true,legacyHeaders:false,message:{success:false,error:'AUTH_RATE_LIMIT',message:'Kebanyakan percobaan login. Coba lagi nanti ya.'}});
 app.use(['/auth/google','/auth/google/callback','/auth/google/credential','/auth/login','/auth/register','/auth/email/verify','/auth/email/resend','/auth/password/forgot','/auth/password/reset'],authLimiter);
 
+// Browser scripts are shipped obfuscated: views/dist/<file> is served when it exists (built by
+// `npm run obfuscate`), otherwise the readable original in views/. Server code is never obfuscated.
+const clientJs = file => { const d = path.join(__dirname, 'views', 'dist', file); return fs.existsSync(d) ? d : path.join(__dirname, 'views', file); };
 // Shared stylesheet for the account pages (explicit route so the Vercel bundle includes it).
 app.get('/assets/scene3d.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'scene3d.js'));
+  res.type('application/javascript').sendFile(clientJs('scene3d.js'));
 });
 // Hero model: the Crimson Requiem scythe baked from /3d (Draco + WebP, see tools/scythe/bake_web.py).
 app.get('/assets/scythe.glb', (req, res) => {
@@ -209,10 +212,10 @@ app.get('/assets/site-music.mp3', (req, res) => {
 });
 app.get('/assets/music.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'music.js'));
+  res.type('application/javascript').sendFile(clientJs('music.js'));
 });
 // WhatsApp channel button (views/channel.js), linked to settings.whatsappChannelLink.
-const channelJs = fs.readFileSync(path.join(__dirname, 'views', 'channel.js'), 'utf8');
+const channelJs = fs.readFileSync(clientJs('channel.js'), 'utf8');
 app.get('/assets/channel.js', (req, res) => {
   const link = /^https:\/\//.test(settings.whatsappChannelLink || '') ? settings.whatsappChannelLink : '';
   res.set('Cache-Control', 'no-cache');
@@ -221,28 +224,28 @@ app.get('/assets/channel.js', (req, res) => {
 // Announcement cards (maintenance, Pengumuman Dev) for the sign-in page and Home.
 app.get('/assets/announce.js', (req, res) => {
   res.set('Cache-Control', 'no-cache');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'announce.js'));
+  res.type('application/javascript').sendFile(clientJs('announce.js'));
 });
 // Scythe colours (views/scythe-color.js): handle / head / effects, set by tapping the scythe.
 app.get('/assets/scythe-color.js', (req, res) => {
   res.set('Cache-Control', 'no-cache');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'scythe-color.js'));
+  res.type('application/javascript').sendFile(clientJs('scythe-color.js'));
 });
 // Custom UI (views/ui-theme.js): the look and colour each visitor picked on /custom-ui.
 app.get('/assets/ui-theme.js', (req, res) => {
   res.set('Cache-Control', 'no-cache');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'ui-theme.js'));
+  res.type('application/javascript').sendFile(clientJs('ui-theme.js'));
 });
 app.get('/assets/endpoint-monitor.js', (req, res) => {
   res.set('Cache-Control', 'no-cache');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'endpoint-monitor.js'));
+  res.type('application/javascript').sendFile(clientJs('endpoint-monitor.js'));
 });
 // Website translation (views/i18n.js) and its English dictionary.
 // no-cache = the browser checks for a newer version on every page (a quick 304 when unchanged),
 // so new or changed texts are translated right after a deploy.
 app.get('/assets/i18n.js', (req, res) => {
   res.set('Cache-Control', 'no-cache');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'i18n.js'));
+  res.type('application/javascript').sendFile(clientJs('i18n.js'));
 });
 app.get('/assets/i18n-en.json', (req, res) => {
   res.set('Cache-Control', 'no-cache');
@@ -250,15 +253,15 @@ app.get('/assets/i18n-en.json', (req, res) => {
 });
 app.get('/assets/select.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'select.js'));
+  res.type('application/javascript').sendFile(clientJs('select.js'));
 });
 app.get('/assets/chat.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'chat.js'));
+  res.type('application/javascript').sendFile(clientJs('chat.js'));
 });
 app.get('/assets/aura-intro.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'aura-intro.js'));
+  res.type('application/javascript').sendFile(clientJs('aura-intro.js'));
 });
 // Sample photo the automatic endpoint checks send to photo endpoints (OCR, Remini, Sketch, ...).
 app.get('/assets/check-sample.png', (req, res) => {
@@ -276,7 +279,7 @@ app.get('/assets/scythe-mark-parts.png', (req, res) => {
 });
 app.get('/assets/slash-intro.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'slash-intro.js'));
+  res.type('application/javascript').sendFile(clientJs('slash-intro.js'));
 });
 app.get('/assets/qris-manual.jpg', (req, res) => {
   res.set('Cache-Control', 'public, max-age=3600');
@@ -397,7 +400,7 @@ app.post('/human-check', async (req, res) => {
 });
 app.get('/assets/human-check.js', (req, res) => {
   res.set('Cache-Control', 'public, max-age=300');
-  res.type('application/javascript').sendFile(path.join(__dirname, 'views', 'human-check.js'));
+  res.type('application/javascript').sendFile(clientJs('human-check.js'));
 });
 app.use(platformRouter);
 app.use(require('./routes/auth')({ issueSession }));

@@ -54,7 +54,8 @@ test('the translator and the dictionary are served', { skip: h.skip }, async () 
   const js = await app.request('GET', '/assets/i18n.js');
   assert.equal(js.status, 200);
   assert.match(js.headers['content-type'], /javascript/);
-  assert.match(js.text, /yannz-lang/);
+  // Served script is obfuscated; check the feature in the readable source.
+  assert.match(fs.readFileSync(path.join(__dirname, '..', '..', 'views', 'i18n.js'), 'utf8'), /yannz-lang/);
   const json = await app.request('GET', '/assets/i18n-en.json');
   assert.equal(json.status, 200);
   assert.match(json.headers['content-type'], /json/);

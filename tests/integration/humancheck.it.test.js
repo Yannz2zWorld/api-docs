@@ -127,6 +127,8 @@ it('the box lives only on the entry page; it is small, never full screen', async
   }
   const js = await app.request('GET', '/assets/human-check.js');
   assert.equal(js.status, 200);
-  assert.match(js.text, /max-width:360px/);
-  assert.ok(!/position:\s*fixed|100vh|inset:\s*0/.test(js.text), 'no full-screen overlay');
+  // Served script is obfuscated; check the box styling in the readable source.
+  const hc = view('human-check.js');
+  assert.match(hc, /max-width:360px/);
+  assert.ok(!/position:\s*fixed|100vh|inset:\s*0/.test(hc), 'no full-screen overlay');
 });
