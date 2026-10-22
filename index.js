@@ -144,6 +144,18 @@ app.use((req, res, next) => {
   res.set('Content-Security-Policy', "frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
   next();
 });
+// Serve the obfuscated build of any HTML page (views/dist/<page>.html) in place of the readable
+// original when one exists. One hook covers every res.sendFile of a page; the readable views/ stay the
+// source we edit (rebuilt by `npm run obfuscate`).
+const pageFile = file => { const d = path.join(__dirname, 'views', 'dist', file); return fs.existsSync(d) ? d : path.join(__dirname, 'views', file); };
+app.use((req, res, next) => {
+  const orig = res.sendFile.bind(res);
+  res.sendFile = (p, ...rest) => {
+    if (typeof p === 'string' && /\/views\/[^/]+\.html$/.test(p)) { const d = p.replace(/\/views\//, '/views/dist/'); if (fs.existsSync(d)) return orig(d, ...rest); }
+    return orig(p, ...rest);
+  };
+  next();
+});
 // Bodies are small everywhere except a manual payment, which carries the proof image
 // (<= 2 MB, base64 in JSON; Vercel's request limit is 4.5 MB).
 const uploadPaths = new Set();   // theresav file endpoints accept a raw uploaded file (POST body)
@@ -338,11 +350,11 @@ function sendMaintenance(req, res, message, since) {
   // Sign-in page and Home: the sign-in page with the maintenance announcement over it
   // (views/announce.js). Signing in is still refused on the server.
   if (req.path === '/' || req.path === '/home') {
-    if (!loginPage) loginPage = fs.readFileSync(path.join(__dirname, 'views', 'login.html'), 'utf8');
+    if (!loginPage) loginPage = fs.readFileSync(pageFile('login.html'), 'utf8');
     const state = JSON.stringify({ maintenance: { message, since: since || null } }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
     return res.status(503).type('html').send(loginPage.replace('</head>', () => `<script>window.__yannzAnnounce=${state}</script>\n</head>`));
   }
-  if (!maintenancePage) maintenancePage = fs.readFileSync(path.join(__dirname, 'views', 'maintenance.html'), 'utf8');
+  if (!maintenancePage) maintenancePage = fs.readFileSync(pageFile('maintenance.html'), 'utf8');
   const safe = String(message).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   return res.status(503).type('html').send(maintenancePage.replace('{{MESSAGE}}', safe));
 }

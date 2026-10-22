@@ -127,7 +127,8 @@ it('the /upload page is served to signed-in users, sends others to the login pag
   const page = await app.request('GET', '/upload', app.asBrowser(user));
   assert.equal(page.status, 200);
   assert.match(page.text, /Upload File/);
-  assert.match(page.text, /\/cdn\/upload/);
+  // The page's inline script is served obfuscated; check its upload endpoint in the readable source.
+  assert.match(require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'views', 'upload.html'), 'utf8'), /\/cdn\/upload/);
   // reachable from the dashboard's ☰ MENU, right under 3D Scythe (not from the endpoint catalog)
   const home = await app.request('GET', '/home', app.asBrowser(user));
   assert.match(home.text, /<a href="\/3d">3D Scythe<\/a><a href="\/upload">Upload CDN<\/a>/);
