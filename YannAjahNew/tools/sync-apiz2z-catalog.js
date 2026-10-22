@@ -30,6 +30,12 @@ if (!fs.existsSync(pluginDir)) {
 process.env.NODE_PATH = [path.join(root, 'node_modules'), process.env.NODE_PATH].filter(Boolean).join(path.delimiter);
 Module._initPaths();
 
+// Parameter dari query string path: dianggap wajib (route memakainya tanpa nilai default).
+function pathParams(p) {
+  const q = p.includes('?') ? p.slice(p.indexOf('?') + 1) : '';
+  return q.split('&').map(kv => kv.split('=')[0]).filter(Boolean).map(name => ({ name, required: true, fromPath: true }));
+}
+
 const endpoints = [];
 const errors = [];
 for (const f of fs.readdirSync(pluginDir).filter(f => f.endsWith('.js')).sort()) {
@@ -46,14 +52,16 @@ for (const f of fs.readdirSync(pluginDir).filter(f => f.endsWith('.js')).sort())
       category: String(e.category),
       source: f.replace(/\.js$/, ''),
       upload: Boolean(e.upload),
-      params: (e.params || []).map(x => ({
+      // Sebagian route hanya mendokumentasikan parameter lewat query string path (mis. "/api/download/tiktok?url=").
+      params: (Array.isArray(e.params) && e.params.length ? e.params : pathParams(e.path)).map(x => ({
         name: x.name,
         required: Boolean(x.required),
         ...(x.type === 'file' ? { file: true } : {}),
         ...(x.aliases ? { aliases: x.aliases } : {}),
         ...(x.options ? { options: x.options } : {}),
         ...(x.default !== undefined ? { default: String(x.default) } : {}),
-        ...(x.max ? { max: x.max } : {})
+        ...(x.max ? { max: x.max } : {}),
+        ...(x.fromPath ? { fromPath: true } : {})
       })),
       ...(EXCLUDED[p] ? { excluded: EXCLUDED[p] } : {})
     });

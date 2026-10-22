@@ -1,0 +1,4386 @@
+{
+ "source": "Yann AI V15 Fixed: YannzAjah-cmd.js (case) + plugins/*/handler.command",
+ "generatedAt": "2026-10-22T04:30:33.552Z",
+ "v15Names": 1617,
+ "coveredByRegistry": 246,
+ "items": [
+  {
+   "name": "1917style",
+   "status": "planned"
+  },
+  {
+   "name": "1gb",
+   "status": "planned"
+  },
+  {
+   "name": "2048",
+   "status": "planned"
+  },
+  {
+   "name": "2gb",
+   "status": "planned"
+  },
+  {
+   "name": "3gb",
+   "status": "planned"
+  },
+  {
+   "name": "4gb",
+   "status": "planned"
+  },
+  {
+   "name": "5gb",
+   "status": "planned"
+  },
+  {
+   "name": "6gb",
+   "status": "planned"
+  },
+  {
+   "name": "7gb",
+   "status": "planned"
+  },
+  {
+   "name": "abu",
+   "status": "planned"
+  },
+  {
+   "name": "abu-abutua",
+   "status": "planned"
+  },
+  {
+   "name": "acc",
+   "status": "planned"
+  },
+  {
+   "name": "addaksesprem",
+   "status": "disabled",
+   "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
+  },
+  {
+   "name": "addbadword",
+   "status": "planned"
+  },
+  {
+   "name": "addcase",
+   "status": "planned"
+  },
+  {
+   "name": "addlimitall",
+   "status": "planned"
+  },
+  {
+   "name": "addlist",
+   "status": "planned"
+  },
+  {
+   "name": "addmoney",
+   "status": "planned"
+  },
+  {
+   "name": "addp",
+   "status": "planned"
+  },
+  {
+   "name": "addplug",
+   "status": "planned"
+  },
+  {
+   "name": "addplugin",
+   "status": "planned"
+  },
+  {
+   "name": "addplugins",
+   "status": "planned"
+  },
+  {
+   "name": "addprefix",
+   "status": "planned"
+  },
+  {
+   "name": "addpremgc",
+   "status": "planned"
+  },
+  {
+   "name": "addpremgrup",
+   "status": "planned"
+  },
+  {
+   "name": "addpremiumgc",
+   "status": "planned"
+  },
+  {
+   "name": "addres",
+   "status": "planned"
+  },
+  {
+   "name": "addreseller",
+   "status": "planned"
+  },
+  {
+   "name": "addreselleram",
+   "status": "planned"
+  },
+  {
+   "name": "addrespon",
+   "status": "planned"
+  },
+  {
+   "name": "addsewagc",
+   "status": "planned"
+  },
+  {
+   "name": "advancedglow",
+   "status": "planned"
+  },
+  {
+   "name": "ah-ah-ah",
+   "status": "planned"
+  },
+  {
+   "name": "aiedit",
+   "status": "planned"
+  },
+  {
+   "name": "ailabs",
+   "status": "planned"
+  },
+  {
+   "name": "aimention",
+   "status": "planned"
+  },
+  {
+   "name": "airealtime",
+   "status": "planned"
+  },
+  {
+   "name": "aitts",
+   "status": "planned"
+  },
+  {
+   "name": "aiundress",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "aivideo",
+   "status": "planned"
+  },
+  {
+   "name": "akiyama",
+   "status": "planned"
+  },
+  {
+   "name": "amai",
+   "status": "planned"
+  },
+  {
+   "name": "ambilsw",
+   "status": "planned"
+  },
+  {
+   "name": "amprem",
+   "status": "disabled",
+   "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
+  },
+  {
+   "name": "ana",
+   "status": "planned"
+  },
+  {
+   "name": "anime2d",
+   "status": "planned"
+  },
+  {
+   "name": "animeakira",
+   "status": "planned"
+  },
+  {
+   "name": "animeasuna",
+   "status": "planned"
+  },
+  {
+   "name": "animeeba",
+   "status": "planned"
+  },
+  {
+   "name": "animeemilia",
+   "status": "planned"
+  },
+  {
+   "name": "animegremory",
+   "status": "planned"
+  },
+  {
+   "name": "animehinata",
+   "status": "planned"
+  },
+  {
+   "name": "animeinfo",
+   "status": "planned"
+  },
+  {
+   "name": "animeisuzu",
+   "status": "planned"
+  },
+  {
+   "name": "animeitori",
+   "status": "planned"
+  },
+  {
+   "name": "animekagura",
+   "status": "planned"
+  },
+  {
+   "name": "animekeneki",
+   "status": "planned"
+  },
+  {
+   "name": "animemegumin",
+   "status": "planned"
+  },
+  {
+   "name": "animemiku",
+   "status": "planned"
+  },
+  {
+   "name": "animenezuko",
+   "status": "planned"
+  },
+  {
+   "name": "animensfwloli",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "animepokemon",
+   "status": "planned"
+  },
+  {
+   "name": "animequotes",
+   "status": "planned"
+  },
+  {
+   "name": "animeshina",
+   "status": "planned"
+  },
+  {
+   "name": "animeshinka",
+   "status": "planned"
+  },
+  {
+   "name": "animeshota",
+   "status": "planned"
+  },
+  {
+   "name": "animetejina",
+   "status": "planned"
+  },
+  {
+   "name": "animetoukachan",
+   "status": "planned"
+  },
+  {
+   "name": "animeyotsuba",
+   "status": "planned"
+  },
+  {
+   "name": "animeyuli",
+   "status": "planned"
+  },
+  {
+   "name": "animeyumeko",
+   "status": "planned"
+  },
+  {
+   "name": "antibot",
+   "status": "planned"
+  },
+  {
+   "name": "anubis",
+   "status": "planned"
+  },
+  {
+   "name": "api",
+   "status": "planned"
+  },
+  {
+   "name": "apkprem",
+   "status": "disabled",
+   "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
+  },
+  {
+   "name": "arti-nama",
+   "status": "planned"
+  },
+  {
+   "name": "asuna",
+   "status": "planned"
+  },
+  {
+   "name": "asupan",
+   "status": "planned"
+  },
+  {
+   "name": "asupanbocil",
+   "status": "planned"
+  },
+  {
+   "name": "asupandouyin",
+   "status": "planned"
+  },
+  {
+   "name": "asupangeayubi",
+   "status": "planned"
+  },
+  {
+   "name": "asupangheayubi",
+   "status": "planned"
+  },
+  {
+   "name": "asupanhijaber",
+   "status": "planned"
+  },
+  {
+   "name": "asupanrikagusriani",
+   "status": "planned"
+  },
+  {
+   "name": "asupansantuy",
+   "status": "planned"
+  },
+  {
+   "name": "asupanukhty",
+   "status": "planned"
+  },
+  {
+   "name": "autoabsen",
+   "status": "planned"
+  },
+  {
+   "name": "autoai",
+   "status": "planned"
+  },
+  {
+   "name": "autobackup",
+   "status": "planned"
+  },
+  {
+   "name": "autocorrect",
+   "status": "planned"
+  },
+  {
+   "name": "autolevel",
+   "status": "planned"
+  },
+  {
+   "name": "autolv",
+   "status": "planned"
+  },
+  {
+   "name": "autoreactsw",
+   "status": "planned"
+  },
+  {
+   "name": "autosambut",
+   "status": "planned"
+  },
+  {
+   "name": "autosholat",
+   "status": "planned"
+  },
+  {
+   "name": "ayuzawa",
+   "status": "planned"
+  },
+  {
+   "name": "banfitur",
+   "status": "planned"
+  },
+  {
+   "name": "bank",
+   "status": "planned"
+  },
+  {
+   "name": "batalkantrx",
+   "status": "planned"
+  },
+  {
+   "name": "batalkostum",
+   "status": "planned"
+  },
+  {
+   "name": "batalpolaroid",
+   "status": "planned"
+  },
+  {
+   "name": "batalpremku",
+   "status": "disabled",
+   "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
+  },
+  {
+   "name": "bataltrx",
+   "status": "planned"
+  },
+  {
+   "name": "bayar_apk",
+   "status": "disabled",
+   "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
+  },
+  {
+   "name": "beliapk",
+   "status": "disabled",
+   "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
+  },
+  {
+   "name": "beliprem",
+   "status": "planned"
+  },
+  {
+   "name": "belipremium",
+   "status": "planned"
+  },
+  {
+   "name": "beritacnbc",
+   "status": "planned"
+  },
+  {
+   "name": "bintang",
+   "status": "planned"
+  },
+  {
+   "name": "biru",
+   "status": "planned"
+  },
+  {
+   "name": "birulangit",
+   "status": "planned"
+  },
+  {
+   "name": "birulangitcerah",
+   "status": "planned"
+  },
+  {
+   "name": "birulaut",
+   "status": "planned"
+  },
+  {
+   "name": "birumuda",
+   "status": "planned"
+  },
+  {
+   "name": "birumudalangit",
+   "status": "planned"
+  },
+  {
+   "name": "birutua",
+   "status": "planned"
+  },
+  {
+   "name": "blackpinklogo",
+   "status": "planned"
+  },
+  {
+   "name": "blackpinkstyle",
+   "status": "planned"
+  },
+  {
+   "name": "blockblast",
+   "status": "planned"
+  },
+  {
+   "name": "blockgame",
+   "status": "planned"
+  },
+  {
+   "name": "blockpuzzle",
+   "status": "planned"
+  },
+  {
+   "name": "blok",
+   "status": "planned"
+  },
+  {
+   "name": "blokir",
+   "status": "planned"
+  },
+  {
+   "name": "bom",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "boost",
+   "status": "planned"
+  },
+  {
+   "name": "boruto",
+   "status": "planned"
+  },
+  {
+   "name": "bratbiasa",
+   "status": "planned"
+  },
+  {
+   "name": "bratbiasahd",
+   "status": "planned"
+  },
+  {
+   "name": "bratgambar",
+   "status": "planned"
+  },
+  {
+   "name": "bratgambar3",
+   "status": "planned"
+  },
+  {
+   "name": "bratgambarhd",
+   "status": "planned"
+  },
+  {
+   "name": "bratgura",
+   "status": "planned"
+  },
+  {
+   "name": "bratimg3",
+   "status": "planned"
+  },
+  {
+   "name": "bratpink",
+   "status": "planned"
+  },
+  {
+   "name": "bratt",
+   "status": "planned"
+  },
+  {
+   "name": "breakout",
+   "status": "planned"
+  },
+  {
+   "name": "brick",
+   "status": "planned"
+  },
+  {
+   "name": "brickbreaker",
+   "status": "planned"
+  },
+  {
+   "name": "broadcast",
+   "status": "planned"
+  },
+  {
+   "name": "buatkode",
+   "status": "planned"
+  },
+  {
+   "name": "buatlagu",
+   "status": "planned"
+  },
+  {
+   "name": "buatstreak",
+   "status": "planned"
+  },
+  {
+   "name": "buatvideo",
+   "status": "planned"
+  },
+  {
+   "name": "bugil",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "bugilin",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "buronan",
+   "status": "planned"
+  },
+  {
+   "name": "buyapkprem",
+   "status": "disabled",
+   "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
+  },
+  {
+   "name": "buyprem",
+   "status": "planned"
+  },
+  {
+   "name": "buypremium",
+   "status": "planned"
+  },
+  {
+   "name": "buysewagc",
+   "status": "planned"
+  },
+  {
+   "name": "bzirrt",
+   "status": "planned"
+  },
+  {
+   "name": "cadp",
+   "status": "planned"
+  },
+  {
+   "name": "capcutdownload",
+   "status": "planned"
+  },
+  {
+   "name": "cardmusik",
+   "status": "planned"
+  },
+  {
+   "name": "carianime",
+   "status": "planned"
+  },
+  {
+   "name": "carigrouptele",
+   "status": "planned"
+  },
+  {
+   "name": "carigroupv2",
+   "status": "planned"
+  },
+  {
+   "name": "carigroupv3",
+   "status": "planned"
+  },
+  {
+   "name": "carigruptele",
+   "status": "planned"
+  },
+  {
+   "name": "carigrupwa",
+   "status": "planned"
+  },
+  {
+   "name": "carigrupwav2",
+   "status": "planned"
+  },
+  {
+   "name": "carigrupwav3",
+   "status": "planned"
+  },
+  {
+   "name": "caristickerdown",
+   "status": "planned"
+  },
+  {
+   "name": "caristiker",
+   "status": "planned"
+  },
+  {
+   "name": "caristikerdown",
+   "status": "planned"
+  },
+  {
+   "name": "caritele",
+   "status": "planned"
+  },
+  {
+   "name": "cartoonstyle",
+   "status": "planned"
+  },
+  {
+   "name": "casino",
+   "status": "planned"
+  },
+  {
+   "name": "catbox",
+   "status": "planned"
+  },
+  {
+   "name": "cecan",
+   "status": "planned"
+  },
+  {
+   "name": "cecanchina",
+   "status": "planned"
+  },
+  {
+   "name": "cecanhijaber",
+   "status": "planned"
+  },
+  {
+   "name": "cecanindonesia",
+   "status": "planned"
+  },
+  {
+   "name": "cecanjapan",
+   "status": "planned"
+  },
+  {
+   "name": "cecanjeni",
+   "status": "planned"
+  },
+  {
+   "name": "cecanjiso",
+   "status": "planned"
+  },
+  {
+   "name": "cecanjustinaxie",
+   "status": "planned"
+  },
+  {
+   "name": "cecankorea",
+   "status": "planned"
+  },
+  {
+   "name": "cecanmalaysia",
+   "status": "planned"
+  },
+  {
+   "name": "cecannaxie",
+   "status": "planned"
+  },
+  {
+   "name": "cecanrandom",
+   "status": "planned"
+  },
+  {
+   "name": "cecanrose",
+   "status": "planned"
+  },
+  {
+   "name": "cecanryujin",
+   "status": "planned"
+  },
+  {
+   "name": "cecanthailand",
+   "status": "planned"
+  },
+  {
+   "name": "cecanvietnam",
+   "status": "planned"
+  },
+  {
+   "name": "cekaura",
+   "status": "planned"
+  },
+  {
+   "name": "cekbeban",
+   "status": "planned"
+  },
+  {
+   "name": "cekfemboy",
+   "status": "planned"
+  },
+  {
+   "name": "cekff",
+   "status": "planned"
+  },
+  {
+   "name": "cekgay",
+   "status": "disabled",
+   "reason": "Konten vulgar / merendahkan — tidak akan diimplementasikan."
+  },
+  {
+   "name": "cekidch",
+   "status": "planned"
+  },
+  {
+   "name": "cekidgc",
+   "status": "planned"
+  },
+  {
+   "name": "cekjadwal",
+   "status": "planned"
+  },
+  {
+   "name": "cekjadwalpesan",
+   "status": "planned"
+  },
+  {
+   "name": "cekjodoh",
+   "status": "planned"
+  },
+  {
+   "name": "cekkontol",
+   "status": "disabled",
+   "reason": "Konten vulgar / merendahkan — tidak akan diimplementasikan."
+  },
+  {
+   "name": "ceklistwarn",
+   "status": "planned"
+  },
+  {
+   "name": "cekmasadepan",
+   "status": "planned"
+  },
+  {
+   "name": "cekmemek",
+   "status": "disabled",
+   "reason": "Konten vulgar / merendahkan — tidak akan diimplementasikan."
+  },
+  {
+   "name": "ceknim",
+   "status": "planned"
+  },
+  {
+   "name": "ceknohp",
+   "status": "planned"
+  },
+  {
+   "name": "ceknomor",
+   "status": "planned"
+  },
+  {
+   "name": "cekres",
+   "status": "planned"
+  },
+  {
+   "name": "ceksewagc",
+   "status": "planned"
+  },
+  {
+   "name": "ceksider",
+   "status": "planned"
+  },
+  {
+   "name": "cekstreak",
+   "status": "planned"
+  },
+  {
+   "name": "cekultah",
+   "status": "planned"
+  },
+  {
+   "name": "cfsub",
+   "status": "planned"
+  },
+  {
+   "name": "charinfo",
+   "status": "planned"
+  },
+  {
+   "name": "chiho",
+   "status": "planned"
+  },
+  {
+   "name": "chitoge",
+   "status": "planned"
+  },
+  {
+   "name": "cinta",
+   "status": "planned"
+  },
+  {
+   "name": "clearchat",
+   "status": "planned"
+  },
+  {
+   "name": "cleardb",
+   "status": "planned"
+  },
+  {
+   "name": "clearlist",
+   "status": "planned"
+  },
+  {
+   "name": "clearprem",
+   "status": "planned"
+  },
+  {
+   "name": "clearreseller",
+   "status": "planned"
+  },
+  {
+   "name": "clearrespon",
+   "status": "planned"
+  },
+  {
+   "name": "clearsesi",
+   "status": "planned"
+  },
+  {
+   "name": "clearsession",
+   "status": "planned"
+  },
+  {
+   "name": "closetime",
+   "status": "planned"
+  },
+  {
+   "name": "clsesi",
+   "status": "planned"
+  },
+  {
+   "name": "cnbcnews",
+   "status": "planned"
+  },
+  {
+   "name": "cocoknama",
+   "status": "planned"
+  },
+  {
+   "name": "cogan",
+   "status": "planned"
+  },
+  {
+   "name": "cokelat",
+   "status": "planned"
+  },
+  {
+   "name": "colorize",
+   "status": "planned"
+  },
+  {
+   "name": "confes",
+   "status": "planned"
+  },
+  {
+   "name": "configurewings",
+   "status": "planned"
+  },
+  {
+   "name": "convertweb",
+   "status": "planned"
+  },
+  {
+   "name": "copilotvoice",
+   "status": "planned"
+  },
+  {
+   "name": "copy",
+   "status": "planned"
+  },
+  {
+   "name": "coverpubg",
+   "status": "planned"
+  },
+  {
+   "name": "createadp",
+   "status": "planned"
+  },
+  {
+   "name": "creategc",
+   "status": "planned"
+  },
+  {
+   "name": "creategroup",
+   "status": "planned"
+  },
+  {
+   "name": "creategrup",
+   "status": "planned"
+  },
+  {
+   "name": "createhtml",
+   "status": "planned"
+  },
+  {
+   "name": "createimage",
+   "status": "planned"
+  },
+  {
+   "name": "createsong",
+   "status": "planned"
+  },
+  {
+   "name": "createsubdo",
+   "status": "planned"
+  },
+  {
+   "name": "crop",
+   "status": "planned"
+  },
+  {
+   "name": "culikmember",
+   "status": "disabled",
+   "reason": "Mengambil alih / memindahkan anggota grup tanpa izin — tidak akan diimplementasikan."
+  },
+  {
+   "name": "custom-encrypt",
+   "status": "planned"
+  },
+  {
+   "name": "customenc",
+   "status": "planned"
+  },
+  {
+   "name": "customjsen",
+   "status": "planned"
+  },
+  {
+   "name": "cyan",
+   "status": "planned"
+  },
+  {
+   "name": "daftarbadword",
+   "status": "planned"
+  },
+  {
+   "name": "dai",
+   "status": "planned"
+  },
+  {
+   "name": "darkjoke",
+   "status": "disabled",
+   "reason": "Konten vulgar / merendahkan — tidak akan diimplementasikan."
+  },
+  {
+   "name": "deepnude",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "deeppink",
+   "status": "planned"
+  },
+  {
+   "name": "deidara",
+   "status": "planned"
+  },
+  {
+   "name": "delaksesprem",
+   "status": "disabled",
+   "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
+  },
+  {
+   "name": "delbadword",
+   "status": "planned"
+  },
+  {
+   "name": "delcase",
+   "status": "planned"
+  },
+  {
+   "name": "deletepanel",
+   "status": "planned"
+  },
+  {
+   "name": "deletepremgc",
+   "status": "planned"
+  },
+  {
+   "name": "deletingtext",
+   "status": "planned"
+  },
+  {
+   "name": "dellimit",
+   "status": "planned"
+  },
+  {
+   "name": "dellist",
+   "status": "planned"
+  },
+  {
+   "name": "delmoney",
+   "status": "planned"
+  },
+  {
+   "name": "delpanel",
+   "status": "planned"
+  },
+  {
+   "name": "delpay",
+   "status": "planned"
+  },
+  {
+   "name": "delplugin",
+   "status": "planned"
+  },
+  {
+   "name": "delplugins",
+   "status": "planned"
+  },
+  {
+   "name": "delprefix",
+   "status": "planned"
+  },
+  {
+   "name": "delpremgc",
+   "status": "planned"
+  },
+  {
+   "name": "delpremgrup",
+   "status": "planned"
+  },
+  {
+   "name": "delreseller",
+   "status": "planned"
+  },
+  {
+   "name": "delreselleram",
+   "status": "planned"
+  },
+  {
+   "name": "delrespon",
+   "status": "planned"
+  },
+  {
+   "name": "delsewagc",
+   "status": "planned"
+  },
+  {
+   "name": "delsrv",
+   "status": "planned"
+  },
+  {
+   "name": "delstikercmd",
+   "status": "planned"
+  },
+  {
+   "name": "delsubdo",
+   "status": "planned"
+  },
+  {
+   "name": "delsubdomain",
+   "status": "planned"
+  },
+  {
+   "name": "delultah",
+   "status": "planned"
+  },
+  {
+   "name": "deluser",
+   "status": "planned"
+  },
+  {
+   "name": "denia",
+   "status": "planned"
+  },
+  {
+   "name": "denia-run",
+   "status": "planned"
+  },
+  {
+   "name": "deniarunner",
+   "status": "planned"
+  },
+  {
+   "name": "developer",
+   "status": "planned"
+  },
+  {
+   "name": "dino",
+   "status": "planned"
+  },
+  {
+   "name": "dinorunner",
+   "status": "planned"
+  },
+  {
+   "name": "donate",
+   "status": "planned"
+  },
+  {
+   "name": "done",
+   "status": "planned"
+  },
+  {
+   "name": "doraemon",
+   "status": "planned"
+  },
+  {
+   "name": "downloadpin",
+   "status": "planned"
+  },
+  {
+   "name": "downpin",
+   "status": "planned"
+  },
+  {
+   "name": "dragonfire",
+   "status": "planned"
+  },
+  {
+   "name": "dsd",
+   "status": "planned"
+  },
+  {
+   "name": "duckai",
+   "status": "planned"
+  },
+  {
+   "name": "duckaiimage",
+   "status": "planned"
+  },
+  {
+   "name": "dzikir",
+   "status": "planned"
+  },
+  {
+   "name": "editai",
+   "status": "planned"
+  },
+  {
+   "name": "editimg",
+   "status": "planned"
+  },
+  {
+   "name": "effectclouds",
+   "status": "planned"
+  },
+  {
+   "name": "ehbtw",
+   "status": "planned"
+  },
+  {
+   "name": "emas",
+   "status": "planned"
+  },
+  {
+   "name": "emilia",
+   "status": "planned"
+  },
+  {
+   "name": "emoji",
+   "status": "planned"
+  },
+  {
+   "name": "emojigif",
+   "status": "planned"
+  },
+  {
+   "name": "emojiwa",
+   "status": "planned"
+  },
+  {
+   "name": "emojix",
+   "status": "planned"
+  },
+  {
+   "name": "enc-custom",
+   "status": "planned"
+  },
+  {
+   "name": "enc-invis",
+   "status": "planned"
+  },
+  {
+   "name": "enc-invisible",
+   "status": "planned"
+  },
+  {
+   "name": "enc-siu",
+   "status": "planned"
+  },
+  {
+   "name": "enc-strong",
+   "status": "planned"
+  },
+  {
+   "name": "enc-ultra",
+   "status": "planned"
+  },
+  {
+   "name": "enccustom",
+   "status": "planned"
+  },
+  {
+   "name": "enccustomjs",
+   "status": "planned"
+  },
+  {
+   "name": "encinvis",
+   "status": "planned"
+  },
+  {
+   "name": "encinvisible",
+   "status": "planned"
+  },
+  {
+   "name": "encjsinvis",
+   "status": "planned"
+  },
+  {
+   "name": "encrypt-custom",
+   "status": "planned"
+  },
+  {
+   "name": "encrypt-invis",
+   "status": "planned"
+  },
+  {
+   "name": "encrypt-invisible",
+   "status": "planned"
+  },
+  {
+   "name": "encrypt-siu",
+   "status": "planned"
+  },
+  {
+   "name": "encrypt-strong",
+   "status": "planned"
+  },
+  {
+   "name": "encrypt-ultra",
+   "status": "planned"
+  },
+  {
+   "name": "encryptcustom",
+   "status": "planned"
+  },
+  {
+   "name": "encryptcustomjs",
+   "status": "planned"
+  },
+  {
+   "name": "encryptinvis",
+   "status": "planned"
+  },
+  {
+   "name": "encryptinvisible",
+   "status": "planned"
+  },
+  {
+   "name": "encryptsiu",
+   "status": "planned"
+  },
+  {
+   "name": "encryptstrong",
+   "status": "planned"
+  },
+  {
+   "name": "encryptultra",
+   "status": "planned"
+  },
+  {
+   "name": "encsiu",
+   "status": "planned"
+  },
+  {
+   "name": "encsiujs",
+   "status": "planned"
+  },
+  {
+   "name": "encstrong",
+   "status": "planned"
+  },
+  {
+   "name": "encstrongjs",
+   "status": "planned"
+  },
+  {
+   "name": "encultra",
+   "status": "planned"
+  },
+  {
+   "name": "encultrajs",
+   "status": "planned"
+  },
+  {
+   "name": "eninvisiblejs",
+   "status": "planned"
+  },
+  {
+   "name": "eraser",
+   "status": "planned"
+  },
+  {
+   "name": "error",
+   "status": "planned"
+  },
+  {
+   "name": "erza",
+   "status": "planned"
+  },
+  {
+   "name": "exchange",
+   "status": "planned"
+  },
+  {
+   "name": "failed",
+   "status": "planned"
+  },
+  {
+   "name": "fakedana",
+   "status": "disabled",
+   "reason": "Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan."
+  },
+  {
+   "name": "fakeff",
+   "status": "disabled",
+   "reason": "Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan."
+  },
+  {
+   "name": "fakeml",
+   "status": "disabled",
+   "reason": "Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan."
+  },
+  {
+   "name": "fakereply",
+   "status": "disabled",
+   "reason": "Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan."
+  },
+  {
+   "name": "fakestory",
+   "status": "disabled",
+   "reason": "Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan."
+  },
+  {
+   "name": "fakewa",
+   "status": "planned"
+  },
+  {
+   "name": "fakewhatsapp",
+   "status": "planned"
+  },
+  {
+   "name": "fakexnxx",
+   "status": "planned"
+  },
+  {
+   "name": "faktadunia",
+   "status": "planned"
+  },
+  {
+   "name": "fitnah",
+   "status": "disabled",
+   "reason": "Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan."
+  },
+  {
+   "name": "flag3dtext",
+   "status": "planned"
+  },
+  {
+   "name": "flagtext",
+   "status": "planned"
+  },
+  {
+   "name": "flappy",
+   "status": "planned"
+  },
+  {
+   "name": "flappybird",
+   "status": "planned"
+  },
+  {
+   "name": "font1",
+   "status": "planned"
+  },
+  {
+   "name": "font10",
+   "status": "planned"
+  },
+  {
+   "name": "font2",
+   "status": "planned"
+  },
+  {
+   "name": "font3",
+   "status": "planned"
+  },
+  {
+   "name": "font4",
+   "status": "planned"
+  },
+  {
+   "name": "font5",
+   "status": "planned"
+  },
+  {
+   "name": "font6",
+   "status": "planned"
+  },
+  {
+   "name": "font7",
+   "status": "planned"
+  },
+  {
+   "name": "font8",
+   "status": "planned"
+  },
+  {
+   "name": "font9",
+   "status": "planned"
+  },
+  {
+   "name": "freecreate",
+   "status": "planned"
+  },
+  {
+   "name": "freestalk",
+   "status": "planned"
+  },
+  {
+   "name": "fuchsia",
+   "status": "planned"
+  },
+  {
+   "name": "fwa",
+   "status": "planned"
+  },
+  {
+   "name": "galaxian",
+   "status": "planned"
+  },
+  {
+   "name": "galaxy",
+   "status": "planned"
+  },
+  {
+   "name": "galaxystyle",
+   "status": "planned"
+  },
+  {
+   "name": "galaxywallpaper",
+   "status": "planned"
+  },
+  {
+   "name": "gambartopdf",
+   "status": "planned"
+  },
+  {
+   "name": "game2048",
+   "status": "planned"
+  },
+  {
+   "name": "gamebom",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "gamebrick",
+   "status": "planned"
+  },
+  {
+   "name": "gamedino",
+   "status": "planned"
+  },
+  {
+   "name": "gameflappy",
+   "status": "planned"
+  },
+  {
+   "name": "gamesnake",
+   "status": "planned"
+  },
+  {
+   "name": "gcsider",
+   "status": "planned"
+  },
+  {
+   "name": "generateimage",
+   "status": "planned"
+  },
+  {
+   "name": "genvideo",
+   "status": "planned"
+  },
+  {
+   "name": "get",
+   "status": "planned"
+  },
+  {
+   "name": "getaudio",
+   "status": "planned"
+  },
+  {
+   "name": "getcase",
+   "status": "planned"
+  },
+  {
+   "name": "getidgc",
+   "status": "planned"
+  },
+  {
+   "name": "getp",
+   "status": "planned"
+  },
+  {
+   "name": "getpastebin",
+   "status": "planned"
+  },
+  {
+   "name": "getplugin",
+   "status": "planned"
+  },
+  {
+   "name": "getplugins",
+   "status": "planned"
+  },
+  {
+   "name": "getpp",
+   "status": "planned"
+  },
+  {
+   "name": "getsc",
+   "status": "planned"
+  },
+  {
+   "name": "ghibli",
+   "status": "planned"
+  },
+  {
+   "name": "gitclone",
+   "status": "planned"
+  },
+  {
+   "name": "glitchimg",
+   "status": "planned"
+  },
+  {
+   "name": "glitchtext",
+   "status": "planned"
+  },
+  {
+   "name": "glowingtext",
+   "status": "planned"
+  },
+  {
+   "name": "goldbutton",
+   "status": "planned"
+  },
+  {
+   "name": "goldenrod",
+   "status": "planned"
+  },
+  {
+   "name": "gore",
+   "status": "disabled",
+   "reason": "Konten kekerasan ekstrem — tidak akan diimplementasikan."
+  },
+  {
+   "name": "gp",
+   "status": "planned"
+  },
+  {
+   "name": "gpt5plus",
+   "status": "planned"
+  },
+  {
+   "name": "gptimage",
+   "status": "planned"
+  },
+  {
+   "name": "gptimg",
+   "status": "planned"
+  },
+  {
+   "name": "gptonline",
+   "status": "planned"
+  },
+  {
+   "name": "gradienttext",
+   "status": "planned"
+  },
+  {
+   "name": "grafitti",
+   "status": "planned"
+  },
+  {
+   "name": "gremory",
+   "status": "planned"
+  },
+  {
+   "name": "groupsider",
+   "status": "planned"
+  },
+  {
+   "name": "gtmp3",
+   "status": "planned"
+  },
+  {
+   "name": "hadits",
+   "status": "planned"
+  },
+  {
+   "name": "hapusbadword",
+   "status": "planned"
+  },
+  {
+   "name": "hapuskode",
+   "status": "planned"
+  },
+  {
+   "name": "hapusobjek",
+   "status": "planned"
+  },
+  {
+   "name": "hapussemuareseller",
+   "status": "planned"
+  },
+  {
+   "name": "hapuswatermark",
+   "status": "planned"
+  },
+  {
+   "name": "hcr",
+   "status": "planned"
+  },
+  {
+   "name": "hd2",
+   "status": "planned"
+  },
+  {
+   "name": "hdvid",
+   "status": "planned"
+  },
+  {
+   "name": "hdvideo",
+   "status": "planned"
+  },
+  {
+   "name": "hestia",
+   "status": "planned"
+  },
+  {
+   "name": "hidetagpoll",
+   "status": "planned"
+  },
+  {
+   "name": "hiitwixtor",
+   "status": "planned"
+  },
+  {
+   "name": "hijabpin",
+   "status": "planned"
+  },
+  {
+   "name": "hijau",
+   "status": "planned"
+  },
+  {
+   "name": "hijaugelap",
+   "status": "planned"
+  },
+  {
+   "name": "hijaulaut",
+   "status": "planned"
+  },
+  {
+   "name": "hijaulumut",
+   "status": "planned"
+  },
+  {
+   "name": "hijautua",
+   "status": "planned"
+  },
+  {
+   "name": "hinata",
+   "status": "planned"
+  },
+  {
+   "name": "hitam",
+   "status": "planned"
+  },
+  {
+   "name": "hitamin",
+   "status": "disabled",
+   "reason": "Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan."
+  },
+  {
+   "name": "hoki",
+   "status": "planned"
+  },
+  {
+   "name": "horor",
+   "status": "planned"
+  },
+  {
+   "name": "hotpink",
+   "status": "planned"
+  },
+  {
+   "name": "idch",
+   "status": "planned"
+  },
+  {
+   "name": "idgc",
+   "status": "planned"
+  },
+  {
+   "name": "image2video",
+   "status": "planned"
+  },
+  {
+   "name": "imagetopdf",
+   "status": "planned"
+  },
+  {
+   "name": "img2pdf",
+   "status": "planned"
+  },
+  {
+   "name": "img2prompt",
+   "status": "planned"
+  },
+  {
+   "name": "img2video",
+   "status": "planned"
+  },
+  {
+   "name": "imgai",
+   "status": "planned"
+  },
+  {
+   "name": "imgquotes",
+   "status": "planned"
+  },
+  {
+   "name": "incandescent",
+   "status": "planned"
+  },
+  {
+   "name": "infonegara",
+   "status": "planned"
+  },
+  {
+   "name": "infosubdo",
+   "status": "planned"
+  },
+  {
+   "name": "infosubdomain",
+   "status": "planned"
+  },
+  {
+   "name": "infouser",
+   "status": "planned"
+  },
+  {
+   "name": "infowarn",
+   "status": "planned"
+  },
+  {
+   "name": "inori",
+   "status": "planned"
+  },
+  {
+   "name": "installpanel",
+   "status": "planned"
+  },
+  {
+   "name": "intro",
+   "status": "planned"
+  },
+  {
+   "name": "invis-encrypt",
+   "status": "planned"
+  },
+  {
+   "name": "invisenc",
+   "status": "planned"
+  },
+  {
+   "name": "invisible-encrypt",
+   "status": "planned"
+  },
+  {
+   "name": "invisibleenc",
+   "status": "planned"
+  },
+  {
+   "name": "iphonequoted",
+   "status": "planned"
+  },
+  {
+   "name": "iphonequoted2",
+   "status": "planned"
+  },
+  {
+   "name": "iqc3",
+   "status": "planned"
+  },
+  {
+   "name": "isidompet",
+   "status": "planned"
+  },
+  {
+   "name": "isuzu",
+   "status": "planned"
+  },
+  {
+   "name": "itachi",
+   "status": "planned"
+  },
+  {
+   "name": "itori",
+   "status": "planned"
+  },
+  {
+   "name": "jadidisney",
+   "status": "planned"
+  },
+  {
+   "name": "jadigta",
+   "status": "planned"
+  },
+  {
+   "name": "jadipixar",
+   "status": "planned"
+  },
+  {
+   "name": "jadpes",
+   "status": "planned"
+  },
+  {
+   "name": "jadwalkirim",
+   "status": "planned"
+  },
+  {
+   "name": "jadwalngirimpesan",
+   "status": "planned"
+  },
+  {
+   "name": "jadwalpesan",
+   "status": "planned"
+  },
+  {
+   "name": "jawab",
+   "status": "planned"
+  },
+  {
+   "name": "jawabasah",
+   "status": "planned"
+  },
+  {
+   "name": "jawabbom",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "jawabkuis",
+   "status": "planned"
+  },
+  {
+   "name": "jawabtebak",
+   "status": "planned"
+  },
+  {
+   "name": "jawabteka",
+   "status": "planned"
+  },
+  {
+   "name": "jingga",
+   "status": "planned"
+  },
+  {
+   "name": "jodohbali",
+   "status": "planned"
+  },
+  {
+   "name": "jodohmakanan",
+   "status": "planned"
+  },
+  {
+   "name": "joinallgc",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "joinch",
+   "status": "planned"
+  },
+  {
+   "name": "joingcall",
+   "status": "planned"
+  },
+  {
+   "name": "jpm",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "jpmexec",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "jpmtesti",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "jscustomenc",
+   "status": "planned"
+  },
+  {
+   "name": "jsinvisenc",
+   "status": "planned"
+  },
+  {
+   "name": "jssiuenc",
+   "status": "planned"
+  },
+  {
+   "name": "jsstrongenc",
+   "status": "planned"
+  },
+  {
+   "name": "jsultraenc",
+   "status": "planned"
+  },
+  {
+   "name": "jumlahuser",
+   "status": "planned"
+  },
+  {
+   "name": "kaga",
+   "status": "planned"
+  },
+  {
+   "name": "kagura",
+   "status": "planned"
+  },
+  {
+   "name": "kaori",
+   "status": "planned"
+  },
+  {
+   "name": "kapanreset",
+   "status": "planned"
+  },
+  {
+   "name": "kecocokannama",
+   "status": "planned"
+  },
+  {
+   "name": "kecocokanpasangan",
+   "status": "planned"
+  },
+  {
+   "name": "kicksider",
+   "status": "planned"
+  },
+  {
+   "name": "kirimch",
+   "status": "planned"
+  },
+  {
+   "name": "kirimchat",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "kirimchatvo",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "kontolscan",
+   "status": "planned"
+  },
+  {
+   "name": "kudeta",
+   "status": "disabled",
+   "reason": "Mengambil alih / memindahkan anggota grup tanpa izin — tidak akan diimplementasikan."
+  },
+  {
+   "name": "kuis",
+   "status": "planned"
+  },
+  {
+   "name": "kuning",
+   "status": "planned"
+  },
+  {
+   "name": "kurumi",
+   "status": "planned"
+  },
+  {
+   "name": "lbmoney",
+   "status": "planned"
+  },
+  {
+   "name": "leaderboardmoney",
+   "status": "planned"
+  },
+  {
+   "name": "lighteffects",
+   "status": "planned"
+  },
+  {
+   "name": "list",
+   "status": "planned"
+  },
+  {
+   "name": "listaksesprem",
+   "status": "disabled",
+   "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
+  },
+  {
+   "name": "listbadword",
+   "status": "planned"
+  },
+  {
+   "name": "listcase",
+   "status": "planned"
+  },
+  {
+   "name": "listkode",
+   "status": "planned"
+  },
+  {
+   "name": "listpanel",
+   "status": "planned"
+  },
+  {
+   "name": "listpay",
+   "status": "planned"
+  },
+  {
+   "name": "listplugin",
+   "status": "planned"
+  },
+  {
+   "name": "listplugins",
+   "status": "planned"
+  },
+  {
+   "name": "listprefix",
+   "status": "planned"
+  },
+  {
+   "name": "listreseller",
+   "status": "planned"
+  },
+  {
+   "name": "listreselleram",
+   "status": "planned"
+  },
+  {
+   "name": "listrespon",
+   "status": "planned"
+  },
+  {
+   "name": "listschedmsg",
+   "status": "planned"
+  },
+  {
+   "name": "listsewagc",
+   "status": "planned"
+  },
+  {
+   "name": "listsubdo",
+   "status": "planned"
+  },
+  {
+   "name": "listsubdomain",
+   "status": "planned"
+  },
+  {
+   "name": "listultah",
+   "status": "planned"
+  },
+  {
+   "name": "listuser",
+   "status": "planned"
+  },
+  {
+   "name": "listwarning",
+   "status": "planned"
+  },
+  {
+   "name": "logicbell",
+   "status": "planned"
+  },
+  {
+   "name": "logomaker",
+   "status": "planned"
+  },
+  {
+   "name": "logoporn",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "loli",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "lsd",
+   "status": "planned"
+  },
+  {
+   "name": "luma",
+   "status": "planned"
+  },
+  {
+   "name": "luxurygold",
+   "status": "planned"
+  },
+  {
+   "name": "madara",
+   "status": "planned"
+  },
+  {
+   "name": "magenta",
+   "status": "planned"
+  },
+  {
+   "name": "magentagelap",
+   "status": "planned"
+  },
+  {
+   "name": "maintenance",
+   "status": "planned"
+  },
+  {
+   "name": "makingneon",
+   "status": "planned"
+  },
+  {
+   "name": "manusialidi",
+   "status": "planned"
+  },
+  {
+   "name": "mathchallenge",
+   "status": "planned"
+  },
+  {
+   "name": "mbg",
+   "status": "planned"
+  },
+  {
+   "name": "megumin",
+   "status": "planned"
+  },
+  {
+   "name": "memekprimbon",
+   "status": "planned"
+  },
+  {
+   "name": "memekscan",
+   "status": "planned"
+  },
+  {
+   "name": "menu-ai",
+   "status": "planned"
+  },
+  {
+   "name": "menu-anime",
+   "status": "planned"
+  },
+  {
+   "name": "menu-animetheme",
+   "status": "planned"
+  },
+  {
+   "name": "menu-asupan",
+   "status": "planned"
+  },
+  {
+   "name": "menu-cecan",
+   "status": "planned"
+  },
+  {
+   "name": "menu-download",
+   "status": "planned"
+  },
+  {
+   "name": "menu-ehpoto",
+   "status": "planned"
+  },
+  {
+   "name": "menu-enc",
+   "status": "planned"
+  },
+  {
+   "name": "menu-fun",
+   "status": "planned"
+  },
+  {
+   "name": "menu-game",
+   "status": "planned"
+  },
+  {
+   "name": "menu-group",
+   "status": "planned"
+  },
+  {
+   "name": "menu-islami",
+   "status": "planned"
+  },
+  {
+   "name": "menu-maker",
+   "status": "planned"
+  },
+  {
+   "name": "menu-nsfw",
+   "status": "planned"
+  },
+  {
+   "name": "menu-owner",
+   "status": "planned"
+  },
+  {
+   "name": "menu-panel",
+   "status": "planned"
+  },
+  {
+   "name": "menu-potoanime",
+   "status": "planned"
+  },
+  {
+   "name": "menu-prem",
+   "status": "planned"
+  },
+  {
+   "name": "menu-primbon",
+   "status": "planned"
+  },
+  {
+   "name": "menu-random",
+   "status": "planned"
+  },
+  {
+   "name": "menu-rpg",
+   "status": "planned"
+  },
+  {
+   "name": "menu-search",
+   "status": "planned"
+  },
+  {
+   "name": "menu-shop",
+   "status": "planned"
+  },
+  {
+   "name": "menu-stickers",
+   "status": "planned"
+  },
+  {
+   "name": "menu-stk",
+   "status": "planned"
+  },
+  {
+   "name": "menu-store",
+   "status": "planned"
+  },
+  {
+   "name": "menu-tools",
+   "status": "planned"
+  },
+  {
+   "name": "merah",
+   "status": "planned"
+  },
+  {
+   "name": "merahgelap",
+   "status": "planned"
+  },
+  {
+   "name": "merahmuda",
+   "status": "planned"
+  },
+  {
+   "name": "merahtua",
+   "status": "planned"
+  },
+  {
+   "name": "mikasa",
+   "status": "planned"
+  },
+  {
+   "name": "miku",
+   "status": "planned"
+  },
+  {
+   "name": "minato",
+   "status": "planned"
+  },
+  {
+   "name": "mirror",
+   "status": "planned"
+  },
+  {
+   "name": "mirror2",
+   "status": "planned"
+  },
+  {
+   "name": "mirrorimg",
+   "status": "planned"
+  },
+  {
+   "name": "mirrorimg2",
+   "status": "planned"
+  },
+  {
+   "name": "mixemoji",
+   "status": "planned"
+  },
+  {
+   "name": "mixing",
+   "status": "planned"
+  },
+  {
+   "name": "mobil",
+   "status": "planned"
+  },
+  {
+   "name": "moneylb",
+   "status": "planned"
+  },
+  {
+   "name": "multicoloredneon",
+   "status": "planned"
+  },
+  {
+   "name": "musikcard",
+   "status": "planned"
+  },
+  {
+   "name": "mutegc",
+   "status": "planned"
+  },
+  {
+   "name": "mutegc_proses",
+   "status": "planned"
+  },
+  {
+   "name": "mypanel",
+   "status": "planned"
+  },
+  {
+   "name": "mywarn",
+   "status": "planned"
+  },
+  {
+   "name": "naked",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "namacocok",
+   "status": "planned"
+  },
+  {
+   "name": "nasib",
+   "status": "planned"
+  },
+  {
+   "name": "nasibbatere",
+   "status": "planned"
+  },
+  {
+   "name": "neko2",
+   "status": "planned"
+  },
+  {
+   "name": "neonglitch",
+   "status": "planned"
+  },
+  {
+   "name": "news",
+   "status": "planned"
+  },
+  {
+   "name": "nezuko",
+   "status": "planned"
+  },
+  {
+   "name": "ngl",
+   "status": "planned"
+  },
+  {
+   "name": "nglgenerator",
+   "status": "planned"
+  },
+  {
+   "name": "nglspam",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "niatsholat",
+   "status": "planned"
+  },
+  {
+   "name": "nightstars",
+   "status": "planned"
+  },
+  {
+   "name": "nohoki",
+   "status": "planned"
+  },
+  {
+   "name": "nomerhoki",
+   "status": "planned"
+  },
+  {
+   "name": "nomorinfo",
+   "status": "planned"
+  },
+  {
+   "name": "notif",
+   "status": "planned"
+  },
+  {
+   "name": "npmjs",
+   "status": "planned"
+  },
+  {
+   "name": "npmstalk",
+   "status": "planned"
+  },
+  {
+   "name": "nsfw",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwahegao",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwass",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwbdsm",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwblowjob",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwcuckold",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwcum",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfweba",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwero",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwfemdom",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwfoot",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwgangbang",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwgay",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwgifs",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwglasses",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwhentai",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwjahy",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwkasedaiki",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwloli",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwmanga",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwmanstrubation",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwmasturbation",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwneko",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwneko2",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwopai",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwopaianime",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfworgy",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwpanties",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwpussy",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwtentacles",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwthighs",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwyuri",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nsfwzettai",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nude",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "nyalainstreak",
+   "status": "planned"
+  },
+  {
+   "name": "nyerahbom",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "off",
+   "status": "planned"
+  },
+  {
+   "name": "on",
+   "status": "planned"
+  },
+  {
+   "name": "onepiece",
+   "status": "planned"
+  },
+  {
+   "name": "onlygc",
+   "status": "planned"
+  },
+  {
+   "name": "onlygrup",
+   "status": "planned"
+  },
+  {
+   "name": "onlyprem",
+   "status": "planned"
+  },
+  {
+   "name": "opentime",
+   "status": "planned"
+  },
+  {
+   "name": "orange",
+   "status": "planned"
+  },
+  {
+   "name": "oranyemerah",
+   "status": "planned"
+  },
+  {
+   "name": "oranyetua",
+   "status": "planned"
+  },
+  {
+   "name": "otakudesu",
+   "status": "planned"
+  },
+  {
+   "name": "own",
+   "status": "planned"
+  },
+  {
+   "name": "pakustad",
+   "status": "planned"
+  },
+  {
+   "name": "papercutstyle",
+   "status": "planned"
+  },
+  {
+   "name": "pastebin",
+   "status": "planned"
+  },
+  {
+   "name": "pay",
+   "status": "planned"
+  },
+  {
+   "name": "payment",
+   "status": "planned"
+  },
+  {
+   "name": "pb",
+   "status": "planned"
+  },
+  {
+   "name": "peachpuff",
+   "status": "planned"
+  },
+  {
+   "name": "perak",
+   "status": "planned"
+  },
+  {
+   "name": "perpanjangsewa",
+   "status": "planned"
+  },
+  {
+   "name": "photoai",
+   "status": "planned"
+  },
+  {
+   "name": "pig",
+   "status": "planned"
+  },
+  {
+   "name": "pindown",
+   "status": "planned"
+  },
+  {
+   "name": "pink",
+   "status": "planned"
+  },
+  {
+   "name": "pixhost",
+   "status": "planned"
+  },
+  {
+   "name": "planet",
+   "status": "planned"
+  },
+  {
+   "name": "play1",
+   "status": "planned"
+  },
+  {
+   "name": "playch",
+   "status": "planned"
+  },
+  {
+   "name": "playmusik",
+   "status": "planned"
+  },
+  {
+   "name": "playtiktok",
+   "status": "planned"
+  },
+  {
+   "name": "playtiktok2",
+   "status": "planned"
+  },
+  {
+   "name": "playv2",
+   "status": "planned"
+  },
+  {
+   "name": "playvid",
+   "status": "planned"
+  },
+  {
+   "name": "playvidyt",
+   "status": "planned"
+  },
+  {
+   "name": "pokemon",
+   "status": "planned"
+  },
+  {
+   "name": "polaroid",
+   "status": "planned"
+  },
+  {
+   "name": "pornhublogo",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "posterwanted",
+   "status": "planned"
+  },
+  {
+   "name": "prem",
+   "status": "planned"
+  },
+  {
+   "name": "processing",
+   "status": "planned"
+  },
+  {
+   "name": "profesiku",
+   "status": "planned"
+  },
+  {
+   "name": "proses",
+   "status": "planned"
+  },
+  {
+   "name": "ptv",
+   "status": "planned"
+  },
+  {
+   "name": "ptv2",
+   "status": "planned"
+  },
+  {
+   "name": "ptvch",
+   "status": "planned"
+  },
+  {
+   "name": "ptvtovid",
+   "status": "planned"
+  },
+  {
+   "name": "ptvtovideo",
+   "status": "planned"
+  },
+  {
+   "name": "pushkontak",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "pushkontak2",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "pushkontak_process",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "putih",
+   "status": "planned"
+  },
+  {
+   "name": "putihkan",
+   "status": "disabled",
+   "reason": "Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan."
+  },
+  {
+   "name": "puzzle2048",
+   "status": "planned"
+  },
+  {
+   "name": "qanime",
+   "status": "planned"
+  },
+  {
+   "name": "qc1",
+   "status": "planned"
+  },
+  {
+   "name": "qc2",
+   "status": "planned"
+  },
+  {
+   "name": "qu",
+   "status": "planned"
+  },
+  {
+   "name": "quax",
+   "status": "planned"
+  },
+  {
+   "name": "quitbom",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "quotesimg",
+   "status": "planned"
+  },
+  {
+   "name": "quotesislami",
+   "status": "planned"
+  },
+  {
+   "name": "ramalan",
+   "status": "planned"
+  },
+  {
+   "name": "ramalancinta",
+   "status": "planned"
+  },
+  {
+   "name": "ramalanjodoh",
+   "status": "planned"
+  },
+  {
+   "name": "ramalannasib",
+   "status": "planned"
+  },
+  {
+   "name": "ramalansuamiistri",
+   "status": "planned"
+  },
+  {
+   "name": "ramalanzodiak",
+   "status": "planned"
+  },
+  {
+   "name": "randomaesthetic",
+   "status": "planned"
+  },
+  {
+   "name": "randomantiwork",
+   "status": "planned"
+  },
+  {
+   "name": "randomblackpink",
+   "status": "planned"
+  },
+  {
+   "name": "randomcecan",
+   "status": "planned"
+  },
+  {
+   "name": "randomcogan",
+   "status": "planned"
+  },
+  {
+   "name": "randomcosplay",
+   "status": "planned"
+  },
+  {
+   "name": "randomdadu",
+   "status": "planned"
+  },
+  {
+   "name": "randomgore",
+   "status": "disabled",
+   "reason": "Konten kekerasan ekstrem — tidak akan diimplementasikan."
+  },
+  {
+   "name": "randomhekel",
+   "status": "planned"
+  },
+  {
+   "name": "randomjustina",
+   "status": "planned"
+  },
+  {
+   "name": "randomkayes",
+   "status": "planned"
+  },
+  {
+   "name": "randomkpop",
+   "status": "planned"
+  },
+  {
+   "name": "randommeme",
+   "status": "planned"
+  },
+  {
+   "name": "randommontor",
+   "status": "planned"
+  },
+  {
+   "name": "randomnotnot",
+   "status": "planned"
+  },
+  {
+   "name": "randomppcp",
+   "status": "planned"
+  },
+  {
+   "name": "randomprofil",
+   "status": "planned"
+  },
+  {
+   "name": "randomprofile",
+   "status": "planned"
+  },
+  {
+   "name": "randompubg",
+   "status": "planned"
+  },
+  {
+   "name": "randomquotenime",
+   "status": "planned"
+  },
+  {
+   "name": "randomrose",
+   "status": "planned"
+  },
+  {
+   "name": "randomryujin",
+   "status": "planned"
+  },
+  {
+   "name": "randomwaifu",
+   "status": "planned"
+  },
+  {
+   "name": "randomwallhp",
+   "status": "planned"
+  },
+  {
+   "name": "randomwallml",
+   "status": "planned"
+  },
+  {
+   "name": "redeem",
+   "status": "planned"
+  },
+  {
+   "name": "rembg",
+   "status": "planned"
+  },
+  {
+   "name": "removeobj",
+   "status": "planned"
+  },
+  {
+   "name": "removeobject",
+   "status": "planned"
+  },
+  {
+   "name": "removewatermark",
+   "status": "planned"
+  },
+  {
+   "name": "renamebot",
+   "status": "planned"
+  },
+  {
+   "name": "renew",
+   "status": "planned"
+  },
+  {
+   "name": "renewserver",
+   "status": "planned"
+  },
+  {
+   "name": "renewsewa",
+   "status": "planned"
+  },
+  {
+   "name": "renewsewagc",
+   "status": "planned"
+  },
+  {
+   "name": "report",
+   "status": "planned"
+  },
+  {
+   "name": "req",
+   "status": "planned"
+  },
+  {
+   "name": "resetdb",
+   "status": "planned"
+  },
+  {
+   "name": "resetjadwal",
+   "status": "planned"
+  },
+  {
+   "name": "resetlist",
+   "status": "planned"
+  },
+  {
+   "name": "resetreseller",
+   "status": "planned"
+  },
+  {
+   "name": "resettotalchat",
+   "status": "planned"
+  },
+  {
+   "name": "resetwarn",
+   "status": "planned"
+  },
+  {
+   "name": "resimg",
+   "status": "planned"
+  },
+  {
+   "name": "resolusiimage",
+   "status": "planned"
+  },
+  {
+   "name": "resolusivideo",
+   "status": "planned"
+  },
+  {
+   "name": "restart",
+   "status": "planned"
+  },
+  {
+   "name": "resvid",
+   "status": "planned"
+  },
+  {
+   "name": "rgore",
+   "status": "disabled",
+   "reason": "Konten kekerasan ekstrem — tidak akan diimplementasikan."
+  },
+  {
+   "name": "rmobj",
+   "status": "planned"
+  },
+  {
+   "name": "royaltext",
+   "status": "planned"
+  },
+  {
+   "name": "rst",
+   "status": "planned"
+  },
+  {
+   "name": "rstdb",
+   "status": "planned"
+  },
+  {
+   "name": "rvo",
+   "status": "planned"
+  },
+  {
+   "name": "rvo2",
+   "status": "planned"
+  },
+  {
+   "name": "sadaudio",
+   "family": "sad1..sadN",
+   "status": "planned",
+   "reason": "Keluarga command V15 sad1..N (cuplikan audio bernomor) — digabung jadi satu fitur dengan parameter nomor."
+  },
+  {
+   "name": "sakura",
+   "status": "planned"
+  },
+  {
+   "name": "salmon",
+   "status": "planned"
+  },
+  {
+   "name": "sambutowner",
+   "status": "planned"
+  },
+  {
+   "name": "sandsummer",
+   "status": "planned"
+  },
+  {
+   "name": "sasuke",
+   "status": "planned"
+  },
+  {
+   "name": "save",
+   "status": "planned"
+  },
+  {
+   "name": "savekontak",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "savekontak2",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "saveplugin",
+   "status": "planned"
+  },
+  {
+   "name": "saveplugins",
+   "status": "planned"
+  },
+  {
+   "name": "saveweb",
+   "status": "planned"
+  },
+  {
+   "name": "scankontol",
+   "status": "planned"
+  },
+  {
+   "name": "scanmemek",
+   "status": "planned"
+  },
+  {
+   "name": "schedmsg",
+   "status": "planned"
+  },
+  {
+   "name": "schedule",
+   "status": "planned"
+  },
+  {
+   "name": "schedulesend",
+   "status": "planned"
+  },
+  {
+   "name": "script",
+   "status": "planned"
+  },
+  {
+   "name": "sdm",
+   "status": "planned"
+  },
+  {
+   "name": "searchanime",
+   "status": "planned"
+  },
+  {
+   "name": "searchchar",
+   "status": "planned"
+  },
+  {
+   "name": "searching",
+   "status": "planned"
+  },
+  {
+   "name": "searchtelegram",
+   "status": "planned"
+  },
+  {
+   "name": "selengkapnya",
+   "status": "planned"
+  },
+  {
+   "name": "sendchat",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "sendchatvo",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "sendmessage",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "sendmessagevo",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "sendtesti",
+   "status": "planned"
+  },
+  {
+   "name": "separating",
+   "status": "planned"
+  },
+  {
+   "name": "sertifikat",
+   "status": "planned"
+  },
+  {
+   "name": "sertifikat-tolol",
+   "status": "planned"
+  },
+  {
+   "name": "sertifikattolol",
+   "status": "planned"
+  },
+  {
+   "name": "setabsen",
+   "status": "planned"
+  },
+  {
+   "name": "setaudiomenu",
+   "status": "planned"
+  },
+  {
+   "name": "setbotpp",
+   "status": "planned"
+  },
+  {
+   "name": "setclose",
+   "status": "planned"
+  },
+  {
+   "name": "setclosetime",
+   "status": "planned"
+  },
+  {
+   "name": "setdaftar",
+   "status": "planned"
+  },
+  {
+   "name": "setdone",
+   "status": "planned"
+  },
+  {
+   "name": "setimage",
+   "status": "planned"
+  },
+  {
+   "name": "setimg",
+   "status": "planned"
+  },
+  {
+   "name": "setintro",
+   "status": "planned"
+  },
+  {
+   "name": "setlabel",
+   "status": "planned"
+  },
+  {
+   "name": "setlimit",
+   "status": "planned"
+  },
+  {
+   "name": "setlist",
+   "status": "planned"
+  },
+  {
+   "name": "setmenu",
+   "status": "planned"
+  },
+  {
+   "name": "setmoney",
+   "status": "planned"
+  },
+  {
+   "name": "setopen",
+   "status": "planned"
+  },
+  {
+   "name": "setopentime",
+   "status": "planned"
+  },
+  {
+   "name": "setpanel",
+   "status": "planned"
+  },
+  {
+   "name": "setpay",
+   "status": "planned"
+  },
+  {
+   "name": "setppgc",
+   "status": "planned"
+  },
+  {
+   "name": "setpppanjang",
+   "status": "planned"
+  },
+  {
+   "name": "setpppanjangbot",
+   "status": "planned"
+  },
+  {
+   "name": "setproses",
+   "status": "planned"
+  },
+  {
+   "name": "setregister",
+   "status": "planned"
+  },
+  {
+   "name": "setrestart",
+   "status": "planned"
+  },
+  {
+   "name": "setultah",
+   "status": "planned"
+  },
+  {
+   "name": "sewa",
+   "status": "planned"
+  },
+  {
+   "name": "sharkstudio",
+   "status": "planned"
+  },
+  {
+   "name": "shina",
+   "status": "planned"
+  },
+  {
+   "name": "shinka",
+   "status": "planned"
+  },
+  {
+   "name": "shizuka",
+   "status": "planned"
+  },
+  {
+   "name": "shortlink-dl",
+   "status": "planned"
+  },
+  {
+   "name": "shortlink2",
+   "status": "planned"
+  },
+  {
+   "name": "shota",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "sider",
+   "status": "planned"
+  },
+  {
+   "name": "sidercek",
+   "status": "planned"
+  },
+  {
+   "name": "sidergc",
+   "status": "planned"
+  },
+  {
+   "name": "sidergroup",
+   "status": "planned"
+  },
+  {
+   "name": "siderkick",
+   "status": "planned"
+  },
+  {
+   "name": "sidompul",
+   "status": "planned"
+  },
+  {
+   "name": "silverbutton",
+   "status": "planned"
+  },
+  {
+   "name": "sistemsewa",
+   "status": "planned"
+  },
+  {
+   "name": "siu-encrypt",
+   "status": "planned"
+  },
+  {
+   "name": "siuenc",
+   "status": "planned"
+  },
+  {
+   "name": "siujsen",
+   "status": "planned"
+  },
+  {
+   "name": "sjp",
+   "status": "planned"
+  },
+  {
+   "name": "sjps",
+   "status": "planned"
+  },
+  {
+   "name": "sketsa",
+   "status": "planned"
+  },
+  {
+   "name": "sketsa2",
+   "status": "planned"
+  },
+  {
+   "name": "snake",
+   "status": "planned"
+  },
+  {
+   "name": "snakename",
+   "status": "planned"
+  },
+  {
+   "name": "sora",
+   "status": "planned"
+  },
+  {
+   "name": "soraai",
+   "status": "planned"
+  },
+  {
+   "name": "soundaudio",
+   "family": "sound1..soundN",
+   "status": "planned",
+   "reason": "Keluarga command V15 sound1..N (cuplikan audio bernomor) — digabung jadi satu fitur dengan parameter nomor."
+  },
+  {
+   "name": "sp",
+   "status": "planned"
+  },
+  {
+   "name": "space",
+   "status": "planned"
+  },
+  {
+   "name": "spaceinvaders",
+   "status": "planned"
+  },
+  {
+   "name": "spaceshooter",
+   "status": "planned"
+  },
+  {
+   "name": "spdown",
+   "status": "planned"
+  },
+  {
+   "name": "spoiler",
+   "status": "planned"
+  },
+  {
+   "name": "sprem",
+   "status": "disabled",
+   "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
+  },
+  {
+   "name": "ssp",
+   "status": "planned"
+  },
+  {
+   "name": "stack",
+   "status": "planned"
+  },
+  {
+   "name": "stackgame",
+   "status": "planned"
+  },
+  {
+   "name": "stacktower",
+   "status": "planned"
+  },
+  {
+   "name": "stalktiktok",
+   "status": "planned"
+  },
+  {
+   "name": "starting",
+   "status": "planned"
+  },
+  {
+   "name": "startwings",
+   "status": "planned"
+  },
+  {
+   "name": "stele",
+   "status": "planned"
+  },
+  {
+   "name": "stickertele",
+   "status": "planned"
+  },
+  {
+   "name": "stickerwa",
+   "status": "planned"
+  },
+  {
+   "name": "stikeranime",
+   "status": "planned"
+  },
+  {
+   "name": "stikercmd",
+   "status": "planned"
+  },
+  {
+   "name": "stikerdinokuning",
+   "status": "planned"
+  },
+  {
+   "name": "stikergojo",
+   "status": "planned"
+  },
+  {
+   "name": "stikermeme",
+   "status": "planned"
+  },
+  {
+   "name": "stikermukalu",
+   "status": "planned"
+  },
+  {
+   "name": "stikerpentol",
+   "status": "planned"
+  },
+  {
+   "name": "stikerrandom",
+   "status": "planned"
+  },
+  {
+   "name": "stikerspongebob",
+   "status": "planned"
+  },
+  {
+   "name": "stkbaik",
+   "status": "planned"
+  },
+  {
+   "name": "stkcantik",
+   "status": "planned"
+  },
+  {
+   "name": "stkganteng",
+   "status": "planned"
+  },
+  {
+   "name": "stkgila",
+   "status": "planned"
+  },
+  {
+   "name": "stkhitam",
+   "status": "planned"
+  },
+  {
+   "name": "stkkaya",
+   "status": "planned"
+  },
+  {
+   "name": "stkkeren",
+   "status": "planned"
+  },
+  {
+   "name": "stklucu",
+   "status": "planned"
+  },
+  {
+   "name": "stkmarah",
+   "status": "planned"
+  },
+  {
+   "name": "stkmiskin",
+   "status": "planned"
+  },
+  {
+   "name": "stkmisterius",
+   "status": "planned"
+  },
+  {
+   "name": "stksabar",
+   "status": "planned"
+  },
+  {
+   "name": "stksakiti",
+   "status": "planned"
+  },
+  {
+   "name": "stksantai",
+   "status": "planned"
+  },
+  {
+   "name": "stksombong",
+   "status": "planned"
+  },
+  {
+   "name": "stopallschedmsg",
+   "status": "planned"
+  },
+  {
+   "name": "stopjadpes",
+   "status": "planned"
+  },
+  {
+   "name": "stopjadwalpesan",
+   "status": "planned"
+  },
+  {
+   "name": "stopjadwalpesanall",
+   "status": "planned"
+  },
+  {
+   "name": "stopjadwalpesansemua",
+   "status": "planned"
+  },
+  {
+   "name": "stopschedmsg",
+   "status": "planned"
+  },
+  {
+   "name": "storyhd",
+   "status": "planned"
+  },
+  {
+   "name": "streak",
+   "status": "planned"
+  },
+  {
+   "name": "strong-encrypt",
+   "status": "planned"
+  },
+  {
+   "name": "strongenc",
+   "status": "planned"
+  },
+  {
+   "name": "strongjsen",
+   "status": "planned"
+  },
+  {
+   "name": "struk",
+   "status": "disabled",
+   "reason": "Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan."
+  },
+  {
+   "name": "suamiistri",
+   "status": "planned"
+  },
+  {
+   "name": "subdo",
+   "status": "planned"
+  },
+  {
+   "name": "success",
+   "status": "planned"
+  },
+  {
+   "name": "summerbeach",
+   "status": "planned"
+  },
+  {
+   "name": "sunlight",
+   "status": "planned"
+  },
+  {
+   "name": "svp",
+   "status": "planned"
+  },
+  {
+   "name": "swgc",
+   "status": "planned"
+  },
+  {
+   "name": "swgc_allprocess",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "swgc_process",
+   "status": "planned"
+  },
+  {
+   "name": "swgcall",
+   "status": "disabled",
+   "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
+  },
+  {
+   "name": "swhd",
+   "status": "planned"
+  },
+  {
+   "name": "sync",
+   "status": "planned"
+  },
+  {
+   "name": "syncsubdo",
+   "status": "planned"
+  },
+  {
+   "name": "tambahbadword",
+   "status": "planned"
+  },
+  {
+   "name": "tan",
+   "status": "planned"
+  },
+  {
+   "name": "teal",
+   "status": "planned"
+  },
+  {
+   "name": "tebakff",
+   "status": "planned"
+  },
+  {
+   "name": "tebakkah",
+   "status": "planned"
+  },
+  {
+   "name": "telanjang",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "telesticker",
+   "status": "planned"
+  },
+  {
+   "name": "tembak",
+   "status": "planned"
+  },
+  {
+   "name": "tempo",
+   "status": "planned"
+  },
+  {
+   "name": "terimajadian",
+   "status": "planned"
+  },
+  {
+   "name": "testi",
+   "status": "planned"
+  },
+  {
+   "name": "testimoni",
+   "status": "planned"
+  },
+  {
+   "name": "testleft",
+   "status": "planned"
+  },
+  {
+   "name": "testultah",
+   "status": "planned"
+  },
+  {
+   "name": "testwelcome",
+   "status": "planned"
+  },
+  {
+   "name": "text2speech",
+   "status": "planned"
+  },
+  {
+   "name": "th",
+   "status": "planned"
+  },
+  {
+   "name": "threadsdown",
+   "status": "planned"
+  },
+  {
+   "name": "tictactoe2",
+   "status": "planned"
+  },
+  {
+   "name": "tictactoerich",
+   "status": "planned"
+  },
+  {
+   "name": "tiktokmp3",
+   "status": "planned"
+  },
+  {
+   "name": "tiktokplay",
+   "status": "planned"
+  },
+  {
+   "name": "tiktokplay2",
+   "status": "planned"
+  },
+  {
+   "name": "to2d",
+   "status": "planned"
+  },
+  {
+   "name": "toaktivis",
+   "status": "planned"
+  },
+  {
+   "name": "toanime",
+   "status": "planned"
+  },
+  {
+   "name": "tobabi",
+   "status": "disabled",
+   "reason": "Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan."
+  },
+  {
+   "name": "tobotak",
+   "status": "planned"
+  },
+  {
+   "name": "tochibi",
+   "status": "planned"
+  },
+  {
+   "name": "todemo",
+   "status": "planned"
+  },
+  {
+   "name": "todemojalanan",
+   "status": "planned"
+  },
+  {
+   "name": "todemonstrasi",
+   "status": "planned"
+  },
+  {
+   "name": "todino",
+   "status": "planned"
+  },
+  {
+   "name": "todonghua",
+   "status": "planned"
+  },
+  {
+   "name": "todpr",
+   "status": "planned"
+  },
+  {
+   "name": "tofigure",
+   "status": "planned"
+  },
+  {
+   "name": "tofootball",
+   "status": "planned"
+  },
+  {
+   "name": "tohitam",
+   "status": "disabled",
+   "reason": "Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan."
+  },
+  {
+   "name": "tojawa",
+   "status": "planned"
+  },
+  {
+   "name": "tokartun",
+   "status": "planned"
+  },
+  {
+   "name": "tolakacc",
+   "status": "planned"
+  },
+  {
+   "name": "tomanga",
+   "status": "planned"
+  },
+  {
+   "name": "tomangu",
+   "status": "planned"
+  },
+  {
+   "name": "tomanhwa",
+   "status": "planned"
+  },
+  {
+   "name": "tomirror",
+   "status": "planned"
+  },
+  {
+   "name": "tomoai",
+   "status": "planned"
+  },
+  {
+   "name": "tomonyet",
+   "status": "disabled",
+   "reason": "Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan."
+  },
+  {
+   "name": "tomountain",
+   "status": "planned"
+  },
+  {
+   "name": "top4top",
+   "status": "planned"
+  },
+  {
+   "name": "topacar",
+   "status": "planned"
+  },
+  {
+   "name": "topbalance",
+   "status": "planned"
+  },
+  {
+   "name": "topenjara",
+   "status": "planned"
+  },
+  {
+   "name": "topmoney",
+   "status": "planned"
+  },
+  {
+   "name": "toproblox",
+   "status": "planned"
+  },
+  {
+   "name": "topstreak",
+   "status": "planned"
+  },
+  {
+   "name": "toptv",
+   "status": "planned"
+  },
+  {
+   "name": "topunk",
+   "status": "planned"
+  },
+  {
+   "name": "toroblox",
+   "status": "planned"
+  },
+  {
+   "name": "tosad",
+   "status": "planned"
+  },
+  {
+   "name": "tosatan",
+   "status": "planned"
+  },
+  {
+   "name": "tosunda",
+   "status": "planned"
+  },
+  {
+   "name": "totalchat",
+   "status": "planned"
+  },
+  {
+   "name": "totalpesan",
+   "status": "planned"
+  },
+  {
+   "name": "totaluser",
+   "status": "planned"
+  },
+  {
+   "name": "toukachan",
+   "status": "planned"
+  },
+  {
+   "name": "touploader",
+   "status": "planned"
+  },
+  {
+   "name": "tourl",
+   "status": "planned"
+  },
+  {
+   "name": "tourl2",
+   "status": "planned"
+  },
+  {
+   "name": "tourl3",
+   "status": "planned"
+  },
+  {
+   "name": "tourlgh",
+   "status": "planned"
+  },
+  {
+   "name": "tqto",
+   "status": "planned"
+  },
+  {
+   "name": "trialprem",
+   "status": "planned"
+  },
+  {
+   "name": "trialpremium",
+   "status": "planned"
+  },
+  {
+   "name": "tsunade",
+   "status": "planned"
+  },
+  {
+   "name": "ttmp3",
+   "status": "planned"
+  },
+  {
+   "name": "ttsbrando",
+   "status": "planned"
+  },
+  {
+   "name": "tukarkoin",
+   "status": "planned"
+  },
+  {
+   "name": "tukaruang",
+   "status": "planned"
+  },
+  {
+   "name": "tvstiker",
+   "status": "planned"
+  },
+  {
+   "name": "typographytext",
+   "status": "planned"
+  },
+  {
+   "name": "uguu",
+   "status": "planned"
+  },
+  {
+   "name": "ultah",
+   "status": "planned"
+  },
+  {
+   "name": "ultra-encrypt",
+   "status": "planned"
+  },
+  {
+   "name": "ultraenc",
+   "status": "planned"
+  },
+  {
+   "name": "ultrajsen",
+   "status": "planned"
+  },
+  {
+   "name": "unblok",
+   "status": "planned"
+  },
+  {
+   "name": "unblur",
+   "status": "planned"
+  },
+  {
+   "name": "uncensored",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "underwatertext",
+   "status": "planned"
+  },
+  {
+   "name": "ungu",
+   "status": "planned"
+  },
+  {
+   "name": "ungukehitaman",
+   "status": "planned"
+  },
+  {
+   "name": "ungutua",
+   "status": "planned"
+  },
+  {
+   "name": "unli",
+   "status": "planned"
+  },
+  {
+   "name": "unmutegc",
+   "status": "planned"
+  },
+  {
+   "name": "unmutegc_proses",
+   "status": "planned"
+  },
+  {
+   "name": "unresimg",
+   "status": "planned"
+  },
+  {
+   "name": "unsensored",
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
+  },
+  {
+   "name": "upchannel",
+   "status": "planned"
+  },
+  {
+   "name": "upchannel2",
+   "status": "planned"
+  },
+  {
+   "name": "updatelist",
+   "status": "planned"
+  },
+  {
+   "name": "userinfo",
+   "status": "planned"
+  },
+  {
+   "name": "v",
+   "status": "planned"
+  },
+  {
+   "name": "veo3",
+   "status": "planned"
+  },
+  {
+   "name": "videy",
+   "status": "planned"
+  },
+  {
+   "name": "videydl",
+   "status": "planned"
+  },
+  {
+   "name": "vignet",
+   "status": "planned"
+  },
+  {
+   "name": "vignette",
+   "status": "planned"
+  },
+  {
+   "name": "vocalremover",
+   "status": "planned"
+  },
+  {
+   "name": "voicecover",
+   "status": "planned"
+  },
+  {
+   "name": "vol",
+   "status": "planned"
+  },
+  {
+   "name": "volumevideo",
+   "status": "planned"
+  },
+  {
+   "name": "volvid",
+   "status": "planned"
+  },
+  {
+   "name": "volvideo",
+   "status": "planned"
+  },
+  {
+   "name": "waifu2",
+   "status": "planned"
+  },
+  {
+   "name": "wanted",
+   "status": "planned"
+  },
+  {
+   "name": "warning",
+   "status": "planned"
+  },
+  {
+   "name": "warninglist",
+   "status": "planned"
+  },
+  {
+   "name": "warnlist",
+   "status": "planned"
+  },
+  {
+   "name": "watercolortext",
+   "status": "planned"
+  },
+  {
+   "name": "web2apk",
+   "status": "planned"
+  },
+  {
+   "name": "webtoapk",
+   "status": "planned"
+  },
+  {
+   "name": "wheat",
+   "status": "planned"
+  },
+  {
+   "name": "wood",
+   "status": "planned"
+  },
+  {
+   "name": "worm",
+   "status": "planned"
+  },
+  {
+   "name": "wormgpt",
+   "status": "disabled",
+   "reason": "AI tanpa batasan untuk kegiatan berbahaya — tidak akan diimplementasikan."
+  },
+  {
+   "name": "writetext",
+   "status": "planned"
+  },
+  {
+   "name": "yandl",
+   "status": "planned"
+  },
+  {
+   "name": "yanedit",
+   "status": "planned"
+  },
+  {
+   "name": "yannai",
+   "status": "planned"
+  },
+  {
+   "name": "yannaimd",
+   "status": "planned"
+  },
+  {
+   "name": "yannedit",
+   "status": "planned"
+  },
+  {
+   "name": "yannqc",
+   "status": "planned"
+  },
+  {
+   "name": "yanqc",
+   "status": "planned"
+  },
+  {
+   "name": "youtubemp4",
+   "status": "planned"
+  },
+  {
+   "name": "ytcomment",
+   "status": "planned"
+  },
+  {
+   "name": "ytgoldbutton",
+   "status": "planned"
+  },
+  {
+   "name": "ytsilverbutton",
+   "status": "planned"
+  },
+  {
+   "name": "yuki",
+   "status": "planned"
+  },
+  {
+   "name": "yuri",
+   "status": "planned"
+  },
+  {
+   "name": "zrooart",
+   "status": "planned"
+  }
+ ]
+}

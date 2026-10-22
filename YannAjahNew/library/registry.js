@@ -101,16 +101,19 @@ class Registry {
       const adapted = this.adaptLegacy(mod, file);
       return adapted ? this.register(adapted, { file }) : [];
     }
-    const feats = typeof mod === 'function' ? mod() : mod;
+    // Factory plugin: function(registry) -> fitur (bisa melihat nama command yang sudah terpakai).
+    const feats = typeof mod === 'function' ? mod(this) : mod;
     return this.register(feats, { file });
   }
 
   // Muat semua plugin dari folder (rekursif). Folder 'external' hanya dimuat kalau hash-nya dipercaya.
-  loadDir(dir, { trustedExternal = {} } = {}) {
+  // Folder di deferDirs dimuat paling akhir sesuai urutan (default: apiz2z lalu backlog), supaya fitur lokal mendapat nama command lebih dulu.
+  loadDir(dir, { trustedExternal = {}, deferDirs = ['apiz2z', 'backlog'] } = {}) {
     if (!fs.existsSync(dir)) return 0;
     let n = 0;
     const walk = d => {
-      for (const ent of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const rank = e => (e.isDirectory() && deferDirs.includes(e.name) ? 1 + deferDirs.indexOf(e.name) : 0);
+      for (const ent of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name))) {
         const full = path.join(d, ent.name);
         if (ent.isDirectory()) { if (!ent.name.startsWith('_')) walk(full); continue; }
         if (!ent.name.endsWith('.js') || ent.name.startsWith('_')) continue;

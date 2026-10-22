@@ -1,6 +1,6 @@
 {
  "source": "api-docs repository (platform apiz2z.web.id), folder plugin/",
- "generatedAt": "2026-10-22T03:42:24.407Z",
+ "generatedAt": "2026-10-22T04:29:47.782Z",
  "auth": {
   "header": "Authorization: Bearer <APIZ2Z_API_KEY>",
   "alt": "x-api-key"
@@ -3042,7 +3042,13 @@
    "category": "Downloader",
    "source": "tiktok",
    "upload": false,
-   "params": []
+   "params": [
+    {
+     "name": "url",
+     "required": true,
+     "fromPath": true
+    }
+   ]
   },
   {
    "path": "/api/download/tiktok-v2",
