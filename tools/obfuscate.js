@@ -46,3 +46,31 @@ for (const f of FILES) {
   console.log(`  ${f}: ${(src.length / 1024).toFixed(1)}KB -> ${(out.length / 1024).toFixed(1)}KB (${Date.now() - t}ms)`);
 }
 console.log(`done: ${FILES.length} files, ${(total / 1024).toFixed(0)}KB in views/dist/`);
+
+// --- Inline <script> in the HTML pages -----------------------------------------------------------
+// Each page's own inline script is real browser logic too, so it is obfuscated into views/dist/<page>.html
+// (served when present). Only bare <script> blocks are touched: <script src=...> (external, already in
+// dist) and any templated markers outside scripts are left alone. renameGlobals:false keeps names that
+// HTML attributes call (e.g. Google Sign-In's data-callback, on* handlers).
+const HTML = require('fs').readdirSync(VIEWS).filter(f => f.endsWith('.html'));
+let htmlTotal = 0;
+for (const f of HTML) {
+  let html = fs.readFileSync(path.join(VIEWS, f), 'utf8');
+  const prefix = '_h' + Buffer.from(f).toString('hex').slice(0, 6) + '_';
+  let changed = false, n = 0;
+  // Bare <script> ... </script> only (no attributes, so not src= and not type=json).
+  html = html.replace(/<script>([\s\S]*?)<\/script>/g, (m, code) => {
+    if (!code.trim()) return m;
+    try {
+      const out = O.obfuscate(code, { ...OPTS, identifiersPrefix: prefix + (n++) + '_' }).getObfuscatedCode();
+      changed = true;
+      return '<script>' + out + '</script>';
+    } catch (e) { process.stderr.write(`  ! ${f}: a <script> block could not be obfuscated (${e.message}); left as is\n`); return m; }
+  });
+  // Vercel caps a function response near 4.5 MB; a page past this stays readable so it can't break
+  // (big ones are 3D demos / the login-gated owner panel, low value to hide).
+  const CAP = 3 * 1024 * 1024;
+  if (changed && html.length > CAP) { try { fs.unlinkSync(path.join(DIST, f)); } catch {} console.log(`  ${f}: ${(html.length / 1024 / 1024).toFixed(1)}MB too big -> left readable`); changed = false; }
+  if (changed) { fs.writeFileSync(path.join(DIST, f), html); htmlTotal += html.length; console.log(`  ${f}: ${n} inline script(s) obfuscated -> ${(html.length / 1024).toFixed(0)}KB`); }
+}
+console.log(`done: ${HTML.length} html pages scanned, dist html ${(htmlTotal / 1024).toFixed(0)}KB`);
