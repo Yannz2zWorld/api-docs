@@ -24,6 +24,7 @@ function createApp({ db, cfg, googleClient = createGoogle(cfg.google), logger = 
   });
 
   app.get('/health', (req, res) => res.json({ status: 'ok' }));
+  app.get('/favicon.ico', (req, res) => res.status(204).end());
   app.get('/health/ready', async (req, res) => {
     const dbh = await db.healthCheck().catch(() => ({ ok: false }));
     const waiting = dbh.ok ? await pending(db).catch(() => null) : null;
