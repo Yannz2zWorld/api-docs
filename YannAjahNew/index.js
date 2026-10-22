@@ -163,28 +163,36 @@ async function main() {
   wa.on('terminal', reason => {
     const msg = { logged_out: 'Perangkat logout dari WhatsApp. Session dihapus; jalankan ulang untuk pairing lagi.', replaced: 'Session dipakai di tempat lain (connection replaced). Bot berhenti.', bad_session: 'Session rusak dan dihapus. Jalankan ulang untuk pairing.', forbidden: 'WhatsApp menolak koneksi (403).', max_reconnect: 'Gagal reconnect berulang kali.' }[reason] || reason;
     console.log(chalk.red(`✖ ${msg}`));
+    // Butuh tindakan manusia (pairing ulang / proses lain) -> 78 agar process manager tidak restart terus; lainnya -> 1.
+    shutdown(`terminal:${reason}`, ['logged_out', 'replaced', 'bad_session', 'forbidden', 'multidevice_mismatch'].includes(reason) ? EXIT_DENIED : 1);
   });
+  wa.on('pairing_timeout', () => { console.log(chalk.red('✖ Pairing tidak selesai dalam batas waktu.')); shutdown('pairing_timeout', EXIT_DENIED); });
+  wa.on('number_mismatch', () => shutdown('number_mismatch', EXIT_DENIED));
 
   // Ban / disable / sesi dicabut dari dashboard -> hentikan pemakaian WhatsApp (tidak reconnect).
   license.on('locked', reason => {
     logger.warn(`Lisensi terkunci: ${license.describe(reason)} — koneksi WhatsApp dihentikan`);
     wa.stop().catch(() => {});
+    // Server tidak terjangkau: tetap hidup dan tunggu pulih (heartbeat terus mencoba).
+    // Sesi dicabut / bot diban / disable: butuh tindakan admin + login ulang -> keluar 78.
+    if (reason !== 'SERVER_UNREACHABLE') shutdown(`lisensi terkunci (${reason})`, EXIT_DENIED);
   });
   // Pulih dari gangguan jaringan ke server lisensi (token masih sah) -> sambung lagi.
   license.on('state', s => { if (s.allowed && wa.stopped && !shuttingDown && wa.hasSession()) wa.start().catch(e => logger.error('Gagal menyambung ulang', e.message)); });
   license.startHeartbeat();
+  license.timer?.ref?.();   // proses bot tetap hidup selama heartbeat berjalan (menunggu pulih bila server lisensi down)
 
-  const shutdown = async sig => {
+  async function shutdown(sig, code = 0) {
     if (shuttingDown) return; shuttingDown = true;
-    console.log(chalk.yellow(`\n${sig} diterima — menutup dengan aman (session & database disimpan)...`));
+    console.log(chalk.yellow(`\n${sig} — menutup dengan aman (session & database disimpan)...`));
     license.stopHeartbeat();
     await wa.stop().catch(() => {});
     store.stopAutoSave();
     await store.write().catch(e => logger.error('Gagal menyimpan database', e.message));
     await license.heartbeat().catch(() => {});   // laporkan disconnected
     await logger.close();
-    process.exit(0);
-  };
+    process.exit(code);
+  }
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('unhandledRejection', e => logger.error('unhandledRejection', e?.message || String(e)));

@@ -136,7 +136,9 @@ module.exports = {
     // Plugin legacy (format handler.command) dari V15/base tetap bisa dipakai lewat adapter.
     enableLegacy: true,
     hotReload: envBool('PLUGIN_HOT_RELOAD', false),
-    disabled: envList('DISABLED_FEATURES')
+    disabled: envList('DISABLED_FEATURES'),
+    // plugins/external/*.js hanya dimuat kalau SHA-256 file-nya terdaftar di sini: { 'nama.js': '<sha256>' }
+    trustedExternal: {}
   },
 
   // ------------------------------------------------------------------ media

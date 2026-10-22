@@ -87,4 +87,11 @@ section('Backlog V15 (planned)', r => r.status === 'planned', [['Command V15', r
 fs.mkdirSync(path.join(ROOT, 'docs'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'docs', 'FEATURES.md'), md.join('\n'));
 
+// Pemetaan endpoint APIZ2Z -> command
+const api = rows.filter(r => r.source === 'apiz2z').sort((a, b) => a.dependency.localeCompare(b.dependency));
+const amd = ['# Pemetaan endpoint APIZ2Z → command WhatsApp', '', '> Dibuat otomatis oleh `npm run features:report` dari `library/catalog/apiz2z-endpoints.json`. Semua endpoint di bawah diverifikasi dari source platform (bukan karangan). Kolom Uji = hasil uji mock terakhir (bukan uji live).', '',
+  `Total: ${api.length} command.`, '', '| Endpoint | Command | Alias | Kategori | Parameter (* wajib) | Uji |', '|---|---|---|---|---|---|'];
+for (const r of api) amd.push(`| \`${r.dependency.replace('APIZ2Z ', '')}\` | .${r.command} | ${esc(r.aliases.join(', '))} | ${r.category} | ${esc(r.params.join(', '))} | ${r.test || '-'} |`);
+fs.writeFileSync(path.join(ROOT, 'docs', 'APIZ2Z-MAPPING.md'), amd.join('\n') + '\n');
+
 console.log(JSON.stringify({ ...summary, byCategory: undefined, loadErrors: summary.loadErrors.length }, null, 1));
