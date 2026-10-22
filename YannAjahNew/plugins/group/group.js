@@ -130,7 +130,7 @@ module.exports = [
     async onMessage(ctx) {
       const m = ctx.m;
       if (!m.isGroup || m.fromMe || ctx.isOwner || m.isAdmin || !m.isBotAdmin) return false;
-      const g = ctx.db.get(`groups.${m.chat}`);
+      const g = ctx.db.get(['groups', m.chat]);
       if (!g?.antilink) return false;
       const link = LINK_RE.exec(m.body || '');
       if (!link) return false;

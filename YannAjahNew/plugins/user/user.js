@@ -52,7 +52,7 @@ module.exports = [
     async onMessage(ctx) {
       const m = ctx.m;
       if (m.isCmd && m.command === 'afk') return false;
-      const me = ctx.db.get(`users.${m.sender}`);
+      const me = ctx.db.get(['users', m.sender]);
       if (me?.afk) {
         const mins = Math.round((Date.now() - me.afk.since) / 60000);
         me.afk = null; ctx.db.touch();
@@ -60,7 +60,7 @@ module.exports = [
       }
       const targets = [...(m.mentionedJid || []), m.quoted?.sender].filter(Boolean);
       for (const jid of new Set(targets)) {
-        const u = ctx.db.get(`users.${jid}`);
+        const u = ctx.db.get(['users', jid]);
         if (u?.afk) await ctx.reply(`💤 @${jidUser(jid)} sedang AFK (${Math.round((Date.now() - u.afk.since) / 60000)} menit): ${u.afk.reason}`);
       }
       return false;

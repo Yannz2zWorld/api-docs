@@ -9,7 +9,7 @@
  *   yannajah.reply(m, content, opts)           balas pesan m
  *   yannajah.react(m, emoji)                   reaksi
  *   yannajah.sendFile(jid, input, opts)        kirim Buffer/URL/file dengan deteksi mime sebenarnya
- *   yannajah.database.get/set/delete/user/group/save
+ *   yannajah.database.get/set/delete/user/group/save   (path string bertitik atau array, mis. ['users', jid])
  *   yannajah.api.get/post/getEndpoints/getStatus   (library/apiz2z.js — hanya endpoint terverifikasi)
  *   yannajah.auth.verify/isActive/status/maintenance (library/license.js — backend pusat)
  *   yannajah.plugins.register/list/get/enable/disable (library/registry.js)
@@ -25,8 +25,9 @@ const { download } = require('./library/net');
 const FORBIDDEN_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 const JID_RE = /^[0-9a-zA-Z._:-]+@(s\.whatsapp\.net|g\.us|lid|newsletter|broadcast)$/;
 
+// Path: 'settings.public' atau array ['users', jid] (WAJIB array kalau ada kunci bertitik seperti JID).
 function splitPath(p) {
-  const parts = String(p || '').split('.').filter(Boolean);
+  const parts = Array.isArray(p) ? p.map(String) : String(p || '').split('.').filter(Boolean);
   if (!parts.length || parts.length > 8 || parts.some(k => FORBIDDEN_KEYS.has(k) || k.length > 120)) throw err('INVALID_DB_PATH', `Path database tidak valid: ${p}`);
   return parts;
 }
@@ -54,7 +55,7 @@ function createDatabaseFacade(store, { dailyLimit = 10 } = {}) {
     },
     delete(path) {
       const parts = splitPath(path);
-      const parent = parts.length > 1 ? facade.get(parts.slice(0, -1).join('.')) : data();
+      const parent = parts.length > 1 ? facade.get(parts.slice(0, -1)) : data();
       if (parent && typeof parent === 'object') { delete parent[parts[parts.length - 1]]; store.markDirty(); return true; }
       return false;
     },

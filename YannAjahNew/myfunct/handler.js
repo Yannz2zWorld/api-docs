@@ -15,7 +15,7 @@ function createGroupHandler(yannajah, { logger }) {
   return async function onParticipants(ev) {
     try {
       if (!yannajah.auth.isActive() || yannajah.auth.maintenance().active) return;
-      const g = yannajah.database.get(`groups.${ev.id}`);
+      const g = yannajah.database.get(['groups', ev.id]);
       if (!g) return;
       const action = ev.action;
       if (!((action === 'add' && g.welcome) || (action === 'remove' && g.left))) return;
