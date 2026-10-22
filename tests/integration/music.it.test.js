@@ -123,8 +123,10 @@ it('SITE_MUSIC_URL picks the video, "off" hides the player; the widget script is
   const js = await app.request('GET', '/assets/music.js');
   assert.equal(js.status, 200);
   assert.match(js.headers['content-type'], /javascript/);
-  assert.match(js.text, /audio\.loop = true/);
-  assert.match(js.text, /if \(!state\.paused\) start\(false\)/, 'tries to play automatically');
+  // Served script is obfuscated; check the features in the readable source.
+  const musicSrc = require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'views', 'music.js'), 'utf8');
+  assert.match(musicSrc, /audio\.loop = true/);
+  assert.match(musicSrc, /if \(!state\.paused\) start\(false\)/, 'tries to play automatically');
   const page = await app.request('GET', '/pricing');
   assert.match(page.text, /<script src="\/assets\/music\.js" defer><\/script>/);
 });

@@ -109,7 +109,8 @@ it('the WebGL scene script is served as JavaScript', async () => {
   const r = await app.request('GET', '/assets/scene3d.js');
   assert.equal(r.status, 200);
   assert.match(r.headers['content-type'], /javascript/);
-  assert.match(r.text, /window\.THREE/);
+  // Served script is obfuscated; check the feature in the readable source.
+  assert.match(require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'views', 'scene3d.js'), 'utf8'), /window\.THREE/);
 });
 
 it('the hero scythe model is served as a small Draco GLB', async () => {
@@ -130,10 +131,11 @@ it('the hero loads three.js like /3d (classic WebGL1-capable build) and preloads
   assert.match(r.text, /rel="preload" href="\/assets\/scythe\.glb"/);
   const js = await app.request('GET', '/assets/scene3d.js');
   assert.equal(js.status, 200);
-  // r163+ needs WebGL2; r147 runs on WebGL1 too.
-  assert.match(js.text, /three@0\.147\.0\//);
-  assert.match(js.text, /build\/three\.min\.js/);
-  assert.doesNotMatch(js.text, /^\s*import /m);
+  // r163+ needs WebGL2; r147 runs on WebGL1 too. Served script is obfuscated; check the source.
+  const scene3d = require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'views', 'scene3d.js'), 'utf8');
+  assert.match(scene3d, /three@0\.147\.0\//);
+  assert.match(scene3d, /build\/three\.min\.js/);
+  assert.doesNotMatch(scene3d, /^\s*import /m);
 });
 
 it('the 3D scene page is public and loads three.js from the CDN', async () => {
