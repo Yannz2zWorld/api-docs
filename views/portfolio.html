@@ -5,38 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Portfolio</title>
 <meta name="description" content="Portfolio pribadi">
+<meta property="og:type" content="profile">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/views/assets/favicon.png">
 <style>
   :root {
     --bg: #ffffff;
-    --surface: #f7f9f9;
-    --card: #ffffff;
-    --text: #0f1419;
-    --muted: #536471;
-    --line: #eff3f4;
+    --soft: #f5f5f5;
+    --text: #0a0a0a;
+    --muted: #737373;
+    --line: #e5e5e5;
     --accent: #1d9bf0;
-    --accent-ink: #ffffff;
-    --shadow: 0 1px 2px rgba(15, 20, 25, .06), 0 8px 24px rgba(15, 20, 25, .06);
+    color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #000000;
-      --surface: #16181c;
-      --card: #0b0c0e;
-      --text: #e7e9ea;
-      --muted: #71767b;
-      --line: #2f3336;
-      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    :root {
+      --bg: #0a0a0a;
+      --soft: #171717;
+      --text: #fafafa;
+      --muted: #a3a3a3;
+      --line: #262626;
+      color-scheme: dark;
     }
-  }
-  :root[data-theme="dark"] {
-    --bg: #000000;
-    --surface: #16181c;
-    --card: #0b0c0e;
-    --text: #e7e9ea;
-    --muted: #71767b;
-    --line: #2f3336;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .4);
   }
 
   * { box-sizing: border-box; }
@@ -44,324 +35,211 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font: 15px/1.5 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  a { color: inherit; text-decoration: none; }
   img, video { display: block; }
-  button { font: inherit; color: inherit; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  svg { width: 18px; height: 18px; flex: none; }
 
-  .page {
-    max-width: 640px;
-    margin: 0 auto;
-    min-height: 100vh;
-    border-left: 1px solid var(--line);
-    border-right: 1px solid var(--line);
-  }
-  @media (max-width: 640px) { .page { border: 0; } }
+  .page { max-width: 600px; margin: 0 auto; min-height: 100vh; }
 
-  /* Top bar */
-  .topbar {
-    position: sticky; top: 0; z-index: 20;
-    display: flex; align-items: center; gap: 12px;
-    padding: 8px 16px;
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  }
-  .topbar .t-name { font-weight: 700; font-size: 17px; display: flex; align-items: center; gap: 4px; }
-  .topbar .t-sub { color: var(--muted); font-size: 13px; }
-  .topbar .spacer { flex: 1; }
-  .icon-btn {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: grid; place-items: center;
-    border: 0; background: transparent; cursor: pointer;
-  }
-  .icon-btn:hover { background: var(--surface); }
-  .icon-btn svg { width: 20px; height: 20px; }
-
-  /* Banner (header) */
+  /* Banner */
   .banner {
-    position: relative;
+    position: relative; overflow: hidden;
     aspect-ratio: var(--banner-ratio, 16 / 9);
-    background: linear-gradient(135deg, #1d9bf0 0%, #7856ff 50%, #f91880 100%);
-    overflow: hidden;
+    background: var(--soft);
   }
   .banner > img, .banner > video { width: 100%; height: 100%; object-fit: cover; }
+  @media (min-width: 600px) { .banner { border-radius: 0 0 16px 16px; } }
 
-  /* Profile head */
-  .head { padding: 0 16px; position: relative; }
+  /* Profile */
+  .head { padding: 0 20px; }
   .head-row { display: flex; justify-content: space-between; align-items: flex-end; }
-  .avatar-wrap {
-    position: relative;
-    width: clamp(88px, 25vw, 136px); aspect-ratio: 1;
-    margin-top: calc(clamp(88px, 25vw, 136px) / -2);
+  .avatar {
+    --size: clamp(84px, 24vw, 120px);
+    position: relative; overflow: hidden; flex: none;
+    width: var(--size); height: var(--size);
+    margin-top: calc(var(--size) / -2);
     border-radius: 50%;
     border: 4px solid var(--bg);
-    background: var(--surface);
-    overflow: hidden;
+    background: var(--soft);
   }
-  .avatar-wrap img, .avatar-wrap video { width: 100%; height: 100%; object-fit: cover; }
-  .avatar-fallback {
-    width: 100%; height: 100%; display: grid; place-items: center;
-    font-size: 44px; font-weight: 800; color: #fff;
-    background: linear-gradient(135deg, #1d9bf0, #7856ff);
-  }
-  .head-actions { display: flex; gap: 8px; padding-top: 12px; }
+  .avatar img, .avatar video { width: 100%; height: 100%; object-fit: cover; }
+  .avatar-initial { width: 100%; height: 100%; display: grid; place-items: center; font-size: 36px; font-weight: 600; color: var(--muted); }
+  .actions { display: flex; gap: 8px; padding-top: 12px; }
   .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 0 18px; height: 36px; border-radius: 999px;
-    font-weight: 700; font-size: 15px; cursor: pointer;
-    border: 1px solid var(--line); background: transparent; color: var(--text);
-    text-decoration: none !important;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    height: 36px; padding: 0 16px; border-radius: 999px;
+    border: 1px solid var(--line); font-size: 14px; font-weight: 600;
+    transition: background-color .15s;
   }
-  .btn:hover { background: var(--surface); }
-  .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
-  .btn.primary:hover { opacity: .88; }
-  .btn.round { width: 36px; padding: 0; justify-content: center; }
-  .btn svg { width: 18px; height: 18px; }
+  .btn:hover { background: var(--soft); }
+  .btn.icon { width: 36px; padding: 0; }
+  .btn.solid { background: var(--text); border-color: var(--text); color: var(--bg); }
+  .btn.solid:hover { opacity: .85; background: var(--text); }
 
-  .name {
-    margin: 12px 0 0;
-    font-size: 21px; font-weight: 800; line-height: 1.2;
-    display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
-    overflow-wrap: anywhere;
-  }
-  .verified { width: 22px; height: 22px; flex: none; color: var(--accent); }
-  .verified.sm { width: 18px; height: 18px; }
-  .handle { color: var(--muted); margin-top: 1px; overflow-wrap: anywhere; }
+  .name { margin: 12px 0 0; font-size: 20px; font-weight: 700; line-height: 1.25; display: flex; align-items: center; gap: 4px; overflow-wrap: anywhere; }
+  .verified { width: 20px; height: 20px; color: var(--accent); }
+  .handle { color: var(--muted); }
   .bio { margin: 12px 0 0; white-space: pre-line; overflow-wrap: anywhere; }
-  .meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 12px; color: var(--muted); font-size: 14px; }
-  .meta span, .meta a { display: inline-flex; align-items: center; gap: 4px; }
-  .meta svg { width: 17px; height: 17px; }
-  .stats { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 12px; font-size: 14px; }
-  .stats b { font-weight: 700; }
-  .stats span { color: var(--muted); }
+  .meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 12px; color: var(--muted); font-size: 14px; }
+  .meta > * { display: inline-flex; align-items: center; gap: 5px; }
+  .meta svg { width: 16px; height: 16px; }
+  .meta a:hover { color: var(--text); }
+  .stats { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 12px; font-size: 14px; color: var(--muted); }
+  .stats b { color: var(--text); font-weight: 600; }
 
   /* Tabs */
   .tabs {
-    position: sticky; top: 52px; z-index: 10;
-    display: flex; margin-top: 16px;
-    border-bottom: 1px solid var(--line);
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 10;
+    display: flex; margin-top: 20px;
+    background: var(--bg); border-bottom: 1px solid var(--line);
   }
-  .tab {
-    flex: 1; padding: 0; background: none; border: 0; cursor: pointer;
-    color: var(--muted); font-weight: 600;
-  }
-  .tab:hover { background: var(--surface); }
-  .tab span { display: inline-block; padding: 15px 2px 13px; border-bottom: 4px solid transparent; }
-  .tab[aria-selected="true"] { color: var(--text); font-weight: 700; }
-  .tab[aria-selected="true"] span { border-bottom-color: var(--accent); }
+  .tab { flex: 1; padding: 14px 0 12px; color: var(--muted); font-size: 14px; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--text); }
+  .panel[hidden] { display: none; }
 
-  .panel { display: none; }
-  .panel.on { display: block; }
-
-  /* Portfolio grid (Instagram-like) */
-  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px 0; }
-  @media (max-width: 420px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-  .tile {
-    position: relative; aspect-ratio: 4 / 5; overflow: hidden;
-    border: 0; padding: 0; cursor: pointer; background: var(--surface);
-  }
-  .tile img, .tile video { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
-  .tile:hover img, .tile:hover video { transform: scale(1.04); }
-  .tile .ph { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 26px; }
-  .tile .cap {
-    position: absolute; inset: auto 0 0 0; padding: 22px 10px 8px;
+  /* Portfolio grid */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  .tile { position: relative; aspect-ratio: 1; overflow: hidden; background: var(--soft); }
+  .tile img, .tile video { width: 100%; height: 100%; object-fit: cover; }
+  .tile .ph { position: absolute; inset: 0; display: grid; place-items: center; padding: 12px; text-align: center; color: var(--muted); font-size: 13px; font-weight: 600; }
+  .tile .over {
+    position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 10px;
+    background: linear-gradient(transparent 50%, rgba(0,0,0,.6));
     color: #fff; font-size: 13px; font-weight: 600; text-align: left;
-    background: linear-gradient(transparent, rgba(0,0,0,.65));
+    opacity: 0; transition: opacity .2s;
   }
-  .tile .kind {
-    position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; color: #fff;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
-  }
+  .tile:hover .over, .tile:focus-visible .over { opacity: 1; }
+  .tile .badge { position: absolute; top: 8px; right: 8px; color: #fff; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+  @media (hover: none) { .tile.has-media .over { opacity: 1; } }
 
-  /* Skills & about */
-  .section { padding: 16px; border-bottom: 1px solid var(--line); }
-  .section h2 { margin: 0 0 12px; font-size: 20px; font-weight: 800; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { padding: 6px 12px; border-radius: 999px; background: var(--surface); font-size: 14px; font-weight: 600; }
-  .bar { margin-bottom: 12px; }
-  .bar-top { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
-  .bar-top span { color: var(--muted); }
-  .bar-track { height: 6px; border-radius: 999px; background: var(--surface); overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: inherit; background: var(--accent); }
-  .timeline { list-style: none; margin: 0; padding: 0; }
-  .timeline li { position: relative; padding: 0 0 16px 22px; border-left: 2px solid var(--line); margin-left: 6px; }
-  .timeline li:last-child { padding-bottom: 0; }
-  .timeline li::before {
-    content: ""; position: absolute; left: -7px; top: 3px;
-    width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg);
-  }
-  .timeline .when { color: var(--muted); font-size: 13px; }
-  .timeline .what { font-weight: 700; }
-  .timeline .where { color: var(--muted); font-size: 14px; }
+  /* Sections */
+  .section { padding: 24px 20px; border-bottom: 1px solid var(--line); }
+  #sec-social { border-bottom: 0; }
+  .section h2 { margin: 0 0 14px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; }
+  .exp { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .exp li { display: flex; justify-content: space-between; gap: 12px; }
+  .exp b { font-weight: 600; display: block; }
+  .exp span { color: var(--muted); font-size: 14px; }
+  .exp time { color: var(--muted); font-size: 13px; white-space: nowrap; }
 
-  /* Contact & socials */
-  .contact-card {
-    display: flex; align-items: center; gap: 12px; padding: 12px;
-    border: 1px solid var(--line); border-radius: 16px; margin-bottom: 10px;
-    color: var(--text); text-decoration: none !important;
-  }
-  .contact-card:hover { background: var(--surface); }
-  .contact-card .ci { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); flex: none; }
-  .contact-card .ci svg { width: 20px; height: 20px; }
-  .contact-card .ct { min-width: 0; }
-  .contact-card .ct b { display: block; }
-  .contact-card .ct span { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
-  .socials { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  /* Contact list */
+  .list { display: grid; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; transition: background-color .15s; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row:hover { background: var(--soft); }
+  .row .lbl { flex: 1; min-width: 0; }
+  .row .lbl b { display: block; font-weight: 600; font-size: 14px; }
+  .row .lbl span { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+  .row .go { color: var(--muted); }
+
+  /* Socials */
+  .socials { display: flex; flex-wrap: wrap; gap: 10px; }
   .social {
-    display: flex; align-items: center; gap: 10px; padding: 12px;
-    border-radius: 16px; color: #fff; font-weight: 700; text-decoration: none !important;
-    background: var(--brand); transition: transform .15s, box-shadow .15s;
+    width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center;
+    border: 1px solid var(--line); color: var(--text);
+    transition: background-color .15s, color .15s, border-color .15s;
   }
-  .social:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-  .social svg { width: 22px; height: 22px; flex: none; }
-  .social small { display: block; font-weight: 500; opacity: .85; font-size: 12px; overflow-wrap: anywhere; }
-  .social.youtube { --brand: #ff0033; }
-  .social.tiktok { --brand: #111111; box-shadow: inset 0 0 0 1px #2a2a2a; }
-  .social.x { --brand: #0f1419; box-shadow: inset 0 0 0 1px #2f3336; }
-  .social.instagram { --brand: linear-gradient(45deg, #feda75, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5); }
-  .social.whatsapp { --brand: #25d366; }
+  .social svg { width: 20px; height: 20px; }
+  .social:hover { background: var(--text); border-color: var(--text); color: var(--bg); }
 
-  .form { display: grid; gap: 10px; margin-top: 14px; }
-  .form input, .form textarea {
-    width: 100%; padding: 12px 14px; border-radius: 12px;
-    border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit;
-  }
-  .form input:focus, .form textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
-  .form textarea { min-height: 100px; resize: vertical; }
-  .form .btn { justify-self: start; }
+  footer { padding: 28px 20px 40px; text-align: center; color: var(--muted); font-size: 13px; }
 
-  footer { padding: 24px 16px 40px; text-align: center; color: var(--muted); font-size: 13px; }
+  /* Project dialog */
+  dialog {
+    width: min(520px, calc(100% - 32px)); max-height: calc(100vh - 32px);
+    padding: 0; border: 1px solid var(--line); border-radius: 16px;
+    background: var(--bg); color: var(--text); overflow: auto;
+  }
+  dialog::backdrop { background: rgba(0,0,0,.6); }
+  .d-media { background: #000; }
+  .d-media img, .d-media video { width: 100%; max-height: 65vh; object-fit: contain; }
+  .d-body { padding: 20px; }
+  .d-body h3 { margin: 0 0 6px; font-size: 18px; }
+  .d-body p { margin: 0 0 14px; color: var(--muted); }
+  .d-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 
-  /* Modal */
-  .modal {
-    position: fixed; inset: 0; z-index: 50; display: none;
-    background: rgba(0,0,0,.8); padding: 16px;
-    align-items: center; justify-content: center;
-  }
-  .modal.on { display: flex; }
-  .modal-box {
-    width: min(560px, 100%); max-height: calc(100vh - 32px); overflow: auto;
-    background: var(--bg); border-radius: 16px;
-  }
-  .modal-media { background: #000; }
-  .modal-media img, .modal-media video { width: 100%; max-height: 70vh; object-fit: contain; }
-  .modal-media .ph { aspect-ratio: 16 / 9; display: grid; place-items: center; color: #fff; font-size: 40px; font-weight: 800; }
-  .modal-body { padding: 16px; }
-  .modal-body h3 { margin: 0 0 6px; font-size: 19px; }
-  .modal-body p { margin: 0 0 12px; color: var(--muted); }
-  .modal-close {
-    position: fixed; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%;
-    border: 0; background: rgba(255,255,255,.15); color: #fff; cursor: pointer; font-size: 22px;
-  }
+  /* Edit mode (?edit=1): preview banner/avatar from your device, not saved */
+  .pick { position: absolute; z-index: 2; inset: 0; margin: auto; width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; display: none; place-items: center; }
+  body.editing .pick { display: grid; }
 
-  /* Edit mode (?edit=1): try banner / avatar from device, not saved */
-  .edit-pick {
-    position: absolute; z-index: 2; width: 42px; height: 42px; border-radius: 50%;
-    border: 0; background: rgba(0,0,0,.55); color: #fff; cursor: pointer;
-    display: none; place-items: center;
-  }
-  .edit-pick svg { width: 20px; height: 20px; }
-  body.editing .edit-pick { display: grid; }
-  .banner .edit-pick { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-  .avatar-wrap .edit-pick { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
 <script>
 /* =========================================================================
    EDIT DATA KAMU DI SINI
-   - Foto/video/gif: taruh file di views/assets/portfolio/ lalu isi path-nya,
-     contoh: '/views/assets/portfolio/banner.mp4'  atau pakai URL langsung.
-   - Banner otomatis jadi video kalau ekstensinya .mp4 / .webm / .mov
+   - Foto/video/gif: taruh di views/assets/portfolio/ lalu tulis path-nya,
+     contoh '/views/assets/portfolio/banner.mp4', atau pakai URL langsung.
+   - File .mp4 / .webm / .mov otomatis diputar sebagai video.
    - bannerRatio: '16 / 9' atau '4 / 3'
-   - Kosongkan ('') link sosmed yang tidak dipakai, nanti tombolnya hilang.
+   - Kosongkan ('') yang tidak dipakai, bagiannya otomatis hilang.
    ========================================================================= */
 const PROFILE = {
   name: 'Yannz',
   username: 'yannz2zworld',
   verified: true,
-  bio: 'Web developer & content creator 🚀\nSuka bikin website, API, dan desain UI yang clean.',
+  bio: 'Web developer & content creator.\nMembangun website, API, dan antarmuka yang rapi.',
   location: 'Indonesia',
   website: 'https://github.com/Yannz2zWorld',
-  joined: 'Bergabung 2024',
+  joined: 'Sejak 2024',
 
-  banner: '',              // foto / gif / video (16:9 atau 4:3)
+  banner: '',
   bannerRatio: '16 / 9',
-  avatar: '',              // foto / gif
+  avatar: '',
 
   stats: [
     { value: '24', label: 'Proyek' },
-    { value: '3+', label: 'Tahun pengalaman' },
+    { value: '3+', label: 'Tahun' },
     { value: '1.2K', label: 'Pengikut' },
   ],
 
-  // Isi grid portfolio. media boleh foto/gif/video, kosong = kotak warna.
   projects: [
-    { title: 'REST API Platform', desc: 'Platform API dengan dashboard, billing, dan sistem API key.', media: '', link: '', tags: ['Node.js', 'Express', 'PostgreSQL'] },
-    { title: 'Landing Page Toko', desc: 'Landing page responsif untuk UMKM.', media: '', link: '', tags: ['HTML', 'CSS'] },
-    { title: '3D Scythe Scene', desc: 'Scene 3D interaktif pakai three.js.', media: '', link: '', tags: ['three.js', 'WebGL'] },
-    { title: 'Bot WhatsApp', desc: 'Bot otomatis dengan banyak fitur.', media: '', link: '', tags: ['Node.js'] },
-    { title: 'Desain UI App', desc: 'Konsep UI aplikasi mobile.', media: '', link: '', tags: ['Figma', 'UI/UX'] },
-    { title: 'Video Editing', desc: 'Konten pendek untuk TikTok & Reels.', media: '', link: '', tags: ['CapCut', 'Premiere'] },
+    { title: 'REST API Platform', desc: 'Platform API dengan dashboard, billing, dan manajemen API key.', media: '', link: '', tags: ['Node.js', 'Express', 'PostgreSQL'] },
+    { title: 'Landing Page UMKM', desc: 'Landing page responsif untuk usaha kecil.', media: '', link: '', tags: ['HTML', 'CSS'] },
+    { title: '3D Scene', desc: 'Scene 3D interaktif berbasis three.js.', media: '', link: '', tags: ['three.js'] },
+    { title: 'Bot WhatsApp', desc: 'Bot otomatis dengan berbagai fitur.', media: '', link: '', tags: ['Node.js'] },
+    { title: 'Desain UI', desc: 'Konsep antarmuka aplikasi mobile.', media: '', link: '', tags: ['Figma'] },
+    { title: 'Video Editing', desc: 'Konten pendek untuk TikTok & Reels.', media: '', link: '', tags: ['CapCut'] },
   ],
 
-  skills: ['JavaScript', 'Node.js', 'Express', 'HTML', 'CSS', 'PostgreSQL', 'UI/UX', 'Video Editing'],
-  skillBars: [
-    { name: 'Frontend', level: 90 },
-    { name: 'Backend / API', level: 85 },
-    { name: 'Desain UI', level: 75 },
-  ],
+  skills: ['JavaScript', 'Node.js', 'Express', 'HTML & CSS', 'PostgreSQL', 'UI/UX', 'Video Editing'],
   experience: [
-    { when: '2025 – sekarang', what: 'Full-stack Developer', where: 'Freelance' },
+    { when: '2025 — Sekarang', what: 'Full-stack Developer', where: 'Freelance' },
     { when: '2024', what: 'Content Creator', where: 'TikTok & YouTube' },
   ],
 
   contact: {
     email: 'yannzworld@gmail.com',
-    phone: '',            // contoh: '+62 812-3456-7890'
+    phone: '',                 // contoh: '+62 812-3456-7890'
   },
   socials: {
     youtube: 'https://youtube.com/@username',
     tiktok: 'https://tiktok.com/@username',
     x: 'https://x.com/username',
     instagram: 'https://instagram.com/username',
-    whatsapp: '6281234567890',   // nomor WA tanpa + / spasi
+    whatsapp: '6281234567890', // nomor WA tanpa + dan spasi
   },
 };
 </script>
 
-<div class="page">
-  <header class="topbar">
-    <div>
-      <div class="t-name"><span id="tName"></span><span id="tBadge"></span></div>
-      <div class="t-sub" id="tSub"></div>
-    </div>
-    <div class="spacer"></div>
-    <button class="icon-btn" id="themeBtn" aria-label="Ganti tema" title="Ganti tema">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-    </button>
-    <button class="icon-btn" id="shareBtn" aria-label="Bagikan" title="Bagikan">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>
-    </button>
-  </header>
-
-  <div class="banner" id="banner">
-    <button class="edit-pick" data-pick="banner" aria-label="Ganti banner"></button>
-  </div>
+<main class="page">
+  <div class="banner" id="banner"><button class="pick" data-pick="banner" aria-label="Ganti banner"></button></div>
 
   <section class="head">
     <div class="head-row">
-      <div class="avatar-wrap" id="avatar">
-        <button class="edit-pick" data-pick="avatar" aria-label="Ganti foto profil"></button>
-      </div>
-      <div class="head-actions">
-        <a class="btn round" id="mailBtn" aria-label="Email" title="Email"></a>
-        <a class="btn primary" href="#contact" id="contactBtn">Kontak</a>
+      <div class="avatar" id="avatar"><button class="pick" data-pick="avatar" aria-label="Ganti foto profil"></button></div>
+      <div class="actions">
+        <button class="btn icon" id="share" aria-label="Bagikan profil" title="Bagikan"></button>
+        <a class="btn solid" href="#kontak">Hubungi</a>
       </div>
     </div>
     <h1 class="name"><span id="name"></span><span id="badge"></span></h1>
@@ -372,225 +250,167 @@ const PROFILE = {
   </section>
 
   <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" aria-selected="true" data-tab="work"><span>Portfolio</span></button>
-    <button class="tab" role="tab" aria-selected="false" data-tab="skills"><span>Skill</span></button>
-    <button class="tab" role="tab" aria-selected="false" data-tab="about"><span>Pengalaman</span></button>
+    <button class="tab" role="tab" aria-selected="true" aria-controls="p-work" id="t-work">Portfolio</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="p-about" id="t-about">Tentang</button>
   </nav>
 
-  <div class="panel on" id="p-work"><div class="grid" id="grid"></div></div>
-  <div class="panel" id="p-skills">
-    <div class="section"><h2>Skill</h2><div class="chips" id="chips"></div></div>
-    <div class="section" id="barsSec"><h2>Keahlian</h2><div id="bars"></div></div>
-  </div>
-  <div class="panel" id="p-about">
-    <div class="section"><h2>Pengalaman</h2><ul class="timeline" id="timeline"></ul></div>
+  <div class="panel" id="p-work" role="tabpanel" aria-labelledby="t-work"><div class="grid" id="grid"></div></div>
+  <div class="panel" id="p-about" role="tabpanel" aria-labelledby="t-about" hidden>
+    <section class="section" id="sec-skills"><h2>Keahlian</h2><div class="chips" id="skills"></div></section>
+    <section class="section" id="sec-exp"><h2>Pengalaman</h2><ul class="exp" id="exp"></ul></section>
   </div>
 
-  <section class="section" id="contact">
-    <h2>Kontak Saya</h2>
-    <div id="contactCards"></div>
-    <form class="form" id="form">
-      <input name="name" placeholder="Nama kamu" required>
-      <textarea name="msg" placeholder="Tulis pesan…" required></textarea>
-      <button class="btn primary" type="submit">Kirim pesan</button>
-    </form>
-  </section>
-
-  <section class="section" style="border-bottom:0">
-    <h2>Sosial Media</h2>
-    <div class="socials" id="socials"></div>
-  </section>
+  <section class="section" id="kontak"><h2>Kontak</h2><div class="list" id="contact"></div></section>
+  <section class="section" id="sec-social"><h2>Sosial Media</h2><div class="socials" id="socials"></div></section>
 
   <footer id="footer"></footer>
-</div>
+</main>
 
-<div class="modal" id="modal" role="dialog" aria-modal="true">
-  <button class="modal-close" id="modalClose" aria-label="Tutup">×</button>
-  <div class="modal-box" id="modalBox"></div>
-</div>
-
-<input type="file" id="filePick" accept="image/*,video/*" hidden>
+<dialog id="dialog"></dialog>
+<input type="file" id="file" accept="image/*,video/*" hidden>
 
 <script>
 (function () {
   const P = PROFILE;
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const isVideo = src => /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(src) || /^blob:.*#video$/.test(src);
-  const GRADS = [
-    'linear-gradient(135deg,#1d9bf0,#7856ff)', 'linear-gradient(135deg,#f91880,#ff7a00)',
-    'linear-gradient(135deg,#00ba7c,#1d9bf0)', 'linear-gradient(135deg,#7856ff,#f91880)',
-    'linear-gradient(135deg,#ffd400,#ff7a00)', 'linear-gradient(135deg,#0f1419,#536471)',
-  ];
+  const isVideo = src => /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(src) || /#video$/.test(src);
+  const svg = (d, fill) => `<svg viewBox="0 0 24 24" ${fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"'} aria-hidden="true">${d}</svg>`;
 
-  const ICON = {
-    verified: '<svg class="verified" viewBox="0 0 24 24" aria-label="Akun terverifikasi" role="img"><path fill="currentColor" d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg>',
-    pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
-    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>',
-    cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>',
-    mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
-    phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>',
-    camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>',
-    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
-    youtube: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>',
-    tiktok: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>',
-    x: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
-    instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.3"/><circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"/></svg>',
-    whatsapp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 20.5l1.3-4.2A8.7 8.7 0 1 1 8 19.4z"/><path fill="currentColor" stroke="none" d="M9.2 7.6c.2-.4.5-.4.7-.4h.5c.2 0 .4 0 .6.5l.7 1.7c.1.2.1.4 0 .6l-.4.6c-.1.2-.2.3 0 .6.4.7 1 1.4 1.6 1.9.6.5 1.1.7 1.4.8.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.6-.1l1.6.8c.2.1.4.2.4.3.1.2.1.8-.2 1.5-.3.6-1.4 1.2-1.9 1.2-.5.1-1.1.2-3.4-.8-2.8-1.2-4.5-4.1-4.7-4.3-.1-.2-1.1-1.5-1.1-2.9 0-1.4.7-2 1-2.3z"/></svg>',
+  const I = {
+    verified: '<svg class="verified" viewBox="0 0 24 24" role="img" aria-label="Terverifikasi"><path fill="currentColor" d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg>',
+    pin: svg('<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>'),
+    link: svg('<path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/>'),
+    cal: svg('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>'),
+    share: svg('<path d="M12 3v13M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/>'),
+    mail: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+    phone: svg('<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>'),
+    arrow: svg('<path d="M7 17 17 7M8 7h9v9"/>'),
+    camera: svg('<path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/>'),
+    play: svg('<path d="M8 5v14l11-7z"/>', true),
+    youtube: svg('<path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>', true),
+    tiktok: svg('<path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>', true),
+    x: svg('<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>', true),
+    instagram: svg('<rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.3"/><circle cx="17.6" cy="6.4" r="1" fill="currentColor"/>'),
+    whatsapp: svg('<path d="M3.5 20.5l1.3-4.2A8.7 8.7 0 1 1 8 19.4z"/><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1-1.5-2-1-1 .8a5 5 0 0 1-2.3-2.3l.8-1-1-2z"/>'),
   };
-  const SOCIALS = [
-    { key: 'youtube', label: 'YouTube' },
-    { key: 'tiktok', label: 'TikTok' },
-    { key: 'x', label: 'X (Twitter)' },
-    { key: 'instagram', label: 'Instagram' },
-    { key: 'whatsapp', label: 'WhatsApp' },
-  ];
+  const SOCIALS = [['youtube', 'YouTube'], ['tiktok', 'TikTok'], ['x', 'X'], ['instagram', 'Instagram'], ['whatsapp', 'WhatsApp']];
+  const waUrl = v => /^https?:/i.test(v) ? v : 'https://wa.me/' + String(v).replace(/\D/g, '');
 
-  function media(src, { autoplay = true, controls = false } = {}) {
+  function media(src, { controls = false, eager = false } = {}) {
     if (!src) return '';
-    if (isVideo(src)) {
-      const s = src.replace(/#video$/, '');
-      return `<video src="${esc(s)}" ${autoplay ? 'autoplay loop muted' : ''} ${controls ? 'controls' : ''} playsinline preload="metadata"></video>`;
-    }
-    return `<img src="${esc(src)}" alt="" loading="lazy">`;
+    if (isVideo(src)) return `<video src="${esc(src.replace(/#video$/, ''))}" ${controls ? 'controls' : 'autoplay loop muted'} playsinline preload="${eager ? 'auto' : 'metadata'}"></video>`;
+    return `<img src="${esc(src)}" alt="" decoding="async" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'}>`;
   }
-
   function setMedia(el, src) {
-    el.querySelectorAll('img,video,.avatar-fallback').forEach(n => n.remove());
-    if (src) el.insertAdjacentHTML('afterbegin', media(src));
-    else if (el.id === 'avatar') el.insertAdjacentHTML('afterbegin', `<div class="avatar-fallback">${esc((P.name || '?').trim().charAt(0).toUpperCase())}</div>`);
+    el.querySelectorAll('img, video, .avatar-initial').forEach(n => n.remove());
+    if (src) el.insertAdjacentHTML('afterbegin', media(src, { eager: true }));
+    else if (el.id === 'avatar') el.insertAdjacentHTML('afterbegin', `<div class="avatar-initial">${esc((P.name || '?').trim().charAt(0).toUpperCase())}</div>`);
   }
+  const hide = id => $(id).remove();
 
-  function socialUrl(key, v) {
-    if (key === 'whatsapp') return /^https?:/i.test(v) ? v : 'https://wa.me/' + String(v).replace(/\D/g, '');
-    return v;
-  }
-  function socialHandle(key, v) {
-    if (key === 'whatsapp') return /^https?:/i.test(v) ? 'Chat' : '+' + String(v).replace(/\D/g, '');
-    const m = String(v).match(/@[\w.\-]+/) || String(v).match(/\.com\/([\w.\-]+)/);
-    return m ? (m[0].startsWith('@') ? m[0] : '@' + m[1]) : 'Kunjungi';
-  }
-
-  // ---- Header
-  document.title = `${P.name} (@${P.username}) · Portfolio`;
-  const badge = P.verified ? ICON.verified : '';
-  $('tName').textContent = P.name; $('tBadge').innerHTML = badge.replace('class="verified"', 'class="verified sm"');
-  $('tSub').textContent = `${P.projects.length} proyek`;
+  // Profile
+  document.title = `${P.name} (@${P.username})`;
+  document.querySelector('meta[name="description"]').content = P.bio.replace(/\n/g, ' ');
   document.documentElement.style.setProperty('--banner-ratio', P.bannerRatio || '16 / 9');
   setMedia($('banner'), P.banner);
   setMedia($('avatar'), P.avatar);
-  $('name').textContent = P.name; $('badge').innerHTML = badge;
+  $('name').textContent = P.name;
+  $('badge').innerHTML = P.verified ? I.verified : '';
   $('handle').textContent = '@' + P.username;
   $('bio').textContent = P.bio;
+  $('meta').innerHTML = [
+    P.location && `<span>${I.pin}${esc(P.location)}</span>`,
+    P.website && `<a href="${esc(P.website)}" target="_blank" rel="noopener">${I.link}${esc(P.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''))}</a>`,
+    P.joined && `<span>${I.cal}${esc(P.joined)}</span>`,
+  ].filter(Boolean).join('');
+  $('stats').innerHTML = (P.stats || []).map(s => `<span><b>${esc(s.value)}</b> ${esc(s.label)}</span>`).join('');
 
-  const meta = [];
-  if (P.location) meta.push(`<span>${ICON.pin}${esc(P.location)}</span>`);
-  if (P.website) meta.push(`<a href="${esc(P.website)}" target="_blank" rel="noopener">${ICON.link}${esc(P.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''))}</a>`);
-  if (P.joined) meta.push(`<span>${ICON.cal}${esc(P.joined)}</span>`);
-  $('meta').innerHTML = meta.join('');
-  $('stats').innerHTML = (P.stats || []).map(s => `<div><b>${esc(s.value)}</b> <span>${esc(s.label)}</span></div>`).join('');
+  // Tabs
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(t => t.addEventListener('click', () => tabs.forEach(x => {
+    x.setAttribute('aria-selected', x === t);
+    $(x.getAttribute('aria-controls')).hidden = x !== t;
+  })));
 
-  const mailBtn = $('mailBtn');
-  if (P.contact?.email) { mailBtn.href = 'mailto:' + P.contact.email; mailBtn.innerHTML = ICON.mail; }
-  else mailBtn.remove();
-
-  // ---- Tabs
-  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
-    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + t.dataset.tab));
-  }));
-
-  // ---- Portfolio grid
-  $('grid').innerHTML = P.projects.map((p, i) => `
-    <button class="tile" data-i="${i}" aria-label="${esc(p.title)}">
-      ${p.media ? media(p.media) : `<div class="ph" style="background:${GRADS[i % GRADS.length]}">${esc(p.title.charAt(0))}</div>`}
-      ${p.media && isVideo(p.media) ? `<span class="kind">${ICON.play}</span>` : ''}
-      <span class="cap">${esc(p.title)}</span>
+  // Portfolio
+  $('grid').innerHTML = (P.projects || []).map((p, i) => `
+    <button class="tile${p.media ? ' has-media' : ''}" data-i="${i}" aria-label="${esc(p.title)}">
+      ${p.media ? media(p.media) : `<span class="ph">${esc(p.title)}</span>`}
+      ${p.media && isVideo(p.media) ? `<span class="badge">${I.play}</span>` : ''}
+      ${p.media ? `<span class="over">${esc(p.title)}</span>` : ''}
     </button>`).join('');
 
-  const modal = $('modal'), box = $('modalBox');
-  function openProject(i) {
-    const p = P.projects[i];
-    box.innerHTML = `
-      <div class="modal-media">${p.media ? media(p.media, { autoplay: true, controls: isVideo(p.media) }) : `<div class="ph" style="background:${GRADS[i % GRADS.length]}">${esc(p.title.charAt(0))}</div>`}</div>
-      <div class="modal-body">
+  const dlg = $('dialog');
+  $('grid').addEventListener('click', e => {
+    const t = e.target.closest('.tile'); if (!t) return;
+    const p = P.projects[+t.dataset.i];
+    dlg.innerHTML = `
+      ${p.media ? `<div class="d-media">${media(p.media, { controls: isVideo(p.media), eager: true })}</div>` : ''}
+      <div class="d-body">
         <h3>${esc(p.title)}</h3>
-        <p>${esc(p.desc)}</p>
-        ${p.tags?.length ? `<div class="chips" style="margin-bottom:12px">${p.tags.map(t => `<span class="chip">${esc(t)}</span>`).join('')}</div>` : ''}
-        ${p.link ? `<a class="btn primary" href="${esc(p.link)}" target="_blank" rel="noopener">Lihat proyek</a>` : ''}
+        ${p.desc ? `<p>${esc(p.desc)}</p>` : ''}
+        ${p.tags?.length ? `<div class="chips">${p.tags.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div>` : ''}
+        <div class="d-foot">
+          <button class="btn" data-close>Tutup</button>
+          ${p.link ? `<a class="btn solid" href="${esc(p.link)}" target="_blank" rel="noopener">Lihat proyek</a>` : ''}
+        </div>
       </div>`;
-    modal.classList.add('on');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeModal() { modal.classList.remove('on'); box.innerHTML = ''; document.body.style.overflow = ''; }
-  $('grid').addEventListener('click', e => { const t = e.target.closest('.tile'); if (t) openProject(+t.dataset.i); });
-  $('modalClose').addEventListener('click', closeModal);
-  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('on')) closeModal(); });
-
-  // ---- Skills & experience
-  $('chips').innerHTML = (P.skills || []).map(s => `<span class="chip">${esc(s)}</span>`).join('');
-  if (P.skillBars?.length) {
-    $('bars').innerHTML = P.skillBars.map(b => `
-      <div class="bar"><div class="bar-top"><b>${esc(b.name)}</b><span>${+b.level}%</span></div>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.max(0, Math.min(100, +b.level))}%"></div></div></div>`).join('');
-  } else $('barsSec').remove();
-  $('timeline').innerHTML = (P.experience || []).map(x => `
-    <li><div class="when">${esc(x.when)}</div><div class="what">${esc(x.what)}</div><div class="where">${esc(x.where)}</div></li>`).join('');
-
-  // ---- Contact
-  const cards = [];
-  if (P.contact?.email) cards.push(`<a class="contact-card" href="mailto:${esc(P.contact.email)}"><span class="ci">${ICON.mail}</span><span class="ct"><b>Email</b><span>${esc(P.contact.email)}</span></span></a>`);
-  if (P.contact?.phone) cards.push(`<a class="contact-card" href="tel:${esc(P.contact.phone.replace(/[^\d+]/g, ''))}"><span class="ci">${ICON.phone}</span><span class="ct"><b>Telepon</b><span>${esc(P.contact.phone)}</span></span></a>`);
-  if (P.socials?.whatsapp) cards.push(`<a class="contact-card" href="${esc(socialUrl('whatsapp', P.socials.whatsapp))}" target="_blank" rel="noopener"><span class="ci" style="color:#25d366">${ICON.whatsapp}</span><span class="ct"><b>WhatsApp</b><span>${esc(socialHandle('whatsapp', P.socials.whatsapp))}</span></span></a>`);
-  $('contactCards').innerHTML = cards.join('');
-
-  // The form opens WhatsApp (if set) or the mail app with the message filled in; no server needed.
-  $('form').addEventListener('submit', e => {
-    e.preventDefault();
-    const f = e.target, text = `Halo ${P.name}, saya ${f.name.value.trim()}.\n\n${f.msg.value.trim()}`;
-    if (P.socials?.whatsapp) window.open(socialUrl('whatsapp', P.socials.whatsapp) + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
-    else if (P.contact?.email) location.href = `mailto:${P.contact.email}?subject=${encodeURIComponent('Pesan dari portfolio')}&body=${encodeURIComponent(text)}`;
+    dlg.showModal();
   });
+  dlg.addEventListener('click', e => { if (e.target === dlg || e.target.closest('[data-close]')) dlg.close(); });
+  dlg.addEventListener('close', () => { dlg.innerHTML = ''; });
 
-  // ---- Socials
-  $('socials').innerHTML = SOCIALS.filter(s => P.socials?.[s.key]).map(s => `
-    <a class="social ${s.key}" href="${esc(socialUrl(s.key, P.socials[s.key]))}" target="_blank" rel="noopener">
-      ${ICON[s.key]}<span>${s.label}<small>${esc(socialHandle(s.key, P.socials[s.key]))}</small></span>
+  // About
+  if (P.skills?.length) $('skills').innerHTML = P.skills.map(s => `<span class="chip">${esc(s)}</span>`).join('');
+  else hide('sec-skills');
+  if (P.experience?.length) $('exp').innerHTML = P.experience.map(x => `<li><div><b>${esc(x.what)}</b><span>${esc(x.where)}</span></div><time>${esc(x.when)}</time></li>`).join('');
+  else hide('sec-exp');
+
+  // Contact
+  const c = P.contact || {}, wa = P.socials?.whatsapp;
+  const rows = [
+    c.email && [`mailto:${c.email}`, I.mail, 'Email', c.email],
+    wa && [waUrl(wa), I.whatsapp, 'WhatsApp', /^https?:/i.test(wa) ? 'Kirim pesan' : '+' + String(wa).replace(/\D/g, '')],
+    c.phone && [`tel:${c.phone.replace(/[^\d+]/g, '')}`, I.phone, 'Telepon', c.phone],
+  ].filter(Boolean);
+  if (rows.length) $('contact').innerHTML = rows.map(([href, icon, label, value]) => `
+    <a class="row" href="${esc(href)}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>
+      ${icon}<span class="lbl"><b>${label}</b><span>${esc(value)}</span></span><span class="go">${I.arrow}</span>
     </a>`).join('');
+  else hide('kontak');
 
-  $('footer').textContent = `© ${new Date().getFullYear()} ${P.name} · @${P.username}`;
+  // Socials
+  const socials = SOCIALS.filter(([k]) => P.socials?.[k]);
+  if (socials.length) $('socials').innerHTML = socials.map(([k, label]) => `
+    <a class="social" href="${esc(k === 'whatsapp' ? waUrl(P.socials[k]) : P.socials[k])}" target="_blank" rel="noopener" aria-label="${label}" title="${label}">${I[k]}</a>`).join('');
+  else hide('sec-social');
 
-  // ---- Theme toggle (remembered per browser)
-  const root = document.documentElement;
-  try { const t = localStorage.getItem('pf-theme'); if (t) root.dataset.theme = t; } catch (_) {}
-  $('themeBtn').addEventListener('click', () => {
-    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-    root.dataset.theme = dark ? 'light' : 'dark';
-    try { localStorage.setItem('pf-theme', root.dataset.theme); } catch (_) {}
-  });
+  $('footer').textContent = `© ${new Date().getFullYear()} ${P.name}`;
 
-  // ---- Share
-  $('shareBtn').addEventListener('click', async () => {
-    const data = { title: document.title, url: location.href };
+  // Share
+  $('share').innerHTML = I.share;
+  $('share').addEventListener('click', async () => {
     try {
-      if (navigator.share) await navigator.share(data);
-      else { await navigator.clipboard.writeText(location.href); alert('Link disalin!'); }
+      if (navigator.share) await navigator.share({ title: document.title, url: location.href });
+      else { await navigator.clipboard.writeText(location.href); $('share').title = 'Link disalin'; }
     } catch (_) {}
   });
 
-  // ---- Edit mode: open /portfolio?edit=1 to preview a banner/avatar from your device (not saved)
+  // Pause looping videos for visitors who prefer reduced motion
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('video[autoplay]').forEach(v => { v.autoplay = false; v.pause(); });
+
+  // Edit mode: /portfolio?edit=1 previews a banner/avatar from your device (not saved)
   if (new URLSearchParams(location.search).has('edit')) {
     document.body.classList.add('editing');
     let target = null;
-    document.querySelectorAll('.edit-pick').forEach(b => {
-      b.innerHTML = ICON.camera;
-      b.addEventListener('click', () => { target = b.dataset.pick; $('filePick').click(); });
+    document.querySelectorAll('.pick').forEach(b => {
+      b.innerHTML = I.camera;
+      b.addEventListener('click', () => { target = b.dataset.pick; $('file').click(); });
     });
-    $('filePick').addEventListener('change', e => {
+    $('file').addEventListener('change', e => {
       const f = e.target.files[0]; if (!f || !target) return;
-      const url = URL.createObjectURL(f) + (f.type.startsWith('video/') ? '#video' : '');
-      setMedia($(target), url);
+      setMedia($(target), URL.createObjectURL(f) + (f.type.startsWith('video/') ? '#video' : ''));
       e.target.value = '';
     });
   }
