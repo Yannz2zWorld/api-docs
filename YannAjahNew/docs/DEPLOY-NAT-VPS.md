@@ -1,73 +1,82 @@
-# YannAjahNew di VPS NAT (pola sama dengan CDN APIZ2Z)
+# YannAjahNew di VPS NAT (VPS yang sama dengan CDN APIZ2Z)
 
-Polanya sama persis dengan `deploy/cdn-vps.md` di root repo: VPS NAT tidak butuh port 80/443 karena
-koneksi masuk lewat **Cloudflare Tunnel**, dan database ada di **Neon**.
+Disesuaikan dengan VPS yang sudah dipakai CDN (`deploy/cdn-vps.md`, `PANDUAN-LENGKAP.md` bagian 10.2):
+**Nauval Cloud, NAT VPS (LXC), Ubuntu 24.04**, Node.js + pm2 sudah terpasang, domain lewat panel **Managed Domain** (SSL otomatis).
 
 ```
-Admin (browser) → https://lisensi.apiz2z.web.id (Cloudflare) → tunnel → VPS :8787 (dashboard + API lisensi) → Neon
-Bot WhatsApp (di VPS yang sama)  → koneksi KELUAR ke WhatsApp, APIZ2Z, dan http://127.0.0.1:8787
+Admin (browser HP/PC) → https://lisensi.apiz2z.web.id → panel Managed Domain (SSL) → VPS :8787 (dashboard + API lisensi) → Neon
+Bot WhatsApp (di VPS yang sama) → koneksi KELUAR ke WhatsApp & APIZ2Z, lisensi lewat http://127.0.0.1:8787
+CDN yang sudah ada tetap di :3000 (tidak terganggu)
 ```
 
-Bot WhatsApp hanya butuh koneksi keluar, jadi aman di VPS NAT. Yang perlu diakses dari luar hanya dashboard.
+Bot WhatsApp hanya butuh koneksi keluar, jadi aman di VPS NAT. Yang diakses dari luar hanya dashboard.
 
-## 0. Cek VPS dulu
+## 0. Cek dulu
 
-| Syarat | Kenapa |
+| Syarat | Cara cek |
 |---|---|
-| RAM **≥ 2 GB** (kalau satu VPS dengan CDN, hitung total) | Bot ±128 MB sebelum konek WhatsApp + socket WhatsApp + dashboard ±70 MB + ffmpeg saat bikin stiker |
-| Akses root, Ubuntu/Debian, bisa install `ffmpeg` | Stiker & efek audio |
-| IPv4 keluar (bukan IPv6-only) | WhatsApp & APIZ2Z |
-| Boleh proses jalan 24/7 | Bot & dashboard selalu hidup (bot berhenti sendiri kalau dashboard mati) |
+| RAM cukup (bot + dashboard + CDN) — sisakan **±700 MB** untuk YannAjahNew | `free -m`, `pm2 monit` |
+| Disk cukup (node_modules ±250 MB + session + log) | `df -h` |
+| ffmpeg bisa dipasang (LXC biasanya bisa) | `apt install -y ffmpeg && ffmpeg -version` |
+| Node.js ≥ 20 (CDN memakai 20 — cukup) | `node -v` |
 
-Cek RAM yang tersisa kalau dipakai bareng CDN: `free -m` dan `pm2 monit`.
+### Aturan provider yang relevan
 
-## 1. Database di Neon (BUKAN database APIZ2Z)
+| Aturan | Status YannAjahNew |
+|---|---|
+| CPU total tidak boleh >100% terus-menerus | ffmpeg diantrikan (`MEDIA_MAX_CONCURRENT=1`, `FFMPEG_THREADS=1`), cooldown & limit per user, anti-spam. Jangan naikkan angka ini di VPS bersama |
+| Spam | Fitur broadcast massal (jpm, pushkontak, nglspam, kirim ke nomor sembarang) **tidak ada** — dinonaktifkan |
+| Phishing / malware / scanning / DDoS / proxy / VPN / mining | Tidak ada fitur seperti itu |
+| Pterodactyl | Tidak dipakai (pm2 biasa) |
+| Bypass token AI | Fitur AI memakai API key APIZ2Z resmi milik Anda |
 
-Buat **project baru** di Neon (mis. `yannajah`), jangan pakai database platform APIZ2Z.
-Salin *Connection string* → jadi `DATABASE_URL` (jangan dikirim ke chat).
+Aturan bisa berubah — cek halaman Terms/Rules di panel, termasuk apakah **bot WhatsApp** diizinkan.
 
-## 2. Siapin VPS
+## 1. Database: project Neon baru
+
+Neon → **New Project** `yannajah` (jangan pakai database APIZ2Z) → salin *Connection string* untuk `DATABASE_URL`.
+Postgres tidak dipasang di VPS supaya RAM & CPU hemat.
+
+## 2. Ambil kode
+
+YannAjahNew ada di repo yang sama (`api-docs/YannAjahNew`). Clone terpisah dari CDN supaya update tidak saling mengganggu:
 
 ```bash
-apt update && apt install -y curl git ffmpeg
-curl -fsSL https://deb.nodesource.com/setup_22.x | bash -     # Node 22 (minimal 20)
-apt install -y nodejs
-npm install -g pm2          # kalau sudah ada dari CDN, lewati
-
+apt install -y ffmpeg
 git clone https://github.com/Yannz2zWorld/api-docs.git /opt/yannajah
-# repo private? username GitHub + Personal Access Token (Contents: Read-only), sama seperti CDN
+# selama YannAjahNew belum di-merge ke main: git clone -b ccr-58da9a5a-szzl5v ... /opt/yannajah
 cd /opt/yannajah/YannAjahNew
 npm ci --omit=dev
 ```
+(Repo private: username GitHub + Personal Access Token, sama seperti saat pasang CDN.)
 
-## 3. Isi `.env`
+## 3. `.env`
 
 ```bash
-cd /opt/yannajah/YannAjahNew
-cp .env.example .env && chmod 600 .env && nano .env
+cd /opt/yannajah/YannAjahNew && cp .env.example .env && chmod 600 .env && nano .env
 ```
 
-Yang wajib diisi (nilai rahasia **jangan** dikirim ke chat):
+Isi (nilai rahasia **jangan** dikirim ke chat):
 
 ```
 NODE_ENV=production
-DATABASE_URL=postgresql://...            # dari Neon project yannajah
-DASHBOARD_HOST=127.0.0.1
-DASHBOARD_PORT=8787                      # beda dengan CDN (3000)
+DATABASE_URL=postgresql://...             # Neon project yannajah
+DASHBOARD_HOST=0.0.0.0                    # supaya bisa dijangkau Managed Domain (sama seperti CDN)
+DASHBOARD_PORT=8787                       # beda dengan CDN (3000)
 DASHBOARD_PUBLIC_URL=https://lisensi.apiz2z.web.id
 DASHBOARD_TRUST_PROXY=true
-SESSION_SECRET=...                       # openssl rand -hex 32
-BACKUP_ENCRYPTION_KEY=...                # teks acak ≥ 16 karakter, simpan juga di tempat lain
+SESSION_SECRET=...                        # openssl rand -hex 32
+BACKUP_ENCRYPTION_KEY=...                 # teks acak ≥ 16 karakter, simpan juga di tempat lain
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 GOOGLE_CALLBACK_URL=https://lisensi.apiz2z.web.id/auth/google/callback
 
-LICENSE_SERVER_URL=http://127.0.0.1:8787  # bot & dashboard satu VPS: lewat localhost
+LICENSE_SERVER_URL=http://127.0.0.1:8787  # bot & dashboard satu VPS
 OWNER_NUMBER=628xxxxxxxxxx
 APIZ2Z_API_KEY=...
+MEDIA_MAX_CONCURRENT=1
+FFMPEG_THREADS=1
 ```
-
-`LICENSE_SERVER_URL` boleh `http://127.0.0.1` karena tidak keluar dari VPS. Bot di VPS lain harus pakai `https://lisensi.apiz2z.web.id`.
 
 ## 4. Database + akun pertama + dashboard
 
@@ -75,19 +84,16 @@ APIZ2Z_API_KEY=...
 npm run migrate
 node server/cli.js bootstrap-developer --username yann --email emailkamu@gmail.com
 pm2 start server/index.js --name yannajah-dashboard
-curl http://127.0.0.1:8787/health/ready     # harus {"status":"ready",...}
+curl http://127.0.0.1:8787/health/ready      # harus {"status":"ready",...}
 ```
 
-## 5. Cloudflare Tunnel
+## 5. Domain (sama seperti `cdn`)
 
-Domain `apiz2z.web.id` sudah ada di Cloudflare (dari setup CDN).
+1. DNS: tambah record **A** `lisensi` → IP publik VPS (di Vercel → Domains → DNS Records, karena nameserver di Vercel).
+2. Panel VPS → **Managed Domain**: `lisensi.apiz2z.web.id` → port `8787` (SSL otomatis).
+3. Cek: buka `https://lisensi.apiz2z.web.id/` dari HP → halaman login YannAjahNew.
 
-- **Pakai tunnel CDN yang sudah ada** (paling gampang): Zero Trust → Networks → Tunnels → tunnel `yannz-cdn`
-  → **Public Hostname** → *Add a public hostname*: Subdomain `lisensi`, Domain `apiz2z.web.id`,
-  Service **HTTP** → `localhost:8787`.
-- Atau buat tunnel baru `yannajah` kalau dashboard di VPS lain.
-
-Cek: buka `https://lisensi.apiz2z.web.id/` → halaman login YannAjahNew.
+VPS tanpa Managed Domain: pakai Cloudflare Tunnel ke `localhost:8787` (lihat `deploy/cdn-vps.md` bagian 4) dan `DASHBOARD_HOST=127.0.0.1`.
 
 ## 6. Google OAuth
 
@@ -95,23 +101,23 @@ Google Cloud Console → APIs & Services → Credentials → **Create OAuth clie
 - Authorized JavaScript origins: `https://lisensi.apiz2z.web.id`
 - Authorized redirect URIs: `https://lisensi.apiz2z.web.id/auth/google/callback`
 
-Isi Client ID/Secret ke `.env`, lalu `pm2 restart yannajah-dashboard`.
-Sebelum OAuth jadi, login sementara: `node server/cli.js login-link --username yann`.
+Isi ke `.env`, lalu `pm2 restart yannajah-dashboard`.
+Sebelum OAuth jadi: `node server/cli.js login-link --username yann` → buka link di HP (berlaku 15 menit, sekali pakai).
 
 ## 7. Daftarkan nomor bot & jalankan bot
 
 1. Dashboard → **Bot** → *Tambah bot*: nama, nomor WhatsApp bot, password bot.
-2. Login + pairing pertama **interaktif** di SSH:
+2. Login + pairing pertama di SSH (Termius/Termux):
    ```bash
    cd /opt/yannajah/YannAjahNew
-   npm run start:pairing        # atau npm run start:qr
+   npm run start:pairing
    ```
-   Isi nomor bot + password bot, masukkan pairing code di HP (WhatsApp → Perangkat tertaut →
-   Tautkan dengan nomor telepon). Setelah terhubung, tekan Ctrl+C.
+   Isi nomor bot + password bot → kode pairing muncul → di HP nomor bot: WhatsApp → Perangkat tertaut →
+   Tautkan perangkat → **Tautkan dengan nomor telepon** → masukkan kode. Setelah "WhatsApp terhubung", Ctrl+C.
 3. Jalankan permanen (token tersimpan, tidak minta password lagi):
    ```bash
    pm2 start index.js --name yannajah-bot --stop-exit-codes 78 --exp-backoff-restart-delay=5000
-   pm2 save && pm2 startup
+   pm2 save
    ```
    Exit code 78 = ditolak lisensi / perlu pairing ulang → pm2 tidak restart terus-menerus.
 
@@ -122,14 +128,23 @@ cd /opt/yannajah && git pull && cd YannAjahNew && npm ci --omit=dev && npm run m
   && pm2 restart yannajah-dashboard && pm2 restart yannajah-bot
 ```
 
+## Perawatan (sama seperti CDN)
+
+```bash
+apt clean && npm cache clean --force && pm2 flush && journalctl --vacuum-size=50M   # bersihkan disk
+pm2 install pm2-logrotate                                                            # sekali saja (kalau belum dari CDN)
+```
+- Log bot: `/opt/yannajah/YannAjahNew/library/database/logs/yannajah.log` — kosongkan berkala bila besar: `truncate -s 0 <file>`.
+- Nyalakan **Auto-Renew** di panel VPS (VPS mati = dashboard mati = bot berhenti, gagal aman).
+- Pantau `https://lisensi.apiz2z.web.id/health/ready` (mis. UptimeRobot gratis).
+
 ## Backup
 
 - Database: Neon punya restore point bawaan; tambahan backup terenkripsi:
-  `node server/cli.js backup --out /root/backup/yannajah-$(date +%F).json.enc` (cron harian, salin keluar VPS).
+  `node server/cli.js backup --out /root/backup/yannajah-$(date +%F).json.enc` → salin keluar VPS.
 - Folder `YannAjahNew/session/` = login WhatsApp bot. Backup terenkripsi, jangan dibagikan.
 
 ## Catatan
 
-- Dashboard mati = bot berhenti (gagal aman). Pantau `https://lisensi.apiz2z.web.id/health/ready` (mis. UptimeRobot gratis).
 - Kalau VPS mati, data akun/bot aman di Neon; session WhatsApp ada di VPS (makanya dibackup).
-- Satu proses bot = satu nomor. Nomor kedua: folder/clone kedua dengan `SESSION_DIR`, `BOT_INSTANCE_NAME` berbeda.
+- Satu proses bot = satu nomor. Nomor kedua: folder/clone kedua dengan `SESSION_DIR` & `BOT_INSTANCE_NAME` berbeda — hitung RAM & CPU dulu.

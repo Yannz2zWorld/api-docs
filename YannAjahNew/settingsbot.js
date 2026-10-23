@@ -147,7 +147,11 @@ module.exports = {
     maxDownloadBytes: envInt('MEDIA_MAX_BYTES', 50 * 1024 * 1024),
     maxUploadBytes: 8 * 1024 * 1024,     // batas upload endpoint APIZ2Z
     downloadTimeoutMs: 45000,
-    ffmpegPath: env('FFMPEG_PATH', 'ffmpeg')
+    ffmpegPath: env('FFMPEG_PATH', 'ffmpeg'),
+    // Batas CPU untuk VPS bersama: berapa ffmpeg boleh jalan bersamaan & thread per proses
+    // (dibaca library/media.js dari env MEDIA_MAX_CONCURRENT / FFMPEG_THREADS)
+    maxConcurrent: envInt('MEDIA_MAX_CONCURRENT', 1),
+    ffmpegThreads: envInt('FFMPEG_THREADS', 1)
   },
 
   // ------------------------------------------------------------------ limit & premium (V15)

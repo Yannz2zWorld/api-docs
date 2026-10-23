@@ -8,20 +8,28 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 const { err } = require('./errors');
-const { sniffMime } = require('./function');
+const { sniffMime, Semaphore } = require('./function');
 
 const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg';
+// Batas CPU (aturan VPS bersama): ffmpeg diantrikan (default 1 proses sekaligus) dan dibatasi thread-nya.
+const intEnv = (k, d, lo, hi) => { const n = parseInt(process.env[k], 10); return Number.isInteger(n) && n >= lo && n <= hi ? n : d; };
+const queue = new Semaphore(intEnv('MEDIA_MAX_CONCURRENT', 1, 1, 8));
+const THREADS = String(intEnv('FFMPEG_THREADS', 1, 1, 16));
 const MAX_OUT = 64 * 1024 * 1024;
 
-async function ffmpeg(input, args, { inExt, outExt, timeoutMs = 90000 } = {}) {
-  if (!Buffer.isBuffer(input) || !input.length) throw err('EMPTY_MEDIA', 'Media kosong', { userMessage: 'Media kosong atau gagal diunduh.' });
+function ffmpeg(input, args, opts = {}) {
+  if (!Buffer.isBuffer(input) || !input.length) return Promise.reject(err('EMPTY_MEDIA', 'Media kosong', { userMessage: 'Media kosong atau gagal diunduh.' }));
+  return queue.run(() => runFfmpeg(input, args, opts));
+}
+
+async function runFfmpeg(input, args, { inExt, outExt, timeoutMs = 90000 } = {}) {
   const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'yan-'));
   const inFile = path.join(dir, `in.${inExt || sniffMime(input)?.ext || 'bin'}`);
   const outFile = path.join(dir, `out.${outExt}`);
   try {
     await fs.promises.writeFile(inFile, input);
     await new Promise((resolve, reject) => {
-      const p = spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-i', inFile, ...args, outFile], { stdio: ['ignore', 'ignore', 'pipe'] });
+      const p = spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-threads', THREADS, '-i', inFile, ...args, '-threads', THREADS, outFile], { stdio: ['ignore', 'ignore', 'pipe'] });
       let stderr = '';
       p.stderr.on('data', d => { stderr = (stderr + d).slice(-2000); });
       const t = setTimeout(() => { p.kill('SIGKILL'); reject(err('MEDIA_TIMEOUT', 'ffmpeg timeout', { userMessage: 'Proses media terlalu lama.' })); }, timeoutMs);
