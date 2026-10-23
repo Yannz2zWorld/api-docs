@@ -21,7 +21,8 @@ const inline = html => JSON.parse(html.match(/const PROFILE = (.*?) \|\| \{/)[1]
 const PROFILE = {
   name: 'Yannz', username: '@yannz', verified: true, bio: 'Halo', banner: 'https://cdn.example/banner.mp4', bannerRatio: '4 / 3', avatar: '/views/assets/portfolio/me.jpg',
   stats: [{ value: '10', label: 'Proyek' }],
-  stories: [{ media: 'https://cdn.example/s1.jpg', caption: 'Baru!' }, { media: '' }],
+  storyStyle: 'view',
+  stories: [{ media: 'https://cdn.example/s1.jpg', caption: 'Baru!' }, { media: '' }, { type: 'text', text: 'Lagi open commission', bg: 'blue' }, { type: 'text', text: '  ' }, { type: 'text', text: 'Hai', bg: 'neon' }],
   highlights: [{ title: 'Trip', cover: '', items: [{ media: 'https://cdn.example/h1.mp4' }] }, { title: '', items: [] }],
   projects: [{ title: 'API', desc: 'Platform', media: 'https://youtu.be/dQw4w9WgXcQ', link: '/api', tags: ['Node', ''] }],
   skills: ['JS', ''], experience: [{ when: '2025', what: 'Dev', where: 'Freelance' }],
@@ -38,7 +39,14 @@ it('page shows the built-in example until the owner saves, then the saved profil
   assert.equal(saved.status, 200, saved.text);
   const p = saved.json.profile;
   assert.equal(p.username, 'yannz', 'leading @ dropped');
-  assert.equal(p.stories.length, 1, 'empty story dropped');
+  assert.deepEqual(p.stories, [
+    { type: 'media', media: 'https://cdn.example/s1.jpg', caption: 'Baru!' },
+    { type: 'text', text: 'Lagi open commission', bg: 'blue' },
+    { type: 'text', text: 'Hai', bg: 'dark' },
+  ], 'empty stories dropped, text stories kept, unknown background falls back');
+  assert.equal(p.storyStyle, 'view');
+  assert.equal((await o('PUT', '/owner/portfolio', { profile: { ...PROFILE, storyStyle: 'popup' } })).json.profile.storyStyle, 'overlay', 'unknown style falls back to overlay');
+  await o('PUT', '/owner/portfolio', { profile: PROFILE });
   assert.equal(p.highlights.length, 1, 'empty highlight dropped');
   assert.deepEqual(p.projects[0].tags, ['Node']);
   assert.deepEqual(p.skills, ['JS']);

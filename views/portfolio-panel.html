@@ -138,9 +138,10 @@
   const svg = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const I = { up: svg('<path d="m18 15-6-6-6 6"/>'), down: svg('<path d="m6 9 6 6 6-6"/>'), del: svg('<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>'), plus: svg('<path d="M12 5v14M5 12h14"/>') };
   const PLATFORM_NAMES = { youtube: 'YouTube', tiktok: 'TikTok', x: 'X (Twitter)', instagram: 'Instagram', whatsapp: 'WhatsApp', facebook: 'Facebook', telegram: 'Telegram', github: 'GitHub', linkedin: 'LinkedIn', threads: 'Threads', spotify: 'Spotify', discord: 'Discord', website: 'Website' };
+  const BG_NAMES_ALL = { dark: 1, light: 1, blue: 1, pink: 1, green: 1, orange: 1, purple: 1 };
   const PLACEHOLDER = { youtube: 'https://youtube.com/@kamu', tiktok: 'https://tiktok.com/@kamu', x: 'https://x.com/kamu', instagram: 'https://instagram.com/kamu', whatsapp: '6281234567890', facebook: 'https://facebook.com/kamu', telegram: 'https://t.me/kamu', github: 'https://github.com/kamu', linkedin: 'https://linkedin.com/in/kamu', threads: 'https://threads.net/@kamu', spotify: 'https://open.spotify.com/…', discord: 'https://discord.gg/…', website: 'https://…' };
 
-  let S = null, platforms = Object.keys(PLATFORM_NAMES), ratios = ['16 / 9', '4 / 3', '3 / 1'], dirty = false, saving = false;
+  let S = null, platforms = Object.keys(PLATFORM_NAMES), ratios = ['16 / 9', '4 / 3', '3 / 1'], bgs = Object.keys(BG_NAMES_ALL), dirty = false, saving = false;
 
   // ---------------------------------------------------------------- state helpers
   const getPath = (o, k) => k.split('.').reduce((a, p) => (a == null ? a : a[p]), o);
@@ -181,15 +182,24 @@
   const add = (arrKey, label) => `<button class="btn add" data-add="${arrKey}">${I.plus}${label}</button>`;
   const card = (id, title, count, body, open) => `
     <details class="card" id="c-${id}" ${open ? 'open' : ''}><summary><h2>${title}</h2>${count != null ? `<span class="count">${count}</span>` : ''}</summary><div class="body">${body}</div></details>`;
-  const mediaItems = (key, nameOf) => {
+  // Story items (stories and highlight items): a photo/GIF/video link, or a text card.
+  const BG_NAMES = { dark: 'Gelap', light: 'Terang', blue: 'Biru', pink: 'Pink', green: 'Hijau', orange: 'Oranye', purple: 'Ungu' };
+  const BG_CSS = { dark: 'linear-gradient(160deg,#171717,#404040)', light: 'linear-gradient(160deg,#fafafa,#d4d4d4)', blue: 'linear-gradient(160deg,#1d4ed8,#38bdf8)', pink: 'linear-gradient(160deg,#be185d,#f472b6)', green: 'linear-gradient(160deg,#047857,#34d399)', orange: 'linear-gradient(160deg,#c2410c,#fb923c)', purple: 'linear-gradient(160deg,#5b21b6,#a78bfa)' };
+  const storyItems = (key, nameOf) => {
     const arr = getPath(S, key) || [];
-    return `<div class="items">${arr.map((m, i) => `
-      <div class="item">${itemHead(key, i, arr.length, nameOf(i))}
-        <div class="media-row">${thumb(m.media)}
-          <div style="display:grid;gap:8px;min-width:0">${input(`${key}.${i}.media`, 'Link foto / video / GIF', { type: 'url', ph: 'https://…/foto.jpg', media: true })}${input(`${key}.${i}.caption`, 'Teks (opsional)')}</div>
-        </div>
-      </div>`).join('')}</div>`;
+    return `<div class="items">${arr.map((m, i) => {
+      const isText = m.type === 'text', k = `${key}.${i}`;
+      const typeSel = `<label class="f"><span>Jenis</span><select data-k="${k}.type" data-rerender><option value="media" ${isText ? '' : 'selected'}>Foto / video / GIF</option><option value="text" ${isText ? 'selected' : ''}>Teks</option></select></label>`;
+      const body = isText
+        ? `<div class="media-row"><span class="thumb" style="background:${BG_CSS[m.bg] || BG_CSS.dark};color:${m.bg === 'light' ? '#0a0a0a' : '#fff'};font-weight:700">Aa</span>
+            <div style="display:grid;gap:8px;min-width:0">${typeSel}${area(`${k}.text`, 'Teks cerita', 'Tulis sesuatu…')}
+              <label class="f"><span>Latar</span><select data-k="${k}.bg" data-rerender>${bgs.map(b => `<option value="${b}" ${b === (m.bg || 'dark') ? 'selected' : ''}>${BG_NAMES[b] || b}</option>`).join('')}</select></label></div></div>`
+        : `<div class="media-row">${thumb(m.media)}
+            <div style="display:grid;gap:8px;min-width:0">${typeSel}${input(`${k}.media`, 'Link foto / video / GIF', { type: 'url', ph: 'https://…/foto.jpg', media: true })}${input(`${k}.caption`, 'Keterangan (opsional)')}</div></div>`;
+      return `<div class="item">${itemHead(key, i, arr.length, nameOf(i))}${body}</div>`;
+    }).join('')}</div>`;
   };
+  const addStory = (key, label) => `<div style="display:flex;gap:8px;flex-wrap:wrap">${add(key, label + ' foto/video')}<button class="btn add" data-add="${key}" data-kind="text">${I.plus}${label} teks</button></div>`;
 
   // ---------------------------------------------------------------- render
   const openCards = new Set(['profil']);
@@ -213,15 +223,19 @@
       <div class="media-row">${thumb(S.avatar, 'round')}${input('avatar', 'Link foto profil', { type: 'url', ph: 'https://…/foto.jpg', media: true })}</div>`, o('media')));
 
     html.push(card('stories', 'Cerita', `${S.stories.length} item`, `
-      <p class="hint">Muncul sebagai lingkaran warna di foto profil, seperti story Instagram/TikTok. Pengunjung tinggal klik foto profilmu. Foto tampil 5 detik, video sampai habis.</p>
-      ${mediaItems('stories', i => `Cerita ${i + 1}`)}${add('stories', 'Tambah cerita')}`, o('stories')));
+      <label class="f"><span>Tampilan cerita</span><select data-k="storyStyle">
+        <option value="overlay" ${S.storyStyle !== 'view' ? 'selected' : ''}>Overlay: gelembung di samping foto profil, terbuka sebagai kartu (ada tombol View)</option>
+        <option value="view" ${S.storyStyle === 'view' ? 'selected' : ''}>View: lingkaran di foto profil, langsung layar penuh</option>
+      </select></label>
+      <p class="hint">Cerita bisa berupa teks, foto, GIF, atau video. Foto dan teks tampil 5 detik, video sampai habis.</p>
+      ${storyItems('stories', i => `Cerita ${i + 1}`)}${addStory('stories', 'Tambah')}`, o('stories')));
 
     html.push(card('highlights', 'Sorotan', `${S.highlights.length} grup`, `
       <p class="hint">Lingkaran kecil di bawah profil, berisi kumpulan cerita yang tetap tampil.</p>
       <div class="items">${S.highlights.map((h, i) => `
         <div class="item">${itemHead('highlights', i, S.highlights.length, h.title || `Sorotan ${i + 1}`)}
           <div class="grid2">${input(`highlights.${i}.title`, 'Judul')}${input(`highlights.${i}.cover`, 'Link sampul (opsional)', { type: 'url', media: true })}</div>
-          <div class="sub-items">${mediaItems(`highlights.${i}.items`, j => `Item ${j + 1}`)}${add(`highlights.${i}.items`, 'Tambah item')}</div>
+          <div class="sub-items">${storyItems(`highlights.${i}.items`, j => `Item ${j + 1}`)}${addStory(`highlights.${i}.items`, 'Tambah')}</div>
         </div>`).join('')}</div>${add('highlights', 'Tambah sorotan')}`, o('highlights')));
 
     html.push(card('projects', 'Portfolio', `${S.projects.length} karya`, `
@@ -273,13 +287,13 @@
   }
 
   const BLANK = {
-    stories: () => ({ media: '', caption: '' }),
-    highlights: () => ({ title: '', cover: '', items: [{ media: '', caption: '' }] }),
+    stories: () => ({ type: 'media', media: '', caption: '' }),
+    highlights: () => ({ title: '', cover: '', items: [{ type: 'media', media: '', caption: '' }] }),
     projects: () => ({ title: '', desc: '', media: '', link: '', tags: [] }),
     stats: () => ({ value: '', label: '' }),
     experience: () => ({ when: '', what: '', where: '' }),
     socials: () => ({ platform: platforms.find(p => !S.socials.some(s => s.platform === p)) || 'website', url: '' }),
-    items: () => ({ media: '', caption: '' }),
+    items: () => ({ type: 'media', media: '', caption: '' }),
   };
 
   // ---------------------------------------------------------------- events
@@ -304,7 +318,7 @@
     if (b.dataset.add) {
       const key = b.dataset.add, arr = getPath(S, key);
       const type = key.endsWith('.items') ? 'items' : key;
-      arr.push(BLANK[type]());
+      arr.push(b.dataset.kind === 'text' ? { type: 'text', text: '', bg: 'dark' } : BLANK[type]());
       openCards.add({ stories: 'stories', highlights: 'highlights', projects: 'projects', stats: 'stats', experience: 'about', socials: 'contact', items: 'highlights' }[type]);
       markDirty(); keepScroll(render);
       const last = [...app.querySelectorAll(`[data-k^="${CSS.escape(key)}.${arr.length - 1}."]`)][0];
@@ -334,6 +348,8 @@
     S.contact = S.contact || { email: '', phone: '' };
     if (r.platforms) platforms = r.platforms;
     if (r.ratios) ratios = r.ratios;
+    if (r.storyBgs) bgs = r.storyBgs;
+    if (!S.storyStyle) S.storyStyle = 'overlay';
     dirty = false;
     $('save').disabled = true;
     render();

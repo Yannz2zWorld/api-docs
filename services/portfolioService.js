@@ -9,6 +9,11 @@ const { query } = require('../lib/db');
 const TTL_MS = 5000;
 const PLATFORMS = ['youtube', 'tiktok', 'x', 'instagram', 'whatsapp', 'facebook', 'telegram', 'github', 'linkedin', 'threads', 'spotify', 'discord', 'website'];
 const RATIOS = ['16 / 9', '4 / 3', '3 / 1'];
+// How the avatar's stories open: 'overlay' = a bubble beside the avatar that opens a card next to
+// the profile (with a View button for full screen), 'view' = the ring that opens full screen.
+const STORY_STYLES = ['overlay', 'view'];
+// Backgrounds for text stories.
+const STORY_BGS = ['dark', 'light', 'blue', 'pink', 'green', 'orange', 'purple'];
 
 const DEFAULT = Object.freeze({
   name: 'Yannz',
@@ -22,6 +27,7 @@ const DEFAULT = Object.freeze({
   bannerRatio: '16 / 9',
   avatar: '',
   stats: [{ value: '24', label: 'Proyek' }, { value: '3+', label: 'Tahun' }, { value: '1.2K', label: 'Pengikut' }],
+  storyStyle: 'overlay',
   stories: [],
   highlights: [],
   projects: [
@@ -58,10 +64,15 @@ function link(v, field) {
   return u;
 }
 
-function media(m, field) {
+// A story: a photo/GIF/video link with an optional caption, or a text card on a background.
+function storyItem(m, field) {
   if (!m || typeof m !== 'object') return null;
+  if (m.type === 'text') {
+    const t = text(m.text, 280);
+    return t ? { type: 'text', text: t, bg: STORY_BGS.includes(m.bg) ? m.bg : 'dark' } : null;
+  }
   const src = link(m.media, field);
-  return src ? { media: src, caption: line(m.caption, 200) } : null;
+  return src ? { type: 'media', media: src, caption: line(m.caption, 200) } : null;
 }
 
 function sanitize(input) {
@@ -88,9 +99,10 @@ function sanitize(input) {
       const value = line(s?.value, 12), label = line(s?.label, 30);
       return value || label ? { value, label } : null;
     }),
-    stories: list(p.stories, 30, (s, i) => media(s, `cerita #${i + 1}`)),
+    storyStyle: STORY_STYLES.includes(p.storyStyle) ? p.storyStyle : 'overlay',
+    stories: list(p.stories, 30, (s, i) => storyItem(s, `cerita #${i + 1}`)),
     highlights: list(p.highlights, 20, (h, i) => {
-      const items = list(h?.items, 30, (s, j) => media(s, `sorotan #${i + 1} item #${j + 1}`));
+      const items = list(h?.items, 30, (s, j) => storyItem(s, `sorotan #${i + 1} item #${j + 1}`));
       const title = line(h?.title, 30);
       if (!items.length && !title) return null;
       return { title, cover: link(h?.cover, `sampul sorotan #${i + 1}`), items };
@@ -155,4 +167,4 @@ async function reset(userId) {
 // JSON for an inline <script>: no "</script>" or "<!--" can end or open anything early.
 const inlineJson = v => JSON.stringify(v).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 
-module.exports = { DEFAULT, PLATFORMS, RATIOS, sanitize, get, save, reset, inlineJson, InvalidPortfolio };
+module.exports = { DEFAULT, PLATFORMS, RATIOS, STORY_STYLES, STORY_BGS, sanitize, get, save, reset, inlineJson, InvalidPortfolio };

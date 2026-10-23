@@ -442,7 +442,7 @@ router.get('/api/portfolio', async (req, res) => {
 });
 router.get('/owner/portfolio', auth, owner, async (req, res) => {
   const r = await portfolio.get();
-  res.json({ success: true, ...r, platforms: portfolio.PLATFORMS, ratios: portfolio.RATIOS });
+  res.json({ success: true, ...r, platforms: portfolio.PLATFORMS, ratios: portfolio.RATIOS, storyStyles: portfolio.STORY_STYLES, storyBgs: portfolio.STORY_BGS });
 });
 router.put('/owner/portfolio', sameOrigin, auth, owner, async (req, res) => {
   try {

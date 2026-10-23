@@ -59,11 +59,10 @@
   /* Profile */
   .head { padding: 0 20px; }
   .head-row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .av-wrap { --size: clamp(84px, 24vw, 120px); position: relative; flex: none; margin-top: calc(var(--size) / -2); }
   .avatar {
-    --size: clamp(84px, 24vw, 120px);
-    position: relative; flex: none;
+    position: relative;
     width: var(--size); height: var(--size);
-    margin-top: calc(var(--size) / -2);
     border-radius: 50%;
     border: 4px solid var(--bg);
     background: var(--bg);
@@ -75,6 +74,39 @@
   .avatar.has-story { cursor: pointer; background: var(--ring); padding: 3px; }
   .avatar.has-story .avatar-in { border: 3px solid var(--bg); }
   .avatar.has-story.seen { background: var(--line); }
+
+  /* Story bubble beside the avatar (overlay style), like Instagram Notes */
+  .note {
+    position: absolute; z-index: 5; left: calc(100% + 4px); top: 2px;
+    display: flex; align-items: center; gap: 8px;
+    width: max-content; max-width: min(210px, calc(100vw - var(--size) - 56px)); padding: 7px 11px 7px 7px;
+    border-radius: 16px; border: 1px solid var(--line); background: var(--bg); color: var(--text);
+    box-shadow: 0 4px 14px rgba(0,0,0,.12); font-size: 13px; line-height: 1.3; text-align: left;
+    animation: pop .25s ease-out;
+  }
+  .note[hidden] { display: none; }
+  .note::before { content: ""; position: absolute; left: -6px; top: 16px; width: 10px; height: 10px; background: var(--bg); border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: rotate(45deg); }
+  .note.text-only { padding-left: 11px; }
+  .note .n-thumb { width: 34px; height: 34px; border-radius: 10px; overflow: hidden; flex: none; background: var(--soft); }
+  .note .n-thumb img, .note .n-thumb video { width: 100%; height: 100%; object-fit: cover; }
+  .note .n-text { min-width: 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+  .note .n-dot { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+  .note.seen .n-dot { display: none; }
+  @keyframes pop { from { opacity: 0; transform: translateY(4px) scale(.96); } }
+
+  /* Story card: opens from the bubble, next to the profile, without leaving the page */
+  .story-card {
+    position: absolute; z-index: 40; left: 0; top: calc(100% + 8px);
+    width: min(300px, calc(100vw - 40px)); aspect-ratio: 9 / 14; max-height: 72vh;
+    border-radius: 18px; overflow: hidden; background: #000; color: #fff;
+    box-shadow: 0 18px 50px rgba(0,0,0,.35); animation: pop .2s ease-out;
+  }
+  .story-card[hidden] { display: none; }
+  @media (min-width: 560px) { .story-card { left: calc(100% + 14px); top: 0; } }
+  .story-card .sv-head { padding: 8px 8px 8px 12px; }
+  .story-card .sv-head button { width: 32px; height: 32px; }
+  .sv-head .view { width: auto !important; padding: 0 12px; height: 30px !important; border-radius: 999px; background: rgba(255,255,255,.18); font-size: 13px; font-weight: 600; display: inline-flex !important; align-items: center; gap: 5px; }
+  .sv-head .view:hover { background: rgba(255,255,255,.28); }
 
   .actions { display: flex; gap: 8px; padding-top: 12px; }
   .btn {
@@ -204,12 +236,17 @@
   .sv-head .sp { flex: 1; }
   .sv-head button { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; }
   .sv-head button:hover { background: rgba(255,255,255,.12); }
+  .sv-head button[hidden] { display: none; }
   .sv-stage { position: absolute; inset: 0; display: grid; place-items: center; }
   .sv-stage img, .sv-stage video { max-width: 100%; max-height: 100%; width: 100%; height: 100%; object-fit: contain; }
   .sv-tap { position: absolute; top: 0; bottom: 0; width: 35%; z-index: 2; }
   .sv-tap.prev { left: 0; } .sv-tap.next { right: 0; width: 65%; }
   .sv-cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 40px 16px 28px; text-align: center; font-size: 15px; background: linear-gradient(transparent, rgba(0,0,0,.6)); pointer-events: none; }
   .sv-cap:empty { display: none; }
+  .sv-text { width: 100%; height: 100%; display: grid; place-items: center; padding: 64px 28px; text-align: center; font-weight: 700; line-height: 1.3; white-space: pre-line; overflow-wrap: anywhere; color: #fff; }
+  .sv-text.light { color: #0a0a0a; }
+  .story-card .sv-text { padding: 56px 20px; }
+  @media (prefers-reduced-motion: reduce) { .note, .story-card { animation: none; } }
 
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -220,7 +257,11 @@
 
   <section class="head">
     <div class="head-row">
-      <div class="avatar" id="avatar"><div class="avatar-in" id="avatarIn"></div></div>
+      <div class="av-wrap">
+        <div class="avatar" id="avatar"><div class="avatar-in" id="avatarIn"></div></div>
+        <button class="note" id="note" hidden></button>
+        <div class="story-card" id="storyCard" role="dialog" aria-label="Cerita" hidden></div>
+      </div>
       <div class="actions">
         <a class="btn" id="edit" href="/portfolio/panel" hidden>Edit</a>
         <button class="btn icon" id="share" aria-label="Bagikan profil" title="Bagikan"></button>
@@ -259,7 +300,7 @@
 <script>
 // Filled in by the server from Diriku Panel (/portfolio/panel); the fallback only shows when
 // this file is opened on its own.
-const PROFILE = /*__PORTFOLIO__*/null || { name: 'Portfolio', username: 'username', verified: false, bio: '', stats: [], stories: [], highlights: [], projects: [], skills: [], experience: [], contact: {}, socials: [] };
+const PROFILE = /*__PORTFOLIO__*/null || { name: 'Portfolio', username: 'username', verified: false, bio: '', storyStyle: 'overlay', stats: [], stories: [], highlights: [], projects: [], skills: [], experience: [], contact: {}, socials: [] };
 </script>
 <script>
 (function () {
@@ -283,6 +324,7 @@ const PROFILE = /*__PORTFOLIO__*/null || { name: 'Portfolio', username: 'usernam
     close: svg('<path d="M18 6 6 18M6 6l12 12"/>'),
     pause: svg('<path d="M9 5v14M15 5v14"/>'),
     sound: svg('<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>'),
+    expand: svg('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
     mute: svg('<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/>'),
   };
   const PLATFORM = {
@@ -406,126 +448,175 @@ const PROFILE = /*__PORTFOLIO__*/null || { name: 'Portfolio', username: 'usernam
   });
 
   // ---------------------------------------------------------------- stories
-  // The avatar plays P.stories (ring stays colored until this visitor has seen the latest set);
-  // each highlight circle plays its own items. Photos show 5 s, videos play to the end.
+  // P.stories open from the avatar. storyStyle 'overlay': a bubble beside the avatar opens a card
+  // next to the profile (View = full screen); 'view': a ring on the avatar opens full screen.
+  // Highlights always open full screen. Photos and text show 5 s, videos play to the end.
   const PHOTO_MS = 5000;
-  const storyKey = list => { let h = 0; for (const ch of list.map(s => s.media).join('|')) h = (h * 31 + ch.charCodeAt(0)) | 0; return 'pf-seen:' + h; };
+  const BG = {
+    dark: 'linear-gradient(160deg,#171717,#404040)', light: 'linear-gradient(160deg,#fafafa,#d4d4d4)',
+    blue: 'linear-gradient(160deg,#1d4ed8,#38bdf8)', pink: 'linear-gradient(160deg,#be185d,#f472b6)',
+    green: 'linear-gradient(160deg,#047857,#34d399)', orange: 'linear-gradient(160deg,#c2410c,#fb923c)',
+    purple: 'linear-gradient(160deg,#5b21b6,#a78bfa)',
+  };
+  const kindOf = s => s.type === 'text' ? 'text' : isVideo(s.media) ? 'video' : 'photo';
+  const textSize = t => (t.length < 40 ? 28 : t.length < 120 ? 22 : 17) + 'px';
+  const storyKey = list => { let h = 0; for (const ch of list.map(s => s.media || s.text).join('|')) h = (h * 31 + ch.charCodeAt(0)) | 0; return 'pf-seen:' + h; };
+
+  function makePlayer(root, { mount, unmount, compact = false }) {
+    let st = null;   // { list, i, title, onEnd, t0, left, raf, paused, muted }
+    const q = sel => root.querySelector(sel);
+    function open(list, title, onEnd, start = 0, muted = true) {
+      st = { list, title, onEnd, muted, i: 0 };
+      root.innerHTML = `<div class="sv">
+        <div class="sv-bars">${list.map(() => '<span class="sv-bar"><i></i></span>').join('')}</div>
+        <div class="sv-head">
+          <span class="av">${P.avatar && !isVideo(P.avatar) ? `<img src="${esc(P.avatar)}" alt="">` : ''}</span>
+          <span><b>${esc(P.username)}${P.verified ? VERIFIED : ''}</b><span class="sub">${esc(title || '')}</span></span>
+          <span class="sp"></span>
+          ${compact ? `<button class="view" data-view aria-label="Lihat layar penuh">${I.expand}View</button>` : ''}
+          <button data-sound hidden aria-label="Suara">${I.mute}</button>
+          ${compact ? '' : `<button data-pause aria-label="Jeda">${I.pause}</button>`}
+          <button data-x aria-label="Tutup">${I.close}</button>
+        </div>
+        <div class="sv-stage"></div>
+        <button class="sv-tap prev" aria-label="Sebelumnya"></button>
+        <button class="sv-tap next" aria-label="Berikutnya"></button>
+        <div class="sv-cap"></div>
+      </div>`;
+      mount();
+      show(start);
+    }
+    function show(i) {
+      if (!st) return;
+      if (i < 0) i = 0;
+      if (i >= st.list.length) { const end = st.onEnd; close(); end?.(); return; }
+      cancelAnimationFrame(st.raf);
+      st.i = i; st.paused = false;
+      root.querySelectorAll('.sv-bar i').forEach((b, k) => { b.style.width = k < i ? '100%' : '0'; });
+      const s = st.list[i], kind = kindOf(s), stage = q('.sv-stage');
+      q('.sv-cap').textContent = kind === 'text' ? '' : s.caption || '';
+      q('[data-sound]').hidden = kind !== 'video';
+      stage.innerHTML = kind === 'text'
+        ? `<div class="sv-text${s.bg === 'light' ? ' light' : ''}" style="background:${BG[s.bg] || BG.dark};font-size:${textSize(s.text)}">${esc(s.text)}</div>`
+        : kind === 'video' ? `<video src="${esc(s.media)}" playsinline autoplay ${st.muted ? 'muted' : ''}></video>` : `<img src="${esc(s.media)}" alt="">`;
+      const el = stage.firstElementChild, bar = root.querySelectorAll('.sv-bar i')[i];
+      if (kind === 'video') {
+        el.addEventListener('ended', () => show(st.i + 1));
+        el.addEventListener('error', () => setTimeout(() => show(st.i + 1), 800));
+        const tick = () => { if (!st || st.i !== i) return; if (el.duration) bar.style.width = (el.currentTime / el.duration * 100) + '%'; st.raf = requestAnimationFrame(tick); };
+        tick();
+      } else {
+        st.left = PHOTO_MS; st.t0 = performance.now();
+        const tick = now => {
+          if (!st || st.i !== i) return;
+          if (!st.paused) {
+            const done = PHOTO_MS - st.left + (now - st.t0);
+            bar.style.width = Math.min(100, done / PHOTO_MS * 100) + '%';
+            if (done >= PHOTO_MS) return show(i + 1);
+          }
+          st.raf = requestAnimationFrame(tick);
+        };
+        st.raf = requestAnimationFrame(tick);
+      }
+    }
+    function pause(on) {
+      if (!st || st.paused === on) return;
+      const v = q('.sv-stage video');
+      if (on) { st.paused = true; st.left -= performance.now() - st.t0; v?.pause(); }
+      else { st.paused = false; st.t0 = performance.now(); v?.play().catch(() => {}); }
+      const b = q('[data-pause]'); if (b) b.innerHTML = on ? I.play : I.pause;
+    }
+    function close() {
+      if (!st) return;
+      cancelAnimationFrame(st.raf);
+      st = null;
+      unmount();
+      root.innerHTML = '';
+    }
+    root.addEventListener('click', e => {
+      if (!st) return;
+      if (e.target.closest('[data-x]')) return close();
+      if (e.target.closest('[data-view]')) {
+        const { list, title, onEnd, i, muted } = st;
+        close();
+        return full.open(list, title, onEnd, i, muted);
+      }
+      if (e.target.closest('[data-pause]')) return pause(!st.paused);
+      if (e.target.closest('[data-sound]')) {
+        st.muted = !st.muted;
+        const v = q('.sv-stage video'); if (v) v.muted = st.muted;
+        e.target.closest('[data-sound]').innerHTML = st.muted ? I.mute : I.sound;
+        return;
+      }
+      if (e.target.closest('.sv-tap.prev')) return show(st.i - 1);
+      if (e.target.closest('.sv-tap.next')) return show(st.i + 1);
+    });
+    root.addEventListener('keydown', e => {
+      if (!st) return;
+      if (e.key === 'ArrowRight') show(st.i + 1);
+      else if (e.key === 'ArrowLeft') show(st.i - 1);
+      else if (e.key === 'Escape' && compact) close();
+    });
+    return { open, close };
+  }
+
+  const sd = $('story'), card = $('storyCard');
+  const full = makePlayer(sd, { mount: () => sd.showModal(), unmount: () => { if (sd.open) sd.close(); } });
+  sd.addEventListener('close', () => full.close());
+  const mini = makePlayer(card, { compact: true, mount: () => { card.hidden = false; card.querySelector('.sv-tap.next')?.focus(); }, unmount: () => { card.hidden = true; } });
+  // A click anywhere outside the card (and outside the bubble/avatar that open it) closes it.
+  document.addEventListener('click', e => {
+    if (!card.hidden && !e.target.closest('#storyCard, #note, #avatar')) mini.close();
+  });
+
   const stories = P.stories || [];
-  const avatar = $('avatar');
+  const avatar = $('avatar'), note = $('note');
   if (stories.length) {
+    const overlay = P.storyStyle !== 'view';
+    const key = storyKey(stories);
+    const markSeen = () => { storage.set(key, '1'); avatar.classList.add('seen'); note.classList.add('seen'); };
+    const open = () => {
+      if (overlay) { if (!card.hidden) return mini.close(); mini.open(stories, 'Cerita', markSeen); }
+      else full.open(stories, 'Cerita', markSeen);
+    };
     avatar.classList.add('has-story');
+    if (overlay) avatar.classList.add('seen');   // the bubble carries the "new" mark, the ring stays quiet
     avatar.setAttribute('role', 'button');
     avatar.tabIndex = 0;
     avatar.setAttribute('aria-label', 'Lihat cerita');
-    if (storage.get(storyKey(stories))) avatar.classList.add('seen');
-    const open = () => play(stories, 'Cerita', () => { storage.set(storyKey(stories), '1'); avatar.classList.add('seen'); });
     avatar.addEventListener('click', open);
     avatar.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    if (overlay) {
+      const first = stories[0], kind = kindOf(first);
+      const label = kind === 'text' ? first.text : first.caption || (stories.length > 1 ? `${stories.length} cerita baru` : 'Cerita baru');
+      note.classList.toggle('text-only', kind === 'text');
+      note.innerHTML = `${kind === 'text' ? '' : `<span class="n-thumb">${kind === 'video' ? `<video src="${esc(first.media)}" muted playsinline preload="metadata"></video>` : `<img src="${esc(first.media)}" alt="" loading="lazy">`}</span>`}<span class="n-text">${esc(label)}</span><span class="n-dot"></span>`;
+      note.setAttribute('aria-label', 'Lihat cerita: ' + label);
+      note.hidden = false;
+      note.addEventListener('click', open);
+    }
+    if (storage.get(key)) { avatar.classList.add('seen'); note.classList.add('seen'); }
   }
+
   const highlights = (P.highlights || []).filter(h => h.items?.length);
   if (highlights.length) {
     const hl = $('highlights');
     hl.hidden = false;
     hl.innerHTML = highlights.map((h, i) => {
-      const cover = h.cover || h.items[0].media;
+      const firstMedia = h.items.find(s => s.type !== 'text')?.media || '';
+      const cover = h.cover || firstMedia;
+      const firstText = h.items.find(s => s.type === 'text');
+      const inner = cover && !isVideo(cover) ? media(cover, { thumb: true })
+        : cover ? `<video src="${esc(cover)}" muted playsinline preload="metadata"></video>`
+        : firstText ? `<span class="ph" style="background:${BG[firstText.bg] || BG.dark};color:${firstText.bg === 'light' ? '#0a0a0a' : '#fff'}">Aa</span>`
+        : `<span class="ph">${esc((h.title || '•').charAt(0))}</span>`;
       return `<button class="hl" data-h="${i}" aria-label="Sorotan ${esc(h.title)}">
-        <span class="hl-ring"><span>${cover && !isVideo(cover) ? media(cover, { thumb: true }) : cover ? `<video src="${esc(cover)}" muted playsinline preload="metadata"></video>` : `<span class="ph">${esc((h.title || '•').charAt(0))}</span>`}</span></span>
+        <span class="hl-ring"><span>${inner}</span></span>
         <span class="hl-title">${esc(h.title)}</span>
       </button>`;
     }).join('');
-    hl.addEventListener('click', e => { const b = e.target.closest('.hl'); if (b) { const h = highlights[+b.dataset.h]; play(h.items, h.title); } });
+    hl.addEventListener('click', e => { const b = e.target.closest('.hl'); if (b) { const h = highlights[+b.dataset.h]; mini.close(); full.open(h.items, h.title); } });
   }
-
-  const sd = $('story');
-  let st = null;   // { list, i, onEnd, t0, left, raf, paused, muted }
-  function play(list, title, onEnd) {
-    st = { list, i: 0, onEnd, muted: true };
-    sd.innerHTML = `<div class="sv">
-      <div class="sv-bars">${list.map(() => '<span class="sv-bar"><i></i></span>').join('')}</div>
-      <div class="sv-head">
-        <span class="av">${P.avatar && !isVideo(P.avatar) ? `<img src="${esc(P.avatar)}" alt="">` : ''}</span>
-        <span><b>${esc(P.username)}${P.verified ? VERIFIED : ''}</b><span class="sub">${esc(title || '')}</span></span>
-        <span class="sp"></span>
-        <button data-sound hidden aria-label="Suara">${I.mute}</button>
-        <button data-pause aria-label="Jeda">${I.pause}</button>
-        <button data-x aria-label="Tutup">${I.close}</button>
-      </div>
-      <div class="sv-stage"></div>
-      <button class="sv-tap prev" aria-label="Sebelumnya"></button>
-      <button class="sv-tap next" aria-label="Berikutnya"></button>
-      <div class="sv-cap"></div>
-    </div>`;
-    sd.showModal();
-    show(0);
-  }
-  function bars() {
-    sd.querySelectorAll('.sv-bar i').forEach((b, k) => { b.style.width = k < st.i ? '100%' : '0'; });
-  }
-  function show(i) {
-    if (!st) return;
-    if (i < 0) i = 0;
-    if (i >= st.list.length) { const end = st.onEnd; closeStory(); end?.(); return; }
-    cancelAnimationFrame(st.raf);
-    st.i = i; st.paused = false;
-    bars();
-    const s = st.list[i], stage = sd.querySelector('.sv-stage');
-    sd.querySelector('.sv-cap').textContent = s.caption || '';
-    const vid = isVideo(s.media);
-    sd.querySelector('[data-sound]').hidden = !vid;
-    stage.innerHTML = vid ? `<video src="${esc(s.media)}" playsinline autoplay ${st.muted ? 'muted' : ''}></video>` : `<img src="${esc(s.media)}" alt="">`;
-    const el = stage.firstElementChild, bar = sd.querySelectorAll('.sv-bar i')[i];
-    if (vid) {
-      el.addEventListener('ended', () => show(st.i + 1));
-      el.addEventListener('error', () => setTimeout(() => show(st.i + 1), 800));
-      const tick = () => { if (!st || st.i !== i) return; if (el.duration) bar.style.width = (el.currentTime / el.duration * 100) + '%'; st.raf = requestAnimationFrame(tick); };
-      tick();
-    } else {
-      st.left = PHOTO_MS; st.t0 = performance.now();
-      const tick = now => {
-        if (!st || st.i !== i) return;
-        if (!st.paused) {
-          const done = PHOTO_MS - st.left + (now - st.t0);
-          bar.style.width = Math.min(100, done / PHOTO_MS * 100) + '%';
-          if (done >= PHOTO_MS) return show(i + 1);
-        }
-        st.raf = requestAnimationFrame(tick);
-      };
-      st.raf = requestAnimationFrame(tick);
-    }
-  }
-  function pause(on) {
-    if (!st || st.paused === on) return;
-    const v = sd.querySelector('.sv-stage video');
-    if (on) { st.paused = true; st.left -= performance.now() - st.t0; v?.pause(); }
-    else { st.paused = false; st.t0 = performance.now(); v?.play().catch(() => {}); }
-    sd.querySelector('[data-pause]').innerHTML = on ? I.play : I.pause;
-  }
-  function closeStory() {
-    if (!st) return;
-    cancelAnimationFrame(st.raf);
-    st = null;
-    if (sd.open) sd.close();
-    sd.innerHTML = '';
-  }
-  sd.addEventListener('click', e => {
-    if (!st) return;
-    if (e.target.closest('[data-x]')) return closeStory();
-    if (e.target.closest('[data-pause]')) return pause(!st.paused);
-    if (e.target.closest('[data-sound]')) {
-      st.muted = !st.muted;
-      const v = sd.querySelector('.sv-stage video'); if (v) v.muted = st.muted;
-      e.target.closest('[data-sound]').innerHTML = st.muted ? I.mute : I.sound;
-      return;
-    }
-    if (e.target.closest('.sv-tap.prev')) return show(st.i - 1);
-    if (e.target.closest('.sv-tap.next')) return show(st.i + 1);
-  });
-  sd.addEventListener('keydown', e => {
-    if (!st) return;
-    if (e.key === 'ArrowRight') show(st.i + 1);
-    else if (e.key === 'ArrowLeft') show(st.i - 1);
-  });
-  sd.addEventListener('close', () => { if (st) closeStory(); });
 
   // ---------------------------------------------------------------- owner shortcut
   // Shows "Edit" only to the signed-in owner; everyone else gets a quiet 401/403.
