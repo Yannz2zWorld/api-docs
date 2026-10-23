@@ -1079,12 +1079,6 @@ app.get(['/3d', '/scythe'], (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'scythe.html'));
 });
 
-// Personal portfolio page (standalone; edit the PROFILE object at the top of views/portfolio.html).
-app.get('/portfolio', (req, res) => {
-  res.set('Cache-Control', 'public, max-age=300');
-  res.sendFile(path.join(__dirname, 'views', 'portfolio.html'));
-});
-
 app.get('/api/playground', (req, res) => {
   try {
     res.sendFile(path.join(__dirname, 'views', 'playground.html'));

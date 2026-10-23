@@ -2,6 +2,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
 const settings = require('../settings');
 const { query, healthCheck, checkSchema } = require('../lib/db');
 const { classifyDatabaseError, missingAuthConfig } = require('../lib/authErrors');
@@ -29,6 +30,7 @@ const errorLog = require('../services/errorLogService');
 
 const aliases = require('../services/endpointAliasService');
 const edits = require('../services/endpointEditService');
+const portfolio = require('../services/portfolioService');
 const router = express.Router();
 const VIEWS = path.join(__dirname, '..', 'views');
 const { parseProofImage, parseAvatarImage } = require('../lib/proofImage');
@@ -416,6 +418,52 @@ router.get('/billing', pageAuth, (req, res) => res.sendFile(path.join(VIEWS, 'bi
 router.get('/owner', pageAuth, (req, res) => {
   if (!req.account.isOwner) return res.status(403).send('Cuma developer yang bisa akses ini.');
   res.sendFile(path.join(VIEWS, 'owner.html'));
+});
+
+// ---------------------------------------------------------------- portfolio
+// The public page gets its data inline (no extra request, no flash of the example); Diriku Panel
+// edits it through /owner/portfolio.
+let portfolioPage = null;
+router.get('/portfolio', async (req, res) => {
+  portfolioPage ??= fs.readFileSync(path.join(VIEWS, 'portfolio.html'), 'utf8');
+  const { profile } = await portfolio.get();
+  res.set('Cache-Control', 'no-cache');
+  res.type('html').send(portfolioPage.replace('/*__PORTFOLIO__*/null', () => portfolio.inlineJson(profile)));
+});
+router.get(['/portfolio/panel', '/diriku'], pageAuth, (req, res) => {
+  if (!req.account.isOwner) return res.status(403).send('Cuma developer yang bisa akses ini.');
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(path.join(VIEWS, 'portfolio-panel.html'));
+});
+router.get('/api/portfolio', async (req, res) => {
+  const { profile, updatedAt } = await portfolio.get();
+  res.set('Cache-Control', 'no-cache');
+  res.json({ success: true, profile, updatedAt });
+});
+router.get('/owner/portfolio', auth, owner, async (req, res) => {
+  const r = await portfolio.get();
+  res.json({ success: true, ...r, platforms: portfolio.PLATFORMS, ratios: portfolio.RATIOS });
+});
+router.put('/owner/portfolio', sameOrigin, auth, owner, async (req, res) => {
+  try {
+    const r = await portfolio.save(req.body?.profile, req.account.id);
+    await audit.writeAudit({ actorUserId: req.account.id, action: 'portfolio_change', targetType: 'server_settings', ipAddress: ip(req) });
+    return res.json({ success: true, ...r });
+  } catch (e) {
+    if (e.code === 'INVALID_PORTFOLIO') return fail(res, 400, e.code, e.message, { field: e.field });
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Diriku Panel butuh migration 026_portfolio.sql dulu.');
+    throw e;
+  }
+});
+router.delete('/owner/portfolio', sameOrigin, auth, owner, async (req, res) => {
+  try {
+    await portfolio.reset(req.account.id);
+  } catch (e) {
+    if (migrationMissing(e)) return fail(res, 503, 'MIGRATION_REQUIRED', 'Diriku Panel butuh migration 026_portfolio.sql dulu.');
+    throw e;
+  }
+  await audit.writeAudit({ actorUserId: req.account.id, action: 'portfolio_reset', targetType: 'server_settings', ipAddress: ip(req) });
+  res.json({ success: true, ...(await portfolio.get()) });
 });
 
 // ---------------------------------------------------------------- account
