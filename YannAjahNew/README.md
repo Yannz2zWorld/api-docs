@@ -12,6 +12,7 @@ Struktur file mengikuti base bot (referensi kedua); fitur & perilaku mengikuti Y
 | [docs/RANKS.md](docs/RANKS.md) | Rank, matriks permission, ownership, aturan kuota |
 | [docs/APIZ2Z.md](docs/APIZ2Z.md) · [APIZ2Z-MAPPING.md](docs/APIZ2Z-MAPPING.md) | Verifikasi API, adapter, endpoint → command |
 | [docs/FEATURES.md](docs/FEATURES.md) | Katalog fitur + status (dibuat otomatis) |
+| [docs/DEPLOY-NAT-VPS.md](docs/DEPLOY-NAT-VPS.md) | Langkah deploy di VPS NAT + Cloudflare Tunnel + Neon (pola CDN APIZ2Z) |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Kebutuhan & rekomendasi VPS, setup production, hardening, monitoring, update/rollback, troubleshooting |
 | [docs/REPORT.md](docs/REPORT.md) | Laporan akhir: selesai / sebagian / belum / terblokir |
 
