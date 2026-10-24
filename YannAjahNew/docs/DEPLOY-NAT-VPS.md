@@ -83,6 +83,7 @@ FFMPEG_THREADS=1
 ```bash
 npm run migrate
 node server/cli.js bootstrap-developer --username yann --email emailkamu@gmail.com
+node server/cli.js set-password --username yann     # password login website (ketik tersembunyi)
 pm2 start server/index.js --name yannajah-dashboard
 curl http://127.0.0.1:8787/health/ready      # harus {"status":"ready",...}
 ```
@@ -95,14 +96,17 @@ curl http://127.0.0.1:8787/health/ready      # harus {"status":"ready",...}
 
 VPS tanpa Managed Domain: pakai Cloudflare Tunnel ke `localhost:8787` (lihat `deploy/cdn-vps.md` bagian 4) dan `DASHBOARD_HOST=127.0.0.1`.
 
-## 6. Google OAuth
+## 6. Login website
 
-Google Cloud Console → APIs & Services → Credentials → **Create OAuth client ID** → Web application.
+Buka `https://lisensi.apiz2z.web.id/` → masuk dengan **email + password** dari langkah 4.
+Buat akun pembeli di menu **Akun** (email + password + rank), lalu berikan email & password itu ke pembeli.
+
+Google login **opsional**. Kalau mau dipakai: Google Cloud Console → APIs & Services → Credentials → **Create OAuth client ID** → Web application.
 - Authorized JavaScript origins: `https://lisensi.apiz2z.web.id`
 - Authorized redirect URIs: `https://lisensi.apiz2z.web.id/auth/google/callback`
 
-Isi ke `.env`, lalu `pm2 restart yannajah-dashboard`.
-Sebelum OAuth jadi: `node server/cli.js login-link --username yann` → buka link di HP (berlaku 15 menit, sekali pakai).
+Isi `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` di `.env`, lalu `pm2 restart yannajah-dashboard`.
+Darurat (lupa password): `node server/cli.js set-password --username yann` di server, atau `login-link --username yann` (link sekali pakai 15 menit).
 
 ## 7. Daftarkan nomor bot & jalankan bot
 

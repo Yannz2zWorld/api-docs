@@ -9,6 +9,7 @@
 //   node server/cli.js bootstrap-developer --username yann --email kamu@gmail.com
 //   node server/cli.js grant-developer --username yann --confirm yann
 //   node server/cli.js revoke-developer --username yann --to DEWA --confirm yann
+//   node server/cli.js set-password --username yann        (password login website, input tersembunyi)
 //   node server/cli.js login-link --username yann
 //   node server/cli.js add-bot --username yann --name "Bot Test" --phone 6281234567890
 //   node server/cli.js list-bots --username yann
@@ -124,6 +125,23 @@ async function main() {
         if (p1 !== p2) fail('Password tidak sama.');
         const bot = await bots.create(db, actor, { bot_name: name, phone_number: phone, password: p1 }, { bcryptCost: cfg.bcryptCost });
         console.log(`✔ Bot ${bot.bot_name} (${bot.phone_number}) terdaftar untuk ${a.username}.`);
+        break;
+      }
+      case 'set-password': {
+        // Password login website (email + password) untuk akun mana pun, termasuk DEVELOPER pertama.
+        const a = await findAccount(db, o.username);
+        const row = (await db.query('SELECT email FROM accounts WHERE id = $1', [a.id]))[0];
+        if (!row.email) fail(`Akun ${a.username} belum punya email. Login website memakai email + password.`);
+        const p1 = await askHidden('Password baru: ');
+        const p2 = await askHidden('Ulangi password: ');
+        if (p1 !== p2) fail('Password tidak sama.');
+        const hash = await hashPassword(v.accountPassword(p1), cfg.bcryptCost);
+        await db.withTransaction(async tx => {
+          await tx.query('UPDATE accounts SET password_hash = $2, password_changed_at = now(), failed_logins = 0, locked_until = NULL, updated_at = now() WHERE id = $1', [a.id, hash]);
+          const n = (await tx.query('UPDATE dashboard_sessions SET revoked_at = now() WHERE account_id = $1 AND revoked_at IS NULL RETURNING id', [a.id])).length;
+          await audit.write(tx, { actorType: 'cli', action: 'account.password.reset', targetType: 'account', targetId: a.id, details: { via: 'cli', revoked_sessions: n } });
+        });
+        console.log(`✔ Password website ${a.username} diatur. Login: ${cfg.publicUrl} dengan ${row.email}`);
         break;
       }
       case 'list-bots': {

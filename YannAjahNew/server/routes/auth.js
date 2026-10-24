@@ -1,6 +1,7 @@
 'use strict';
-// Login dashboard: Google OAuth/OIDC (state + nonce di cookie HttpOnly berumur 10 menit) dan
-// link login sekali pakai dari CLI. Logout mencabut sesi di database.
+// Login website: email + password (akun dibuat developer/atasan), Google OAuth/OIDC (opsional;
+// state + nonce di cookie HttpOnly 10 menit), dan link login sekali pakai dari CLI.
+// Semua cara login hanya untuk rank RESELLER ke atas. Logout mencabut sesi di database.
 
 const express = require('express');
 const { newId, safeEqual, parseCookies, setCookie, clearCookie, rateLimiter, clientIp } = require('../lib/security');
@@ -9,6 +10,7 @@ const google = require('../services/googleAuthService');
 const links = require('../services/loginLinkService');
 const audit = require('../services/auditService');
 const access = require('../services/accessControl');
+const passwords = require('../services/passwordAuthService');
 
 const SID = 'yan_sid';
 const OAUTH = 'yan_oauth';
@@ -18,14 +20,29 @@ module.exports = function authRoutes({ db, cfg, googleClient }) {
   const limiter = rateLimiter({ windowMs: 15 * 60000, max: 60, code: 'TOO_MANY_LOGIN_REQUESTS' });
   const cookieOpts = { secure: cfg.secureCookies };
 
-  async function startSession(req, res, accountId, provider) {
-    const actor = await access.loadActor(db, accountId);
-    if (!actor || actor.status !== 'active') return res.redirect('/?auth=restricted');
+  async function openSession(req, res, accountId, provider) {
     const s = await sessions.create(db, accountId, { provider, ip: clientIp(req), userAgent: req.get('user-agent'), hours: cfg.adminSessionHours });
     setCookie(res, SID, s.token, { ...cookieOpts, maxAge: cfg.adminSessionHours * 3600 });
     await audit.write(db, { actorId: accountId, action: 'auth.login', targetType: 'account', targetId: accountId, details: { provider }, ip: clientIp(req) });
+  }
+
+  // Google & link login: redirect ke halaman login dengan kode pesan kalau ditolak.
+  async function startSession(req, res, accountId, provider) {
+    const actor = await access.loadActor(db, accountId);
+    if (!actor || actor.status !== 'active') return res.redirect('/?auth=restricted');
+    try { await passwords.assertWebAccess(db, actor); } catch { return res.redirect('/?auth=member'); }
+    await openSession(req, res, accountId, provider);
     return res.redirect('/dashboard');
   }
+
+  // Email + password (JSON). Origin dicek oleh app.js untuk semua POST /auth.
+  r.post('/auth/login', limiter, async (req, res, next) => {
+    try {
+      const { accountId } = await passwords.login(db, req.body || {}, { ip: clientIp(req) });
+      await openSession(req, res, accountId, 'password');
+      res.json({ success: true, redirect: '/dashboard' });
+    } catch (e) { next(e); }
+  });
 
   r.get('/auth/config', (req, res) => res.json({ success: true, google: googleClient.enabled }));
 

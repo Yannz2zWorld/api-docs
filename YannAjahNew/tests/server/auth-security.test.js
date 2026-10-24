@@ -148,7 +148,9 @@ it('akun DEVELOPER tidak bisa dibuat lewat registrasi / API biasa', async () => 
   assert.equal(location.searchParams.get('nonce'), nonce);
   t.setIdToken(h.googleIdToken({ sub: 'google-sub-new-1', email: 'baru@gmail.example', nonce }));
   const cb = await t.request('GET', `/auth/google/callback?code=abc&state=${state}`, { cookie });
-  assert.equal(cb.status, 302); assert.equal(cb.headers.get('location'), '/dashboard');
+  // Akun baru = MEMBER, dan MEMBER tidak punya akses website (khusus reseller ke atas).
+  assert.equal(cb.status, 302); assert.equal(cb.headers.get('location'), '/?auth=member');
+  assert.ok(!(cb.headers.getSetCookie() || []).some(c => c.startsWith('yan_sid=')), 'MEMBER tidak mendapat sesi');
   const acc = (await t.db.query("SELECT rank_code, email_verified FROM accounts WHERE google_sub = 'google-sub-new-1'"))[0];
   assert.deepEqual(acc, { rank_code: 'MEMBER', email_verified: true });
 });
@@ -193,10 +195,11 @@ it('Google OAuth menautkan akun yang dibuat admin berdasarkan email terverifikas
 });
 
 it('API langsung tidak bisa melewati permission UI; CSRF dan Origin wajib untuk mutasi', async () => {
-  const m = await t.login(await t.account('MEMBER'));
+  await assert.rejects(t.login(await t.account('MEMBER')), /auth=member/, 'MEMBER tidak bisa masuk website');
+  const m = await t.login(await t.account('RESELLER'));
   const ownerAcc = await t.account('RAJA');
   for (const [method, path, body] of [
-    ['post', '/api/dash/accounts', { username: 'hacker1' }],
+    ['post', '/api/dash/accounts', { username: 'hacker1', rank: 'SUKI' }],
     ['put', '/api/dash/maintenance', { enabled: true }],
     ['get', '/api/dash/login-attempts'],
     ['get', '/api/dash/health'],

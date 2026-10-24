@@ -12,10 +12,17 @@
     <section class="panel login-card">
       <div class="brand"><span class="brand-mark">Y</span> YannAjahNew</div>
       <h2>Masuk ke dashboard</h2>
-      <p class="muted">Login memakai akun Google. Akun baru otomatis berrank <b>MEMBER</b>; rank lain diberikan oleh atasanmu.</p>
+      <p class="muted">Gunakan email &amp; password dari developer/atasanmu. Website khusus <b>reseller ke atas</b>.</p>
       <p id="notice" class="banner hidden" role="alert"></p>
-      <a id="google" class="btn primary" href="/auth/google">Masuk dengan Google</a>
-      <p id="nogoogle" class="muted hidden">Google OAuth belum dikonfigurasi di server. Admin bisa membuat link login sekali pakai lewat CLI (<span class="mono">node server/cli.js login-link</span>).</p>
+      <form id="login" class="login-form" autocomplete="on" novalidate>
+        <label>Email<input type="email" name="email" required maxlength="254" autocomplete="username" inputmode="email"></label>
+        <label>Password<input type="password" name="password" required maxlength="128" autocomplete="current-password"></label>
+        <button id="submit" class="btn primary" type="submit">Masuk</button>
+      </form>
+      <div id="google-box" class="hidden">
+        <p class="muted login-or">atau</p>
+        <a id="google" class="btn" href="/auth/google">Masuk dengan Google</a>
+      </div>
     </section>
   </main>
 </body>

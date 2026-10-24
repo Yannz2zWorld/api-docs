@@ -16,6 +16,8 @@ const maintenance = require('../services/maintenanceService');
 const audit = require('../services/auditService');
 const quota = require('../services/quotaService');
 const backup = require('../services/backupService');
+const passwords = require('../services/passwordAuthService');
+const { sha256 } = require('../lib/security');
 const { pending } = require('../lib/migrate');
 const { SID } = require('./auth');
 
@@ -31,6 +33,7 @@ module.exports = function dashboardApi({ db, cfg }) {
       const actor = await access.loadActor(db, s.accountId);
       if (!actor) throw unauthorized('AUTH_REQUIRED', 'Akun tidak ditemukan.');
       if (actor.status !== 'active') throw forbidden('ACCOUNT_RESTRICTED', 'Akun kamu sedang tidak aktif.');
+      await passwords.assertWebAccess(db, actor);   // website khusus RESELLER ke atas (dicek tiap request)
       req.actor = actor;
       req.sessionToken = token;
       if (!['GET', 'HEAD'].includes(req.method)) {
@@ -78,12 +81,14 @@ module.exports = function dashboardApi({ db, cfg }) {
 
   // ---------------------------------------------------------------- akun
   r.get('/api/dash/accounts', h(async req => ({ accounts: await accounts.list(db, req.actor, { q: req.query.q || null, rank: req.query.rank || null, status: req.query.status || null }) })));
-  r.post('/api/dash/accounts', h(async req => ({ account: await accounts.create(db, req.actor, req.body || {}, ip(req)) })));
+  r.post('/api/dash/accounts', h(async req => ({ account: await accounts.create(db, req.actor, req.body || {}, { ...ip(req), bcryptCost: cfg.bcryptCost }) })));
   r.get('/api/dash/accounts/:id', h(async req => ({ account: await accounts.get(db, req.actor, v.id(req.params.id)) })));
   r.patch('/api/dash/accounts/:id', h(async req => ({ account: await accounts.update(db, req.actor, v.id(req.params.id), req.body || {}, ip(req)) })));
   r.post('/api/dash/accounts/:id/rank', h(async req => accounts.changeRank(db, req.actor, v.id(req.params.id), req.body?.rank, ip(req))));
   r.post('/api/dash/accounts/:id/status', h(async req => accounts.setStatus(db, req.actor, v.id(req.params.id), String(req.body?.status || ''), req.body?.reason, ip(req))));
   r.delete('/api/dash/accounts/:id', h(async req => accounts.remove(db, req.actor, v.id(req.params.id), ip(req))));
+  r.post('/api/dash/accounts/:id/password', h(async req => passwords.setPassword(db, req.actor, v.id(req.params.id), req.body?.password, { ...ip(req), bcryptCost: cfg.bcryptCost })));
+  r.post('/api/dash/me/password', h(async req => passwords.changeOwn(db, req.actor, req.body || {}, { ...ip(req), bcryptCost: cfg.bcryptCost, keepSessionHash: sha256(req.sessionToken) })));
 
   // ---------------------------------------------------------------- bot / nomor
   r.get('/api/dash/bots', h(async req => ({ bots: await bots.list(db, req.actor) })));

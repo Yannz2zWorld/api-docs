@@ -2,7 +2,7 @@
 
 ```
                          ┌──────────────────────────── server/ (backend pusat) ─────────────────────────────┐
-  Browser admin ──HTTPS──▶ routes/auth.js (Google OIDC, link CLI)      services/accessControl (rank+permission+cakupan)
+  Browser admin ──HTTPS──▶ routes/auth.js (email+password, Google, link CLI)    services/accessControl (rank+permission+cakupan)
                           routes/dashboardApi.js (CSRF+Origin)  ──▶  services/account|bot|quota|maintenance|audit
                           routes/botApi.js (Bearer token bot)   ──▶  services/botAuthService (login/verify/heartbeat)
                                                                        │

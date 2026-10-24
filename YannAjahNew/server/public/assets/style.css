@@ -67,3 +67,6 @@ dialog::backdrop { background: rgba(0, 0, 0, .45); }
 dialog form { display: grid; gap: 10px; }
 @media (max-width: 640px) { th, td { padding: 6px; } .panel { padding: 14px; } }
 .login-card .brand { justify-content: center; }
+.login-form { display: grid; gap: 12px; text-align: left; margin-top: 8px; }
+.login-form .btn { justify-self: stretch; text-align: center; }
+.login-or { margin: 14px 0 0; }

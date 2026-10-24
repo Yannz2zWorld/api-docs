@@ -22,15 +22,16 @@ const addUser = (s, extra = {}) => t.as(s).post('/api/dash/accounts', { username
 const fillBots = (ownerId, n) => t.db.query(`INSERT INTO bots (owner_id, bot_name, phone_number, created_by)
   SELECT $1, 'Isi ' || g, '7' || lpad(($1::bigint * 100000 + g)::text, 12, '0'), $1 FROM generate_series(1, $2) g`, [ownerId, n]);
 
-it('MEMBER tidak bisa menambah nomor maupun user', async () => {
-  const m = await t.login(await t.account('MEMBER'));
-  const b = await addBot(m);
-  assert.equal(b.status, 403); assert.equal(b.json.error, 'PERMISSION_DENIED');
-  const u = await addUser(m);
-  assert.equal(u.status, 403); assert.equal(u.json.error, 'PERMISSION_DENIED');
-  const me = await t.as(m).get('/api/dash/me');
-  assert.equal(me.json.quota.numbers.label, '0/0');
-  assert.equal(me.json.quota.users.label, '0/0');
+it('MEMBER tidak bisa masuk website, jadi tidak bisa menambah nomor maupun user', async () => {
+  const acc = await t.account('MEMBER');
+  await assert.rejects(t.login(acc), /auth=member/);
+  // Sesi yang sudah ada (mis. reseller yang diturunkan ke MEMBER) langsung tidak berlaku.
+  const resAcc = await t.account('RESELLER');
+  const s = await t.login(resAcc);
+  await t.db.query("UPDATE accounts SET rank_code = 'MEMBER' WHERE id = $1", [resAcc.id]);
+  const b = await addBot(s);
+  assert.equal(b.status, 403); assert.equal(b.json.error, 'WEB_ACCESS_DENIED');
+  assert.equal((await t.as(s).get('/api/dash/me')).json.error, 'WEB_ACCESS_DENIED');
 });
 
 it('RESELLER: nomor ke-10 diterima, ke-11 ditolak; user ke-10 diterima, ke-11 ditolak', async () => {

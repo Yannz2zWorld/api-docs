@@ -59,14 +59,16 @@ function restrictiveStatus(v) {
   return s;
 }
 
-// Password bot: minimal 10 karakter, maks 128 (batas bcrypt 72 byte dicek juga).
-function botPassword(v) {
-  if (typeof v !== 'string') throw badRequest('INVALID_PASSWORD', 'Password wajib diisi.');
-  if (v.length < 10 || v.length > 128) throw badRequest('WEAK_PASSWORD', 'Password bot harus 10-128 karakter.');
-  if (Buffer.byteLength(v) > 72) throw badRequest('WEAK_PASSWORD', 'Password bot maksimal 72 byte.');
-  if (!/[a-zA-Z]/.test(v) || !/\d/.test(v)) throw badRequest('WEAK_PASSWORD', 'Password bot harus berisi huruf dan angka.');
+// Password bot & akun website: minimal 10 karakter, maks 128 (batas bcrypt 72 byte dicek juga), huruf + angka.
+function passwordRule(v, label) {
+  if (typeof v !== 'string') throw badRequest('INVALID_PASSWORD', `${label} wajib diisi.`);
+  if (v.length < 10 || v.length > 128) throw badRequest('WEAK_PASSWORD', `${label} harus 10-128 karakter.`);
+  if (Buffer.byteLength(v) > 72) throw badRequest('WEAK_PASSWORD', `${label} maksimal 72 byte.`);
+  if (!/[a-zA-Z]/.test(v) || !/\d/.test(v)) throw badRequest('WEAK_PASSWORD', `${label} harus berisi huruf dan angka.`);
   return v;
 }
+const botPassword = v => passwordRule(v, 'Password bot');
+const accountPassword = v => passwordRule(v, 'Password');
 
 function id(v, field = 'id') {
   const n = Number(v);
@@ -85,4 +87,4 @@ function pageParams(q) {
   return { limit, before };
 }
 
-module.exports = { RANKS, ACCOUNT_STATUSES, normalizePhone, str, username, displayName, email, reason, optionalReason, botName, message, phone, rank, restrictiveStatus, botPassword, id, bool, pageParams };
+module.exports = { RANKS, ACCOUNT_STATUSES, normalizePhone, str, username, displayName, email, reason, optionalReason, botName, message, phone, rank, restrictiveStatus, botPassword, accountPassword, id, bool, pageParams };

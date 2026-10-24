@@ -1,6 +1,6 @@
 # YannAjahNew
 
-Bot WhatsApp modular dengan namespace `yannajah`, autentikasi bot ke **backend pusat** (nomor bot + password bot), **dashboard admin** dengan login Google, **6 rank** (MEMBER, RESELLER, SUKI, RAJA, DEWA, DEVELOPER) dengan kuota nomor 0/10/50/100/1000/∞, ban/unban & maintenance yang tersinkron ke proses bot, serta integrasi **APIZ2Z** dari katalog endpoint yang terverifikasi.
+Bot WhatsApp modular dengan namespace `yannajah`, autentikasi bot ke **backend pusat** (nomor bot + password bot), **website dashboard** dengan login email + password (Google opsional), **6 rank** (MEMBER, RESELLER, SUKI, RAJA, DEWA, DEVELOPER) dengan kuota nomor 0/10/50/100/1000/∞, ban/unban & maintenance yang tersinkron ke proses bot, serta integrasi **APIZ2Z** dari katalog endpoint yang terverifikasi.
 
 Struktur file mengikuti base bot (referensi kedua); fitur & perilaku mengikuti Yann AI V15 Fixed. Detail audit: [docs/AUDIT.md](docs/AUDIT.md).
 
@@ -36,9 +36,20 @@ cp .env.example .env && chmod 600 .env    # isi nilai sesuai komentar di file
 ```bash
 npm run migrate                                                   # buat tabel (aman diulang)
 node server/cli.js bootstrap-developer --username kamu --email kamu@gmail.com   # DEVELOPER pertama
+node server/cli.js set-password --username kamu                   # password login website (tersembunyi)
 npm run dashboard                                                 # http://127.0.0.1:8787
 ```
-Login dengan Google memakai email tadi (akun ditautkan otomatis karena email terverifikasi Google). Sebelum Google OAuth disetel: `node server/cli.js login-link --username kamu` mencetak link login sekali pakai (15 menit).
+Masuk website dengan **email + password** tadi. Google login opsional (kalau `GOOGLE_CLIENT_ID` diisi); link sekali pakai `node server/cli.js login-link --username kamu` tetap ada untuk darurat.
+
+### Alur jual script ke pembeli
+
+1. Pembeli membeli script bot ke Anda.
+2. Anda masuk website (DEVELOPER) → **Akun** → *+ Tambah akun*: username, email, **password website**, dan rank sesuai paket (RESELLER / SUKI / RAJA / DEWA).
+3. Berikan email + password itu ke pembeli. Pembeli masuk website yang sama dan hanya melihat menu & kuota sesuai rank-nya.
+4. Pembeli bisa **ganti password sendiri** (tombol *Ganti password*). Atasan bisa **reset password** akun di bawahnya (tombol *Password*).
+5. **MEMBER tidak bisa masuk website** — MEMBER hanya pemakai bot yang diatur oleh reseller ke atas. Kalau rank seseorang diturunkan ke MEMBER, sesi websitenya langsung tidak berlaku.
+
+Keamanan login: password disimpan sebagai hash bcrypt; pesan gagal selalu sama ("Email atau password salah") sehingga email terdaftar tidak bisa ditebak; 5x salah dalam 15 menit = akun dikunci 15 menit; percobaan dibatasi juga per IP; login dari website lain ditolak.
 
 ### 2. Daftarkan nomor bot & password
 

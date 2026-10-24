@@ -22,7 +22,7 @@ erDiagram
 
   ranks { text code PK  smallint level  int max_numbers  int max_managed_users  bool assignable }
   permissions { text code PK  text description }
-  accounts { bigint id PK  text username  text email  text google_sub  text phone_number  text rank_code FK  text status  bigint manager_id FK  bigint created_by  timestamptz last_login_at  timestamptz deleted_at }
+  accounts { bigint id PK  text username  text email  text google_sub  text password_hash  text phone_number  text rank_code FK  text status  bigint manager_id FK  bigint created_by  timestamptz last_login_at  timestamptz deleted_at }
   bots { bigint id PK  bigint owner_id FK  bigint user_account_id FK  text bot_name  text phone_number  text connection_status  bool enabled  bool banned  text ban_reason  bigint banned_by  bool maintenance_enabled  uuid session_ref  timestamptz deleted_at }
   bot_credentials { bigint bot_id PK  text password_hash  bigint set_by  int failed_attempts  timestamptz locked_until }
   bot_sessions { bigint id PK  bigint bot_id FK  text token_hash  text instance_id  timestamptz expires_at  timestamptz revoked_at  text revoked_reason }
@@ -38,7 +38,7 @@ erDiagram
 |---|---|---|
 | `ranks` | 6 rank, level, kuota (`NULL` = unlimited), `assignable` | `CHECK code IN (...)`, `level UNIQUE` |
 | `permissions`, `rank_permissions` | daftar permission eksplisit & relasi rank→permission | PK gabungan, FK cascade |
-| `accounts` | akun dashboard (users) | unik parsial `username`/`email`/`phone_number` untuk baris belum dihapus; `google_sub` unik di **semua** baris (akun dihapus tidak bisa daftar ulang diam-diam); `CHECK` format username/email/nomor; `manager_id <> id`; status `active/disabled/suspended/banned` |
+| `accounts` | akun dashboard (users) | unik parsial `username`/`email`/`phone_number` untuk baris belum dihapus; `google_sub` unik di **semua** baris (akun dihapus tidak bisa daftar ulang diam-diam); `CHECK` format username/email/nomor; `manager_id <> id`; status `active/disabled/suspended/banned`; `password_hash` bcrypt (login website, migrasi 004) + `failed_logins`/`locked_until` untuk kunci sementara |
 | `bots` | nomor/instance WhatsApp | `bots_phone_uq` unik parsial (nomor boleh didaftar ulang setelah soft-delete); FK `owner_id` **RESTRICT**; `CHECK` banned ⇒ `banned_at`, disabled ⇒ `disabled_at`; `session_ref` uuid opaque (isi session tidak disimpan) |
 | `bot_credentials` | password bot terpisah dari login web | `CHECK` hanya format hash bcrypt (plaintext ditolak di level DB) |
 | `bot_sessions` | token proses bot | hanya SHA-256 token; `instance_id` untuk lease satu-proses; bisa dicabut (`revoked_reason`) |

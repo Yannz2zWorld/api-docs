@@ -4,12 +4,13 @@
 // -> validasi -> mutasi transaksional -> audit log -> respons aman (tanpa hash/token/google_sub).
 
 const v = require('../lib/validate');
-const { forbidden, conflict, fromDatabase } = require('../lib/errors');
+const { forbidden, conflict, badRequest, fromDatabase } = require('../lib/errors');
+const { hashPassword } = require('../lib/security');
 const access = require('./accessControl');
 const quota = require('./quotaService');
 const audit = require('./auditService');
 
-const PUBLIC_FIELDS = 'a.id, a.username, a.display_name, a.email, a.email_verified, a.phone_number, a.rank_code, a.status, a.status_reason, a.status_changed_at, a.manager_id, a.created_by, a.created_at, a.updated_at, a.last_login_at, (a.google_sub IS NOT NULL) AS google_linked';
+const PUBLIC_FIELDS = 'a.id, a.username, a.display_name, a.email, a.email_verified, a.phone_number, a.rank_code, a.status, a.status_reason, a.status_changed_at, a.manager_id, a.created_by, a.created_at, a.updated_at, a.last_login_at, (a.google_sub IS NOT NULL) AS google_linked, (a.password_hash IS NOT NULL) AS password_set';
 
 function publicAccount(row) {
   if (!row) return row;
@@ -66,7 +67,7 @@ async function get(db, actor, id) {
   return { ...publicAccount(row), quota: await quota.usage(db, id, row.rank_code) };
 }
 
-async function create(db, actor, input, { ip = null } = {}) {
+async function create(db, actor, input, { ip = null, bcryptCost = 12 } = {}) {
   const rank = v.rank(input.rank || 'MEMBER');
   const data = {
     username: v.username(input.username),
@@ -74,6 +75,9 @@ async function create(db, actor, input, { ip = null } = {}) {
     email: v.email(input.email),
     phone_number: v.phone(input.phone_number, { optional: true })
   };
+  // Password website (opsional): diberikan developer/atasan ke pembeli untuk login email + password.
+  const passwordHash = input.password ? await hashPassword(v.accountPassword(input.password), bcryptCost) : null;
+  if (passwordHash && !data.email) throw badRequest('EMAIL_REQUIRED', 'Isi email kalau mengatur password (login website memakai email + password).');
   const ranks = await access.loadRanks(db);
   if (!ranks.get(rank).assignable) throw forbidden('RANK_NOT_ASSIGNABLE', `Rank ${rank} hanya bisa diberikan lewat prosedur khusus.`);
   const perm = access.CREATE_PERM[rank];
@@ -89,10 +93,10 @@ async function create(db, actor, input, { ip = null } = {}) {
       if (!mr.perms.has(perm) || mr.level <= ranks.get(rank).level) throw forbidden('MANAGER_CANNOT_MANAGE_RANK', `Manager ${mgr.username} tidak boleh mengelola rank ${rank}.`);
     }
     const q = await quota.assertCanAdd(tx, managerId, 'users');
-    const row = (await tx.query(`INSERT INTO accounts (username, display_name, email, phone_number, rank_code, manager_id, created_by)
-      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`, [data.username, data.display_name, data.email, data.phone_number, rank, managerId, actor.id]))[0];
+    const row = (await tx.query(`INSERT INTO accounts (username, display_name, email, phone_number, rank_code, manager_id, created_by, password_hash, password_changed_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8, CASE WHEN $8::text IS NULL THEN NULL ELSE now() END) RETURNING id`, [data.username, data.display_name, data.email, data.phone_number, rank, managerId, actor.id, passwordHash]))[0];
     const id = Number(row.id);
-    await audit.write(tx, { actorId: actor.id, action: 'account.create', targetType: 'account', targetId: id, details: { username: data.username, rank, manager_id: managerId, quota_after: `${q.used + 1}/${q.limit ?? '∞'}` }, ip });
+    await audit.write(tx, { actorId: actor.id, action: 'account.create', targetType: 'account', targetId: id, details: { username: data.username, rank, manager_id: managerId, password_set: Boolean(passwordHash), quota_after: `${q.used + 1}/${q.limit ?? '∞'}` }, ip });
     return publicAccount((await tx.query(`SELECT ${PUBLIC_FIELDS} FROM accounts a WHERE a.id = $1`, [id]))[0]);
   }));
 }

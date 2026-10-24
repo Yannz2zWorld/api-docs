@@ -105,13 +105,15 @@
       const v = await ask('Tambah akun', [
         { name: 'username', label: 'Username', required: true, min: 3, max: 32, hint: 'huruf kecil, angka, . _ -' },
         { name: 'display_name', label: 'Nama tampilan', max: 80 },
-        { name: 'email', label: 'Email Google (untuk login)', type: 'email', hint: 'Akun ditautkan saat orang ini login Google dengan email terverifikasi ini.' },
-        { name: 'rank', label: 'Rank', type: 'select', options: creatable, value: 'MEMBER' }
+        { name: 'email', label: 'Email (untuk login website)', type: 'email' },
+        { name: 'password', label: 'Password website', type: 'password', min: 10, max: 72, hint: 'Berikan email + password ini ke pembeli. Minimal 10 karakter, huruf & angka. Hanya reseller ke atas yang bisa masuk website.' },
+        { name: 'rank', label: 'Rank', type: 'select', options: creatable, value: creatable.find(o => o.value === 'RESELLER') ? 'RESELLER' : 'MEMBER' }
       ], 'Buat');
-      if (v && await run(() => api('POST', '/api/dash/accounts', { ...v, email: v.email || undefined }), 'Akun dibuat')) show('akun');
+      if (v && await run(() => api('POST', '/api/dash/accounts', { ...v, email: v.email || undefined, password: v.password || undefined }), 'Akun dibuat')) show('akun');
     } }, '+ Tambah akun'));
     const rows = accounts.map(a => el('tr', {},
-      el('td', {}, el('b', {}, a.username), el('div', { class: 'muted' }, a.display_name || ''), el('div', { class: 'muted mono' }, a.email || '')),
+      el('td', {}, el('b', {}, a.username), el('div', { class: 'muted' }, a.display_name || ''), el('div', { class: 'muted mono' }, a.email || ''),
+        el('div', { class: 'muted' }, a.password_set ? 'login website: aktif' : 'belum ada password website')),
       el('td', {}, el('span', { class: 'badge accent' }, a.rank_code)),
       el('td', {}, statusBadge(a.status), a.status_reason ? el('div', { class: 'muted' }, a.status_reason) : null),
       el('td', {}, a.quota ? [el('div', {}, 'nomor ', a.quota.numbers), el('div', {}, 'user ', a.quota.users)] : '—'),
@@ -143,6 +145,10 @@
     if (a.status !== 'active' && can('user.unban')) box.append(el('button', { class: 'btn small', type: 'button', onclick: async () => {
       if (await run(() => api('POST', `/api/dash/accounts/${a.id}/status`, { status: 'active' }), 'Akun diaktifkan')) show('akun');
     } }, 'Aktifkan'));
+    if (can('user.update') && cur && cur.level < myLevel) box.append(el('button', { class: 'btn small', type: 'button', onclick: async () => {
+      const v = await ask(`Password website ${a.username}`, [{ name: 'password', label: 'Password baru', type: 'password', required: true, min: 10, max: 72, hint: 'Sesi login akun ini akan dicabut; dia perlu login ulang dengan password baru.' }]);
+      if (v && await run(() => api('POST', `/api/dash/accounts/${a.id}/password`, v), 'Password akun diatur')) show('akun');
+    } }, 'Password'));
     if (can('user.update')) box.append(el('button', { class: 'btn small', type: 'button', onclick: async () => {
       const v = await ask(`Ubah ${a.username}`, [{ name: 'display_name', label: 'Nama tampilan', value: a.display_name, max: 80 }, { name: 'email', label: 'Email', type: 'email', value: a.email || '' }]);
       if (v && await run(() => api('PATCH', `/api/dash/accounts/${a.id}`, { display_name: v.display_name, email: v.email || null }), 'Akun diperbarui')) show('akun');
@@ -274,6 +280,12 @@
     $('who').textContent = `${ME.account.username} · ${ME.account.rank}`;
     $('nav').replaceChildren(...Object.entries(VIEWS).filter(([, x]) => x.show()).map(([k, x]) => el('button', { type: 'button', 'data-view': k, onclick: () => show(k) }, x.label)));
     $('logout').addEventListener('click', async () => { await run(() => api('POST', '/auth/logout')); location.replace('/'); });
+    $('mypass').addEventListener('click', async () => {
+      const v = await ask('Ganti password kamu', [
+        { name: 'current_password', label: 'Password lama', type: 'password', hint: 'Kosongkan kalau akun ini belum pernah punya password.' },
+        { name: 'new_password', label: 'Password baru', type: 'password', required: true, min: 10, max: 72, hint: 'Minimal 10 karakter, huruf & angka. Sesi di perangkat lain akan dikeluarkan.' }]);
+      if (v) await run(() => api('POST', '/api/dash/me/password', v), 'Password diganti');
+    });
     banner();
     show(location.hash.slice(1) || 'ringkasan');
   }
