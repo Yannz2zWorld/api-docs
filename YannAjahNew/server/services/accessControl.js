@@ -6,8 +6,8 @@ const { forbidden, notFound } = require('../lib/errors');
 
 // Permission yang dibutuhkan untuk membuat / menghapus (atau menaikkan ke / menurunkan dari) rank tertentu.
 // DEVELOPER: null = tidak bisa dibuat/dihapus lewat website (hanya prosedur CLI).
-const CREATE_PERM = { RESELLER: 'reseller.create', SUKI: 'suki.create', RAJA: 'raja.create', DEWA: 'dewa.create', DEVELOPER: null };
-const DELETE_PERM = { RESELLER: 'reseller.delete', SUKI: 'suki.delete', RAJA: 'raja.delete', DEWA: 'dewa.delete', DEVELOPER: null };
+const CREATE_PERM = { RESELLER: 'reseller.create', SUKI: 'suki.create', KING: 'king.create', CEO: 'ceo.create', DEVELOPER: null };
+const DELETE_PERM = { RESELLER: 'reseller.delete', SUKI: 'suki.delete', KING: 'king.delete', CEO: 'ceo.delete', DEVELOPER: null };
 
 let cache = null;
 let cacheAt = 0;

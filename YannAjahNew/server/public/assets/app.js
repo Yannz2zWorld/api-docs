@@ -18,6 +18,9 @@
     return n;
   }
   const can = p => ME && ME.permissions.includes(p);
+  // DEVELOPER melihat semua kolom & operasi. Rank lain (reseller/suki/king/ceo) hanya tambah/hapus
+  // nomor dan tambah/hapus role di bawahnya, jadi tampilannya diringkas.
+  const isDev = () => can('bot.view_all');
   const fmt = d => (d ? new Date(d).toLocaleString('id-ID') : '—');
 
   let toastTimer;
@@ -70,7 +73,7 @@
 
   // ------------------------------------------------------------------ views
   const VIEWS = {
-    ringkasan: { label: 'Ringkasan', show: () => true, render: renderSummary },
+    ringkasan: { label: 'Ringkasan', show: () => isDev(), render: renderSummary },
     akun: { label: 'Akun', show: () => can('user.view') || can('user.view_all'), render: renderAccounts },
     bot: { label: 'Bot', show: () => can('bot.view'), render: renderBots },
     maintenance: { label: 'Maintenance', show: () => can('maintenance.manage'), render: renderMaintenance },
@@ -89,30 +92,33 @@
           el('div', { class: 'stat' }, el('b', {}, q.numbers.label), el('span', {}, 'Kuota nomor bot')),
           el('div', { class: 'stat' }, el('b', {}, q.users.label), el('span', {}, 'Kuota user yang dikelola')),
           ...Object.entries(stats.stats).map(([k, v]) => el('div', { class: 'stat' }, el('b', {}, v), el('span', {}, k.replace(/_/g, ' ')))))),
-      el('section', { class: 'panel' }, el('h2', {}, 'Permission kamu'), el('div', { class: 'chips' }, ME.permissions.map(p => el('span', { class: 'badge' }, p)))),
+      isDev() ? el('section', { class: 'panel' }, el('h2', {}, 'Permission kamu'), el('div', { class: 'chips' }, ME.permissions.map(p => el('span', { class: 'badge' }, p)))) : null,
       el('section', { class: 'panel' }, el('h2', {}, 'Sesi'), el('button', { class: 'btn danger', type: 'button', onclick: async () => { if (await run(() => api('POST', '/api/dash/sessions/revoke-all'), 'Semua sesi dicabut')) location.replace('/'); } }, 'Keluar dari semua perangkat'))
     );
   }
 
   // Sama dengan server/services/accessControl.js. Server tetap yang memutuskan; ini hanya menyaring tombol.
-  const RANK_CREATE = { RESELLER: 'reseller.create', SUKI: 'suki.create', RAJA: 'raja.create', DEWA: 'dewa.create' };
-  const RANK_DELETE = { RESELLER: 'reseller.delete', SUKI: 'suki.delete', RAJA: 'raja.delete', DEWA: 'dewa.delete' };
+  const RANK_CREATE = { RESELLER: 'reseller.create', SUKI: 'suki.create', KING: 'king.create', CEO: 'ceo.create' };
+  const RANK_DELETE = { RESELLER: 'reseller.delete', SUKI: 'suki.delete', KING: 'king.delete', CEO: 'ceo.delete' };
 
   async function renderAccounts(view) {
     const [{ accounts }, { ranks }] = await Promise.all([api('GET', '/api/dash/accounts'), api('GET', '/api/dash/ranks')]);
     const creatable = Object.entries(RANK_CREATE).filter(([, p]) => can(p)).map(([r]) => ({ value: r, label: r }));
     const head = el('section', { class: 'panel' }, el('h2', {}, `Akun (${accounts.length})`));
+    const dev = isDev();
     if (creatable.length) head.append(el('button', { class: 'btn primary', type: 'button', onclick: async () => {
-      const v = await ask('Tambah akun', [
-        { name: 'username', label: 'Username', required: true, min: 3, max: 32, hint: 'huruf kecil, angka, . _ -' },
-        { name: 'display_name', label: 'Nama tampilan', max: 80 },
-        { name: 'email', label: 'Email (untuk login website)', type: 'email' },
-        { name: 'password', label: 'Password website', type: 'password', min: 10, max: 72, hint: 'Berikan email + password ini ke pembeli. Minimal 10 karakter, huruf & angka. Hanya reseller ke atas yang bisa masuk website.' },
-        { name: 'rank', label: 'Rank', type: 'select', options: creatable, value: (creatable[0] || {}).value }
-      ], 'Buat');
-      if (v && await run(() => api('POST', '/api/dash/accounts', { ...v, email: v.email || undefined, password: v.password || undefined }), 'Akun dibuat')) show('akun');
-    } }, '+ Tambah akun'));
-    const rows = accounts.map(a => el('tr', {},
+      const fields = [
+        { name: 'username', label: 'Username (untuk login)', required: true, min: 3, max: 32, hint: 'huruf kecil, angka, . _ -' },
+        { name: 'password', label: 'Password', type: 'password', required: true, min: 10, max: 72, hint: 'Berikan username + password ini ke pembeli. Minimal 10 karakter, huruf & angka.' }
+      ];
+      if (creatable.length > 1 || dev) fields.push({ name: 'rank', label: 'Role', type: 'select', options: creatable, value: (creatable[0] || {}).value });
+      if (dev) fields.splice(1, 0, { name: 'display_name', label: 'Nama tampilan (opsional)', max: 80 }, { name: 'email', label: 'Email (opsional, bisa dipakai login)', type: 'email' });
+      const v = await ask(`Tambah ${creatable.length === 1 ? creatable[0].label.toLowerCase() : 'akun'}`, fields, 'Buat');
+      if (!v) return;
+      const body = { ...v, rank: v.rank || creatable[0].value, email: v.email || undefined, display_name: v.display_name || undefined };
+      if (await run(() => api('POST', '/api/dash/accounts', body), 'Akun dibuat')) show('akun');
+    } }, `+ Tambah ${creatable.length === 1 ? creatable[0].label.toLowerCase() : 'akun'}`));
+    const rows = accounts.map(a => dev ? el('tr', {},
       el('td', {}, el('b', {}, a.username), el('div', { class: 'muted' }, a.display_name || ''), el('div', { class: 'muted mono' }, a.email || ''),
         el('div', { class: 'muted' }, a.password_set ? 'login website: aktif' : 'belum ada password website')),
       el('td', {}, el('span', { class: 'badge accent' }, a.rank_code)),
@@ -121,9 +127,15 @@
       el('td', {}, (a.bots || []).map(b => el('div', {}, b.bot_name))),
       el('td', {}, a.manager_username || '—'),
       el('td', {}, a.id === ME.account.id ? el('span', { class: 'muted' }, 'kamu') : accountActions(a, ranks))
+    ) : el('tr', {},
+      el('td', {}, el('b', {}, a.username)),
+      el('td', {}, el('span', { class: 'badge accent' }, a.rank_code)),
+      el('td', {}, a.quota ? a.quota.numbers : '—'),
+      el('td', {}, a.id === ME.account.id ? el('span', { class: 'muted' }, 'kamu') : accountActions(a, ranks))
     ));
+    const cols = dev ? ['Akun', 'Rank', 'Status', 'Kuota', 'Bot', 'Manager', 'Aksi'] : ['Username', 'Role', 'Nomor', 'Aksi'];
     view.append(head, el('section', { class: 'panel table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, ['Akun', 'Rank', 'Status', 'Kuota', 'Bot', 'Manager', 'Aksi'].map(h => el('th', {}, h)))), el('tbody', {}, rows))));
+      el('thead', {}, el('tr', {}, cols.map(h => el('th', {}, h)))), el('tbody', {}, rows))));
   }
 
   function accountActions(a, ranks) {
@@ -163,22 +175,21 @@
 
   async function renderBots(view) {
     const { bots } = await api('GET', '/api/dash/bots');
-    const head = el('section', { class: 'panel' }, el('h2', {}, `Bot / nomor (${bots.length})`), el('p', { class: 'muted' }, `Kuota nomor kamu: ${ME.quota.numbers.label}`));
+    const dev = isDev();
+    const head = el('section', { class: 'panel' }, el('h2', {}, `${dev ? 'Bot / nomor' : 'Nomor'} (${bots.length})`), el('p', { class: 'muted' }, `Kuota nomor kamu: ${ME.quota.numbers.label}`));
     if (can('number.create')) head.append(el('button', { class: 'btn primary', type: 'button', onclick: async () => {
-      const fields = [
-        { name: 'bot_name', label: 'Nama bot', required: true, max: 60 },
-        { name: 'phone_number', label: 'Nomor WhatsApp bot (dari pembeli)', required: true, placeholder: '6281234567890' }
-      ];
+      const fields = [{ name: 'phone_number', label: 'Nomor WhatsApp (diawali kode negara)', required: true, placeholder: '6281234567890', hint: 'Contoh 6281234567890 — tanpa 0 di depan, tanpa spasi.' }];
       // Password bot hanya bisa dibuat DEVELOPER. Rank lain cuma mendaftarkan nomor;
       // bot belum bisa jalan sampai developer menetapkan passwordnya (tombol "Password").
+      if (dev) fields.unshift({ name: 'bot_name', label: 'Nama bot (opsional)', max: 60 });
       if (can('bot.credential.reset')) fields.push({ name: 'password', label: 'Password bot (opsional — bisa diatur nanti)', type: 'password', min: 10, max: 72, hint: 'Kosongkan kalau mau mengaturnya belakangan. Hanya developer yang bisa membuat/mengganti password bot.' });
-      const v = await ask('Tambah bot', fields, 'Tambah');
+      const v = await ask('Tambah nomor', fields, 'Tambah');
       if (!v) return;
-      if (!v.password) delete v.password;
-      const res = await run(() => api('POST', '/api/dash/bots', v), 'Nomor bot ditambahkan');
+      for (const k of ['bot_name', 'password']) if (!v[k]) delete v[k];
+      const res = await run(() => api('POST', '/api/dash/bots', v), 'Nomor ditambahkan');
       if (res) { ME = await api('GET', '/api/dash/me'); show('bot'); }
-    } }, '+ Tambah bot'));
-    const rows = bots.map(b => el('tr', {},
+    } }, '+ Tambah nomor'));
+    const rows = bots.map(b => dev ? el('tr', {},
       el('td', {}, el('b', {}, b.bot_name), el('div', { class: 'mono muted' }, b.phone_number)),
       el('td', {}, b.owner_username, el('div', { class: 'muted' }, b.owner_rank)),
       el('td', {}, b.user_username || '—'),
@@ -188,9 +199,15 @@
       el('td', {}, b.password_set ? 'diset' : el('span', { class: 'badge warn' }, 'belum'), el('div', { class: 'muted' }, `${b.active_sessions} sesi`)),
       el('td', {}, fmt(b.last_seen_at)),
       el('td', {}, botActions(b))
+    ) : el('tr', {},
+      el('td', { class: 'mono' }, b.phone_number),
+      el('td', {}, b.owner_username, el('div', { class: 'muted' }, b.owner_rank)),
+      el('td', {}, fmt(b.created_at)),
+      el('td', {}, botActions(b))
     ));
+    const cols = dev ? ['Bot', 'Pemilik', 'Pemakai', 'Status', 'Enabled/Ban', 'Maint.', 'Password', 'Terakhir aktif', 'Aksi'] : ['Nomor', 'Ditambahkan oleh', 'Tanggal', 'Aksi'];
     view.append(head, el('section', { class: 'panel table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, ['Bot', 'Pemilik', 'Pemakai', 'Status', 'Enabled/Ban', 'Maint.', 'Password', 'Terakhir aktif', 'Aksi'].map(h => el('th', {}, h)))), el('tbody', {}, rows))));
+      el('thead', {}, el('tr', {}, cols.map(h => el('th', {}, h)))), el('tbody', {}, rows))));
   }
 
   function botActions(b) {
@@ -217,8 +234,8 @@
     });
     if (can('bot.session.revoke')) act('Cabut sesi', async () => { if (await run(() => api('POST', `/api/dash/bots/${b.id}/revoke`), 'Sesi bot dicabut')) show('bot'); });
     if (can('number.delete')) act('Hapus', async () => {
-      const v = await ask(`Hapus ${b.bot_name}?`, [{ name: 'confirm', label: `Ketik "${b.phone_number}" untuk konfirmasi`, required: true }], 'Hapus');
-      if (v && v.confirm === b.phone_number && await run(() => api('DELETE', `/api/dash/bots/${b.id}`), 'Bot dihapus')) { ME = await api('GET', '/api/dash/me'); show('bot'); }
+      const v = await ask(`Hapus nomor ${b.phone_number}?`, [{ name: 'confirm', label: `Ketik "${b.phone_number}" untuk konfirmasi`, required: true }], 'Hapus');
+      if (v && v.confirm === b.phone_number && await run(() => api('DELETE', `/api/dash/bots/${b.id}`), 'Nomor dihapus')) { ME = await api('GET', '/api/dash/me'); show('bot'); }
     }, 'danger');
     return box;
   }
@@ -269,7 +286,7 @@
   }
 
   async function show(name) {
-    const v = VIEWS[name] && VIEWS[name].show() ? name : 'ringkasan';
+    const v = VIEWS[name] && VIEWS[name].show() ? name : (isDev() ? 'ringkasan' : 'bot');
     for (const b of $('nav').children) {
       if (b.dataset.view === v) b.setAttribute('aria-current', 'page');
       else b.removeAttribute('aria-current');
@@ -294,7 +311,7 @@
       if (v) await run(() => api('POST', '/api/dash/me/password', v), 'Password diganti');
     });
     banner();
-    show(location.hash.slice(1) || 'ringkasan');
+    show(location.hash.slice(1) || (isDev() ? 'ringkasan' : 'bot'));
   }
   init();
 })();

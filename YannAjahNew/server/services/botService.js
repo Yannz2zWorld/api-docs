@@ -56,8 +56,9 @@ async function assertUserAssignable(tx, actor, ownerId, userId) {
 
 async function create(db, actor, input, { ip = null, bcryptCost = 12 } = {}) {
   access.require(actor, 'number.create');
-  const name = v.botName(input.bot_name);
-  const phone = v.phone(input.phone_number);
+  // Reseller dst. cukup isi nomor (diawali kode negara); nama bot opsional (default "Bot <nomor>").
+  const phone = v.phone(input.phone_number, { countryCode: true });
+  const name = input.bot_name ? v.botName(input.bot_name) : `Bot ${phone}`;
   const ownerId = input.owner_id ? v.id(input.owner_id, 'owner_id') : actor.id;
   const userId = input.user_account_id ? v.id(input.user_account_id, 'user_account_id') : null;
   // Password bot HANYA DEVELOPER yang bisa membuat — tidak ada password otomatis.

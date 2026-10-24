@@ -16,12 +16,12 @@
   const btn = document.getElementById('submit');
   form.addEventListener('submit', async ev => {
     ev.preventDefault();
-    const email = form.email.value.trim();
+    const login = form.login.value.trim();
     const password = form.password.value;
-    if (!email || !password) return show('Isi email dan password.');
+    if (!login || !password) return show('Isi username/email dan password.');
     btn.disabled = true; btn.textContent = 'Memeriksa...';
     try {
-      const r = await fetch('/auth/login', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      const r = await fetch('/auth/login', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ login, password }) });
       const data = await r.json().catch(() => ({}));
       if (r.ok && data.success) return location.replace(data.redirect || '/dashboard');
       show(data.message || 'Login gagal. Coba lagi.');

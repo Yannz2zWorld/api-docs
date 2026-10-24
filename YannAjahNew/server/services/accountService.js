@@ -4,7 +4,7 @@
 // -> validasi -> mutasi transaksional -> audit log -> respons aman (tanpa hash/token/google_sub).
 
 const v = require('../lib/validate');
-const { forbidden, conflict, badRequest, fromDatabase } = require('../lib/errors');
+const { forbidden, conflict, fromDatabase } = require('../lib/errors');
 const { hashPassword } = require('../lib/security');
 const access = require('./accessControl');
 const quota = require('./quotaService');
@@ -68,16 +68,15 @@ async function get(db, actor, id) {
 }
 
 async function create(db, actor, input, { ip = null, bcryptCost = 12 } = {}) {
-  const rank = v.rank(input.rank || 'MEMBER');
+  const rank = v.rank(input.rank || 'RESELLER');
   const data = {
     username: v.username(input.username),
     display_name: input.display_name ? v.displayName(input.display_name) : '',
     email: v.email(input.email),
     phone_number: v.phone(input.phone_number, { optional: true })
   };
-  // Password website (opsional): diberikan developer/atasan ke pembeli untuk login email + password.
+  // Password website: diberikan atasan ke pembeli untuk login (username/email + password).
   const passwordHash = input.password ? await hashPassword(v.accountPassword(input.password), bcryptCost) : null;
-  if (passwordHash && !data.email) throw badRequest('EMAIL_REQUIRED', 'Isi email kalau mengatur password (login website memakai email + password).');
   const ranks = await access.loadRanks(db);
   if (!ranks.get(rank).assignable) throw forbidden('RANK_NOT_ASSIGNABLE', `Rank ${rank} hanya bisa diberikan lewat prosedur khusus.`);
   const perm = access.CREATE_PERM[rank];

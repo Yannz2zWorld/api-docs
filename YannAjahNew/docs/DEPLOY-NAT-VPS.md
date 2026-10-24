@@ -98,8 +98,8 @@ VPS tanpa Managed Domain: pakai Cloudflare Tunnel ke `localhost:8787` (lihat `de
 
 ## 6. Login website
 
-Buka `https://lisensi.apiz2z.web.id/` → masuk dengan **email + password** dari langkah 4.
-Buat akun pembeli di menu **Akun** (email + password + rank), lalu berikan email & password itu ke pembeli.
+Buka `https://lisensi.apiz2z.web.id/` → masuk dengan **username/email + password** dari langkah 4.
+Buat akun pembeli di menu **Akun** (username + password + rank), lalu berikan username & password itu ke pembeli.
 
 Google login **opsional**. Kalau mau dipakai: Google Cloud Console → APIs & Services → Credentials → **Create OAuth client ID** → Web application.
 - Authorized JavaScript origins: `https://lisensi.apiz2z.web.id`

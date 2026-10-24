@@ -1,8 +1,8 @@
 'use strict';
-// Role v3 (final) lewat API dashboard asli + PostgreSQL:
-//   RESELLER 10 · SUKI 50 · RAJA 100 · DEWA 1000 · DEVELOPER tanpa batas (kuota nomor).
-//   MEMBER bukan akun website. Reseller/suki/raja/dewa HANYA kelola nomor + buat/hapus sub-role.
-//   Operasi bot (password, enable/disable, ban, maintenance, cabut sesi) = DEVELOPER saja.
+// Role final lewat API dashboard asli + PostgreSQL:
+//   RESELLER 10 · SUKI 50 · KING 100 · CEO 1000 · DEVELOPER tanpa batas (kuota nomor).
+//   RESELLER: tambah/hapus nomor. SUKI: + tambah/hapus reseller. KING: + suki. CEO: + king.
+//   Operasi bot, reset password/ubah/ban akun, ganti rank = DEVELOPER saja.
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
@@ -62,11 +62,11 @@ it('DEVELOPER boleh menetapkan password bot saat menambah nomor (opsional) atau 
   assert.ok((await t.as(dev).get('/api/dash/bots')).json.bots.find(b => b.id === bare.json.bot.id).password_set);
 });
 
-it('SUKI 50, RAJA 100, DEWA 1000, DEVELOPER tanpa batas', async () => {
+it('SUKI 50, KING 100, CEO 1000, DEVELOPER tanpa batas', async () => {
   const suki = await t.login(await t.account('SUKI'));
   for (let i = 1; i <= 50; i++) assert.equal((await addBot(suki)).status, 200, `suki ${i}`);
   assert.equal((await addBot(suki)).json.limit, 50);
-  for (const [rank, limit] of [['RAJA', 100], ['DEWA', 1000]]) {
+  for (const [rank, limit] of [['KING', 100], ['CEO', 1000]]) {
     const acc = await t.account(rank); const s = await t.login(acc);
     await fillBots(acc.id, limit - 1);
     assert.equal((await addBot(s)).status, 200, `${rank} ke-${limit}`);
@@ -82,12 +82,12 @@ it('SUKI 50, RAJA 100, DEWA 1000, DEVELOPER tanpa batas', async () => {
 // Siapa boleh MEMBUAT & MENGHAPUS role apa.
 const MATRIX = {
   RESELLER: { create: [], del: [] },
-  SUKI: { create: ['RESELLER'], del: [] },
-  RAJA: { create: ['RESELLER', 'SUKI'], del: ['RESELLER'] },
-  DEWA: { create: ['RESELLER', 'SUKI', 'RAJA'], del: ['RESELLER', 'SUKI', 'RAJA'] },
-  DEVELOPER: { create: ['RESELLER', 'SUKI', 'RAJA', 'DEWA'], del: ['RESELLER', 'SUKI', 'RAJA', 'DEWA'] }
+  SUKI: { create: ['RESELLER'], del: ['RESELLER'] },
+  KING: { create: ['RESELLER', 'SUKI'], del: ['RESELLER', 'SUKI'] },
+  CEO: { create: ['RESELLER', 'SUKI', 'KING'], del: ['RESELLER', 'SUKI', 'KING'] },
+  DEVELOPER: { create: ['RESELLER', 'SUKI', 'KING', 'CEO'], del: ['RESELLER', 'SUKI', 'KING', 'CEO'] }
 };
-const ALL = ['RESELLER', 'SUKI', 'RAJA', 'DEWA', 'DEVELOPER'];
+const ALL = ['RESELLER', 'SUKI', 'KING', 'CEO', 'DEVELOPER'];
 
 for (const [actorRank, rule] of Object.entries(MATRIX)) {
   it(`${actorRank}: buat [${rule.create.join('/') || '-'}] hapus [${rule.del.join('/') || '-'}]; selain itu ditolak`, async () => {
@@ -129,8 +129,8 @@ it('operasi bot (password, enable/disable, ban, maintenance, cabut sesi) HANYA d
 it('rank DEVELOPER tidak bisa diberikan lewat website', async () => {
   const dev = await t.login(await t.account('DEVELOPER'));
   assert.equal((await addUser(dev, { rank: 'DEVELOPER' })).status, 403);
-  const raja = await t.account('RAJA', { manager: dev.id });
-  assert.equal((await t.as(dev).post(`/api/dash/accounts/${raja.id}/rank`, { rank: 'DEVELOPER' })).status, 403);
+  const king = await t.account('KING', { manager: dev.id });
+  assert.equal((await t.as(dev).post(`/api/dash/accounts/${king.id}/rank`, { rank: 'DEVELOPER' })).status, 403);
 });
 
 it('menghapus nomor membebaskan slot', async () => {
@@ -143,15 +143,15 @@ it('menghapus nomor membebaskan slot', async () => {
 });
 
 it('penurunan rank tidak menghapus nomor; penambahan diblokir; naik rank menambah kuota', async () => {
-  const dewa = await t.login(await t.account('DEWA'));
-  const sukiAcc = await t.account('SUKI', { manager: dewa.id });
+  const dev = await t.login(await t.account('DEVELOPER'));
+  const sukiAcc = await t.account('SUKI', { manager: dev.id });
   const suki = await t.login(sukiAcc);
   for (let i = 0; i < 12; i++) assert.equal((await addBot(suki)).status, 200);
-  const down = await t.as(dewa).post(`/api/dash/accounts/${sukiAcc.id}/rank`, { rank: 'RESELLER' });
+  const down = await t.as(dev).post(`/api/dash/accounts/${sukiAcc.id}/rank`, { rank: 'RESELLER' });
   assert.equal(down.status, 200, down.text); assert.equal(down.json.over_quota, true);
   assert.equal((await t.db.query('SELECT count(*)::int AS n FROM bots WHERE owner_id = $1 AND deleted_at IS NULL', [sukiAcc.id]))[0].n, 12);
   assert.equal((await addBot(suki)).json.limit, 10);
-  assert.equal((await t.as(dewa).post(`/api/dash/accounts/${sukiAcc.id}/rank`, { rank: 'SUKI' })).status, 200);
+  assert.equal((await t.as(dev).post(`/api/dash/accounts/${sukiAcc.id}/rank`, { rank: 'SUKI' })).status, 200);
   assert.equal((await addBot(suki)).status, 200);
 });
 
@@ -173,25 +173,54 @@ it('tempat tiap reseller terpisah: reseller A tidak bisa melihat/mengubah/mengha
   assert.equal((await addBot(b, { owner_id: a.id })).status, 403, 'tidak bisa menumpang kuota reseller lain');
 });
 
-it('DEWA hanya mengelola akun di bawahnya; DEWA lain di luar cakupan', async () => {
-  const d1 = await t.login(await t.account('DEWA'));
-  const d2 = await t.login(await t.account('DEWA'));
-  const raja = await t.account('RAJA', { manager: d1.id });
-  assert.equal((await t.as(d2).del(`/api/dash/accounts/${raja.id}`)).json.error, 'OUT_OF_SCOPE');
+it('CEO hanya mengelola akun di bawahnya; CEO lain di luar cakupan', async () => {
+  const d1 = await t.login(await t.account('CEO'));
+  const d2 = await t.login(await t.account('CEO'));
+  const king = await t.account('KING', { manager: d1.id });
+  assert.equal((await t.as(d2).del(`/api/dash/accounts/${king.id}`)).json.error, 'OUT_OF_SCOPE');
 });
 
-it('SUKI melihat reseller bawahannya, tapi tidak bisa menghapusnya (butuh izin hapus reseller = RAJA ke atas)', async () => {
+it('SUKI melihat & menghapus reseller bawahannya sendiri; reseller milik SUKI lain di luar cakupan', async () => {
   const suki = await t.login(await t.account('SUKI'));
-  const res = (await addUser(suki, { rank: 'RESELLER' })).json.account;
+  const other = await t.login(await t.account('SUKI'));
+  const res = (await addUser(suki, { rank: 'RESELLER', password: 'ResellerBaru12' })).json.account;
   const list = (await t.as(suki).get('/api/dash/accounts')).json.accounts;
   assert.ok(list.some(x => x.id === res.id), 'reseller bawahan terlihat');
-  assert.equal((await t.as(suki).del(`/api/dash/accounts/${res.id}`)).status, 403);
-  const raja = await t.login(await t.account('RAJA'));
-  const res2 = (await addUser(raja, { rank: 'RESELLER' })).json.account;
-  assert.equal((await t.as(raja).del(`/api/dash/accounts/${res2.id}`)).status, 200);
+  assert.ok(!(await t.as(other).get('/api/dash/accounts')).json.accounts.some(x => x.id === res.id), 'SUKI lain tidak melihatnya');
+  assert.equal((await t.as(other).del(`/api/dash/accounts/${res.id}`)).json.error, 'OUT_OF_SCOPE');
+  assert.equal((await t.as(suki).del(`/api/dash/accounts/${res.id}`)).status, 200);
 });
 
-it('migrasi 003+005: PARTNER/OWNER/CEO lama -> SUKI/RAJA/DEWA; MEMBER dihapus; data nomor utuh', { skip: h.skip }, async () => {
+it('selain DEVELOPER: tidak bisa ganti rank, reset password, ubah, atau ban akun bawahan', async () => {
+  for (const rank of ['SUKI', 'KING', 'CEO']) {
+    const boss = await t.login(await t.account(rank));
+    const sub = (await addUser(boss, { rank: 'RESELLER', password: 'ResellerBaru12' })).json.account;
+    for (const [m, p, b] of [
+      ['post', `/api/dash/accounts/${sub.id}/rank`, { rank: 'SUKI' }],
+      ['post', `/api/dash/accounts/${sub.id}/password`, { password: 'Bajakan12345' }],
+      ['patch', `/api/dash/accounts/${sub.id}`, { display_name: 'x' }],
+      ['post', `/api/dash/accounts/${sub.id}/status`, { status: 'banned', reason: 'coba ban' }]
+    ]) {
+      const r = await t.as(boss)[m](p, b);
+      assert.equal(r.status, 403, `${rank} ${p}`); assert.equal(r.json.error, 'PERMISSION_DENIED');
+    }
+  }
+});
+
+it('nomor wajib diawali kode negara; nama bot opsional', async () => {
+  const r = await t.login(await t.account('RESELLER'));
+  const bad = await t.as(r).post('/api/dash/bots', { phone_number: '081234567890' });
+  assert.equal(bad.status, 400); assert.equal(bad.json.error, 'PHONE_COUNTRY_CODE');
+  const plus = await t.as(r).post('/api/dash/bots', { phone_number: '+6281200001111' });
+  assert.equal(plus.status, 200, plus.text);
+  assert.equal(plus.json.bot.phone_number, '6281200001111');
+  assert.equal(plus.json.bot.bot_name, 'Bot 6281200001111');
+  const foreign = await t.as(r).post('/api/dash/bots', { phone_number: '60123456789' });
+  assert.equal(foreign.status, 200, 'nomor luar negeri (Malaysia) tidak diubah jadi +62');
+  assert.equal(foreign.json.bot.phone_number, '60123456789');
+});
+
+it('migrasi 003+005+006: PARTNER/OWNER/CEO lama -> SUKI/KING/CEO; MEMBER dihapus; data nomor utuh', { skip: h.skip }, async () => {
   const schema = 'ym_' + crypto.randomBytes(6).toString('hex');
   const admin = createDb({ connectionString: process.env.TEST_DATABASE_URL, max: 1 });
   await admin.query(`CREATE SCHEMA ${schema}`);
@@ -206,14 +235,18 @@ it('migrasi 003+005: PARTNER/OWNER/CEO lama -> SUKI/RAJA/DEWA; MEMBER dihapus; d
     await db.query("INSERT INTO bots (owner_id, bot_name, phone_number, created_by) VALUES ($1, 'Bot lama', '6281299990000', $1)", [p.id]);
     await migrate(db, { dir });
     const rows = Object.fromEntries((await db.query('SELECT username, rank_code FROM accounts')).map(r => [r.username, r.rank_code]));
-    assert.deepEqual(rows, { lama_partner: 'SUKI', lama_owner: 'RAJA', lama_ceo: 'DEWA' }, 'MEMBER lama dihapus, lainnya dipindah');
+    assert.deepEqual(rows, { lama_partner: 'SUKI', lama_owner: 'KING', lama_ceo: 'CEO' }, 'MEMBER lama dihapus, lainnya dipindah');
     assert.equal((await db.query('SELECT count(*)::int AS n FROM bots'))[0].n, 1, 'nomor lama tetap ada');
     const ranks = Object.fromEntries((await db.query('SELECT code, max_numbers FROM ranks')).map(r => [r.code, r.max_numbers]));
-    assert.deepEqual(ranks, { RESELLER: 10, SUKI: 50, RAJA: 100, DEWA: 1000, DEVELOPER: null });
+    assert.deepEqual(ranks, { RESELLER: 10, SUKI: 50, KING: 100, CEO: 1000, DEVELOPER: null });
     // Hanya DEVELOPER yang punya izin operasi bot setelah migrasi.
     const perms = (await db.query("SELECT permission_code FROM rank_permissions WHERE rank_code = 'RESELLER' ORDER BY 1")).map(r => r.permission_code);
     assert.deepEqual(perms, ['bot.view', 'number.create', 'number.delete']);
     await assert.rejects(db.query("INSERT INTO accounts (username, rank_code) VALUES ('x_member', 'MEMBER')"), 'MEMBER tidak bisa dipakai lagi');
+    await assert.rejects(db.query("INSERT INTO ranks (code, level, max_numbers) VALUES ('RAJA', 77, 1)"), 'RAJA/DEWA sudah diganti KING/CEO');
+    const perm = async rank => (await db.query('SELECT permission_code FROM rank_permissions WHERE rank_code = $1 ORDER BY 1', [rank])).map(r => r.permission_code);
+    assert.deepEqual(await perm('SUKI'), ['bot.view', 'number.create', 'number.delete', 'reseller.create', 'reseller.delete', 'user.view']);
+    assert.deepEqual(await perm('CEO'), ['bot.view', 'king.create', 'king.delete', 'number.create', 'number.delete', 'reseller.create', 'reseller.delete', 'suki.create', 'suki.delete', 'user.view']);
   } finally {
     await db.close();
     await admin.query(`DROP SCHEMA ${schema} CASCADE`); await admin.close();

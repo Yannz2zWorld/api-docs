@@ -1,9 +1,9 @@
 'use strict';
-// Login website dengan email + password, reset password oleh atasan, dan ganti password sendiri.
+// Login website dengan username/email + password, reset password oleh atasan, dan ganti password sendiri.
 // - Hanya rank RESELLER ke atas yang boleh masuk website (MEMBER = pemakai bot saja).
 //   Penolakan rank baru diberikan SETELAH password terbukti benar, supaya tidak bisa dipakai
 //   untuk menebak email mana yang terdaftar.
-// - Pesan gagal selalu sama ("Email atau password salah"), termasuk untuk email tidak terdaftar
+// - Pesan gagal selalu sama ("Username/email atau password salah"), termasuk untuk akun tidak terdaftar
 //   (bcrypt tetap dijalankan dengan hash palsu agar waktu responsnya sama).
 // - Brute force: batas kegagalan per email (hash) dan per IP di login_attempts + kunci akun sementara.
 
@@ -15,7 +15,7 @@ const audit = require('./auditService');
 
 const DEFAULTS = { maxFailuresPerEmail: 5, maxFailuresPerIp: 30, failureWindowMinutes: 15, lockMinutes: 15 };
 const WEB_MIN_RANK = 'RESELLER';
-const GENERIC = () => unauthorized('INVALID_CREDENTIALS', 'Email atau password salah.');
+const GENERIC = () => unauthorized('INVALID_CREDENTIALS', 'Username/email atau password salah.');
 const identHash = email => sha256('dashboard:' + email);
 
 async function recordAttempt(q, { hash, success, reason, ip }) {
@@ -35,19 +35,21 @@ async function tooManyFailures(q, hash, ip, opt) {
 async function assertWebAccess(q, actor) {
   if (!actor || actor.status !== 'active') throw forbidden('ACCOUNT_RESTRICTED', 'Akun kamu sedang tidak aktif. Hubungi atasanmu.');
   const ranks = await access.loadRanks(q);
-  if (actor.level < ranks.get(WEB_MIN_RANK).level) throw forbidden('WEB_ACCESS_DENIED', 'Akun MEMBER tidak punya akses website. Website khusus reseller ke atas.');
+  if (actor.level < ranks.get(WEB_MIN_RANK).level) throw forbidden('WEB_ACCESS_DENIED', 'Website khusus reseller ke atas.');
 }
 
 async function login(db, input, { ip = null, options = {} } = {}) {
   const opt = { ...DEFAULTS, ...options };
-  const email = String(input.email || '').trim().toLowerCase().slice(0, 254);
+  // `login` = username atau email (field lama `email` tetap diterima). Ada '@' -> email.
+  const ident = String(input.login ?? input.email ?? '').trim().toLowerCase().slice(0, 254);
   const password = typeof input.password === 'string' ? input.password.slice(0, 128) : '';
-  const hash = identHash(email);
+  const hash = identHash(ident);
   if (await tooManyFailures(db, hash, ip, opt)) {
     await recordAttempt(db, { hash, success: false, reason: 'RATE_LIMITED', ip });
     throw tooMany('TOO_MANY_ATTEMPTS', 'Terlalu banyak percobaan login. Coba lagi 15 menit lagi.');
   }
-  const row = email ? (await db.query('SELECT id, password_hash, locked_until FROM accounts WHERE email = $1 AND deleted_at IS NULL', [email]))[0] : null;
+  const column = ident.includes('@') ? 'email' : 'username';
+  const row = ident ? (await db.query(`SELECT id, password_hash, locked_until FROM accounts WHERE ${column} = $1 AND deleted_at IS NULL`, [ident]))[0] : null;
   const locked = row?.locked_until && new Date(row.locked_until) > new Date();
   const ok = (await verifyPassword(password, row?.password_hash || null)) && !locked;
   if (!ok) {

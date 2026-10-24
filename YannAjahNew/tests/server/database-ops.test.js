@@ -87,8 +87,8 @@ it('maintenance global & per bot tercatat (pelaku + waktu) dan sampai ke proses 
   const audits = await t.db.query("SELECT action FROM audit_logs WHERE action LIKE 'maintenance.%' AND actor_id = $1", [ceoAcc.id]);
   assert.equal(audits.filter(a => a.action === 'maintenance.global.update').length, 2);
   assert.equal(audits.filter(a => a.action === 'maintenance.bot.update').length, 1);
-  // DEWA tidak punya maintenance.manage (khusus DEVELOPER)
-  const own = await t.login(await t.account('DEWA'));
+  // CEO tidak punya maintenance.manage (khusus DEVELOPER)
+  const own = await t.login(await t.account('CEO'));
   assert.equal((await t.as(own).put('/api/dash/maintenance', { enabled: true })).status, 403);
   // Pengecualian administratif eksplisit: bot milik rank yang dikecualikan tidak kena maintenance global.
   await t.db.query("UPDATE bots SET maintenance_enabled = false WHERE id = $1", [bot.id]);

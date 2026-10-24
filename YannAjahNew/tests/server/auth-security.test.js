@@ -118,17 +118,18 @@ it('rate limit / brute force login bot: kegagalan ke-6 untuk nomor yang sama dib
 
 it('user tidak bisa menaikkan rank sendiri / mengelola akun setingkat', async () => {
   const p = await t.login(await t.account('SUKI'));
-  const self = await t.as(p).post(`/api/dash/accounts/${p.id}/rank`, { rank: 'RAJA' });
+  const self = await t.as(p).post(`/api/dash/accounts/${p.id}/rank`, { rank: 'KING' });
   assert.equal(self.status, 403);
   const selfReseller = await t.as(p).post(`/api/dash/accounts/${p.id}/rank`, { rank: 'RESELLER' });
   assert.equal(selfReseller.status, 403, 'mengubah rank sendiri dalam bentuk apa pun ditolak');
   const dev1 = await t.login(await t.account('DEVELOPER'));
   const dev2 = await t.account('DEVELOPER');
   assert.equal((await t.as(dev1).post(`/api/dash/accounts/${dev2.id}/status`, { status: 'banned', reason: 'coba ban sesama' })).json.error, 'RANK_HIERARCHY');
-  const dewa = await t.login(await t.account('DEWA'));
-  const otherDewa = await t.account('DEWA', { manager: dewa.id });
-  assert.equal((await t.as(dewa).post(`/api/dash/accounts/${otherDewa.id}/rank`, { rank: 'RAJA' })).json.error, 'RANK_HIERARCHY', 'DEWA tidak bisa mengelola DEWA lain');
-  assert.equal((await t.as(dewa).post(`/api/dash/accounts/${dev2.id}/rank`, { rank: 'RESELLER' })).json.error, 'RANK_HIERARCHY', 'DEWA tidak bisa menurunkan DEVELOPER');
+  const ceo = await t.login(await t.account('CEO'));
+  const otherCeo = await t.account('CEO', { manager: ceo.id });
+  assert.equal((await t.as(ceo).post(`/api/dash/accounts/${otherCeo.id}/rank`, { rank: 'KING' })).status, 403, 'CEO tidak bisa mengubah rank (hanya DEVELOPER)');
+  assert.equal((await t.as(ceo).del(`/api/dash/accounts/${otherCeo.id}`)).status, 403, 'CEO tidak bisa menghapus CEO lain');
+  assert.equal((await t.as(ceo).del(`/api/dash/accounts/${dev2.id}`)).status, 403, 'CEO tidak bisa menghapus DEVELOPER');
 });
 
 it('akun DEVELOPER tidak bisa dibuat lewat registrasi / API biasa', async () => {
@@ -192,7 +193,7 @@ it('Google OAuth menautkan akun yang dibuat admin berdasarkan email terverifikas
 
 it('API langsung tidak bisa melewati permission UI; CSRF dan Origin wajib untuk mutasi', async () => {
   const m = await t.login(await t.account('RESELLER'));
-  const ownerAcc = await t.account('RAJA');
+  const ownerAcc = await t.account('KING');
   for (const [method, path, body] of [
     ['post', '/api/dash/accounts', { username: 'hacker1', rank: 'SUKI' }],
     ['put', '/api/dash/maintenance', { enabled: true }],

@@ -3,7 +3,7 @@
 
 const { badRequest } = require('./errors');
 
-const RANKS = ['RESELLER', 'SUKI', 'RAJA', 'DEWA', 'DEVELOPER'];
+const RANKS = ['RESELLER', 'SUKI', 'KING', 'CEO', 'DEVELOPER'];
 const ACCOUNT_STATUSES = ['active', 'disabled', 'suspended', 'banned'];
 
 function normalizePhone(input, defaultCountry = '62') {
@@ -40,8 +40,11 @@ const optionalReason = v => str(v, { field: 'reason', max: 500, optional: true }
 const botName = v => str(v, { field: 'bot_name', min: 1, max: 60 });
 const message = v => str(v, { field: 'message', min: 1, max: 500 });
 
-function phone(v, { field = 'phone_number', optional = false } = {}) {
+// countryCode: nomor wajib ditulis diawali kode negara (mis. 62…, boleh pakai +); 08… ditolak
+// supaya nomor dari luar Indonesia tidak salah ditebak jadi +62.
+function phone(v, { field = 'phone_number', optional = false, countryCode = false } = {}) {
   if ((v === undefined || v === null || v === '') && optional) return null;
+  if (countryCode && /^0/.test(String(v ?? '').trim())) throw badRequest('PHONE_COUNTRY_CODE', 'Nomor harus diawali kode negara, contoh 6281234567890 (bukan 0812…).', { field });
   const p = normalizePhone(v);
   if (!p) throw badRequest('INVALID_PHONE', 'Nomor telepon tidak valid. Pakai format internasional, contoh 6281234567890.', { field });
   return p;
