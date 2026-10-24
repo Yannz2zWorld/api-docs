@@ -12,7 +12,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const OUT = path.join(ROOT, 'dist', 'YannAjahNew');
 const obfuscate = !process.argv.includes('--no-obfuscate');
-const INCLUDE = ['index.js', 'yannajah.js', 'command.js', 'menu.js', 'settings.js', 'settingsbot.js', 'package.json', 'package-lock.json', '.env.example', 'library', 'myfunct', 'source', 'plugins', 'data', 'README.md'];
+const INCLUDE = ['index.js', 'yannajah.js', 'command.js', 'menu.js', 'settings.js', 'settingsbot.js', 'package.json', 'package-lock.json', '.env.example', 'library', 'myfunct', 'source', 'plugins', 'data', 'assets', 'README.md'];
 const NO_OBFUSCATE = new Set(['settingsbot.js', 'settings.js']);
 const OBF_OPTIONS = {
   compact: true, controlFlowFlattening: false, deadCodeInjection: false, debugProtection: false, selfDefending: false,

@@ -10,6 +10,7 @@ library/database/*.bak
 library/database/*.tmp
 library/database/logs/
 library/database/sampah/
+library/database/media/
 !library/database/.gitkeep
 server/data/
 dist/

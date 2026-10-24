@@ -27,14 +27,14 @@ function createScenario({ registry = loadRegistry().registry, config = require('
     plugins: { disable() {}, enable() {} }
   };
 
-  function message({ text = '', from = OWNER, group = false, quoted = null, mentions = [], media = null, participants = [] }) {
+  function message({ text = '', from = OWNER, group = false, quoted = null, mentions = [], media = null, participants = [], keyId = null }) {
     const prefix = text.startsWith('.') ? '.' : '';
     const body = prefix ? text.slice(1) : text;
     const [cmd, ...args] = body.split(/\s+/);
     return {
       chat: group ? GROUP : from, sender: from, senderNumber: from.split('@')[0], isGroup: group, fromMe: false,
       isCmd: Boolean(prefix), command: prefix ? cmd.toLowerCase() : '', prefix, args: prefix ? args.filter(Boolean) : [], text: prefix ? body.slice(cmd.length).trim() : text, body: text,
-      quoted, pushName: 'Tester', key: { id: `IN${sent.length}`, remoteJid: group ? GROUP : from }, raw: {}, mentionedJid: mentions,
+      quoted, pushName: 'Tester', key: { id: keyId || `IN${sent.length}`, remoteJid: group ? GROUP : from }, raw: {}, mentionedJid: mentions,
       timestamp: Math.floor(Date.now() / 1000), isMedia: Boolean(media), mime: media?.mime || '',
       groupMetadata: group ? { id: GROUP, subject: 'Grup Tes', participants } : null,
       getMedia: () => media

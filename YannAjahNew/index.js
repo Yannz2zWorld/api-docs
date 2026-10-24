@@ -136,6 +136,7 @@ async function main() {
   const yannajah = createYannajah({ config, logger, store, license, api, registry, wa });
   global.yannajah = yannajah;   // akses untuk plugin legacy
   const route = createRouter(yannajah, { config, logger: logger.child('router') });
+  require('./library/scheduler').start(yannajah, config);   // absen, jadwal grup, ulang tahun, dll.
   const onGroup = createGroupHandler(yannajah, { logger });
   const B = await loadBaileys();
   const groupMetadata = jid => wa.groupCache.get(jid) ? Promise.resolve(wa.groupCache.get(jid)) : wa.sock.groupMetadata(jid).then(md => { wa.groupCache.set(jid, md); return md; });

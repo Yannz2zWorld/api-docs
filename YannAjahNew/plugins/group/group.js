@@ -101,7 +101,7 @@ module.exports = [
     async run(ctx) { ctx.group.welcomeText = ctx.requireText().slice(0, 1000); ctx.db.touch(); await ctx.reply('✅ Teks welcome disimpan.'); } }),
   G({ id: 'group.setleft', name: 'setleft', description: 'Atur teks perpisahan (@user @group @count)', usage: '<teks>', permission: 'admin',
     async run(ctx) { ctx.group.leftText = ctx.requireText().slice(0, 1000); ctx.db.touch(); await ctx.reply('✅ Teks perpisahan disimpan.'); } }),
-  G({ id: 'group.warn', name: 'warn', aliases: ['peringatan'], description: 'Beri peringatan; kena batas = dikeluarkan (kalau bot admin)', usage: '@user [alasan]', permission: 'admin',
+  G({ id: 'group.warn', name: 'warn', aliases: ['peringatan', 'warning'], description: 'Beri peringatan; kena batas = dikeluarkan (kalau bot admin)', usage: '@user [alasan]', permission: 'admin',
     async run(ctx) {
       const [t] = needTargets(ctx);
       const warns = ctx.group.warns = ctx.group.warns || {};
@@ -116,7 +116,7 @@ module.exports = [
     } }),
   G({ id: 'group.unwarn', name: 'delwarn', aliases: ['unwarn'], description: 'Hapus peringatan anggota', usage: '@user', permission: 'admin',
     async run(ctx) { const [t] = needTargets(ctx); if (ctx.group.warns) delete ctx.group.warns[t]; ctx.db.touch(); await ctx.reply('✅ Peringatan dihapus.'); } }),
-  G({ id: 'group.listwarn', name: 'listwarn', aliases: ['cekwarn'], description: 'Daftar peringatan di grup ini',
+  G({ id: 'group.listwarn', name: 'listwarn', aliases: ['cekwarn', 'listwarning', 'warninglist', 'warnlist', 'ceklistwarn'], description: 'Daftar peringatan di grup ini',
     async run(ctx) {
       const w = Object.entries(ctx.group.warns || {});
       if (!w.length) return ctx.reply('Tidak ada anggota yang punya peringatan.');
