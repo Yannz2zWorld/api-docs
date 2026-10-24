@@ -165,20 +165,18 @@
     const { bots } = await api('GET', '/api/dash/bots');
     const head = el('section', { class: 'panel' }, el('h2', {}, `Bot / nomor (${bots.length})`), el('p', { class: 'muted' }, `Kuota nomor kamu: ${ME.quota.numbers.label}`));
     if (can('number.create')) head.append(el('button', { class: 'btn primary', type: 'button', onclick: async () => {
-      const v = await ask('Tambah bot', [
+      const fields = [
         { name: 'bot_name', label: 'Nama bot', required: true, max: 60 },
         { name: 'phone_number', label: 'Nomor WhatsApp bot (dari pembeli)', required: true, placeholder: '6281234567890' }
-      ], 'Tambah');
+      ];
+      // Password bot hanya bisa dibuat DEVELOPER. Rank lain cuma mendaftarkan nomor;
+      // bot belum bisa jalan sampai developer menetapkan passwordnya (tombol "Password").
+      if (can('bot.credential.reset')) fields.push({ name: 'password', label: 'Password bot (opsional — bisa diatur nanti)', type: 'password', min: 10, max: 72, hint: 'Kosongkan kalau mau mengaturnya belakangan. Hanya developer yang bisa membuat/mengganti password bot.' });
+      const v = await ask('Tambah bot', fields, 'Tambah');
       if (!v) return;
-      const res = await run(() => api('POST', '/api/dash/bots', v), 'Bot ditambahkan');
-      if (res) {
-        ME = await api('GET', '/api/dash/me');
-        await ask('Nomor ditambahkan — simpan password bot', [
-          { name: 'phone', label: 'Nomor bot', value: res.bot.phone_number, readonly: true },
-          { name: 'password', label: 'Password bot (muncul sekali — berikan ke pembeli)', value: res.bot.generated_password, readonly: true, hint: 'Pembeli menjalankan bot lalu memasukkan nomor + password ini. Hanya developer yang bisa menggantinya nanti.' }
-        ], 'Sudah saya catat');
-        show('bot');
-      }
+      if (!v.password) delete v.password;
+      const res = await run(() => api('POST', '/api/dash/bots', v), 'Nomor bot ditambahkan');
+      if (res) { ME = await api('GET', '/api/dash/me'); show('bot'); }
     } }, '+ Tambah bot'));
     const rows = bots.map(b => el('tr', {},
       el('td', {}, el('b', {}, b.bot_name), el('div', { class: 'mono muted' }, b.phone_number)),

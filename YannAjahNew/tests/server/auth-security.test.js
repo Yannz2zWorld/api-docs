@@ -212,9 +212,11 @@ it('password, hash, token, google_sub tidak pernah dikembalikan API', async () =
   await t.db.query("UPDATE accounts SET google_sub = 'google-secret-sub' WHERE id = $1", [dev.id]);
   const created = await t.as(dev).post('/api/dash/bots', { bot_name: 'Leak', phone_number: h.phone(), password: 'RahasiaBot12345' });
   assert.equal(created.status, 200, created.text);
-  assert.equal(created.json.bot.generated_password, 'RahasiaBot12345', 'password bot ditampilkan sekali ke pembuat');
+  assert.equal(created.json.bot.password_set, true, 'password bot tersimpan');
+  assert.equal(created.json.bot.generated_password, undefined, 'tidak ada password otomatis');
+  assert.ok(!created.text.includes('RahasiaBot12345'), 'password plaintext tidak pernah dikembalikan');
   await t.as(dev).post(`/api/dash/bots/${created.json.bot.id}/password`, { password: 'RahasiaBaru54321' });
-  // Password plaintext TIDAK boleh muncul lagi di daftar/akun/me/audit (hanya sekali saat dibuat).
+  // Password plaintext bot TIDAK boleh muncul di manapun (create/daftar/akun/me/audit).
   const responses = [await t.as(dev).get('/api/dash/bots'), await t.as(dev).get('/api/dash/accounts'), await t.as(dev).get('/api/dash/me'), await t.as(dev).get('/api/dash/audit')];
   for (const r of responses) {
     for (const needle of ['RahasiaBot12345', 'RahasiaBaru54321', '$2a$', '$2b$', 'password_hash', 'token_hash', 'google-secret-sub', 'session_ref']) {

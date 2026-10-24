@@ -53,7 +53,7 @@ Keamanan login: password disimpan sebagai hash bcrypt; pesan gagal selalu sama (
 
 ### 2. Daftarkan nomor bot & password
 
-Dashboard → **Bot**: reseller ke atas hanya *+ Tambah bot* (nama, nomor WhatsApp) dan *Hapus* nomor, sesuai kuota akun. Saat nomor ditambahkan, **password bot dibuat otomatis** dan ditampilkan sekali — reseller menyerahkannya ke pembeli bersama script. Operasi bot lain (ganti password bot, nyalakan/matikan, ganti nama, cabut sesi, ban, maintenance per bot) **hanya DEVELOPER**. Nomor, password, status, ban, dan maintenance bot disimpan di PostgreSQL pusat; bot tidak pernah menyimpan URL/password database (lihat [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+Dashboard → **Bot**: reseller ke atas hanya *+ Tambah bot* (nama, nomor WhatsApp) dan *Hapus* nomor, sesuai kuota akun — **tanpa password**. **Password bot hanya DEVELOPER yang bisa membuat/mengganti** (tombol *Password*); tidak ada password otomatis, jadi bot belum bisa login sampai developer menetapkannya, lalu diberikan ke pembeli bersama script. Operasi bot lain (nyalakan/matikan, ganti nama, cabut sesi, ban, maintenance per bot) juga **hanya DEVELOPER**. Nomor, password, status, ban, dan maintenance bot disimpan di PostgreSQL pusat; bot tidak pernah menyimpan URL/password database (lihat [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
 
 Tanpa dashboard, lewat server (DEVELOPER/owner):
 ```bash

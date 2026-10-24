@@ -6,7 +6,6 @@
 
 const v = require('../lib/validate');
 const { forbidden, notFound, badRequest, fromDatabase } = require('../lib/errors');
-const crypto = require('crypto');
 const { hashPassword } = require('../lib/security');
 const access = require('./accessControl');
 const quota = require('./quotaService');
@@ -55,38 +54,29 @@ async function assertUserAssignable(tx, actor, ownerId, userId) {
   throw forbidden('OUT_OF_SCOPE', 'Akun pemakai di luar cakupan.');
 }
 
-// Password bot acak yang mudah dibaca & diketik ulang (tanpa karakter yang mirip: 0/O, 1/l/I).
-// Dipakai saat menambah nomor: reseller/dst. memberikan ini ke pembeli bersama script.
-function generateBotPassword() {
-  const abc = 'abcdefghijkmnpqrstuvwxyz', ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ', num = '23456789';
-  const pick = set => set[crypto.randomInt(0, set.length)];
-  const base = Array.from({ length: 8 }, () => pick(abc + ABC + num));
-  // Pastikan ada huruf + angka (syarat validasi) lalu acak posisinya.
-  base[0] = pick(abc); base[1] = pick(ABC); base[2] = pick(num); base[3] = pick(num);
-  for (let i = base.length - 1; i > 0; i--) { const j = crypto.randomInt(0, i + 1); [base[i], base[j]] = [base[j], base[i]]; }
-  return 'bot' + base.join('');   // mis. "botK7m2qR9t" — 11 karakter, huruf + angka
-}
-
 async function create(db, actor, input, { ip = null, bcryptCost = 12 } = {}) {
   access.require(actor, 'number.create');
   const name = v.botName(input.bot_name);
   const phone = v.phone(input.phone_number);
   const ownerId = input.owner_id ? v.id(input.owner_id, 'owner_id') : actor.id;
   const userId = input.user_account_id ? v.id(input.user_account_id, 'user_account_id') : null;
-  // Password bot: DEVELOPER boleh menentukan sendiri; selain itu selalu dibuat otomatis.
-  // Dikembalikan sekali (plaintext) agar bisa diberikan ke pembeli; yang disimpan hanya hash.
-  const custom = input.password && actor.perms.has('bot.credential.reset') ? v.botPassword(input.password) : null;
-  const plainPassword = custom || generateBotPassword();
-  const passwordHash = await hashPassword(plainPassword, bcryptCost);
+  // Password bot HANYA DEVELOPER yang bisa membuat — tidak ada password otomatis.
+  // Reseller/dst. hanya mendaftarkan nomor (tanpa password); bot belum bisa jalan sampai
+  // DEVELOPER menetapkan passwordnya (lewat setPassword). Kalau yang menambah nomor bukan
+  // developer tapi tetap mengirim password, tolak.
+  const canSetCredential = actor.perms.has('bot.credential.reset');
+  if (input.password && !canSetCredential) throw forbidden('PERMISSION_DENIED', 'Hanya DEVELOPER yang bisa membuat password bot.');
+  const initialPassword = input.password ? v.botPassword(input.password) : null;
+  const passwordHash = initialPassword ? await hashPassword(initialPassword, bcryptCost) : null;
   return mapDbError(() => db.withTransaction(async tx => {
     if (ownerId !== actor.id) await access.assertCanManage(tx, actor, await access.getAccountRow(tx, ownerId));
     const q = await quota.assertCanAdd(tx, ownerId, 'numbers');
     const assigned = await assertUserAssignable(tx, actor, ownerId, userId);
     const id = Number((await tx.query('INSERT INTO bots (owner_id, user_account_id, bot_name, phone_number, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id',
       [ownerId, assigned, name, phone, actor.id]))[0].id);
-    await tx.query("INSERT INTO bot_credentials (bot_id, password_hash, set_by, set_via) VALUES ($1,$2,$3,'dashboard')", [id, passwordHash, actor.id]);
-    await audit.write(tx, { actorId: actor.id, action: 'bot.create', targetType: 'bot', targetId: id, details: { bot_name: name, owner_id: ownerId, password_auto: !custom, quota_after: `${q.used + 1}/${q.limit ?? '∞'}` }, ip });
-    return { ...await view(tx, id), generated_password: plainPassword };
+    if (passwordHash) await tx.query("INSERT INTO bot_credentials (bot_id, password_hash, set_by, set_via) VALUES ($1,$2,$3,'dashboard')", [id, passwordHash, actor.id]);
+    await audit.write(tx, { actorId: actor.id, action: 'bot.create', targetType: 'bot', targetId: id, details: { bot_name: name, owner_id: ownerId, password_set: !!passwordHash, quota_after: `${q.used + 1}/${q.limit ?? '∞'}` }, ip });
+    return view(tx, id);
   }));
 }
 

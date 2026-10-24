@@ -21,15 +21,15 @@ Tombol di dashboard hanya muncul untuk aksi yang boleh dilakukan, tapi server te
 
 - **RESELLER/SUKI/RAJA/DEWA tugasnya hanya: tambah & hapus NOMOR (dalam kuota) + buat/hapus role di bawahnya.**
 - **Operasi bot hanya DEVELOPER**: ganti/reset password bot, nyalakan/matikan, ganti nama, cabut sesi, maintenance per bot, ban/unban bot.
-- **Password bot dibuat otomatis** saat nomor ditambahkan (diawali `bot`, huruf+angka), ditampilkan **sekali** ke yang menambahkan untuk diberikan ke pembeli. Hanya DEVELOPER yang bisa menggantinya lewat website.
+- **Password bot HANYA DEVELOPER yang bisa membuat/mengganti** — tidak ada password otomatis. Nomor yang didaftarkan reseller/dst. belum punya password, jadi bot belum bisa jalan sampai DEVELOPER menetapkannya.
 - Aksi admin global hanya **DEVELOPER**: lihat semua akun & bot, maintenance global, riwayat login, kesehatan sistem, backup/restore, melihat semua aktivitas.
 
 ## Alur jual script
 
 1. Pembeli membeli script bot.
 2. DEVELOPER (atau atasan sesuai rank) membuat akun penjual di website: email + password + rank.
-3. Penjual (reseller ke atas) masuk website, **Tambah nomor**: masukkan nomor WhatsApp dari pembeli. Sistem membuat password bot otomatis dan menampilkannya sekali.
-4. Penjual memberikan **script + nomor + password bot** ke pembeli.
+3. Penjual (reseller ke atas) masuk website, **Tambah nomor**: masukkan nomor WhatsApp dari pembeli (tanpa password).
+4. **DEVELOPER menetapkan password bot** untuk nomor itu, lalu memberikan **script + nomor + password bot** ke pembeli (lewat penjual). Selama password belum diset DEVELOPER, bot belum bisa login.
 5. Pembeli menjalankan script → bot meminta nomor + password → pilih QR / kode pairing → bot jalan.
 
 ## Kuota

@@ -23,24 +23,43 @@ const addUser = (s, extra = {}) => t.as(s).post('/api/dash/accounts', { username
 const fillBots = (ownerId, n) => t.db.query(`INSERT INTO bots (owner_id, bot_name, phone_number, created_by)
   SELECT $1, 'Isi ' || g, '7' || lpad(($1::bigint * 100000 + g)::text, 12, '0'), $1 FROM generate_series(1, $2) g`, [ownerId, n]);
 
-it('RESELLER: nomor ke-10 diterima, ke-11 ditolak; password bot dibuat otomatis & dikembalikan sekali', async () => {
+it('RESELLER: nomor ke-10 diterima, ke-11 ditolak; nomor didaftarkan TANPA password (bukan otomatis)', async () => {
   const r = await t.login(await t.account('RESELLER'));
   const first = await addBot(r);
   assert.equal(first.status, 200, first.text);
-  assert.match(first.json.bot.generated_password, /^bot[A-Za-z0-9]{8}$/, 'password bot otomatis');
-  assert.ok(first.json.bot.password_set, 'password tersimpan');
+  assert.equal(first.json.bot.generated_password, undefined, 'tidak ada password yang dikembalikan');
+  assert.equal(first.json.bot.password_set, false, 'nomor belum punya password; developer yang menetapkan');
   for (let i = 2; i <= 10; i++) assert.equal((await addBot(r)).status, 200, `bot ${i}`);
   const over = await addBot(r);
   assert.equal(over.status, 409); assert.equal(over.json.error, 'QUOTA_EXCEEDED'); assert.equal(over.json.limit, 10);
   assert.equal((await t.as(r).get('/api/dash/me')).json.quota.numbers.label, '10/10');
 });
 
-it('reseller tidak bisa menentukan password bot sendiri (diabaikan, tetap otomatis)', async () => {
+it('reseller tidak bisa menetapkan password bot (ditolak): password bot hanya DEVELOPER', async () => {
   const r = await t.login(await t.account('RESELLER'));
   const res = await addBot(r, { password: 'MauPasswordIni9' });
-  assert.equal(res.status, 200);
-  assert.notEqual(res.json.bot.generated_password, 'MauPasswordIni9');
-  assert.match(res.json.bot.generated_password, /^bot[A-Za-z0-9]{8}$/);
+  assert.equal(res.status, 403, res.text);
+  assert.equal(res.json.error, 'PERMISSION_DENIED');
+  // Nomor tidak ikut terbuat saat password ditolak.
+  assert.equal((await t.as(r).get('/api/dash/me')).json.quota.numbers.label, '0/10');
+});
+
+it('DEVELOPER boleh menetapkan password bot saat menambah nomor (opsional) atau lewat tombol Password', async () => {
+  const dev = await t.login(await t.account('DEVELOPER'));
+  // Tanpa password: nomor terdaftar, password belum diset.
+  const bare = await addBot(dev);
+  assert.equal(bare.status, 200, bare.text);
+  assert.equal(bare.json.bot.password_set, false);
+  // Dengan password di form tambah: langsung tersimpan (hanya hash; plaintext tidak dikembalikan).
+  const withPw = await addBot(dev, { password: 'PasswordBot123' });
+  assert.equal(withPw.status, 200, withPw.text);
+  assert.equal(withPw.json.bot.password_set, true);
+  assert.equal(withPw.json.bot.generated_password, undefined);
+  assert.ok(!JSON.stringify(withPw.json).includes('PasswordBot123'), 'password bot tidak pernah dikirim balik');
+  // DEVELOPER menetapkan password untuk nomor yang tadi kosong.
+  const set = await t.as(dev).post(`/api/dash/bots/${bare.json.bot.id}/password`, { password: 'DitetapkanDev9' });
+  assert.equal(set.status, 200, set.text);
+  assert.ok((await t.as(dev).get('/api/dash/bots')).json.bots.find(b => b.id === bare.json.bot.id).password_set);
 });
 
 it('SUKI 50, RAJA 100, DEWA 1000, DEVELOPER tanpa batas', async () => {

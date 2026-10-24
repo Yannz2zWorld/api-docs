@@ -3,8 +3,9 @@
 --   - RESELLER/SUKI/RAJA/DEWA tugasnya HANYA: tambah & hapus nomor (dalam kuota) + buat/hapus role
 --     di bawahnya. TIDAK ada operasi bot (ganti password bot, nyalakan/matikan, ganti nama,
 --     cabut sesi, maintenance).
---   - DEVELOPER: semua operasi bot + lihat semua bot & aktivitas. Password bot hanya DEVELOPER
---     yang bisa ganti; saat nomor ditambahkan, password dibuat otomatis (reseller berikan ke pembeli).
+--   - DEVELOPER: semua operasi bot + lihat semua bot & aktivitas. Password bot HANYA DEVELOPER
+--     yang bisa membuat/mengganti — tidak ada password otomatis. Nomor yang didaftarkan
+--     reseller/dst. belum punya password; bot baru bisa jalan setelah developer menetapkannya.
 --
 --   role       kuota nomor   boleh membuat            boleh menghapus akun
 --   RESELLER   10            -                        -
