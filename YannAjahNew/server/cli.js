@@ -178,4 +178,8 @@ async function main() {
   }
 }
 
-main().catch(e => { console.error('✖', e.code ? `${e.code}: ${e.message}` : e.message); process.exit(1); });
+main().catch(e => {
+  console.error('✖', e.code ? `${e.code}: ${e.message}` : e.message);
+  if (e.code === '42P01') console.error('  Tabel belum ada. Jalankan dulu: npm run migrate');
+  process.exit(1);
+});
