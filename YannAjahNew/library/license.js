@@ -38,8 +38,11 @@ class LicenseClient extends EventEmitter {
     this.cfg = cfg;
     this.logger = logger;
     this.transport = transport;
-    this.base = new URL(cfg.serverUrl).origin;
-    this.allowHosts = new Set([new URL(cfg.serverUrl).hostname]);
+    // Build distribusi: alamat website tertanam (library/license-endpoint.js) selalu menang.
+    const endpoint = require('./license-endpoint');
+    const url = endpoint.locked && endpoint.url ? endpoint.url : cfg.serverUrl;
+    this.base = new URL(url).origin;
+    this.allowHosts = new Set([new URL(url).hostname]);
     this.file = path.resolve(rootDir, cfg.tokenFile);
     this.session = this._load();
     this.state = null;          // state terakhir dari server

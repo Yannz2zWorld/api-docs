@@ -94,8 +94,9 @@ module.exports = {
 
   // ------------------------------------------------------------------ autentikasi lisensi pusat
   license: {
-    // URL backend dashboard (server/). Wajib HTTPS kecuali localhost untuk development.
-    serverUrl: env('LICENSE_SERVER_URL', 'http://127.0.0.1:8787'),
+    // URL website lisensi (server/). Wajib HTTPS kecuali localhost untuk development.
+    // Di build distribusi dengan --license-url, alamat tertanam di library/license-endpoint.js dipakai.
+    serverUrl: (e => (e.locked && e.url ? e.url : env('LICENSE_SERVER_URL', 'http://127.0.0.1:8787')))(require('./library/license-endpoint')),
     instanceName: env('BOT_INSTANCE_NAME', 'yannajah-main'),
     tokenFile: env('LICENSE_TOKEN_FILE', 'library/database/license-session.json'),
     heartbeatMinutes: envInt('LICENSE_HEARTBEAT_MINUTES', 10),

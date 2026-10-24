@@ -113,9 +113,16 @@ TEST_DATABASE_URL=postgres://user:pass@127.0.0.1:5432/db_test npm test
 ## Build distribusi & obfuscation
 
 ```bash
-npm run build:dist      # dist/YannAjahNew (bot saja, tanpa server/ dan test)
+npm run build:dist -- --license-url https://lisensi.domainkamu.com   # dist/YannAjahNew (bot saja)
 ```
-46 file inti bot diobfuscate (`javascript-obfuscator`) sebagai lapisan tambahan — **bukan** pengganti autentikasi atau secret management; kode tetap bisa direkayasa balik. `settingsbot.js`, katalog, dataset, dan migrasi tidak diobfuscate. Build diuji otomatis (dimuat & dijalankan dari folder dist).
+Cara kerjanya sama seperti bot referensi: password bot disimpan di database website, bot hasil build menyambung ke website itu, dan alamatnya tertanam di kode yang diobfuscate.
+
+- `--license-url` menanam alamat website lisensi di `library/license-endpoint.js` (string dikodekan penuh). Bot hasil build **selalu** login ke website itu; `LICENSE_SERVER_URL` di `.env` dan `settingsbot.js` tidak bisa mengarahkannya ke server lain.
+- Pembeli/pemakai cukup menjalankan bot lalu memasukkan **nomor bot + password bot** yang Anda buat di dashboard. Tambah/hapus nomor, ganti password, ban, dan maintenance diatur dari website.
+- Yang ditanam hanya **alamat website**, bukan URL/password database. Database hanya bisa diakses server website, jadi file bot yang bocor tidak bisa membaca atau mengubah database.
+- Tanpa `--license-url`, dist memakai `LICENSE_SERVER_URL` dari `.env` (untuk tes).
+
+Kode inti bot diobfuscate (`javascript-obfuscator`) sebagai lapisan tambahan: membuat kode sulit dibaca, tapi tidak mustahil direkayasa balik. Keamanan sesungguhnya ada di server (password bcrypt, sesi bisa dicabut, ban dari dashboard). `settingsbot.js`, katalog, dataset, dan migrasi tidak diobfuscate. Build diuji otomatis (dimuat & dijalankan dari folder dist).
 
 ## Backup, restore, pencabutan akses, troubleshooting
 
