@@ -11,6 +11,8 @@
 //   node server/cli.js revoke-developer --username yann --to CEO --confirm yann
 //   node server/cli.js login-link --username yann
 //   node server/cli.js add-bot --username yann --name "Bot Test" --phone 6281234567890
+//   node server/cli.js list-bots --username yann
+//   node server/cli.js del-bot --username yann --phone 6281234567890 --confirm 6281234567890
 //   node server/cli.js set-bot-password --phone 6281234567890
 //   node server/cli.js backup --out backup.json.enc
 //   node server/cli.js restore --in backup.json.enc --confirm-empty
@@ -122,6 +124,29 @@ async function main() {
         if (p1 !== p2) fail('Password tidak sama.');
         const bot = await bots.create(db, actor, { bot_name: name, phone_number: phone, password: p1 }, { bcryptCost: cfg.bcryptCost });
         console.log(`✔ Bot ${bot.bot_name} (${bot.phone_number}) terdaftar untuk ${a.username}.`);
+        break;
+      }
+      case 'list-bots': {
+        // Daftar bot yang bisa dikelola akun (DEVELOPER/owner melihat semua).
+        const a = await findAccount(db, o.username);
+        const actor = await access.loadActor(db, a.id);
+        const list = await bots.list(db, actor);
+        if (!list.length) { console.log('Belum ada bot.'); break; }
+        console.log(`${list.length} bot:`);
+        for (const b of list) console.log(`  #${b.id}  ${b.phone_number}  ${b.bot_name}  [${b.status}]  owner=${b.owner_id}`);
+        break;
+      }
+      case 'del-bot': {
+        // Hapus (soft-delete) bot dan cabut sesinya. Nomor bisa didaftarkan lagi nanti.
+        const a = await findAccount(db, o.username);
+        if (a.status !== 'active') fail('Akun tidak aktif.');
+        const actor = await access.loadActor(db, a.id);
+        const phone = v.phone(o.phone);
+        const bot = (await db.query('SELECT id, bot_name FROM bots WHERE phone_number = $1 AND deleted_at IS NULL', [phone]))[0];
+        if (!bot) fail('Bot dengan nomor itu tidak terdaftar.');
+        if (o.confirm !== phone) fail(`Konfirmasi dengan --confirm ${phone} untuk menghapus bot ${bot.bot_name}.`);
+        await bots.remove(db, actor, Number(bot.id));
+        console.log(`✔ Bot ${bot.bot_name} (${phone}) dihapus. Sesi dicabut; nomor bisa didaftarkan lagi.`);
         break;
       }
       case 'set-bot-password': {

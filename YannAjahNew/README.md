@@ -42,7 +42,16 @@ Login dengan Google memakai email tadi (akun ditautkan otomatis karena email ter
 
 ### 2. Daftarkan nomor bot & password
 
-Dashboard → **Bot** → *+ Tambah bot*: nama bot, nomor WhatsApp bot, password bot (≥ 10 karakter, huruf & angka). Tanpa dashboard: `node server/cli.js add-bot --username kamu --name "Bot 1" --phone 6281234567890` (password diketik tersembunyi; izin & kuota akun tetap berlaku). Ganti password dari server: `node server/cli.js set-bot-password --phone 6281234567890` (input tersembunyi). Password hanya disimpan sebagai hash bcrypt; reset kapan saja dari dashboard (sesi bot lama otomatis dicabut).
+Dashboard → **Bot**: *+ Tambah bot* (nama, nomor WhatsApp, password ≥ 10 karakter huruf & angka), ganti password, dan *Hapus* — semua dari web, sesuai rank & kuota akun. Nomor, password, status, ban, dan maintenance bot disimpan di PostgreSQL pusat; bot tidak pernah menyimpan URL/password database (lihat [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+
+Tanpa dashboard, lewat server (DEVELOPER/owner):
+```bash
+node server/cli.js add-bot      --username kamu --name "Bot 1" --phone 6281234567890   # password diketik tersembunyi
+node server/cli.js list-bots    --username kamu
+node server/cli.js set-bot-password --phone 6281234567890                               # ganti password (sesi lama dicabut)
+node server/cli.js del-bot      --username kamu --phone 6281234567890 --confirm 6281234567890
+```
+Password hanya disimpan sebagai hash bcrypt; reset kapan saja (sesi bot lama otomatis dicabut).
 
 ### 3. Jalankan bot
 
@@ -80,14 +89,14 @@ Detail & cara menulis plugin: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 | | Jumlah |
 |---|---:|
-| Fitur unik yang berfungsi | **865** (381 lokal + 484 APIZ2Z) |
-| Lulus uji otomatis | 722 (187 unit, 484 mock APIZ2Z, 51 ffmpeg/Jimp nyata) |
-| Implemented tanpa uji otomatis (butuh socket WhatsApp, dsb.) | 143 |
+| Fitur unik yang berfungsi | **1103** (619 lokal + 484 APIZ2Z) |
+| Lulus uji otomatis | 740 (203 unit, 484 mock APIZ2Z, 53 ffmpeg/Jimp nyata) |
+| Implemented tanpa uji otomatis (butuh socket WhatsApp, dsb.) | 363 |
 | Butuh `APIZ2Z_API_KEY` | 484 |
-| Backlog V15 (`planned`, sebagian alias) | 966 |
-| Dikecualikan kebijakan (`disabled`) | 102 |
+| Backlog V15 (`planned`, sebagian alias) | 529 |
+| Dikecualikan kebijakan (`disabled`) | 217 |
 
-Target 1.500–2.000+ diperlakukan sebagai roadmap: backlog V15 sudah tercatat per nama command dan bisa dikerjakan bertahap; tidak ada command kosong yang diklaim berfungsi.
+Fitur lokal V15 sudah dibangun bertahap (toko/list, owner/reseller/premium/sewa, grup/sider/warn/absen/ultah/streak/jadwal, fun/primbon/ekonomi, menu & font, maker quote sticker, image mirror/crop). Sisa backlog `planned` kebanyakan butuh endpoint APIZ2Z yang cocok. Yang `disabled` sengaja tidak dibuat (lihat [docs/FEATURES.md](docs/FEATURES.md)): NSFW, OSINT nomor, broadcast massal, panel Pterodactyl, obfuscator kode pihak ketiga. Tidak ada command kosong yang diklaim berfungsi.
 
 ## Integrasi APIZ2Z
 
