@@ -10,6 +10,7 @@
 //   node server/cli.js grant-developer --username yann --confirm yann
 //   node server/cli.js revoke-developer --username yann --to CEO --confirm yann
 //   node server/cli.js login-link --username yann
+//   node server/cli.js add-bot --username yann --name "Bot Test" --phone 6281234567890
 //   node server/cli.js set-bot-password --phone 6281234567890
 //   node server/cli.js backup --out backup.json.enc
 //   node server/cli.js restore --in backup.json.enc --confirm-empty
@@ -25,6 +26,8 @@ const { hashPassword } = require('./lib/security');
 const audit = require('./services/auditService');
 const links = require('./services/loginLinkService');
 const backup = require('./services/backupService');
+const access = require('./services/accessControl');
+const bots = require('./services/botService');
 
 function args() {
   const out = { _: [] };
@@ -105,6 +108,20 @@ async function main() {
         if (a.status !== 'active') fail('Akun tidak aktif.');
         const token = await links.create(db, a.id);
         console.log(`Link login sekali pakai (15 menit, jangan dibagikan):\n${cfg.publicUrl}/auth/link?token=${token}`);
+        break;
+      }
+      case 'add-bot': {
+        // Daftarkan bot atas nama akun (izin & kuota akun itu tetap berlaku) — tanpa perlu dashboard.
+        const a = await findAccount(db, o.username);
+        if (a.status !== 'active') fail('Akun tidak aktif.');
+        const actor = await access.loadActor(db, a.id);
+        const name = v.botName(o.name);
+        const phone = v.phone(o.phone);
+        const p1 = await askHidden('Password bot: ');
+        const p2 = await askHidden('Ulangi password: ');
+        if (p1 !== p2) fail('Password tidak sama.');
+        const bot = await bots.create(db, actor, { bot_name: name, phone_number: phone, password: p1 }, { bcryptCost: cfg.bcryptCost });
+        console.log(`✔ Bot ${bot.bot_name} (${bot.phone_number}) terdaftar untuk ${a.username}.`);
         break;
       }
       case 'set-bot-password': {

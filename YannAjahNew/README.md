@@ -42,7 +42,7 @@ Login dengan Google memakai email tadi (akun ditautkan otomatis karena email ter
 
 ### 2. Daftarkan nomor bot & password
 
-Dashboard → **Bot** → *+ Tambah bot*: nama bot, nomor WhatsApp bot, password bot (≥ 10 karakter, huruf & angka). Atau dari server: `node server/cli.js set-bot-password --phone 6281234567890` (input tersembunyi). Password hanya disimpan sebagai hash bcrypt; reset kapan saja dari dashboard (sesi bot lama otomatis dicabut).
+Dashboard → **Bot** → *+ Tambah bot*: nama bot, nomor WhatsApp bot, password bot (≥ 10 karakter, huruf & angka). Tanpa dashboard: `node server/cli.js add-bot --username kamu --name "Bot 1" --phone 6281234567890` (password diketik tersembunyi; izin & kuota akun tetap berlaku). Ganti password dari server: `node server/cli.js set-bot-password --phone 6281234567890` (input tersembunyi). Password hanya disimpan sebagai hash bcrypt; reset kapan saja dari dashboard (sesi bot lama otomatis dicabut).
 
 ### 3. Jalankan bot
 
