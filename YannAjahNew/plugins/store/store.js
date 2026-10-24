@@ -136,7 +136,7 @@ module.exports = [
     // Ketik nama item persis -> kirim detailnya (V15). Juga keyword payment.
     async onMessage(ctx) {
       const m = ctx.m;
-      if (!m.isGroup || m.isCmd || !m.body || m.body.length > 80) return false;
+      if (!m.isGroup || m.isCmd || m.fromMe || !m.body || m.body.length > 80) return false;
       const g = ctx.db.get(['groups', m.chat]);
       const key = m.body.toLowerCase().trim();
       const item = g?.store?.items?.find(i => i.name.toLowerCase() === key);
