@@ -63,7 +63,7 @@ module.exports = function authRoutes({ db, cfg, googleClient }) {
     }
     try {
       const payload = await googleClient.exchange(req.query.code, nonce);
-      const result = await google.signIn(db, payload, { openSignup: cfg.openSignup, ip: clientIp(req) });
+      const result = await google.signIn(db, payload, { ip: clientIp(req) });
       return startSession(req, res, result.accountId, 'google');
     } catch (e) {
       if (e.status === 403) return res.redirect(`/?auth=${e.code === 'SIGNUP_CLOSED' ? 'closed' : 'restricted'}`);

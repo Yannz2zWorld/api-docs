@@ -51,7 +51,8 @@
         let input;
         if (fd.type === 'select') input = el('select', { name: fd.name }, fd.options.map(o => el('option', { value: o.value, selected: o.value === fd.value }, o.label)));
         else if (fd.type === 'textarea') input = el('textarea', { name: fd.name, required: fd.required, maxlength: fd.max || 500 }, fd.value || '');
-        else input = el('input', { name: fd.name, type: fd.type || 'text', required: fd.required, value: fd.value ?? '', minlength: fd.min, maxlength: fd.max, autocomplete: fd.type === 'password' ? 'new-password' : 'off', placeholder: fd.placeholder });
+        else input = el('input', { name: fd.name, type: fd.type || 'text', required: fd.required, value: fd.value ?? '', minlength: fd.min, maxlength: fd.max, autocomplete: fd.type === 'password' ? 'new-password' : 'off', placeholder: fd.placeholder, readonly: fd.readonly || undefined });
+        if (fd.readonly) { input.type = 'text'; input.onclick = () => input.select(); }
         inputs[fd.name] = input;
         f.append(el('label', {}, fd.label, input), fd.hint ? el('small', { class: 'muted' }, fd.hint) : null);
       }
@@ -94,8 +95,8 @@
   }
 
   // Sama dengan server/services/accessControl.js. Server tetap yang memutuskan; ini hanya menyaring tombol.
-  const RANK_CREATE = { MEMBER: 'user.create', RESELLER: 'reseller.create', SUKI: 'suki.create', RAJA: 'raja.create', DEWA: 'dewa.create' };
-  const RANK_DELETE = { MEMBER: 'user.delete', RESELLER: 'reseller.delete', SUKI: 'suki.delete', RAJA: 'raja.delete', DEWA: 'dewa.delete' };
+  const RANK_CREATE = { RESELLER: 'reseller.create', SUKI: 'suki.create', RAJA: 'raja.create', DEWA: 'dewa.create' };
+  const RANK_DELETE = { RESELLER: 'reseller.delete', SUKI: 'suki.delete', RAJA: 'raja.delete', DEWA: 'dewa.delete' };
 
   async function renderAccounts(view) {
     const [{ accounts }, { ranks }] = await Promise.all([api('GET', '/api/dash/accounts'), api('GET', '/api/dash/ranks')]);
@@ -107,7 +108,7 @@
         { name: 'display_name', label: 'Nama tampilan', max: 80 },
         { name: 'email', label: 'Email (untuk login website)', type: 'email' },
         { name: 'password', label: 'Password website', type: 'password', min: 10, max: 72, hint: 'Berikan email + password ini ke pembeli. Minimal 10 karakter, huruf & angka. Hanya reseller ke atas yang bisa masuk website.' },
-        { name: 'rank', label: 'Rank', type: 'select', options: creatable, value: creatable.find(o => o.value === 'RESELLER') ? 'RESELLER' : 'MEMBER' }
+        { name: 'rank', label: 'Rank', type: 'select', options: creatable, value: (creatable[0] || {}).value }
       ], 'Buat');
       if (v && await run(() => api('POST', '/api/dash/accounts', { ...v, email: v.email || undefined, password: v.password || undefined }), 'Akun dibuat')) show('akun');
     } }, '+ Tambah akun'));
@@ -166,10 +167,18 @@
     if (can('number.create')) head.append(el('button', { class: 'btn primary', type: 'button', onclick: async () => {
       const v = await ask('Tambah bot', [
         { name: 'bot_name', label: 'Nama bot', required: true, max: 60 },
-        { name: 'phone_number', label: 'Nomor WhatsApp bot', required: true, placeholder: '6281234567890' },
-        { name: 'password', label: 'Password bot (opsional, 10+ karakter, huruf & angka)', type: 'password', min: 10, max: 72 }
+        { name: 'phone_number', label: 'Nomor WhatsApp bot (dari pembeli)', required: true, placeholder: '6281234567890' }
       ], 'Tambah');
-      if (v && await run(() => api('POST', '/api/dash/bots', { ...v, password: v.password || undefined }), 'Bot ditambahkan')) { ME = await api('GET', '/api/dash/me'); show('bot'); }
+      if (!v) return;
+      const res = await run(() => api('POST', '/api/dash/bots', v), 'Bot ditambahkan');
+      if (res) {
+        ME = await api('GET', '/api/dash/me');
+        await ask('Nomor ditambahkan — simpan password bot', [
+          { name: 'phone', label: 'Nomor bot', value: res.bot.phone_number, readonly: true },
+          { name: 'password', label: 'Password bot (muncul sekali — berikan ke pembeli)', value: res.bot.generated_password, readonly: true, hint: 'Pembeli menjalankan bot lalu memasukkan nomor + password ini. Hanya developer yang bisa menggantinya nanti.' }
+        ], 'Sudah saya catat');
+        show('bot');
+      }
     } }, '+ Tambah bot'));
     const rows = bots.map(b => el('tr', {},
       el('td', {}, el('b', {}, b.bot_name), el('div', { class: 'mono muted' }, b.phone_number)),

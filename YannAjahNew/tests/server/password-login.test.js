@@ -49,10 +49,11 @@ it('email tidak terdaftar dan password salah mendapat pesan yang sama (tidak bis
   assert.ok(!sid(wrong));
 });
 
-it('MEMBER dengan password benar tetap tidak bisa masuk website', async () => {
-  const m = await buyer('MEMBER');
-  const r = await login(m.email, m.password);
-  assert.equal(r.status, 403); assert.equal(r.json.error, 'WEB_ACCESS_DENIED');
+it('akun yang diturunkan tidak aktif / dihapus tidak bisa login walau password benar', async () => {
+  const b = await buyer('RESELLER');
+  await t.as(dev).del(`/api/dash/accounts/${b.id}`);   // dihapus
+  const r = await login(b.email, b.password);
+  assert.equal(r.status, 401, 'akun dihapus tidak bisa login');
   assert.ok(!sid(r));
 });
 
@@ -83,13 +84,16 @@ it('atasan reset password bawahan: password lama tidak berlaku, sesi lama dicabu
   assert.equal((await login(res.email, 'PasswordBaru456')).status, 200);
 });
 
-it('reset password hanya untuk akun di bawahnya', async () => {
-  const r1 = await t.login(await buyer('RESELLER'));
-  const r2 = await buyer('RESELLER');
-  const other = await t.as(r1).post(`/api/dash/accounts/${r2.id}/password`, { password: 'Bajakan12345' });
-  assert.equal(other.status, 403);
-  const up = await t.as(r1).post(`/api/dash/accounts/${dev.id}/password`, { password: 'Bajakan12345' });
-  assert.equal(up.status, 403); assert.equal(up.json.error, 'RANK_HIERARCHY');
+it('reset password: hanya untuk akun di bawahnya; reseller tidak bisa reset password siapa pun', async () => {
+  const suki = await t.login(await buyer('SUKI'));
+  const mine = await buyer('RESELLER', 'PasswordLama123', suki);     // reseller bawahan suki
+  const foreign = await buyer('RESELLER');                            // reseller lain (bawahan dev)
+  assert.equal((await t.as(suki).post(`/api/dash/accounts/${mine.id}/password`, { password: 'BaruBuatDia12' })).status, 200);
+  assert.equal((await t.as(suki).post(`/api/dash/accounts/${foreign.id}/password`, { password: 'Bajakan12345' })).json.error, 'OUT_OF_SCOPE');
+  assert.equal((await t.as(suki).post(`/api/dash/accounts/${dev.id}/password`, { password: 'Bajakan12345' })).json.error, 'RANK_HIERARCHY');
+  // Reseller tidak punya izin kelola akun sama sekali.
+  const res = await t.login(mine);
+  assert.equal((await t.as(res).post(`/api/dash/accounts/${foreign.id}/password`, { password: 'Bajakan12345' })).json.error, 'PERMISSION_DENIED');
 });
 
 it('ganti password sendiri: wajib password lama; perangkat lain dikeluarkan, sesi ini tetap', async () => {

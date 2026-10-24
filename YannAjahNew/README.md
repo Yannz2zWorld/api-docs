@@ -1,6 +1,6 @@
 # YannAjahNew
 
-Bot WhatsApp modular dengan namespace `yannajah`, autentikasi bot ke **backend pusat** (nomor bot + password bot), **website dashboard** dengan login email + password (Google opsional), **6 rank** (MEMBER, RESELLER, SUKI, RAJA, DEWA, DEVELOPER) dengan kuota nomor 0/10/50/100/1000/∞, ban/unban & maintenance yang tersinkron ke proses bot, serta integrasi **APIZ2Z** dari katalog endpoint yang terverifikasi.
+Bot WhatsApp modular dengan namespace `yannajah`, autentikasi bot ke **backend pusat** (nomor bot + password bot), **website dashboard** dengan login email + password (Google opsional), **5 rank website** (RESELLER, SUKI, RAJA, DEWA, DEVELOPER) dengan kuota nomor 10/50/100/1000/∞, ban/unban & maintenance yang tersinkron ke proses bot, serta integrasi **APIZ2Z** dari katalog endpoint yang terverifikasi. MEMBER bukan akun website — ia hanya pemakai bot yang nomornya didaftarkan reseller ke atas.
 
 Struktur file mengikuti base bot (referensi kedua); fitur & perilaku mengikuti Yann AI V15 Fixed. Detail audit: [docs/AUDIT.md](docs/AUDIT.md).
 
@@ -47,13 +47,13 @@ Masuk website dengan **email + password** tadi. Google login opsional (kalau `GO
 2. Anda masuk website (DEVELOPER) → **Akun** → *+ Tambah akun*: username, email, **password website**, dan rank sesuai paket (RESELLER / SUKI / RAJA / DEWA).
 3. Berikan email + password itu ke pembeli. Pembeli masuk website yang sama dan hanya melihat menu & kuota sesuai rank-nya.
 4. Pembeli bisa **ganti password sendiri** (tombol *Ganti password*). Atasan bisa **reset password** akun di bawahnya (tombol *Password*).
-5. **MEMBER tidak bisa masuk website** — MEMBER hanya pemakai bot yang diatur oleh reseller ke atas. Kalau rank seseorang diturunkan ke MEMBER, sesi websitenya langsung tidak berlaku.
+5. **MEMBER bukan akun website** — pembeli yang hanya ingin memakai bot cukup memberikan nomornya ke reseller (atau rank di atasnya); reseller yang mendaftarkan nomor itu. MEMBER tidak pernah login ke website.
 
 Keamanan login: password disimpan sebagai hash bcrypt; pesan gagal selalu sama ("Email atau password salah") sehingga email terdaftar tidak bisa ditebak; 5x salah dalam 15 menit = akun dikunci 15 menit; percobaan dibatasi juga per IP; login dari website lain ditolak.
 
 ### 2. Daftarkan nomor bot & password
 
-Dashboard → **Bot**: *+ Tambah bot* (nama, nomor WhatsApp, password ≥ 10 karakter huruf & angka), ganti password, dan *Hapus* — semua dari web, sesuai rank & kuota akun. Nomor, password, status, ban, dan maintenance bot disimpan di PostgreSQL pusat; bot tidak pernah menyimpan URL/password database (lihat [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+Dashboard → **Bot**: reseller ke atas hanya *+ Tambah bot* (nama, nomor WhatsApp) dan *Hapus* nomor, sesuai kuota akun. Saat nomor ditambahkan, **password bot dibuat otomatis** dan ditampilkan sekali — reseller menyerahkannya ke pembeli bersama script. Operasi bot lain (ganti password bot, nyalakan/matikan, ganti nama, cabut sesi, ban, maintenance per bot) **hanya DEVELOPER**. Nomor, password, status, ban, dan maintenance bot disimpan di PostgreSQL pusat; bot tidak pernah menyimpan URL/password database (lihat [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
 
 Tanpa dashboard, lewat server (DEVELOPER/owner):
 ```bash

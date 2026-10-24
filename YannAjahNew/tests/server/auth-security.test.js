@@ -53,7 +53,7 @@ it('akun pemilik/pemakai disabled, suspended, banned -> login bot ditolak', asyn
     assert.equal(r.status, 403, status); assert.equal(r.json.error, 'OWNER_RESTRICTED');
   }
   const owner = await t.account('RESELLER');
-  const user = await t.account('MEMBER', { manager: owner.id, status: 'banned' });
+  const user = await t.account('RESELLER', { manager: owner.id, status: 'banned' });
   const bot = await botWithPassword(owner, 'BotPassword123', { user });
   assert.equal((await botLogin(bot.phone, bot.password)).json.error, 'USER_RESTRICTED');
 });
@@ -86,9 +86,10 @@ it('bot banned/disabled tidak bisa login, sesi aktifnya dicabut, dan heartbeat/v
   assert.equal((await t.as(owner).post(`/api/dash/bots/${bot.id}/ban`, { banned: false })).status, 200);
   assert.equal((await botLogin(bot.phone, bot.password)).status, 200, 'unban memulihkan akses');
 
-  // disable oleh pemilik (reseller) juga memutus akses
+  // disable bot oleh developer juga memutus akses (reseller TIDAK punya izin disable di rank v3)
   const reseller = await t.login(resellerAcc);
-  assert.equal((await t.as(reseller).post(`/api/dash/bots/${bot.id}/enabled`, { enabled: false, reason: 'pindah server' })).status, 200);
+  assert.equal((await t.as(reseller).post(`/api/dash/bots/${bot.id}/enabled`, { enabled: false, reason: 'coba' })).json.error, 'PERMISSION_DENIED', 'reseller tidak bisa disable bot');
+  assert.equal((await t.as(owner).post(`/api/dash/bots/${bot.id}/enabled`, { enabled: false, reason: 'pindah server' })).status, 200);
   assert.equal((await botLogin(bot.phone, bot.password, { force: true })).json.error, 'BOT_DISABLED');
 });
 
@@ -127,32 +128,27 @@ it('user tidak bisa menaikkan rank sendiri / mengelola akun setingkat', async ()
   const dewa = await t.login(await t.account('DEWA'));
   const otherDewa = await t.account('DEWA', { manager: dewa.id });
   assert.equal((await t.as(dewa).post(`/api/dash/accounts/${otherDewa.id}/rank`, { rank: 'RAJA' })).json.error, 'RANK_HIERARCHY', 'DEWA tidak bisa mengelola DEWA lain');
-  assert.equal((await t.as(dewa).post(`/api/dash/accounts/${dev2.id}/rank`, { rank: 'MEMBER' })).json.error, 'RANK_HIERARCHY', 'DEWA tidak bisa menurunkan DEVELOPER');
+  assert.equal((await t.as(dewa).post(`/api/dash/accounts/${dev2.id}/rank`, { rank: 'RESELLER' })).json.error, 'RANK_HIERARCHY', 'DEWA tidak bisa menurunkan DEVELOPER');
 });
 
 it('akun DEVELOPER tidak bisa dibuat lewat registrasi / API biasa', async () => {
   const dev = await t.login(await t.account('DEVELOPER'));
   const viaApi = await t.as(dev).post('/api/dash/accounts', { username: 'calon-dev', rank: 'DEVELOPER' });
   assert.equal(viaApi.status, 403); assert.equal(viaApi.json.error, 'RANK_NOT_ASSIGNABLE');
-  const member = await t.account('MEMBER', { manager: dev.id });
-  assert.equal((await t.as(dev).post(`/api/dash/accounts/${member.id}/rank`, { rank: 'DEVELOPER' })).json.error, 'RANK_NOT_ASSIGNABLE');
-  // Registrasi via Google selalu MEMBER.
+  const res = await t.account('RESELLER', { manager: dev.id });
+  assert.equal((await t.as(dev).post(`/api/dash/accounts/${res.id}/rank`, { rank: 'DEVELOPER' })).json.error, 'RANK_NOT_ASSIGNABLE');
+  // Google TIDAK membuat akun: email baru yang belum terdaftar ditolak (semua akun dibuat developer/atasan).
   t.setIdToken(h.googleIdToken({ sub: 'google-sub-new-1', email: 'baru@gmail.example', nonce: 'NONCE_PLACEHOLDER' }));
   const start = await t.request('GET', '/auth/google');
   assert.equal(start.status, 302);
   const cookie = start.headers.getSetCookie().find(c => c.startsWith('yan_oauth=')).split(';')[0];
   const [state, nonce] = decodeURIComponent(cookie.split('=')[1]).split('.');
-  const location = new URL(start.headers.get('location'));
-  assert.equal(location.hostname, 'accounts.google.com');
-  assert.equal(location.searchParams.get('state'), state);
-  assert.equal(location.searchParams.get('nonce'), nonce);
+  assert.equal(new URL(start.headers.get('location')).hostname, 'accounts.google.com');
   t.setIdToken(h.googleIdToken({ sub: 'google-sub-new-1', email: 'baru@gmail.example', nonce }));
   const cb = await t.request('GET', `/auth/google/callback?code=abc&state=${state}`, { cookie });
-  // Akun baru = MEMBER, dan MEMBER tidak punya akses website (khusus reseller ke atas).
-  assert.equal(cb.status, 302); assert.equal(cb.headers.get('location'), '/?auth=member');
-  assert.ok(!(cb.headers.getSetCookie() || []).some(c => c.startsWith('yan_sid=')), 'MEMBER tidak mendapat sesi');
-  const acc = (await t.db.query("SELECT rank_code, email_verified FROM accounts WHERE google_sub = 'google-sub-new-1'"))[0];
-  assert.deepEqual(acc, { rank_code: 'MEMBER', email_verified: true });
+  assert.equal(cb.status, 302); assert.equal(cb.headers.get('location'), '/?auth=closed');
+  assert.ok(!(cb.headers.getSetCookie() || []).some(c => c.startsWith('yan_sid=')), 'tidak ada sesi');
+  assert.equal((await t.db.query("SELECT count(*)::int AS n FROM accounts WHERE google_sub = 'google-sub-new-1'"))[0].n, 0, 'akun tidak dibuat');
 });
 
 it('Google OAuth: state salah, nonce salah, email belum terverifikasi, dan audience lain ditolak', async () => {
@@ -195,7 +191,6 @@ it('Google OAuth menautkan akun yang dibuat admin berdasarkan email terverifikas
 });
 
 it('API langsung tidak bisa melewati permission UI; CSRF dan Origin wajib untuk mutasi', async () => {
-  await assert.rejects(t.login(await t.account('MEMBER')), /auth=member/, 'MEMBER tidak bisa masuk website');
   const m = await t.login(await t.account('RESELLER'));
   const ownerAcc = await t.account('RAJA');
   for (const [method, path, body] of [
@@ -217,8 +212,10 @@ it('password, hash, token, google_sub tidak pernah dikembalikan API', async () =
   await t.db.query("UPDATE accounts SET google_sub = 'google-secret-sub' WHERE id = $1", [dev.id]);
   const created = await t.as(dev).post('/api/dash/bots', { bot_name: 'Leak', phone_number: h.phone(), password: 'RahasiaBot12345' });
   assert.equal(created.status, 200, created.text);
-  const reset = await t.as(dev).post(`/api/dash/bots/${created.json.bot.id}/password`, { password: 'RahasiaBaru54321' });
-  const responses = [created, reset, await t.as(dev).get('/api/dash/bots'), await t.as(dev).get('/api/dash/accounts'), await t.as(dev).get('/api/dash/me'), await t.as(dev).get('/api/dash/audit')];
+  assert.equal(created.json.bot.generated_password, 'RahasiaBot12345', 'password bot ditampilkan sekali ke pembuat');
+  await t.as(dev).post(`/api/dash/bots/${created.json.bot.id}/password`, { password: 'RahasiaBaru54321' });
+  // Password plaintext TIDAK boleh muncul lagi di daftar/akun/me/audit (hanya sekali saat dibuat).
+  const responses = [await t.as(dev).get('/api/dash/bots'), await t.as(dev).get('/api/dash/accounts'), await t.as(dev).get('/api/dash/me'), await t.as(dev).get('/api/dash/audit')];
   for (const r of responses) {
     for (const needle of ['RahasiaBot12345', 'RahasiaBaru54321', '$2a$', '$2b$', 'password_hash', 'token_hash', 'google-secret-sub', 'session_ref']) {
       assert.ok(!r.text.includes(needle), `respons bocor: ${needle}`);

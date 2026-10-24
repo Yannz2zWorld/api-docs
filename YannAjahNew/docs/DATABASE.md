@@ -36,7 +36,7 @@ erDiagram
 
 | Tabel | Fungsi | Constraint / index penting |
 |---|---|---|
-| `ranks` | 6 rank, level, kuota (`NULL` = unlimited), `assignable` | `CHECK code IN (...)`, `level UNIQUE` |
+| `ranks` | 5 rank website (RESELLER/SUKI/RAJA/DEWA/DEVELOPER), level, kuota (`NULL` = unlimited), `assignable` | `CHECK code IN (...)`, `level UNIQUE` |
 | `permissions`, `rank_permissions` | daftar permission eksplisit & relasi rank→permission | PK gabungan, FK cascade |
 | `accounts` | akun dashboard (users) | unik parsial `username`/`email`/`phone_number` untuk baris belum dihapus; `google_sub` unik di **semua** baris (akun dihapus tidak bisa daftar ulang diam-diam); `CHECK` format username/email/nomor; `manager_id <> id`; status `active/disabled/suspended/banned`; `password_hash` bcrypt (login website, migrasi 004) + `failed_logins`/`locked_until` untuk kunci sementara |
 | `bots` | nomor/instance WhatsApp | `bots_phone_uq` unik parsial (nomor boleh didaftar ulang setelah soft-delete); FK `owner_id` **RESTRICT**; `CHECK` banned ⇒ `banned_at`, disabled ⇒ `disabled_at`; `session_ref` uuid opaque (isi session tidak disimpan) |

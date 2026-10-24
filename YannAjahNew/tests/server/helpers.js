@@ -67,7 +67,7 @@ async function setup({ cfgOverrides = {} } = {}) {
 
   // Akun langsung lewat SQL (seed test), lalu sesi lewat link login sekali pakai (alur asli).
   let seq = 0;
-  async function account(rank = 'MEMBER', { manager = null, status = 'active', email } = {}) {
+  async function account(rank = 'RESELLER', { manager = null, status = 'active', email } = {}) {
     seq++;
     const u = `u${seq}-${rank.toLowerCase()}`;
     const row = (await db.query(`INSERT INTO accounts (username, email, rank_code, manager_id, status, status_changed_at) VALUES ($1,$2,$3,$4,$5, CASE WHEN $5 = 'active' THEN NULL ELSE now() END) RETURNING id`,

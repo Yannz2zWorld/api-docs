@@ -25,7 +25,6 @@ function buildServerConfig(env = process.env) {
       clientSecret: env.GOOGLE_CLIENT_SECRET || '',
       callbackUrl: env.GOOGLE_CALLBACK_URL || `${publicUrl}/auth/google/callback`
     },
-    openSignup: /^(1|true|yes|on)$/i.test(env.DASHBOARD_OPEN_SIGNUP || 'false'),   // default tertutup: akun dibuat developer/atasan
     adminSessionHours: settings.adminSessionHours,
     botSessionDays: settings.botSessionDays,
     bcryptCost: settings.bcryptCost,
