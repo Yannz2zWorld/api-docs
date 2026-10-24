@@ -110,9 +110,29 @@ it('ganti password sendiri: wajib password lama; perangkat lain dikeluarkan, ses
   assert.equal((await login(b.email, 'BaruSekali123')).status, 200);
 });
 
-it('validasi: password lemah ditolak', async () => {
-  const weak = await t.as(dev).post('/api/dash/accounts', { username: `w-${uniq()}`, email: `w.${uniq()}@example.test`, password: 'pendek', rank: 'RESELLER' });
-  assert.equal(weak.status, 400); assert.equal(weak.json.error, 'WEAK_PASSWORD');
+it('username & password bebas: huruf besar, spasi, simbol, password pendek tanpa angka boleh; kosong ditolak', async () => {
+  const username = `Budi Store #${uniq()} ★`;
+  const made = await t.as(dev).post('/api/dash/accounts', { username, password: 'abc', rank: 'RESELLER' });
+  assert.equal(made.status, 200, made.text);
+  assert.equal(made.json.account.username, username, 'username disimpan apa adanya');
+  // Login tidak membedakan huruf besar/kecil.
+  const r = await t.request('POST', '/auth/login', { body: { login: username.toLowerCase(), password: 'abc' } });
+  assert.equal(r.status, 200, r.text);
+  assert.equal((await t.request('POST', '/auth/login', { body: { login: username, password: 'ABC' } })).status, 401, 'password tetap case-sensitive');
+  // Username sama beda huruf besar/kecil = bentrok.
+  const dup = await t.as(dev).post('/api/dash/accounts', { username: username.toUpperCase(), password: 'x', rank: 'RESELLER' });
+  assert.equal(dup.status, 409); assert.equal(dup.json.error, 'USERNAME_TAKEN');
+  // Username berisi '@' tetap bisa login sebagai username.
+  const at = `toko@budi${uniq()}`;
+  assert.equal((await t.as(dev).post('/api/dash/accounts', { username: at, password: '1', rank: 'RESELLER' })).status, 200);
+  assert.equal((await t.request('POST', '/auth/login', { body: { login: at, password: '1' } })).status, 200);
+  // Batas teknis: kosong ditolak, > 72 byte ditolak (bcrypt).
+  assert.equal((await t.as(dev).post('/api/dash/accounts', { username: `k-${uniq()}`, password: '', rank: 'RESELLER' })).status, 200, 'tanpa password = akun belum bisa login (boleh diatur nanti)');
+  assert.equal((await t.as(dev).post('/api/dash/accounts', { username: `p-${uniq()}`, password: 'x'.repeat(73), rank: 'RESELLER' })).json.error, 'PASSWORD_TOO_LONG');
+  assert.equal((await t.as(dev).post('/api/dash/accounts', { username: '   ', password: 'abc', rank: 'RESELLER' })).status, 400, 'username kosong ditolak');
+  // Password bot juga bebas.
+  const bot = await t.as(dev).post('/api/dash/bots', { phone_number: '6281277778888', password: '123' });
+  assert.equal(bot.status, 200, bot.text); assert.equal(bot.json.bot.password_set, true);
 });
 
 it('SUKI membuat reseller cukup username + password; reseller login pakai username', async () => {

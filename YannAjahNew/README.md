@@ -49,7 +49,7 @@ Masuk website dengan **username (atau email) + password** tadi. Google login ops
 4. Pembeli bisa **ganti password sendiri** (tombol *Ganti password*). Atasan bisa **reset password** akun di bawahnya (tombol *Password*).
 5. **MEMBER bukan akun website** — pembeli yang hanya ingin memakai bot cukup memberikan nomornya ke reseller (atau rank di atasnya); reseller yang mendaftarkan nomor itu. MEMBER tidak pernah login ke website.
 
-Keamanan login: password disimpan sebagai hash bcrypt; pesan gagal selalu sama ("Username/email atau password salah") sehingga akun terdaftar tidak bisa ditebak; 5x salah dalam 15 menit = akun dikunci 15 menit; percobaan dibatasi juga per IP; login dari website lain ditolak.
+Username & password **bebas** (tanpa syarat format/panjang; maks 72 byte). Keamanan login: password disimpan sebagai hash bcrypt; pesan gagal selalu sama ("Username/email atau password salah") sehingga akun terdaftar tidak bisa ditebak; 5x salah dalam 15 menit = akun dikunci 15 menit; percobaan dibatasi juga per IP; login dari website lain ditolak.
 
 ### 2. Daftarkan nomor bot & password
 

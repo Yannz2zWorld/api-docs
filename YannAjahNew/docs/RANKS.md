@@ -56,6 +56,7 @@ Tombol di dashboard hanya muncul untuk aksi yang boleh dilakukan, tapi server te
 
 ## Login website
 
+- **Username & password bebas**: username boleh huruf besar/kecil, spasi, simbol (maks 64, unik tanpa beda huruf besar/kecil); password bebas tanpa syarat panjang/huruf+angka (batas teknis hanya maks 72 byte karena bcrypt). Berlaku juga untuk password bot.
 - Masuk dengan **username (atau email) + password** yang dibuat atasan. Google OAuth opsional dan hanya **menautkan** ke akun yang email-nya sudah dibuat.
 - Semua orang bisa ganti password sendiri. Reset password akun lain hanya DEVELOPER (sesi lama dicabut). Password bot (berbeda dari password login website) hanya DEVELOPER.
 
@@ -63,6 +64,7 @@ Tombol di dashboard hanya muncul untuk aksi yang boleh dilakukan, tapi server te
 
 - `003_ranks_v2.sql`: `PARTNER → SUKI`, `OWNER → RAJA`, `CEO → DEWA`.
 - `005_roles_final.sql`: MEMBER dihapus sebagai akun; operasi bot hanya DEVELOPER.
+- `007_free_credentials.sql`: aturan format username dilepas (bebas), unik tanpa beda huruf besar/kecil.
 - `006_king_ceo.sql`: `RAJA → KING`, `DEWA → CEO`; izin per role disamakan dengan tampilan website di atas (akun & nomor lama dipindah utuh). Teruji di `tests/server/rank-quota.test.js`.
 
 ## Matriks permission (dari database)

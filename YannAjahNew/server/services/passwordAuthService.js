@@ -40,7 +40,7 @@ async function assertWebAccess(q, actor) {
 
 async function login(db, input, { ip = null, options = {} } = {}) {
   const opt = { ...DEFAULTS, ...options };
-  // `login` = username atau email (field lama `email` tetap diterima). Ada '@' -> email.
+  // `login` = username atau email (field lama `email` tetap diterima), tanpa beda huruf besar/kecil.
   const ident = String(input.login ?? input.email ?? '').trim().toLowerCase().slice(0, 254);
   const password = typeof input.password === 'string' ? input.password.slice(0, 128) : '';
   const hash = identHash(ident);
@@ -48,8 +48,9 @@ async function login(db, input, { ip = null, options = {} } = {}) {
     await recordAttempt(db, { hash, success: false, reason: 'RATE_LIMITED', ip });
     throw tooMany('TOO_MANY_ATTEMPTS', 'Terlalu banyak percobaan login. Coba lagi 15 menit lagi.');
   }
-  const column = ident.includes('@') ? 'email' : 'username';
-  const row = ident ? (await db.query(`SELECT id, password_hash, locked_until FROM accounts WHERE ${column} = $1 AND deleted_at IS NULL`, [ident]))[0] : null;
+  // Username bebas (boleh berisi '@'), jadi cocokkan username dulu, baru email.
+  const row = ident ? (await db.query(`SELECT id, password_hash, locked_until FROM accounts
+    WHERE deleted_at IS NULL AND (lower(username) = $1 OR email = $1) ORDER BY (lower(username) = $1) DESC LIMIT 1`, [ident]))[0] : null;
   const locked = row?.locked_until && new Date(row.locked_until) > new Date();
   const ok = (await verifyPassword(password, row?.password_hash || null)) && !locked;
   if (!ok) {

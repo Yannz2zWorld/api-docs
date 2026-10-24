@@ -29,7 +29,9 @@ const str = (v, { field, min = 0, max = 200, pattern, optional = false, trim = t
   return s;
 };
 
-const username = v => str(String(v ?? '').toLowerCase(), { field: 'username', min: 3, max: 32, pattern: /^[a-z0-9][a-z0-9._-]{2,31}$/ });
+// Username bebas (huruf besar/kecil, spasi, simbol). Hanya: tidak kosong, maks 64, tanpa karakter kontrol.
+// Keunikan & login tidak membedakan huruf besar/kecil.
+const username = v => str(v == null ? v : String(v), { field: 'username', min: 1, max: 64 });
 const displayName = v => str(v, { field: 'display_name', max: 80 });
 const email = (v, { optional = true } = {}) => {
   const s = str(v == null ? v : String(v).toLowerCase(), { field: 'email', max: 254, optional, pattern: /^[^@\s]+@[^@\s]+\.[^@\s]+$/ });
@@ -62,12 +64,12 @@ function restrictiveStatus(v) {
   return s;
 }
 
-// Password bot & akun website: minimal 10 karakter, maks 128 (batas bcrypt 72 byte dicek juga), huruf + angka.
+// Password bot & akun website: BEBAS (permintaan pemilik) — tidak ada syarat panjang minimal / huruf+angka.
+// Batas teknis saja: tidak kosong dan maks 72 byte (bcrypt hanya memakai 72 byte pertama; lebih dari itu
+// ditolak supaya tidak ada bagian password yang diam-diam terabaikan).
 function passwordRule(v, label) {
-  if (typeof v !== 'string') throw badRequest('INVALID_PASSWORD', `${label} wajib diisi.`);
-  if (v.length < 10 || v.length > 128) throw badRequest('WEAK_PASSWORD', `${label} harus 10-128 karakter.`);
-  if (Buffer.byteLength(v) > 72) throw badRequest('WEAK_PASSWORD', `${label} maksimal 72 byte.`);
-  if (!/[a-zA-Z]/.test(v) || !/\d/.test(v)) throw badRequest('WEAK_PASSWORD', `${label} harus berisi huruf dan angka.`);
+  if (typeof v !== 'string' || v.length === 0) throw badRequest('INVALID_PASSWORD', `${label} wajib diisi.`);
+  if (Buffer.byteLength(v) > 72) throw badRequest('PASSWORD_TOO_LONG', `${label} maksimal 72 byte.`);
   return v;
 }
 const botPassword = v => passwordRule(v, 'Password bot');

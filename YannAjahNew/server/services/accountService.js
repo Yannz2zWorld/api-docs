@@ -37,7 +37,7 @@ async function list(db, actor, { q = null, rank = null, status = null, limit = 1
       UNION SELECT x.id FROM accounts x JOIN scope s ON x.manager_id = s.id WHERE x.deleted_at IS NULL) `;
     where.push('(a.id = $2 OR a.id IN (SELECT id FROM scope))');
   }
-  if (q) { params.push('%' + String(q).toLowerCase().slice(0, 60) + '%'); where.push(`(a.username LIKE $${params.length} OR coalesce(a.email,'') LIKE $${params.length} OR lower(a.display_name) LIKE $${params.length})`); }
+  if (q) { params.push('%' + String(q).toLowerCase().slice(0, 60) + '%'); where.push(`(lower(a.username) LIKE $${params.length} OR coalesce(a.email,'') LIKE $${params.length} OR lower(a.display_name) LIKE $${params.length})`); }
   if (rank) { params.push(v.rank(rank)); where.push(`a.rank_code = $${params.length}`); }
   if (status) { params.push(String(status)); where.push(`a.status = $${params.length}`); }
   const rows = await db.query(`${cte}SELECT ${PUBLIC_FIELDS}, r.max_numbers, r.max_managed_users,

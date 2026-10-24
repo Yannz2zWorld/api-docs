@@ -108,8 +108,8 @@
     const dev = isDev();
     if (creatable.length) head.append(el('button', { class: 'btn primary', type: 'button', onclick: async () => {
       const fields = [
-        { name: 'username', label: 'Username (untuk login)', required: true, min: 3, max: 32, hint: 'huruf kecil, angka, . _ -' },
-        { name: 'password', label: 'Password', type: 'password', required: true, min: 10, max: 72, hint: 'Berikan username + password ini ke pembeli. Minimal 10 karakter, huruf & angka.' }
+        { name: 'username', label: 'Username (untuk login)', required: true, max: 64, hint: 'Bebas: huruf, angka, spasi, simbol. Login tidak membedakan huruf besar/kecil.' },
+        { name: 'password', label: 'Password', type: 'password', required: true, max: 72, hint: 'Bebas. Berikan username + password ini ke pembeli.' }
       ];
       if (creatable.length > 1 || dev) fields.push({ name: 'rank', label: 'Role', type: 'select', options: creatable, value: (creatable[0] || {}).value });
       if (dev) fields.splice(1, 0, { name: 'display_name', label: 'Nama tampilan (opsional)', max: 80 }, { name: 'email', label: 'Email (opsional, bisa dipakai login)', type: 'email' });
@@ -159,7 +159,7 @@
       if (await run(() => api('POST', `/api/dash/accounts/${a.id}/status`, { status: 'active' }), 'Akun diaktifkan')) show('akun');
     } }, 'Aktifkan'));
     if (can('user.update') && cur && cur.level < myLevel) box.append(el('button', { class: 'btn small', type: 'button', onclick: async () => {
-      const v = await ask(`Password website ${a.username}`, [{ name: 'password', label: 'Password baru', type: 'password', required: true, min: 10, max: 72, hint: 'Sesi login akun ini akan dicabut; dia perlu login ulang dengan password baru.' }]);
+      const v = await ask(`Password website ${a.username}`, [{ name: 'password', label: 'Password baru', type: 'password', required: true, max: 72, hint: 'Sesi login akun ini akan dicabut; dia perlu login ulang dengan password baru.' }]);
       if (v && await run(() => api('POST', `/api/dash/accounts/${a.id}/password`, v), 'Password akun diatur')) show('akun');
     } }, 'Password'));
     if (can('user.update')) box.append(el('button', { class: 'btn small', type: 'button', onclick: async () => {
@@ -182,7 +182,7 @@
       // Password bot hanya bisa dibuat DEVELOPER. Rank lain cuma mendaftarkan nomor;
       // bot belum bisa jalan sampai developer menetapkan passwordnya (tombol "Password").
       if (dev) fields.unshift({ name: 'bot_name', label: 'Nama bot (opsional)', max: 60 });
-      if (can('bot.credential.reset')) fields.push({ name: 'password', label: 'Password bot (opsional — bisa diatur nanti)', type: 'password', min: 10, max: 72, hint: 'Kosongkan kalau mau mengaturnya belakangan. Hanya developer yang bisa membuat/mengganti password bot.' });
+      if (can('bot.credential.reset')) fields.push({ name: 'password', label: 'Password bot (opsional — bisa diatur nanti)', type: 'password', max: 72, hint: 'Kosongkan kalau mau mengaturnya belakangan. Hanya developer yang bisa membuat/mengganti password bot.' });
       const v = await ask('Tambah nomor', fields, 'Tambah');
       if (!v) return;
       for (const k of ['bot_name', 'password']) if (!v[k]) delete v[k];
@@ -214,7 +214,7 @@
     const box = el('div', { class: 'actions' });
     const act = (label, fn, cls = '') => box.append(el('button', { class: 'btn small ' + cls, type: 'button', onclick: fn }, label));
     if (can('bot.credential.reset')) act('Password', async () => {
-      const v = await ask(`Password bot ${b.bot_name}`, [{ name: 'password', label: 'Password baru', type: 'password', required: true, min: 10, max: 72, hint: 'Sesi bot yang sedang jalan akan dicabut; bot perlu login ulang.' }]);
+      const v = await ask(`Password bot ${b.bot_name}`, [{ name: 'password', label: 'Password baru', type: 'password', required: true, max: 72, hint: 'Sesi bot yang sedang jalan akan dicabut; bot perlu login ulang.' }]);
       if (v && await run(() => api('POST', `/api/dash/bots/${b.id}/password`, v), 'Password bot diperbarui')) show('bot');
     });
     if (can('bot.manage')) act(b.enabled ? 'Disable' : 'Enable', async () => {
@@ -307,7 +307,7 @@
     $('mypass').addEventListener('click', async () => {
       const v = await ask('Ganti password kamu', [
         { name: 'current_password', label: 'Password lama', type: 'password', hint: 'Kosongkan kalau akun ini belum pernah punya password.' },
-        { name: 'new_password', label: 'Password baru', type: 'password', required: true, min: 10, max: 72, hint: 'Minimal 10 karakter, huruf & angka. Sesi di perangkat lain akan dikeluarkan.' }]);
+        { name: 'new_password', label: 'Password baru', type: 'password', required: true, max: 72, hint: 'Bebas. Sesi di perangkat lain akan dikeluarkan.' }]);
       if (v) await run(() => api('POST', '/api/dash/me/password', v), 'Password diganti');
     });
     banner();

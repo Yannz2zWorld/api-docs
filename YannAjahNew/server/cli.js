@@ -53,7 +53,7 @@ function askHidden(prompt) {
 const fail = msg => { console.error('✖ ' + msg); process.exit(1); };
 
 async function findAccount(db, username) {
-  const a = (await db.query('SELECT id, username, rank_code, status FROM accounts WHERE username = $1 AND deleted_at IS NULL', [v.username(username)]))[0];
+  const a = (await db.query('SELECT id, username, rank_code, status FROM accounts WHERE lower(username) = lower($1) AND deleted_at IS NULL', [v.username(username)]))[0];
   if (!a) fail(`Akun ${username} tidak ditemukan`);
   return { ...a, id: Number(a.id) };
 }
