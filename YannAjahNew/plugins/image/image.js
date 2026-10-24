@@ -47,6 +47,30 @@ module.exports = [
     id: `image.${name}`, name, category: 'image', description: `Efek gambar: ${desc}`, usage, cooldown: 5, limit: 1, effect: fn,
     async run(ctx) { const img = await loadImage(ctx); await fn(img, ctx.args); await ctx.sendFile({ buffer: await img.getBuffer('image/png'), mime: 'image/png' }, { caption: `✅ ${name}` }); }
   })),
+  feature({ id: 'image.mirror', name: 'mirror', aliases: ['mirrorimg'], category: 'image', description: 'Cermin gambar: .mirror kiri/kanan/atas/bawah (reply gambar)', usage: '<kiri|kanan|atas|bawah>', cooldown: 5, limit: 1,
+    async run(ctx) {
+      const mode = (ctx.args[0] || '').toLowerCase();
+      if (!['kiri', 'kanan', 'atas', 'bawah'].includes(mode)) throw new UsageError(`🪞 *MIRROR*\nReply gambar lalu pilih mode:\n${ctx.prefix}mirror kiri / kanan / atas / bawah`);
+      const img = await loadImage(ctx);
+      const { width: w, height: h } = img.bitmap;
+      const horizontal = mode === 'kiri' || mode === 'kanan';
+      const half = img.clone();
+      if (horizontal) { half.crop({ x: mode === 'kiri' ? 0 : Math.floor(w / 2), y: 0, w: Math.floor(w / 2), h }); const m = half.clone().flip({ horizontal: true, vertical: false }); img.composite(mode === 'kiri' ? m : half, 0, 0); img.composite(mode === 'kiri' ? half : m, Math.floor(w / 2), 0); }
+      else { half.crop({ x: 0, y: mode === 'atas' ? 0 : Math.floor(h / 2), w, h: Math.floor(h / 2) }); const m = half.clone().flip({ horizontal: false, vertical: true }); img.composite(mode === 'atas' ? m : half, 0, 0); img.composite(mode === 'atas' ? half : m, 0, Math.floor(h / 2)); }
+      await ctx.sendFile({ buffer: await img.getBuffer('image/png'), mime: 'image/png' }, { caption: `✅ mirror ${mode}` });
+    } }),
+  feature({ id: 'image.crop', name: 'crop', category: 'image', description: 'Potong gambar ke rasio: .crop 1:1 / 16:9 / 9:16 / 4:3 / 3:4 (reply gambar)', usage: '<rasio>', cooldown: 5, limit: 1,
+    async run(ctx) {
+      const RATIOS = { '1:1': [1, 1], '16:9': [16, 9], '9:16': [9, 16], '4:3': [4, 3], '3:4': [3, 4], '4:5': [4, 5], '5:4': [5, 4], '2:1': [2, 1], '1:2': [1, 2], '21:9': [21, 9], '3:2': [3, 2], '2:3': [2, 3] };
+      const r = RATIOS[(ctx.args[0] || '').trim()];
+      if (!r) throw new UsageError(`Reply gambar lalu pilih rasio:\n${Object.keys(RATIOS).join(' · ')}\nContoh: ${ctx.prefix}crop 1:1`);
+      const img = await loadImage(ctx);
+      const { width: w, height: h } = img.bitmap;
+      let cw = w, ch = Math.round(w * r[1] / r[0]);
+      if (ch > h) { ch = h; cw = Math.round(h * r[0] / r[1]); }
+      img.crop({ x: Math.floor((w - cw) / 2), y: Math.floor((h - ch) / 2), w: cw, h: ch });
+      await ctx.sendFile({ buffer: await img.getBuffer('image/png'), mime: 'image/png' }, { caption: `✅ crop ${ctx.args[0]}` });
+    } }),
   feature({ id: 'image.info', name: 'imageinfo', aliases: ['infogambar'], category: 'image', description: 'Info gambar: ukuran, resolusi, warna dominan rata-rata', cooldown: 3,
     async run(ctx) {
       const img = await loadImage(ctx);

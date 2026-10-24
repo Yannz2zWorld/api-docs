@@ -39,7 +39,7 @@ after(() => {
 // fitur -> [fixture, mime fixture, args, regex mime hasil]
 function plan(f) {
   if (f.source !== 'internal') return null;   // command APIZ2Z diuji di apiz2z.test.js
-  if (f.category === 'image') return f.name === 'imageinfo' ? ['image', 'image/png', [], null] : ['image', 'image/png', f.name === 'resize' ? ['60'] : [], /^image\/png$/];
+  if (f.category === 'image') { const extra = { resize: ['60'], mirror: ['kiri'], crop: ['1:1'], rotate: ['90'] }; return f.name === 'imageinfo' ? ['image', 'image/png', [], null] : ['image', 'image/png', extra[f.name] || [], /^image\/png$/]; }
   if (f.category === 'sticker') {
     if (f.name === 'sticker') return ['image', 'image/png', [], /^image\/webp$/];
     if (f.name === 'take') return ['webp', 'image/webp', ['Pack', '|', 'Me'], /^image\/webp$/];

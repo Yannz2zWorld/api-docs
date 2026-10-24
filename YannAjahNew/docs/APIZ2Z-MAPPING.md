@@ -242,7 +242,7 @@ Total: 484 command.
 | `/api/islamic/kisahnabi` | .kisahnabiapi |  | islamic | nabi* | 1/1 mock |
 | `/api/islamic/surah` | .surah | quran | islamic | no* | 1/1 mock |
 | `/api/islamic/tahlil` | .tahlil |  | islamic |  | 1/1 mock |
-| `/api/islamic/wirid` | .wirid |  | islamic |  | 1/1 mock |
+| `/api/islamic/wirid` | .islamicwirid |  | islamic |  | 1/1 mock |
 | `/api/lk21/browse` | .browse |  | movie | mode, page | 1/1 mock |
 | `/api/maker/animediff` | .animediff |  | maker | prompt* | 1/1 mock |
 | `/api/maker/attp` | .attp |  | maker | text* | 1/1 mock |
@@ -267,7 +267,7 @@ Total: 484 command.
 | `/api/maker/landsat-name` | .landsatname |  | maker | name*, variant | 1/1 mock |
 | `/api/maker/msg` | .msg |  | maker | message*, title, icon | 1/1 mock |
 | `/api/maker/nulis` | .nulis | tulis | maker | text* | 1/1 mock |
-| `/api/maker/qc` | .qc | quotly | maker | text*, name*, avatar*, color* | 1/1 mock |
+| `/api/maker/qc` | .makerqc | quotly | maker | text*, name*, avatar*, color* | 1/1 mock |
 | `/api/maker/quoted` | .quoted |  | maker | username*, text*, profile, bg | 1/1 mock |
 | `/api/maker/remini` | .remini |  | maker | url* | 1/1 mock |
 | `/api/maker/remini-v2` | .remini2 |  | maker | url* | 1/1 mock |

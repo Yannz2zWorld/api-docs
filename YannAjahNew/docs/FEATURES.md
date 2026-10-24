@@ -2,66 +2,68 @@
 
 > File ini DIBUAT OTOMATIS oleh `npm run features:report` dari feature registry dan hasil uji terakhir (`npm test`). Jangan diedit manual.
 
-Dibuat: 2026-10-22T04:43:48.954Z
+Dibuat: 2026-10-24T10:17:01.032Z
 
 ## Ringkasan
 
 | Ukuran | Jumlah |
 |---|---:|
-| Entri registry (termasuk backlog) | 1933 |
-| **Fitur unik yang berfungsi** (punya implementasi) | **865** |
-| — lulus uji otomatis (tested) | 722 |
-| &nbsp;&nbsp;· uji unit (fungsi murni) | 187 |
+| Entri registry (termasuk backlog) | 1849 |
+| **Fitur unik yang berfungsi** (punya implementasi) | **1103** |
+| — lulus uji otomatis (tested) | 740 |
+| &nbsp;&nbsp;· uji unit (fungsi murni) | 203 |
 | &nbsp;&nbsp;· uji mock APIZ2Z (bukan live) | 484 |
-| &nbsp;&nbsp;· uji nyata ffmpeg/Jimp | 51 |
-| — implemented, belum ada uji otomatis | 143 |
+| &nbsp;&nbsp;· uji nyata ffmpeg/Jimp | 53 |
+| — implemented, belum ada uji otomatis | 363 |
 | — gagal uji (failed) | 0 |
 | Butuh APIZ2Z_API_KEY | 484 |
-| Jalan tanpa API key | 381 |
-| Backlog V15 (planned; sebagian alias) | 966 |
-| Dikecualikan kebijakan (disabled) | 102 |
+| Jalan tanpa API key | 619 |
+| Backlog V15 (planned; sebagian alias) | 529 |
+| Dikecualikan kebijakan (disabled) | 217 |
 
 ### Fitur berfungsi per kategori
 
 | Kategori | Jumlah |
 |---|---:|
 | text | 99 |
+| owner | 82 |
+| maker | 79 |
+| group | 77 |
+| tools | 67 |
 | search | 63 |
-| tools | 63 |
 | ai | 61 |
 | downloader | 55 |
+| fun | 47 |
 | games | 35 |
-| fun | 34 |
+| core | 34 |
 | canvas | 34 |
-| maker | 31 |
-| game | 28 |
-| group | 28 |
-| image | 28 |
+| game | 31 |
+| image | 30 |
 | random | 28 |
 | calc | 26 |
-| owner | 26 |
 | media | 25 |
 | dev | 21 |
+| store | 21 |
 | textpro | 21 |
+| info | 19 |
 | news | 19 |
 | primbon | 19 |
+| islamic | 17 |
 | stalk | 17 |
-| info | 14 |
 | convert | 13 |
-| islamic | 13 |
+| user | 12 |
 | anime | 12 |
-| core | 11 |
 | datetime | 10 |
+| economy | 10 |
 | productivity | 10 |
-| user | 8 |
-| economy | 6 |
 | sticker | 3 |
+| edukasi | 2 |
 | music | 1 |
 | check | 1 |
 | ephoto | 1 |
 | movie | 1 |
 
-## Fitur berfungsi (865)
+## Fitur berfungsi (1103)
 
 | Command | Alias | Kategori | Deskripsi | Permission | Parameter | Dependency | Status | Uji |
 |---|---|---|---|---|---|---|---|---|
@@ -217,6 +219,29 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .botinfo | info | core | Informasi bot, versi, statistik | user |  |  | implemented |  |
 | .cmdinfo | caracmd, infofitur | core | Detail sebuah command: deskripsi, alias, parameter, permission, status | user |  |  | implemented |  |
 | .menu | help, start | core | Daftar kategori & fitur bot | user |  |  | implemented |  |
+| .menu-ai |  | core | Menu ai (kategori: ai) | user |  |  | implemented |  |
+| .menu-anime |  | core | Menu anime (kategori: anime) | user |  |  | implemented |  |
+| .menu-animetheme |  | core | Menu animetheme (kategori: anime) | user |  |  | implemented |  |
+| .menu-download |  | core | Menu download (kategori: downloader, music) | user |  |  | implemented |  |
+| .menu-ehpoto |  | core | Menu ehpoto (kategori: ephoto, textpro) | user |  |  | implemented |  |
+| .menu-enc |  | core | Menu enc (kategori: enc) | user |  |  | implemented |  |
+| .menu-fun |  | core | Menu fun (kategori: fun, primbon) | user |  |  | implemented |  |
+| .menu-game |  | core | Menu game (kategori: game, games) | user |  |  | implemented |  |
+| .menu-group |  | core | Menu group (kategori: group) | user |  |  | implemented |  |
+| .menu-islami |  | core | Menu islami (kategori: islamic) | user |  |  | implemented |  |
+| .menu-maker |  | core | Menu maker (kategori: maker, canvas, textpro) | user |  |  | implemented |  |
+| .menu-owner |  | core | Menu owner (kategori: owner) | user |  |  | implemented |  |
+| .menu-potoanime |  | core | Menu potoanime (kategori: anime) | user |  |  | implemented |  |
+| .menu-prem |  | core | Daftar fitur khusus premium | user |  |  | implemented |  |
+| .menu-primbon |  | core | Menu primbon (kategori: primbon) | user |  |  | implemented |  |
+| .menu-random |  | core | Menu random (kategori: random) | user |  |  | implemented |  |
+| .menu-rpg |  | core | Menu rpg (kategori: economy) | user |  |  | implemented |  |
+| .menu-search |  | core | Menu search (kategori: search, stalk) | user |  |  | implemented |  |
+| .menu-shop |  | core | Menu shop (kategori: store) | user |  |  | implemented |  |
+| .menu-stickers |  | core | Menu stickers (kategori: sticker) | user |  |  | implemented |  |
+| .menu-stk |  | core | Menu stk (kategori: sticker) | user |  |  | implemented |  |
+| .menu-store |  | core | Menu store (kategori: store) | user |  |  | implemented |  |
+| .menu-tools |  | core | Menu tools (kategori: tools, convert, image, media) | user |  |  | implemented |  |
 | .owner | creator, developerbot | core | Kontak owner bot | user |  |  | implemented |  |
 | .ping | p | core | Cek respons bot | user |  |  | implemented |  |
 | .runtime | uptime | core | Lama bot berjalan | user |  |  | implemented |  |
@@ -309,30 +334,41 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .youtube2 |  | downloader | YouTube Downloader v2: Unduh video YouTube. | user | url*, quality | APIZ2Z /api/download/youtube-v2 | tested | 1/1 mock |
 | .ytmp3 | yta | downloader | YouTube Audio Downloader: Download YouTube audio in the format and bitrate you choose. | user | url*, format, bitrate | APIZ2Z /api/download/ytmp3 | tested | 1/1 mock |
 | .ytmp4 | ytv, ytvideo | downloader | YouTube Video Downloader: Download a YouTube video in the resolution you choose. | user | url*, resolution | APIZ2Z /api/download/ytmp4 | tested | 1/1 mock |
+| .bank |  | economy | Bank koin: .bank \| .bank deposit <jumlah\|all> \| .bank withdraw <jumlah\|all> | user |  |  | implemented |  |
 | .buylimit | tukarlimit | economy | Tukar saldo virtual dengan limit (1 limit = 500 saldo) | user |  |  | implemented |  |
+| .casino |  | economy | Taruhan koin 50/50 (menang = 2x). Minimal 10.000 koin | user |  |  | implemented |  |
 | .kerja | work | economy | Bekerja untuk mendapat saldo (sekali per jam) | user |  |  | implemented |  |
 | .saldo | balance, bal, dompet | economy | Cek saldo virtual kamu (atau @user) | user |  |  | implemented |  |
+| .topbalance | topmoney, lbmoney, moneylb, leaderboardmoney | economy | Top 10 terkaya (koin + bank) | user |  |  | implemented |  |
 | .toplevel | topexp | economy | 10 besar exp | user |  |  | implemented |  |
 | .topsaldo | leaderboard, lb, richest | economy | 10 besar saldo | user |  |  | implemented |  |
 | .transfer | tf | economy | Kirim saldo virtual: .transfer @user jumlah | user |  |  | implemented |  |
+| .tukarkoin | exchange, tukaruang | economy | Tukar koin: premium (75.000/hari) atau sewagc (100.000/hari, di grup) | user |  |  | implemented |  |
+| .faktadunia |  | edukasi | Fakta dunia yang unik (56 fakta) | user |  |  | implemented |  |
+| .planet |  | edukasi | Info planet tata surya | user | teks* |  | tested | 2/2 unit |
 | .bravegreen |  | ephoto | Brave Green: Filter duotone hijau-pink buat foto. | user | url* | APIZ2Z /api/ephoto/bravegreen | tested | 1/1 mock |
 | .8ball | magicball | fun | Bola ajaib 8 menjawab pertanyaanmu | user |  |  | tested | 1/1 unit |
 | .alay2 |  | fun | Teks Alay v2: Ubah teks jadi gaya alay. | user | text* | APIZ2Z /api/fun/alay-v2 | tested | 1/1 mock |
 | .alayapi |  | fun | Teks Alay: Ubah teks jadi gaya alay. | user | text* | APIZ2Z /api/fun/alay | tested | 1/1 mock |
 | .apakah | bisakah | fun | Tanya jawab ya/tidak acak (hiburan) | user | teks* |  | tested | 1/1 unit |
 | .berapa |  | fun | Berapa ...? jawaban angka acak (hiburan) | user | teks* |  | tested | 1/1 unit |
+| .cekaura |  | fun | Penerawangan aura dari jam lahir | user | teks* |  | tested | 2/2 unit |
 | .cekbaik |  | fun | Seberapa baik hati kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekbeban |  | fun | Ukur level beban seseorang (acak) | user | teks* |  | tested | 1/1 unit |
 | .cekbucin |  | fun | Seberapa bucin kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .cekcantik |  | fun | Seberapa cantik kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .cekgalau |  | fun | Seberapa galau kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .cekganteng |  | fun | Seberapa ganteng kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .cekhoki |  | fun | Seberapa hoki hari ini kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekjodoh |  | fun | Ramalan jodoh (acak) | user |  |  | implemented |  |
 | .cekjones |  | fun | Seberapa jomblo kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .cekkaya |  | fun | Seberapa kaya kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .cekkeren |  | fun | Seberapa keren kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .cekkodam |  | fun | Cek "khodam" kamu hari ini (hiburan) | user |  |  | implemented |  |
 | .ceklucu |  | fun | Seberapa lucu kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .cekmalas |  | fun | Seberapa malas kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekmasadepan |  | fun | Ramalan masa depan (acak) | user |  |  | implemented |  |
+| .cekpasangan | mypasangan | fun | Cek pasangan (kamu atau @user) | user |  |  | implemented |  |
 | .cekpintar |  | fun | Seberapa pintar kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .ceksabar |  | fun | Seberapa sabar kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .ceksial |  | fun | Seberapa sial hari ini kamu hari ini? (hiburan) | user |  |  | implemented |  |
@@ -340,23 +376,33 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .cekwibu |  | fun | Seberapa wibu kamu hari ini? (hiburan) | user |  |  | implemented |  |
 | .fancytext |  | fun | Fancy Text: Ubah teks jadi 40+ gaya font unik. | user | text* | APIZ2Z /api/fun/fancytext | tested | 1/1 mock |
 | .funumur |  | fun | Fakta Umur: Fakta seru dari tanggal lahir: umur detail, statistik, dan lain-lain. | user | birthdate* | APIZ2Z /api/fun/umur | tested | 1/1 mock |
+| .isidompet |  | fun | Terawang isi dompet gaib | user |  |  | implemented |  |
+| .jodohmakanan |  | fun | Ramalan jodoh dari makanan favorit | user | teks* |  | tested | 2/2 unit |
 | .kapan | kapankah | fun | Kapan sesuatu terjadi? (hiburan) | user | teks* |  | tested | 1/1 unit |
 | .livefunfact |  | fun | Live Fun Facts: Fakta seru soal tubuhmu sejak lahir berdasarkan tanggal lahir. | user | birthdate* | APIZ2Z /api/fun/livefunfact | tested | 1/1 mock |
 | .motivasi | quotesmotivasi | fun | Kata-kata motivasi acak | user |  |  | tested | 1/1 unit |
+| .nasibbatere |  | fun | Ramalan nasib dari persen baterai HP | user | teks* |  | tested | 3/3 unit |
 | .nomin |  | fun | Nama Samaran: Nama samaran acak. | user |  | APIZ2Z /api/fun/nomin | tested | 1/1 mock |
 | .pantun |  | fun | Pantun acak | user |  |  | tested | 1/1 unit |
 | .pasangan | jadian | fun | Pasangkan dua anggota grup secara acak (hiburan) | user/group |  |  | implemented |  |
 | .pilih | choose | fun | Pilihkan satu opsi: .pilih nasi\|mie\|roti | user | teks* |  | tested | 1/1 unit |
+| .profesiku |  | fun | Ramalan profesi masa depan | user |  |  | implemented |  |
+| .putus |  | fun | Putus dengan pasangan | user |  |  | implemented |  |
 | .rate | nilai | fun | Beri nilai 1-10 untuk apa saja (konsisten per hari) | user |  |  | tested | 1/1 unit |
 | .ship | jodoh, cocok | fun | Persentase kecocokan dua nama (hiburan, hasil konsisten) | user | teks* |  | tested | 2/2 unit |
 | .siapa | siapakah | fun | Pilih anggota grup secara acak untuk sebuah pertanyaan | user/group |  |  | implemented |  |
+| .tembak |  | fun | Nyatakan perasaan ke @user (dia jawab .terimajadian / .tolakjadian dalam 5 menit) | user/group |  |  | implemented |  |
+| .terimajadian |  | fun | Terima tembakan | user/group |  |  | implemented |  |
+| .tolakjadian |  | fun | Tolak tembakan | user/group |  |  | implemented |  |
 | .asahotak |  | game | Asah otak: jawab pertanyaan pengetahuan umum (228 soal) | user |  | data/game/asahotak.json | implemented |  |
 | .caklontong |  | game | Teka-teki nyeleneh ala Cak Lontong (414 soal) | user |  | data/game/caklontong.json | implemented |  |
 | .dadu | dice, roll | game | Lempar dadu: .dadu [jumlah dadu] [sisi] | user |  |  | tested | 1/1 unit |
 | .family100 |  | game | Family 100: sebutkan jawaban survei sebanyak-banyaknya (7152 soal) | user |  | data/game/family100.json | implemented |  |
 | .gamestatus |  | game | Status game yang sedang berjalan di chat ini | user |  |  | implemented |  |
 | .hint | petunjuk, bantuan | game | Petunjuk untuk game tebak-tebakan yang sedang berjalan (hadiah berkurang) | user |  |  | implemented |  |
+| .jawab | jawabkuis, jawabtebak, jawabteka, jawabasah | game | Jawab game yang sedang berjalan (bisa juga langsung balas teks) | user |  |  | implemented |  |
 | .koin | coinflip, flip | game | Lempar koin (angka/gambar) | user |  |  | tested | 1/1 unit |
+| .kuis |  | game | Kuis cepat pengetahuan umum (V15) (15 soal) | user |  | data/game/kuis.json | implemented |  |
 | .kuismath | math, mathquiz | game | Kuis matematika: .kuismath [easy\|medium\|hard] | user |  |  | implemented |  |
 | .lengkapikalimat |  | game | Lengkapi peribahasa/kalimat yang rumpang (103 soal) | user |  | data/game/lengkapikalimat.json | implemented |  |
 | .nyerah | menyerah, giveup | game | Menyerah pada game yang sedang berjalan | user |  |  | implemented |  |
@@ -372,6 +418,7 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .tebakgenshin |  | game | Tebak karakter Genshin Impact (66 soal) | user |  | data/game/tebakgenshin.json | implemented |  |
 | .tebakhero |  | game | Tebak hero Mobile Legends (52 soal) | user |  | data/game/tebakhero.json | implemented |  |
 | .tebakhewan |  | game | Tebak nama hewan dari ciri-cirinya (30 soal) | user |  | data/game/tebakhewan.json | implemented |  |
+| .tebakkah |  | game | Tebak-tebakan random (V15) (10 soal) | user |  | data/game/tebakkah.json | implemented |  |
 | .tebakkata |  | game | Tebak kata dari petunjuk-petunjuk (302 soal) | user |  | data/game/tebakkata.json | implemented |  |
 | .tebaklagu |  | game | Tebak judul lagu dari cuplikan audio (750 soal) | user |  | data/game/tebaklagu.json | implemented |  |
 | .tebaklirik |  | game | Lengkapi lirik lagu yang hilang (38 soal) | user |  | data/game/tebaklirik.json | implemented |  |
@@ -413,38 +460,88 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .tebakwarna |  | games | Tebak Warna: Kuis tebak-warna. | user |  | APIZ2Z /api/games/tebak-warna | tested | 1/1 mock |
 | .tekateki |  | games | Teka-Teki: Teka-teki acak plus jawabannya. | user |  | APIZ2Z /api/games/tekateki | tested | 1/1 mock |
 | .tekateki2 |  | games | Teka-Teki v2: Teka-teki acak plus jawabannya. | user |  | APIZ2Z /api/games/tekateki-v2 | tested | 1/1 mock |
+| .acc | accjoin | group | Terima permintaan bergabung grup: tanpa argumen = daftar, "all" = semua | admin/group |  |  | implemented |  |
 | .add |  | group | Tambahkan anggota dengan nomor (hanya nomor yang mengizinkan) | admin/group |  |  | implemented |  |
+| .addbadword | tambahbadword | group | Tambah kata terlarang grup (pesan berisi kata itu dihapus saat .antibadword on) | admin/group |  |  | implemented |  |
+| .antibadword | antitoxic | group | Hapus otomatis pesan berisi kata terlarang (+ peringatan) | admin/group |  |  | implemented |  |
+| .antibot |  | group | Hapus (dan kick) pesan dari bot lain: .antibot delete on \| .antibot kick on | admin/group |  |  | implemented |  |
 | .antilink |  | group | Nyalakan/matikan Anti link grup WhatsApp lain: .antilink on/off | admin/group |  |  | implemented |  |
 | .antilinkstatus |  | group | Status anti-link grup ini | admin/group |  |  | implemented |  |
+| .autoabsen |  | group | Kirim poll absen otomatis setiap hari (jam default 07:00) | admin/group |  |  | implemented |  |
+| .autolevel | autolv | group | Umumkan member naik level: on/off/set <pesan> (@user @level @xp) | admin/group |  |  | implemented |  |
+| .banfitur |  | group | Larang command tertentu di grup ini: .banfitur <cmd> \| .banfitur del <cmd> \| .banfitur | admin/group |  |  | implemented |  |
+| .buatstreak |  | group | Mulai streak harian dengan teman: .buatstreak @user | user/group |  |  | implemented |  |
+| .cekjadwal |  | group | Lihat jadwal buka/tutup grup | user/group |  |  | implemented |  |
+| .cekjadwalpesan | listschedmsg | group | Daftar jadwal pesan grup | user/group |  |  | implemented |  |
+| .ceksewagc | ceksewa | group | Cek sisa masa sewa grup ini | user/group |  |  | implemented |  |
+| .cekstreak | streak | group | Cek streak kamu (atau dengan @user) | user/group |  |  | implemented |  |
+| .cekultah | ultah | group | Hitung mundur ulang tahun (kamu atau @user) | user/group |  |  | implemented |  |
 | .closegc | tutupgrup, close | group | Tutup grup (hanya admin yang bisa kirim pesan) | admin/group |  |  | implemented |  |
+| .closetime |  | group | Ditutup grup otomatis setelah waktu tertentu: .closetime 10 menit | admin/group |  |  | implemented |  |
 | .del | delete, hapus | group | Hapus pesan yang di-reply (pesan bot, atau pesan anggota jika bot admin) | admin/group |  |  | implemented |  |
+| .delbadword | hapusbadword | group | Hapus kata terlarang | admin/group |  |  | implemented |  |
+| .delultah |  | group | Hapus tanggal ulang tahunmu (admin: @user) | user/group |  |  | implemented |  |
 | .delwarn | unwarn | group | Hapus peringatan anggota | admin/group |  |  | implemented |  |
 | .demote |  | group | Copot admin | admin/group |  |  | implemented |  |
 | .groupinfo | infogrup, gcinfo | group | Info grup: nama, anggota, admin, pengaturan bot | user/group |  |  | implemented |  |
 | .hidetag | ht, h | group | Kirim pesan yang men-tag semua anggota tanpa daftar | admin/group |  |  | implemented |  |
+| .hidetagpoll |  | group | Poll dengan tag semua member: .hidetagpoll Pertanyaan?\|Opsi1,Opsi2,Opsi3 | admin/group |  |  | implemented |  |
+| .idgc | cekidgc, getidgc | group | ID grup ini | user/group |  |  | implemented |  |
+| .intro |  | group | Tampilkan template perkenalan member grup | user/group |  |  | implemented |  |
+| .jadwalpesan | jadpes, schedmsg | group | Kirim pesan berulang tiap N menit: .jadwalpesan 60 \| Jangan lupa absen! | admin/group |  |  | implemented |  |
 | .kick | kik, tendang | group | Keluarkan anggota (tag/reply/nomor) | admin/group |  |  | implemented |  |
+| .kicksider | siderkick | group | Keluarkan member pasif: .kicksider <hari> confirm (maks 50 sekali jalan) | admin/group |  |  | implemented |  |
 | .leave | keluar | group | Bot keluar dari grup ini | owner/group |  |  | implemented |  |
 | .left |  | group | Nyalakan/matikan Pesan perpisahan: .left on/off | admin/group |  |  | implemented |  |
 | .linkgc | linkgrup | group | Link undangan grup | user/group |  |  | implemented |  |
 | .listadmin | tagadmin, admins | group | Daftar (dan tag) admin grup | user/group |  |  | implemented |  |
-| .listwarn | cekwarn | group | Daftar peringatan di grup ini | user/group |  |  | implemented |  |
+| .listbadword | daftarbadword | group | Daftar kata terlarang grup | user/group |  |  | implemented |  |
+| .listultah |  | group | Daftar ulang tahun member grup | user/group |  |  | implemented |  |
+| .listwarn | cekwarn, listwarning, warninglist, warnlist, ceklistwarn | group | Daftar peringatan di grup ini | user/group |  |  | implemented |  |
 | .lockinfo |  | group | Kunci info grup (hanya admin yang bisa ubah info) | admin/group |  |  | implemented |  |
 | .mute |  | group | Nyalakan/matikan Mute bot di grup ini (bot hanya merespons owner): .mute on/off | admin/group |  |  | implemented |  |
+| .mywarn | infowarn | group | Cek jumlah peringatan (kamu atau @user) | user/group |  |  | implemented |  |
+| .nyalainstreak | nyalakanstreak | group | Nyalakan streak hari ini (dua orang harus menyalakan) | user/group |  |  | implemented |  |
 | .onlyadmin |  | group | Nyalakan/matikan Mode hanya admin yang bisa pakai bot: .onlyadmin on/off | admin/group |  |  | implemented |  |
+| .onlyprem |  | group | Mode grup: hanya user premium yang bisa memakai bot | admin/group |  |  | implemented |  |
 | .opengc | bukagrup, open | group | Buka grup (semua anggota bisa kirim pesan) | admin/group |  |  | implemented |  |
+| .opentime |  | group | Dibuka grup otomatis setelah waktu tertentu: .opentime 10 menit | admin/group |  |  | implemented |  |
 | .promote | jadiadmin | group | Jadikan admin | admin/group |  |  | implemented |  |
+| .resetjadwal |  | group | Hapus jadwal buka/tutup grup | admin/group |  |  | implemented |  |
 | .resetlinkgc | revoke | group | Reset link undangan grup | admin/group |  |  | implemented |  |
+| .resettotalchat |  | group | Reset hitungan chat grup | admin/group |  |  | implemented |  |
+| .resetwarn |  | group | Reset peringatan @user, atau semua member jika tanpa target | admin/group |  |  | implemented |  |
+| .schedule |  | group | Posting bulanan otomatis + hidetag: .schedule <pesan>\|<tanggal 1-31> (boleh kirim/reply media), list, delete <no>, clear | admin/group |  |  | implemented |  |
+| .setabsen |  | group | Atur jam auto absen (HH:MM, 24 jam) | admin/group |  |  | implemented |  |
+| .setclose |  | group | Pesan saat grup ditutup oleh .closetime | admin/group |  |  | implemented |  |
+| .setclosetime |  | group | Close grup otomatis setiap hari jam tertentu: .setclosetime 22:00\|Grup tutup, selamat malam | admin/group |  |  | implemented |  |
 | .setdesc | setdeskripsi | group | Ganti deskripsi grup | admin/group |  |  | implemented |  |
+| .setintro |  | group | Atur template .intro grup | admin/group |  |  | implemented |  |
 | .setleft |  | group | Atur teks perpisahan (@user @group @count) | admin/group |  |  | implemented |  |
 | .setnamagc | setsubject | group | Ganti nama grup | admin/group |  |  | implemented |  |
+| .setopen |  | group | Pesan saat grup dibuka oleh .opentime | admin/group |  |  | implemented |  |
+| .setopentime |  | group | Open grup otomatis setiap hari jam tertentu: .setopentime 22:00\|Grup tutup, selamat malam | admin/group |  |  | implemented |  |
+| .setppgc | setppgrup | group | Ganti foto grup (kirim/reply gambar) | admin/group |  |  | implemented |  |
+| .setultah |  | group | Simpan tanggal ulang tahunmu: .setultah DD/MM atau DD/MM/YYYY (bot mengucapkan jam 07:00) | user/group |  |  | implemented |  |
 | .setwelcome |  | group | Atur teks welcome (@user @group @desc @count) | admin/group |  |  | implemented |  |
+| .sider | ceksider, gcsider, groupsider, sidercek, sidergc, sidergroup | group | Daftar member pasif (tidak chat N hari, default 7) | admin/group |  |  | implemented |  |
+| .stopallschedmsg | sjps, stopjadwalpesanall, stopjadwalpesansemua | group | Hentikan semua jadwal pesan grup | admin/group |  |  | implemented |  |
+| .stopjadwalpesan | sjp, stopjadpes, stopschedmsg | group | Hentikan jadwal pesan (nomor, default terakhir) | admin/group |  |  | implemented |  |
+| .swgc | statusgrup | group | Buat status grup dari teks/gambar/video (reply media + caption) | admin/group |  |  | implemented |  |
 | .tagall | everyone | group | Tag semua anggota (dengan daftar) | admin/group |  |  | implemented |  |
-| .warn | peringatan | group | Beri peringatan; kena batas = dikeluarkan (kalau bot admin) | admin/group |  |  | implemented |  |
+| .testleft |  | group | Tes pesan left grup | admin/group |  |  | implemented |  |
+| .testultah |  | group | Tes pesan ucapan ulang tahun | admin/group |  |  | implemented |  |
+| .testwelcome |  | group | Tes pesan welcome grup | admin/group |  |  | implemented |  |
+| .tolakacc | rejectjoin | group | Tolak permintaan bergabung grup: tanpa argumen = daftar, "all" = semua | admin/group |  |  | implemented |  |
+| .topstreak |  | group | Top 5 streak di grup | user/group |  |  | implemented |  |
+| .totalchat | totalpesan | group | Peringkat jumlah chat member grup (sejak bot mencatat) | user/group |  |  | implemented |  |
+| .warn | peringatan, warning | group | Beri peringatan; kena batas = dikeluarkan (kalau bot admin) | admin/group |  |  | implemented |  |
 | .welcome |  | group | Nyalakan/matikan Pesan selamat datang: .welcome on/off | admin/group |  |  | implemented |  |
 | .blurimg |  | image | Efek gambar: Blur gambar: .blurimg [1-50] | user |  |  | tested | 1/1 real |
 | .brightness |  | image | Efek gambar: Kecerahan: .brightness [-1..1] | user |  |  | tested | 1/1 real |
 | .circleimg |  | image | Efek gambar: Potong bulat | user |  |  | tested | 1/1 real |
 | .contrast |  | image | Efek gambar: Kontras: .contrast [-1..1] | user |  |  | tested | 1/1 real |
+| .crop |  | image | Potong gambar ke rasio: .crop 1:1 / 16:9 / 9:16 / 4:3 / 3:4 (reply gambar) | user |  |  | tested | 1/1 real |
 | .dither |  | image | Efek gambar: Efek dither | user |  |  | tested | 1/1 real |
 | .edge |  | image | Efek gambar: Deteksi tepi (sketsa garis) | user |  |  | tested | 1/1 real |
 | .emboss |  | image | Efek gambar: Efek emboss | user |  |  | tested | 1/1 real |
@@ -459,6 +556,7 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .imgeditpixelate |  | image | Pixelate: Ubah gambar jadi pixel (level 1-40). | user | url*, level | APIZ2Z /api/imgedit/pixelate | tested | 1/1 mock |
 | .invert |  | image | Efek gambar: Warna terbalik (negatif) | user |  |  | tested | 1/1 real |
 | .lumiart |  | image | Lumi Art: Turn a photo into a Lumi Art style image. | user | imageUrl* | APIZ2Z /api/image/lumiart | tested | 1/1 mock |
+| .mirror | mirrorimg | image | Cermin gambar: .mirror kiri/kanan/atas/bawah (reply gambar) | user |  |  | tested | 1/1 real |
 | .normalize |  | image | Efek gambar: Normalisasi warna otomatis | user |  |  | tested | 1/1 real |
 | .pixelate |  | image | Efek gambar: Pikselasi: .pixelate [2-100] | user |  |  | tested | 1/1 real |
 | .posterize |  | image | Efek gambar: Posterize: .posterize [2-20] | user |  |  | tested | 1/1 real |
@@ -471,6 +569,8 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .threshold |  | image | Efek gambar: Hitam-putih tegas (threshold): .threshold [0-255] | user |  |  | tested | 1/1 real |
 | .cuaca | cekcuaca | info | Cuaca BMKG: Info cuaca dari BMKG. | user | area | APIZ2Z /api/info/cuaca/v1 | tested | 1/1 mock |
 | .cuacav2 |  | info | Cuaca Dunia: Cuaca kota di seluruh dunia. | user | kota*, days | APIZ2Z /api/info/cuaca/v2 | tested | 1/1 mock |
+| .donate | donasi | info | Info donasi (QRIS dari settingsbot.js) | user |  |  | implemented |  |
+| .error |  | info | Report Error ke owner bot | user |  |  | implemented |  |
 | .gempa | infogempa, cekgempa | info | Info Gempa: Info gempa terbaru dari BMKG. | user | type | APIZ2Z /api/info/gempa | tested | 1/1 mock |
 | .gempa2 |  | info | Info Gempa v2: Info gempa terbaru dari BMKG. | user |  | APIZ2Z /api/info/gempa-v2 | tested | 1/1 mock |
 | .growagarden |  | info | Stok Grow a Garden: Cek stok terbaru game Grow a Garden (Roblox). | user |  | APIZ2Z /api/info/grow-a-garden | tested | 1/1 mock |
@@ -483,25 +583,39 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .jadwalsholat2 |  | info | Jadwal Sholat v2: Jadwal sholat harian & bulanan seluruh Indonesia. | user | kota* | APIZ2Z /api/info/jadwal-sholat-v2 | tested | 1/1 mock |
 | .jadwaltv |  | info | Jadwal TV: Jadwal TV hari ini. | user |  | APIZ2Z /api/info/jadwaltv | tested | 1/1 mock |
 | .jadwaltv2 |  | info | Jadwal TV v2: Jadwal TV hari ini. | user | channel* | APIZ2Z /api/info/jadwaltv-v2 | tested | 1/1 mock |
+| .jumlahuser | totaluser | info | Jumlah user bot | user |  |  | implemented |  |
+| .report |  | info | Laporan dari User ke owner bot | user |  |  | implemented |  |
+| .req |  | info | Request Fitur ke owner bot | user |  |  | implemented |  |
 | .asmaulhusna |  | islamic | 99 Asmaul Husna: .asmaulhusna [nomor \| acak \| semua] | user |  |  | tested | 2/2 unit |
 | .ayatkursi |  | islamic | Ayat Kursi: Ayat Kursi lengkap: arab, latin, arti, sama tafsirnya. | user |  | APIZ2Z /api/islamic/ayatkursi | tested | 1/1 mock |
 | .bacaansholat |  | islamic | Bacaan Shalat: Bacaan shalat dari iftitah sampai salam: arab, latin, arti. | user |  | APIZ2Z /api/islamic/bacaanshalat | tested | 1/1 mock |
 | .doaharian | doa | islamic | Doa Harian: Kumpulan doa sehari-hari: arab, latin, arti. | user |  | APIZ2Z /api/islamic/doaharian | tested | 1/1 mock |
+| .dzikir | wirid | islamic | Wirid & dzikir setelah sholat fardhu | user |  |  | implemented |  |
+| .hadits | haditsharian | islamic | Hadits harian singkat | user |  |  | implemented |  |
+| .islamicwirid |  | islamic | Wirid: Bacaan wirid sesudah shalat lima waktu. | user |  | APIZ2Z /api/islamic/wirid | tested | 1/1 mock |
 | .kisahnabi |  | islamic | Kisah 25 nabi: .kisahnabi <nama> | user |  |  | implemented |  |
 | .kisahnabiapi |  | islamic | Kisah Nabi: Kisah 25 nabi: kelahiran, usia wafat, tempat, dan ceritanya. | user | nabi* | APIZ2Z /api/islamic/kisahnabi | tested | 1/1 mock |
 | .listnabi |  | islamic | Daftar 25 nabi dan rasul | user |  |  | tested | 1/1 unit |
 | .listsurah | daftarsurah | islamic | Daftar 114 surah Al-Quran | user |  |  | tested | 1/1 unit |
 | .murottal | audiosurah, audiosurat | islamic | Audio murottal satu surah (Mishary Rashid Alafasy) | user |  |  | implemented |  |
+| .niatsholat | niatshalat | islamic | Niat sholat fardhu (Arab, latin, terjemahan) | user | teks* |  | tested | 2/2 unit |
+| .quotesislami | quotesislam | islamic | Kata mutiara islami (25) | user |  |  | implemented |  |
 | .surah | quran | islamic | Surah Al-Qur'an: Ayat-ayat satu surah: arab, latin, arti. Nomor surah 1–114. | user | no* | APIZ2Z /api/islamic/surah | tested | 1/1 mock |
 | .surahinfo | infosurah | islamic | Info surah: nama, arti, jumlah ayat, golongan | user |  |  | tested | 2/2 unit |
 | .tahlil |  | islamic | Tahlil: Susunan bacaan tahlil lengkap sama artinya. | user |  | APIZ2Z /api/islamic/tahlil | tested | 1/1 mock |
-| .wirid |  | islamic | Wirid: Bacaan wirid sesudah shalat lima waktu. | user |  | APIZ2Z /api/islamic/wirid | tested | 1/1 mock |
+| .abu |  | maker | Stiker quote warna abu: .abu <teks> | user |  |  | implemented |  |
 | .animediff |  | maker | Anime Diffusion: Buat gambar anime dari teks. | user | prompt* | APIZ2Z /api/maker/animediff | tested | 1/1 mock |
+| .api |  | maker | Stiker quote warna api: .api <teks> | user |  |  | implemented |  |
 | .attp |  | maker | ATTP: Teks animasi warna-warni (GIF), cocok buat stiker. | user | text* | APIZ2Z /api/maker/attp | tested | 1/1 mock |
 | .attp2 |  | maker | ATTP v2: Teks animasi warna-warni (GIF), cocok buat stiker. | user | text* | APIZ2Z /api/maker/attp-v2 | tested | 1/1 mock |
 | .balogo |  | maker | Balogo: Logo teks gaya Blue Archive. | user | text* | APIZ2Z /api/maker/balogo | tested | 1/1 mock |
 | .bananaai |  | maker | Banana Edit: Edit gambar dengan AI (unggah gambar + prompt). | user | url*, prompt* | APIZ2Z /api/maker/bananaai | tested | 1/1 mock |
 | .bananagen |  | maker | Banana Generate: Buat gambar dari teks (AI). | user | prompt*, model | APIZ2Z /api/maker/bananagen | tested | 1/1 mock |
+| .biru |  | maker | Stiker quote warna biru: .biru <teks> | user |  |  | implemented |  |
+| .birulangit |  | maker | Stiker quote warna birulangit: .birulangit <teks> | user |  |  | implemented |  |
+| .birulaut |  | maker | Stiker quote warna birulaut: .birulaut <teks> | user |  |  | implemented |  |
+| .birumuda |  | maker | Stiker quote warna birumuda: .birumuda <teks> | user |  |  | implemented |  |
+| .birutua |  | maker | Stiker quote warna birutua: .birutua <teks> | user |  |  | implemented |  |
 | .brat |  | maker | Brat: Generate viral Brat album aesthetic meme text images. | user | text* | APIZ2Z /api/maker/brat | tested | 1/1 mock |
 | .brat2 |  | maker | Brat v2: Generate viral Brat album aesthetic meme text images. | user | text* | APIZ2Z /api/maker/brat-v2 | tested | 1/1 mock |
 | .bratanime |  | maker | Brat Anime: Gambar teks brat versi anime. | user | text* | APIZ2Z /api/maker/bratanime | tested | 1/1 mock |
@@ -511,22 +625,63 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .bratvidhd |  | maker | Bratvid HD: Video teks brat resolusi tinggi. | user | text* | APIZ2Z /api/maker/bratvidhd | tested | 1/1 mock |
 | .carbon | carbonify | maker | Carbon (Code to Image): Ubah kode jadi gambar PNG tema gelap. | user | code*, lang | APIZ2Z /api/maker/carbon | tested | 1/1 mock |
 | .carbon2 |  | maker | Carbon (Code to Image) v2: Ubah kode jadi gambar PNG tema gelap. | user | code* | APIZ2Z /api/maker/carbon-v2 | tested | 1/1 mock |
+| .cokelat |  | maker | Stiker quote warna cokelat: .cokelat <teks> | user |  |  | implemented |  |
+| .cyan |  | maker | Stiker quote warna cyan: .cyan <teks> | user |  |  | implemented |  |
+| .deeppink |  | maker | Stiker quote warna deeppink: .deeppink <teks> | user |  |  | implemented |  |
+| .emas |  | maker | Stiker quote warna emas: .emas <teks> | user |  |  | implemented |  |
 | .emojimix |  | maker | Emoji Mix (Emoji Kitchen): Combine two emojis into a custom Google Emoji Kitchen sticker. | user | emoji1*, emoji2* | APIZ2Z /api/maker/emojimix | tested | 1/1 mock |
 | .emojitogif |  | maker | Emoji to GIF: Convert a standard emoji into an animated Google Noto GIF / WebP sticker. | user | emoji* | APIZ2Z /api/maker/emojitogif | tested | 1/1 mock |
 | .emojitogif2 |  | maker | Emoji to GIF v2: Convert a standard emoji into an animated Google Noto GIF / WebP sticker. | user | emoji* | APIZ2Z /api/maker/emojitogif-v2 | tested | 1/1 mock |
 | .fakecall |  | maker | Fake Call: Buat gambar fake call (panggilan WhatsApp) dengan foto, nama, dan jam. | user | name*, time*, photo* | APIZ2Z /api/maker/fakecall | tested | 1/1 mock |
+| .font1 |  | maker | Gaya teks Unicode #1 (contoh: 𝓱𝓪𝓵𝓸) | user | teks* |  | tested | 1/1 unit |
+| .font10 |  | maker | Gaya teks Unicode #10 (contoh: ʜᴀʟᴏ) | user | teks* |  | tested | 1/1 unit |
+| .font2 |  | maker | Gaya teks Unicode #2 (contoh: ｈａｌｏ) | user | teks* |  | tested | 1/1 unit |
+| .font3 |  | maker | Gaya teks Unicode #3 (contoh: ⓗⓐⓛⓞ) | user | teks* |  | tested | 1/1 unit |
+| .font4 |  | maker | Gaya teks Unicode #4 (contoh: 𝐡𝐚𝐥𝐨) | user | teks* |  | tested | 1/1 unit |
+| .font5 |  | maker | Gaya teks Unicode #5 (contoh: 𝕙𝕒𝕝𝕠) | user | teks* |  | tested | 1/1 unit |
+| .font6 |  | maker | Gaya teks Unicode #6 (contoh: 𝒽𝒶𝓁ℴ) | user | teks* |  | tested | 1/1 unit |
+| .font7 |  | maker | Gaya teks Unicode #7 (contoh: 𝙝𝙖𝙡𝙤) | user | teks* |  | tested | 1/1 unit |
+| .font8 |  | maker | Gaya teks Unicode #8 (contoh: 𝚑𝚊𝚕𝚘) | user | teks* |  | tested | 1/1 unit |
+| .font9 |  | maker | Gaya teks Unicode #9 (contoh: ₕₐlₒ) | user | teks* |  | tested | 1/1 unit |
+| .fuchsia |  | maker | Stiker quote warna fuchsia: .fuchsia <teks> | user |  |  | implemented |  |
+| .goldenrod |  | maker | Stiker quote warna goldenrod: .goldenrod <teks> | user |  |  | implemented |  |
+| .hijau |  | maker | Stiker quote warna hijau: .hijau <teks> | user |  |  | implemented |  |
+| .hijaugelap |  | maker | Stiker quote warna hijaugelap: .hijaugelap <teks> | user |  |  | implemented |  |
+| .hijaulaut |  | maker | Stiker quote warna hijaulaut: .hijaulaut <teks> | user |  |  | implemented |  |
+| .hijaulumut |  | maker | Stiker quote warna hijaulumut: .hijaulumut <teks> | user |  |  | implemented |  |
+| .hijautua |  | maker | Stiker quote warna hijautua: .hijautua <teks> | user |  |  | implemented |  |
+| .hitam |  | maker | Stiker quote warna hitam: .hitam <teks> | user |  |  | implemented |  |
+| .hotpink |  | maker | Stiker quote warna hotpink: .hotpink <teks> | user |  |  | implemented |  |
 | .iqcpink |  | maker | IQC Pink: Bikin gambar IQC Pink dari teks yang kamu kasih | user | q* | APIZ2Z /api/maker/iqc-pink | tested | 1/1 mock |
+| .jingga |  | maker | Stiker quote warna jingga: .jingga <teks> | user |  |  | implemented |  |
+| .kuning |  | maker | Stiker quote warna kuning: .kuning <teks> | user |  |  | implemented |  |
 | .landsatname |  | maker | Landsat Name: Tulis nama kamu pakai foto satelit Landsat NASA. | user | name*, variant | APIZ2Z /api/maker/landsat-name | tested | 1/1 mock |
+| .magenta |  | maker | Stiker quote warna magenta: .magenta <teks> | user |  |  | implemented |  |
+| .makerqc | quotly | maker | Qc: Gambar quote chat: teks, nama, avatar, warna. | user | text*, name*, avatar*, color* | APIZ2Z /api/maker/qc | tested | 1/1 mock |
+| .merah |  | maker | Stiker quote warna merah: .merah <teks> | user |  |  | implemented |  |
+| .merahgelap |  | maker | Stiker quote warna merahgelap: .merahgelap <teks> | user |  |  | implemented |  |
+| .merahmuda |  | maker | Stiker quote warna merahmuda: .merahmuda <teks> | user |  |  | implemented |  |
+| .merahtua |  | maker | Stiker quote warna merahtua: .merahtua <teks> | user |  |  | implemented |  |
 | .msg |  | maker | Message: Gambar kotak pesan ala Windows. | user | message*, title, icon | APIZ2Z /api/maker/msg | tested | 1/1 mock |
 | .nulis | tulis | maker | Nulis: Teks jadi gambar tulisan tangan di buku tulis. | user | text* | APIZ2Z /api/maker/nulis | tested | 1/1 mock |
-| .qc | quotly | maker | Qc: Gambar quote chat: teks, nama, avatar, warna. | user | text*, name*, avatar*, color* | APIZ2Z /api/maker/qc | tested | 1/1 mock |
+| .orange |  | maker | Stiker quote warna orange: .orange <teks> | user |  |  | implemented |  |
+| .peachpuff |  | maker | Stiker quote warna peachpuff: .peachpuff <teks> | user |  |  | implemented |  |
+| .perak |  | maker | Stiker quote warna perak: .perak <teks> | user |  |  | implemented |  |
+| .pink |  | maker | Stiker quote warna pink: .pink <teks> | user |  |  | implemented |  |
+| .putih |  | maker | Stiker quote warna putih: .putih <teks> | user |  |  | implemented |  |
 | .quoted |  | maker | Quoted Chat: Buat gambar "quoted" chat (nama + teks + foto opsional). | user | username*, text*, profile, bg | APIZ2Z /api/maker/quoted | tested | 1/1 mock |
 | .remini |  | maker | Remini: Perjelas / HD-kan foto (unggah atau URL). | user | url* | APIZ2Z /api/maker/remini | tested | 1/1 mock |
 | .remini2 |  | maker | Remini v2: Perjelas / HD-kan foto (unggah atau URL). | user | url* | APIZ2Z /api/maker/remini-v2 | tested | 1/1 mock |
+| .salmon |  | maker | Stiker quote warna salmon: .salmon <teks> | user |  |  | implemented |  |
 | .smeme | stickermeme | maker | Smeme: Bikin meme dengan teks atas dan bawah. | user | text_atas*, text_bawah*, background* | APIZ2Z /api/maker/smeme | tested | 1/1 mock |
+| .tan |  | maker | Stiker quote warna tan: .tan <teks> | user |  |  | implemented |  |
+| .teal |  | maker | Stiker quote warna teal: .teal <teks> | user |  |  | implemented |  |
 | .ttp |  | maker | TTP: Teks jadi gambar (PNG), cocok buat stiker. | user | text* | APIZ2Z /api/maker/ttp | tested | 1/1 mock |
 | .ttp2 |  | maker | TTP v2: Teks jadi gambar (PNG), cocok buat stiker. | user | text* | APIZ2Z /api/maker/ttp-v2 | tested | 1/1 mock |
+| .ungu |  | maker | Stiker quote warna ungu: .ungu <teks> | user |  |  | implemented |  |
 | .wasted |  | maker | Wasted: Efek "WASTED" ala GTA di foto kamu. | user | url* | APIZ2Z /api/maker/wasted | tested | 1/1 mock |
+| .wheat |  | maker | Stiker quote warna wheat: .wheat <teks> | user |  |  | implemented |  |
+| .yannqc | yanqc, qc | maker | Stiker quote berwarna dari fotomu: .yannqc <warna> <teks> | user |  |  | implemented |  |
 | .8d | audio8d | media | Efek audio: Audio 8D (berputar kiri-kanan) (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
 | .bass |  | media | Efek audio: Bass boost (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
 | .blown |  | media | Efek audio: Suara pecah (blown) (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
@@ -573,32 +728,88 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .sindonews2 |  | news | Sindonews v2: Berita dari sindonews.com. | user |  | APIZ2Z /api/news/sindonews-v2 | tested | 1/1 mock |
 | .suara |  | news | Suara: Berita dari suara.com. | user |  | APIZ2Z /api/news/suara | tested | 1/1 mock |
 | .tribun |  | news | Tribunnews: Berita terbaru dari Tribunnews. | user |  | APIZ2Z /api/news/tribun | tested | 1/1 mock |
+| .acctrx | konfirmasitrx | owner | Konfirmasi order (premium/sewa langsung aktif) | owner |  |  | implemented |  |
+| .addcase | addcmd | owner | Buat command teks/media sendiri: reply pesan + .addcase <nama>, atau .addcase <nama>\|<balasan> | owner |  |  | implemented |  |
 | .addlimit |  | owner | Tambah limit user: .addlimit <nomor/@tag> <jumlah> | owner |  |  | implemented |  |
+| .addlimitall |  | owner | Tambah limit hari ini untuk semua user | owner |  |  | implemented |  |
+| .addmoney |  | owner | Tambah koin user | owner |  |  | implemented |  |
 | .addowner | addown | owner | Tambah owner bot (disimpan di database lokal) | owner |  |  | implemented |  |
 | .addprem | addpremium | owner | Tambah premium: .addprem <nomor/@tag> <hari> | owner |  |  | implemented |  |
+| .addpremgc | addpremgrup, addpremiumgc | owner | Jadikan semua member grup premium N hari | owner/group |  |  | implemented |  |
+| .addreseller | addres | owner | Tambah Reseller (tag/reply/nomor) | owner |  |  | implemented |  |
+| .addreselleram |  | owner | Tambah Reseller AM (tag/reply/nomor) | owner |  |  | implemented |  |
+| .addrespon |  | owner | Reply pesan + .addrespon <kata kunci>: bot membalas pesan itu tiap ada yang mengetik kata kunci | owner |  |  | implemented |  |
+| .addsewagc |  | owner | Sewakan bot ke grup: .addsewagc <hari> (di grup) atau .addsewagc <link> <hari> | owner |  |  | implemented |  |
+| .autobackup |  | owner | Kirim backup database ke owner tiap N jam (0 = mati) | owner |  |  | implemented |  |
+| .autoreactsw | autoreadsw | owner | Otomatis baca & beri reaksi status WhatsApp kontak | owner |  |  | implemented |  |
 | .autoread |  | owner | Tandai pesan masuk sebagai dibaca otomatis | owner |  |  | implemented |  |
+| .autosambut | sambutowner | owner | Bot menyambut owner saat owner chat di grup (cooldown menit) | owner |  |  | implemented |  |
 | .autotyping |  | owner | Tampilkan "mengetik..." saat memproses command | owner |  |  | implemented |  |
 | .backupdb | backup | owner | Kirim file database lokal bot ke chat pribadi owner | owner/private |  |  | implemented |  |
 | .banuser | blacklist | owner | Blokir user dari memakai bot (lokal) | owner |  |  | implemented |  |
 | .block |  | owner | Blokir kontak di WhatsApp | owner |  |  | implemented |  |
+| .buatkode | addkode | owner | Buat kode redeem: .buatkode <KODE> <koin\|limit\|premium>:<jumlah> <maks klaim> | owner |  |  | implemented |  |
+| .clearchat | clc | owner | Hapus chat ini dari WhatsApp bot | owner |  |  | implemented |  |
+| .cleardb | resetdb, rstdb | owner | Kosongkan database lokal bot (user, grup, data fitur). Wajib: .cleardb confirm | owner |  |  | implemented |  |
+| .clearprem |  | owner | Bersihkan data premium yang sudah kedaluwarsa | owner |  |  | implemented |  |
+| .clearreseller | resetreseller, hapussemuareseller | owner | Hapus semua reseller | owner |  |  | implemented |  |
+| .clearrespon |  | owner | Hapus semua respon otomatis | owner |  |  | implemented |  |
+| .creategc | creategroup, creategrup | owner | Buat grup baru (kamu dijadikan member) | owner |  |  | implemented |  |
+| .delcase | delcmd | owner | Hapus command buatan sendiri | owner |  |  | implemented |  |
+| .dellimit |  | owner | Hapus limit harian permanen user | owner |  |  | implemented |  |
+| .delmoney |  | owner | Kurangi koin user | owner |  |  | implemented |  |
 | .delowner | delown | owner | Hapus owner tambahan | owner |  |  | implemented |  |
 | .delprem |  | owner | Cabut premium user | owner |  |  | implemented |  |
+| .delpremgc | delpremgrup, deletepremgc | owner | Cabut premium semua member grup | owner/group |  |  | implemented |  |
+| .delreseller |  | owner | Hapus Reseller | owner |  |  | implemented |  |
+| .delreselleram |  | owner | Hapus Reseller AM | owner |  |  | implemented |  |
+| .delrespon |  | owner | Hapus respon otomatis | owner |  |  | implemented |  |
+| .delsewagc |  | owner | Hentikan sewa grup (di grup atau dengan ID grup) | owner |  |  | implemented |  |
 | .disablefitur | matikanfitur | owner | Nonaktifkan fitur (disimpan di database) | owner |  |  | implemented |  |
 | .enablefitur | nyalakanfitur | owner | Aktifkan lagi fitur | owner |  |  | implemented |  |
+| .getcase | getcmd | owner | Lihat isi command buatan sendiri | owner |  |  | implemented |  |
+| .hapuskode | delkode | owner | Hapus kode redeem | owner |  |  | implemented |  |
 | .join | joingc | owner | Bot masuk grup lewat link undangan | owner |  |  | implemented |  |
 | .listban |  | owner | Daftar user yang diblokir dari bot | owner |  |  | implemented |  |
+| .listcase | listcmd | owner | Daftar command buatan sendiri | owner |  |  | implemented |  |
 | .listgc | listgroup | owner | Daftar grup yang diikuti bot | owner |  |  | implemented |  |
+| .listkode |  | owner | Daftar kode redeem | owner |  |  | implemented |  |
 | .listowner | listown | owner | Daftar owner | owner |  |  | implemented |  |
 | .listprem |  | owner | Daftar user premium aktif | owner |  |  | implemented |  |
+| .listreseller |  | owner | Daftar Reseller | owner |  |  | implemented |  |
+| .listreselleram |  | owner | Daftar Reseller AM | owner |  |  | implemented |  |
+| .listrespon |  | owner | Daftar respon otomatis | owner |  |  | implemented |  |
+| .listsewagc |  | owner | Daftar grup sewa aktif | owner |  |  | implemented |  |
+| .listtrx | cektrx | owner | Daftar order pending | owner |  |  | implemented |  |
+| .maintenance | mt | owner | Maintenance bot (lokal): on [pesan] / off / status. Maintenance dari dashboard tetap berlaku terpisah | owner |  |  | implemented |  |
+| .mutegc | mutegc_proses | owner | Bisukan bot di grup (di grup itu, atau dengan ID/nomor dari .listgc) | owner |  |  | implemented |  |
+| .onlygc | onlygrup, onlygroup | owner | Bot hanya merespons di grup (chat pribadi diabaikan, kecuali owner) | owner |  |  | implemented |  |
+| .perpanjangsewa | renewsewa, renewsewagc | owner | Perpanjang sewa grup N hari | owner |  |  | implemented |  |
 | .public |  | owner | Mode public: bot merespons semua orang | owner |  |  | implemented |  |
+| .renamebot | setconfig | owner | Ubah identitas bot: .renamebot <kunci> <nilai> | owner |  |  | implemented |  |
 | .resetlimitall |  | owner | Reset limit harian semua user ke nilai default | owner |  |  | implemented |  |
+| .restart | rst | owner | Restart bot (pm2 menyalakan lagi otomatis) | owner |  |  | implemented |  |
+| .save | sv | owner | Kirim kartu kontak lawan chat (untuk disimpan) | owner/private |  |  | implemented |  |
 | .self |  | owner | Mode self: bot hanya merespons owner | owner |  |  | implemented |  |
+| .setaudiomenu |  | owner | Audio yang dikirim setelah .menu: reply audio + .setaudiomenu (atau .setaudiomenu off) | owner |  |  | implemented |  |
 | .setbio |  | owner | Ganti bio/status bot | owner |  |  | implemented |  |
 | .setbotname |  | owner | Ganti nama profil WhatsApp bot | owner |  |  | implemented |  |
+| .setdaftar | setregister | owner | Wajib daftar sebelum memakai bot: on/off | owner |  |  | implemented |  |
+| .setimg | setimage | owner | Ganti gambar/video menu: reply media + .setimg menu\|menuvideo\|reply (atau .setimg reset) | owner |  |  | implemented |  |
+| .setlabel |  | owner | Atur label member bot di grup: .setlabel <id grup\|all>\|<label maks 30> | owner |  |  | implemented |  |
+| .setlimit |  | owner | Atur limit harian permanen user (0 = kembali default) | owner |  |  | implemented |  |
+| .setmenu |  | owner | Gaya tampilan .menu: text/image/video/document (v1-v10 juga diterima) | owner |  |  | implemented |  |
+| .setmoney |  | owner | Atur koin user | owner |  |  | implemented |  |
 | .setppbot |  | owner | Ganti foto profil bot (reply/kirim gambar) | owner |  |  | implemented |  |
+| .setpppanjang | setpppanjangbot, setppfull, setbotpp | owner | Ganti foto profil bot tanpa crop persegi (reply gambar) | owner |  |  | implemented |  |
 | .setprefix |  | owner | Atur prefix (pisah spasi, 1-3 karakter). Kosong = kembali ke settingsbot.js | owner |  |  | implemented |  |
+| .setrestart | autorestart | owner | Restart otomatis tiap N jam (0 = mati) | owner |  |  | implemented |  |
+| .sistemsewa |  | owner | Sistem sewa: bot hanya melayani grup yang sewa | owner |  |  | implemented |  |
+| .tolaktrx |  | owner | Tolak order | owner |  |  | implemented |  |
 | .unbanuser | unblacklist | owner | Buka blokir user | owner |  |  | implemented |  |
 | .unblock |  | owner | Buka blokir kontak di WhatsApp | owner |  |  | implemented |  |
+| .unmutegc | unmutegc_proses | owner | Aktifkan lagi bot di grup (di grup itu, atau dengan ID/nomor dari .listgc) | owner |  |  | implemented |  |
+| .upchannel | upch, kirimch, upchannel2 | owner | Kirim teks/media ke channel bot (links.channelId) | owner |  |  | implemented |  |
 | .artinama |  | primbon | Arti Nama: Cari arti nama berdasarkan numerologi Jawa. | user | nama* | APIZ2Z /api/primbon/artinama | tested | 1/1 mock |
 | .artinama2 |  | primbon | Arti Nama v2: Cari arti nama berdasarkan numerologi Jawa. | user | nama* | APIZ2Z /api/primbon/artinama-v2 | tested | 1/1 mock |
 | .cocokpasangan |  | primbon | Kecocokan Pasangan: Cek kecocokan pasangan berdasarkan nama (Neptuni Jawa). | user | nama1*, nama2* | APIZ2Z /api/primbon/cocokpasangan | tested | 1/1 mock |
@@ -739,6 +950,27 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .getexif | infostiker | sticker | Lihat metadata pack/author sebuah stiker | user |  | ffmpeg | tested | 1/1 real |
 | .sticker | s, stiker, sk | sticker | Buat stiker dari gambar/video/GIF (video maks 8 detik). Opsional: .s pack\|author | user |  | ffmpeg | tested | 1/1 real |
 | .take | wm, swm, colong | sticker | Ganti nama pack/author stiker: .take pack\|author | user |  | ffmpeg | tested | 1/1 real |
+| .addlist |  | store | Tambah item list grup: .addlist nama\|deskripsi (boleh kirim/reply gambar, video, audio, stiker) | admin/group |  |  | implemented |  |
+| .addpay | setpay | store | Tambah metode bayar grup: .addpay dana\|DANA 0812xxx a.n. Budi (boleh kirim/reply gambar QR) | admin/group |  |  | implemented |  |
+| .bataltrx | batalkantrx | store | Batalkan order kamu yang masih pending | user |  |  | implemented |  |
+| .buyprem | buypremium, beliprem, belipremium | store | Beli premium (order dikonfirmasi owner): .buyprem <hari 7-365> | user |  |  | implemented |  |
+| .buysewagc |  | store | Sewa bot untuk grup (order dikonfirmasi owner): .buysewagc <link grup> <hari 7-365> | user |  |  | implemented |  |
+| .clearlist |  | store | Hapus semua item list grup ini | admin/group |  |  | implemented |  |
+| .dellist |  | store | Hapus item list (nama atau nomor urut) | admin/group |  |  | implemented |  |
+| .delpay |  | store | Hapus payment grup | admin/group |  |  | implemented |  |
+| .done |  | store | Kirim pesan selesai ke pembeli (reply pesan pembeli): .done <item> | admin/group |  |  | implemented |  |
+| .list | daftarlist, store | store | Tampilkan list item grup (ketik nama item untuk detail) | user/group |  |  | implemented |  |
+| .listpay |  | store | Daftar keyword payment grup | user/group |  |  | implemented |  |
+| .pay | payment | store | Tampilkan semua metode pembayaran grup | user/group |  |  | implemented |  |
+| .prem | hargaprem, pricelist | store | Info & harga premium / sewa bot | user |  |  | implemented |  |
+| .proses |  | store | Kirim pesan proses ke pembeli (reply pesan pembeli): .proses <item> | admin/group |  |  | implemented |  |
+| .resetlist |  | store | Kembalikan template .list ke bawaan | admin/group |  |  | implemented |  |
+| .setdone |  | store | Atur template pesan .done (variabel: @tanggal @jam @status @item @user @group) | admin/group |  |  | implemented |  |
+| .setlist |  | store | Atur template .list (variabel @name @group @time @date @fulldate @daytime @x, baris "@prefix <simbol>") | admin/group |  |  | implemented |  |
+| .setproses |  | store | Atur template pesan .proses (variabel: @tanggal @jam @status @item @user @group) | admin/group |  |  | implemented |  |
+| .sewa | sewabot | store | Info sewa bot ke grup | user |  |  | implemented |  |
+| .testimoni | testi | store | Buat kartu testimoni: .testimoni nama\|produk\|harga | user |  |  | implemented |  |
+| .updatelist | editlist | store | Ubah deskripsi item: .updatelist nama\|deskripsi baru (kirim/reply media untuk ganti media) | admin/group |  |  | implemented |  |
 | .acronym |  | text | Buat singkatan dari huruf awal kata | user | teks* |  | tested | 1/1 unit |
 | .alay |  | text | Ubah teks jadi gaya alay | user | teks* |  | tested | 1/1 unit |
 | .anagram |  | text | Cek anagram: .anagram kata1\|kata2 | user | teks* |  | tested | 2/2 unit |
@@ -860,6 +1092,7 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .wolfgalaxy |  | textpro | Wolf Galaxy: Logo serigala galaksi (dua teks). | user | text1*, text2* | APIZ2Z /api/textpro/wolf-galaxy | tested | 1/1 mock |
 | .writegraffiti |  | textpro | Write Graffiti: Efek tulisan graffiti di tembok. | user | text* | APIZ2Z /api/textpro/write-graffiti | tested | 1/1 mock |
 | .alightmotion |  | tools | Alight-Motion: Info project Alight Motion dari link-nya. | user | url* | APIZ2Z /api/tools/alightmotion | tested | 1/1 mock |
+| .ambilsw | sw | tools | Simpan gambar/video dari status WhatsApp yang kamu reply | user |  |  | implemented |  |
 | .base642text |  | tools | Base64 to Text: Konversi base64 ke teks. | user | base64* | APIZ2Z /api/tools/base642text | tested | 1/1 mock |
 | .binary2text |  | tools | Binary to Text: Konversi binary ke teks. | user | binary* | APIZ2Z /api/tools/binary2text | tested | 1/1 mock |
 | .blurface |  | tools | Blur-Face: Blur wajah di foto otomatis. | user | url* | APIZ2Z /api/tools/blurface | tested | 1/1 mock |
@@ -868,15 +1101,18 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .compress | kompres | tools | Image Compress: Kecilin ukuran gambar JPEG/WebP. | user | url, quality | APIZ2Z /api/tools/compress | tested | 1/1 mock |
 | .convert |  | tools | Image Convert: Ubah format gambar (webp/jpeg/png/tiff). | user | url, format | APIZ2Z /api/tools/convert | tested | 1/1 mock |
 | .convert2 |  | tools | Image Convert v2: Ubah format gambar (webp/jpeg/png/tiff). | user | url*, format | APIZ2Z /api/tools/convert-v2 | tested | 1/1 mock |
+| .copy | salin | tools | Salin teks pesan yang di-reply (nomor & link dipisah agar mudah disalin) | user |  |  | implemented |  |
 | .countryinfo |  | tools | Country Info: Info lengkap tentang suatu negara. | user | name* | APIZ2Z /api/tools/countryinfo | tested | 1/1 mock |
 | .dewatermark | hapuswm, removewm | tools | DeWatermark: Hapus watermark dari gambar. | user | url* | APIZ2Z /api/tools/dewatermark | tested | 1/1 mock |
 | .dns |  | tools | DNS Lookup: Cek record DNS sebuah domain. | user | domain*, type | APIZ2Z /api/tools/dns | tested | 1/1 mock |
 | .enhance |  | tools | Photo Enhance: Bikin foto lebih cerah, lebih hidup, dan lebih tajam. | user | url, brightness, saturation | APIZ2Z /api/tools/enhance | tested | 1/1 mock |
 | .enhancer |  | tools | Enhancer: Perjelas kualitas gambar. | user | url* | APIZ2Z /api/tools/enhancer | tested | 1/1 mock |
 | .fontinterceptor |  | tools | Font Detector: Cek font apa aja yang dipakai sebuah website. | user | url* | APIZ2Z /api/tools/font-interceptor | tested | 1/1 mock |
+| .getpp | getprofile | tools | Ambil foto profil WhatsApp (tag/reply/nomor) | user |  |  | implemented |  |
 | .githubroast |  | tools | GitHub Roast: Roast profil GitHub pakai AI. | user | user* | APIZ2Z /api/tools/github-roast | tested | 1/1 mock |
 | .grammarchecker |  | tools | Grammar Checker: Cek & benerin grammar bahasa Inggris. | user | text* | APIZ2Z /api/tools/grammar-checker | tested | 1/1 mock |
 | .grammarchecker2 |  | tools | Grammar Checker v2: Cek & benerin grammar bahasa Inggris. | user | text* | APIZ2Z /api/tools/grammar-checker-v2 | tested | 1/1 mock |
+| .idch | cekidch | tools | Info & ID channel WhatsApp dari link | user |  |  | implemented |  |
 | .iloveimgcrop |  | tools | Image Crop: Potong gambar. | user | url, x, y, width, height | APIZ2Z /api/tools/iloveimg-crop | tested | 1/1 mock |
 | .iloveimgrotate |  | tools | Image Rotate: Putar gambar. | user | url*, degrees | APIZ2Z /api/tools/iloveimg-rotate | tested | 1/1 mock |
 | .imagetoprompt2 |  | tools | Image to Prompt v2: Ubah gambar jadi prompt AI (Midjourney, DALL-E, Stable Diffusion, Flux). | user | url* | APIZ2Z /api/tools/image-to-prompt-v2 | tested | 1/1 mock |
@@ -924,36 +1160,121 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | .yttranscribe |  | tools | YouTube Transcribe: Ambil transkrip/subtitle video YouTube. | user | url* | APIZ2Z /api/tools/yt-transcribe | tested | 1/1 mock |
 | .afk |  | user | Set status AFK; yang menyebut kamu akan diberi tahu | user |  |  | implemented |  |
 | .cekprem | premium | user | Cek status premium | user |  |  | implemented |  |
+| .cekres | isreseller | user | Cek apakah user reseller | user |  |  | implemented |  |
 | .claim | daily | user | Klaim bonus harian: +5 limit, +500 saldo, +50 exp (sekali per hari) | user |  |  | tested | 1/1 unit |
 | .daftar | register, reg | user | Daftar sebagai user bot: .daftar nama,umur | user |  |  | tested | 2/2 unit |
+| .kapanreset |  | user | Kapan limit harian di-reset | user |  |  | implemented |  |
 | .level | mylevel, exp | user | Naik level berdasarkan exp (exp didapat dari claim & game) | user |  |  | implemented |  |
 | .limit | ceklimit | user | Sisa limit harian | user |  |  | implemented |  |
 | .profile | profil, me, myprofile | user | Profil kamu: limit, premium, level, saldo | user |  |  | implemented |  |
+| .redeem | klaimkode | user | Tukar kode redeem | user |  |  | implemented |  |
+| .trialprem | trialpremium | user | Coba premium gratis 1 hari (sekali seumur hidup) | user |  |  | implemented |  |
 | .unreg |  | user | Hapus data pendaftaran kamu | user |  |  | implemented |  |
 
-## Dikecualikan (disabled) (102)
+## Dikecualikan (disabled) (217)
 
 | Command V15 | Alasan |
 |---|---|
+| 1gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 2gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 3gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 4gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 5gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 6gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 7gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
 | addaksesprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| ah-ah-ah | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | aiundress | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | amprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
 | animensfwloli | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | apkprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| asupan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupanbocil | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupandouyin | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupangeayubi | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupangheayubi | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupanhijaber | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupanrikagusriani | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupansantuy | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupanukhty | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
 | batalpremku | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
 | bayar_apk | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
 | beliapk | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
 | bom | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| broadcast | Kirim pesan massal / anonim ke nomor sembarang — rawan spam & pelecehan. |
 | bugil | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | bugilin | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | buyapkprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| bzirrt | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| cadp | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| cecan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanchina | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanhijaber | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanindonesia | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanjapan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanjeni | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanjiso | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanjustinaxie | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecankorea | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanmalaysia | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecannaxie | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanrandom | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanrose | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanryujin | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanthailand | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanvietnam | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cekfemboy | Konten seksual tentang orang yang disebut namanya — tidak diimplementasikan. |
 | cekgay | Konten vulgar / merendahkan — tidak akan diimplementasikan. |
 | cekkontol | Konten vulgar / merendahkan — tidak akan diimplementasikan. |
 | cekmemek | Konten vulgar / merendahkan — tidak akan diimplementasikan. |
+| ceknim | Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi. |
+| ceknohp | Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi. |
+| ceknomor | Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi. |
+| cogan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| confes | Kirim pesan massal / anonim ke nomor sembarang — rawan spam & pelecehan. |
+| configurewings | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| createadp | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
 | culikmember | Mengambil alih / memindahkan anggota grup tanpa izin — tidak akan diimplementasikan. |
+| custom-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| customenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
 | darkjoke | Konten vulgar / merendahkan — tidak akan diimplementasikan. |
 | deepnude | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | delaksesprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| deletepanel | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| delpanel | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| delsrv | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| deluser | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| ehbtw | Membuka ulang pesan sekali lihat (view once) melanggar privasi pengirim. |
+| enc-custom | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enc-invis | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enc-invisible | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enc-siu | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enc-strong | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enc-ultra | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enccustom | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enccustomjs | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encinvis | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encinvisible | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encjsinvis | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-custom | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-invis | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-invisible | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-siu | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-strong | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-ultra | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptcustom | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptcustomjs | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptinvis | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptinvisible | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptsiu | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptstrong | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptultra | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encsiu | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encsiujs | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encstrong | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encstrongjs | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encultra | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encultrajs | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
 | fakedana | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
 | fakeff | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
 | fakeml | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
@@ -961,21 +1282,40 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | fakestory | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
 | fitnah | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
 | gamebom | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| getsc | Mengirim source code/session bot ke chat — risiko kebocoran kredensial. |
 | gore | Konten kekerasan ekstrem — tidak akan diimplementasikan. |
 | hitamin | Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan. |
+| invis-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| invisenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| invisible-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| invisibleenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
 | jawabbom | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | joinallgc | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | jpm | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | jpmexec | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | jpmtesti | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| jscustomenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| jsinvisenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| jssiuenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| jsstrongenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| jsultraenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
 | kirimchat | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | kirimchatvo | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | kudeta | Mengambil alih / memindahkan anggota grup tanpa izin — tidak akan diimplementasikan. |
 | listaksesprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| listpanel | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| listuser | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
 | logoporn | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | loli | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| menu-asupan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| menu-cecan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| menu-nsfw | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| menu-panel | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| mypanel | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
 | naked | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | nglspam | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| nomorinfo | Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi. |
+| notif | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
 | nsfw | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | nsfwahegao | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | nsfwass | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
@@ -1017,8 +1357,14 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | pushkontak2 | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | putihkan | Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan. |
 | quitbom | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| randomcecan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| randomcogan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
 | randomgore | Konten kekerasan ekstrem — tidak akan diimplementasikan. |
+| renew | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| renewserver | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
 | rgore | Konten kekerasan ekstrem — tidak akan diimplementasikan. |
+| rvo | Membuka ulang pesan sekali lihat (view once) melanggar privasi pengirim. |
+| rvo2 | Membuka ulang pesan sekali lihat (view once) melanggar privasi pengirim. |
 | savekontak | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | savekontak2 | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | sendchat | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
@@ -1026,7 +1372,13 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | sendmessage | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | sendmessagevo | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | shota | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| sidompul | Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi. |
+| siu-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| siuenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
 | sprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| startwings | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| strong-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| strongenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
 | struk | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
 | swgc_allprocess | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
 | swgcall | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
@@ -1034,46 +1386,25 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | tobabi | Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan. |
 | tohitam | Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan. |
 | tomonyet | Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan. |
+| ultra-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| ultraenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
 | uncensored | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| unli | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
 | unsensored | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
 | wormgpt | AI tanpa batasan untuk kegiatan berbahaya — tidak akan diimplementasikan. |
 
-## Backlog V15 (planned) (966)
+## Backlog V15 (planned) (529)
 
 | Command V15 | Catatan |
 |---|---|
 | 1917style | Command Yann AI V15 "1917style" — belum diimplementasikan. |
-| 1gb | Command Yann AI V15 "1gb" — belum diimplementasikan. |
 | 2048 | Command Yann AI V15 "2048" — belum diimplementasikan. |
-| 2gb | Command Yann AI V15 "2gb" — belum diimplementasikan. |
-| 3gb | Command Yann AI V15 "3gb" — belum diimplementasikan. |
-| 4gb | Command Yann AI V15 "4gb" — belum diimplementasikan. |
-| 5gb | Command Yann AI V15 "5gb" — belum diimplementasikan. |
-| 6gb | Command Yann AI V15 "6gb" — belum diimplementasikan. |
-| 7gb | Command Yann AI V15 "7gb" — belum diimplementasikan. |
-| abu | Command Yann AI V15 "abu" — belum diimplementasikan. |
-| abu-abutua | Command Yann AI V15 "abu-abutua" — belum diimplementasikan. |
-| acc | Command Yann AI V15 "acc" — belum diimplementasikan. |
-| addbadword | Command Yann AI V15 "addbadword" — belum diimplementasikan. |
-| addcase | Command Yann AI V15 "addcase" — belum diimplementasikan. |
-| addlimitall | Command Yann AI V15 "addlimitall" — belum diimplementasikan. |
-| addlist | Command Yann AI V15 "addlist" — belum diimplementasikan. |
-| addmoney | Command Yann AI V15 "addmoney" — belum diimplementasikan. |
 | addp | Command Yann AI V15 "addp" — belum diimplementasikan. |
 | addplug | Command Yann AI V15 "addplug" — belum diimplementasikan. |
 | addplugin | Command Yann AI V15 "addplugin" — belum diimplementasikan. |
 | addplugins | Command Yann AI V15 "addplugins" — belum diimplementasikan. |
 | addprefix | Command Yann AI V15 "addprefix" — belum diimplementasikan. |
-| addpremgc | Command Yann AI V15 "addpremgc" — belum diimplementasikan. |
-| addpremgrup | Command Yann AI V15 "addpremgrup" — belum diimplementasikan. |
-| addpremiumgc | Command Yann AI V15 "addpremiumgc" — belum diimplementasikan. |
-| addres | Command Yann AI V15 "addres" — belum diimplementasikan. |
-| addreseller | Command Yann AI V15 "addreseller" — belum diimplementasikan. |
-| addreselleram | Command Yann AI V15 "addreselleram" — belum diimplementasikan. |
-| addrespon | Command Yann AI V15 "addrespon" — belum diimplementasikan. |
-| addsewagc | Command Yann AI V15 "addsewagc" — belum diimplementasikan. |
 | advancedglow | Command Yann AI V15 "advancedglow" — belum diimplementasikan. |
-| ah-ah-ah | Command Yann AI V15 "ah-ah-ah" — belum diimplementasikan. |
 | aiedit | Command Yann AI V15 "aiedit" — belum diimplementasikan. |
 | ailabs | Command Yann AI V15 "ailabs" — belum diimplementasikan. |
 | aimention | Command Yann AI V15 "aimention" — belum diimplementasikan. |
@@ -1082,7 +1413,6 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | aivideo | Command Yann AI V15 "aivideo" — belum diimplementasikan. |
 | akiyama | Command Yann AI V15 "akiyama" — belum diimplementasikan. |
 | amai | Command Yann AI V15 "amai" — belum diimplementasikan. |
-| ambilsw | Command Yann AI V15 "ambilsw" — belum diimplementasikan. |
 | ana | Command Yann AI V15 "ana" — belum diimplementasikan. |
 | anime2d | Command Yann AI V15 "anime2d" — belum diimplementasikan. |
 | animeakira | Command Yann AI V15 "animeakira" — belum diimplementasikan. |
@@ -1109,47 +1439,17 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | animeyotsuba | Command Yann AI V15 "animeyotsuba" — belum diimplementasikan. |
 | animeyuli | Command Yann AI V15 "animeyuli" — belum diimplementasikan. |
 | animeyumeko | Command Yann AI V15 "animeyumeko" — belum diimplementasikan. |
-| antibot | Command Yann AI V15 "antibot" — belum diimplementasikan. |
 | anubis | Command Yann AI V15 "anubis" — belum diimplementasikan. |
-| api | Command Yann AI V15 "api" — belum diimplementasikan. |
 | arti-nama | Command Yann AI V15 "arti-nama" — belum diimplementasikan. |
 | asuna | Command Yann AI V15 "asuna" — belum diimplementasikan. |
-| asupan | Command Yann AI V15 "asupan" — belum diimplementasikan. |
-| asupanbocil | Command Yann AI V15 "asupanbocil" — belum diimplementasikan. |
-| asupandouyin | Command Yann AI V15 "asupandouyin" — belum diimplementasikan. |
-| asupangeayubi | Command Yann AI V15 "asupangeayubi" — belum diimplementasikan. |
-| asupangheayubi | Command Yann AI V15 "asupangheayubi" — belum diimplementasikan. |
-| asupanhijaber | Command Yann AI V15 "asupanhijaber" — belum diimplementasikan. |
-| asupanrikagusriani | Command Yann AI V15 "asupanrikagusriani" — belum diimplementasikan. |
-| asupansantuy | Command Yann AI V15 "asupansantuy" — belum diimplementasikan. |
-| asupanukhty | Command Yann AI V15 "asupanukhty" — belum diimplementasikan. |
-| autoabsen | Command Yann AI V15 "autoabsen" — belum diimplementasikan. |
 | autoai | Command Yann AI V15 "autoai" — belum diimplementasikan. |
-| autobackup | Command Yann AI V15 "autobackup" — belum diimplementasikan. |
 | autocorrect | Command Yann AI V15 "autocorrect" — belum diimplementasikan. |
-| autolevel | Command Yann AI V15 "autolevel" — belum diimplementasikan. |
-| autolv | Command Yann AI V15 "autolv" — belum diimplementasikan. |
-| autoreactsw | Command Yann AI V15 "autoreactsw" — belum diimplementasikan. |
-| autosambut | Command Yann AI V15 "autosambut" — belum diimplementasikan. |
 | autosholat | Command Yann AI V15 "autosholat" — belum diimplementasikan. |
 | ayuzawa | Command Yann AI V15 "ayuzawa" — belum diimplementasikan. |
-| banfitur | Command Yann AI V15 "banfitur" — belum diimplementasikan. |
-| bank | Command Yann AI V15 "bank" — belum diimplementasikan. |
-| batalkantrx | Command Yann AI V15 "batalkantrx" — belum diimplementasikan. |
 | batalkostum | Command Yann AI V15 "batalkostum" — belum diimplementasikan. |
 | batalpolaroid | Command Yann AI V15 "batalpolaroid" — belum diimplementasikan. |
-| bataltrx | Command Yann AI V15 "bataltrx" — belum diimplementasikan. |
-| beliprem | Command Yann AI V15 "beliprem" — belum diimplementasikan. |
-| belipremium | Command Yann AI V15 "belipremium" — belum diimplementasikan. |
 | beritacnbc | Command Yann AI V15 "beritacnbc" — belum diimplementasikan. |
 | bintang | Command Yann AI V15 "bintang" — belum diimplementasikan. |
-| biru | Command Yann AI V15 "biru" — belum diimplementasikan. |
-| birulangit | Command Yann AI V15 "birulangit" — belum diimplementasikan. |
-| birulangitcerah | Command Yann AI V15 "birulangitcerah" — belum diimplementasikan. |
-| birulaut | Command Yann AI V15 "birulaut" — belum diimplementasikan. |
-| birumuda | Command Yann AI V15 "birumuda" — belum diimplementasikan. |
-| birumudalangit | Command Yann AI V15 "birumudalangit" — belum diimplementasikan. |
-| birutua | Command Yann AI V15 "birutua" — belum diimplementasikan. |
 | blackpinklogo | Command Yann AI V15 "blackpinklogo" — belum diimplementasikan. |
 | blackpinkstyle | Command Yann AI V15 "blackpinkstyle" — belum diimplementasikan. |
 | blockblast | Command Yann AI V15 "blockblast" — belum diimplementasikan. |
@@ -1171,17 +1471,9 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | breakout | Command Yann AI V15 "breakout" — belum diimplementasikan. |
 | brick | Command Yann AI V15 "brick" — belum diimplementasikan. |
 | brickbreaker | Command Yann AI V15 "brickbreaker" — belum diimplementasikan. |
-| broadcast | Command Yann AI V15 "broadcast" — belum diimplementasikan. |
-| buatkode | Command Yann AI V15 "buatkode" — belum diimplementasikan. |
 | buatlagu | Command Yann AI V15 "buatlagu" — belum diimplementasikan. |
-| buatstreak | Command Yann AI V15 "buatstreak" — belum diimplementasikan. |
 | buatvideo | Command Yann AI V15 "buatvideo" — belum diimplementasikan. |
 | buronan | Command Yann AI V15 "buronan" — belum diimplementasikan. |
-| buyprem | Command Yann AI V15 "buyprem" — belum diimplementasikan. |
-| buypremium | Command Yann AI V15 "buypremium" — belum diimplementasikan. |
-| buysewagc | Command Yann AI V15 "buysewagc" — belum diimplementasikan. |
-| bzirrt | Command Yann AI V15 "bzirrt" — belum diimplementasikan. |
-| cadp | Command Yann AI V15 "cadp" — belum diimplementasikan. |
 | capcutdownload | Command Yann AI V15 "capcutdownload" — belum diimplementasikan. |
 | cardmusik | Command Yann AI V15 "cardmusik" — belum diimplementasikan. |
 | carianime | Command Yann AI V15 "carianime" — belum diimplementasikan. |
@@ -1197,119 +1489,42 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | caristikerdown | Command Yann AI V15 "caristikerdown" — belum diimplementasikan. |
 | caritele | Command Yann AI V15 "caritele" — belum diimplementasikan. |
 | cartoonstyle | Command Yann AI V15 "cartoonstyle" — belum diimplementasikan. |
-| casino | Command Yann AI V15 "casino" — belum diimplementasikan. |
 | catbox | Command Yann AI V15 "catbox" — belum diimplementasikan. |
-| cecan | Command Yann AI V15 "cecan" — belum diimplementasikan. |
-| cecanchina | Command Yann AI V15 "cecanchina" — belum diimplementasikan. |
-| cecanhijaber | Command Yann AI V15 "cecanhijaber" — belum diimplementasikan. |
-| cecanindonesia | Command Yann AI V15 "cecanindonesia" — belum diimplementasikan. |
-| cecanjapan | Command Yann AI V15 "cecanjapan" — belum diimplementasikan. |
-| cecanjeni | Command Yann AI V15 "cecanjeni" — belum diimplementasikan. |
-| cecanjiso | Command Yann AI V15 "cecanjiso" — belum diimplementasikan. |
-| cecanjustinaxie | Command Yann AI V15 "cecanjustinaxie" — belum diimplementasikan. |
-| cecankorea | Command Yann AI V15 "cecankorea" — belum diimplementasikan. |
-| cecanmalaysia | Command Yann AI V15 "cecanmalaysia" — belum diimplementasikan. |
-| cecannaxie | Command Yann AI V15 "cecannaxie" — belum diimplementasikan. |
-| cecanrandom | Command Yann AI V15 "cecanrandom" — belum diimplementasikan. |
-| cecanrose | Command Yann AI V15 "cecanrose" — belum diimplementasikan. |
-| cecanryujin | Command Yann AI V15 "cecanryujin" — belum diimplementasikan. |
-| cecanthailand | Command Yann AI V15 "cecanthailand" — belum diimplementasikan. |
-| cecanvietnam | Command Yann AI V15 "cecanvietnam" — belum diimplementasikan. |
-| cekaura | Command Yann AI V15 "cekaura" — belum diimplementasikan. |
-| cekbeban | Command Yann AI V15 "cekbeban" — belum diimplementasikan. |
-| cekfemboy | Command Yann AI V15 "cekfemboy" — belum diimplementasikan. |
 | cekff | Command Yann AI V15 "cekff" — belum diimplementasikan. |
-| cekidch | Command Yann AI V15 "cekidch" — belum diimplementasikan. |
-| cekidgc | Command Yann AI V15 "cekidgc" — belum diimplementasikan. |
-| cekjadwal | Command Yann AI V15 "cekjadwal" — belum diimplementasikan. |
-| cekjadwalpesan | Command Yann AI V15 "cekjadwalpesan" — belum diimplementasikan. |
-| cekjodoh | Command Yann AI V15 "cekjodoh" — belum diimplementasikan. |
-| ceklistwarn | Command Yann AI V15 "ceklistwarn" — belum diimplementasikan. |
-| cekmasadepan | Command Yann AI V15 "cekmasadepan" — belum diimplementasikan. |
-| ceknim | Command Yann AI V15 "ceknim" — belum diimplementasikan. |
-| ceknohp | Command Yann AI V15 "ceknohp" — belum diimplementasikan. |
-| ceknomor | Command Yann AI V15 "ceknomor" — belum diimplementasikan. |
-| cekres | Command Yann AI V15 "cekres" — belum diimplementasikan. |
-| ceksewagc | Command Yann AI V15 "ceksewagc" — belum diimplementasikan. |
-| ceksider | Command Yann AI V15 "ceksider" — belum diimplementasikan. |
-| cekstreak | Command Yann AI V15 "cekstreak" — belum diimplementasikan. |
-| cekultah | Command Yann AI V15 "cekultah" — belum diimplementasikan. |
 | cfsub | Command Yann AI V15 "cfsub" — belum diimplementasikan. |
 | charinfo | Command Yann AI V15 "charinfo" — belum diimplementasikan. |
 | chiho | Command Yann AI V15 "chiho" — belum diimplementasikan. |
 | chitoge | Command Yann AI V15 "chitoge" — belum diimplementasikan. |
 | cinta | Command Yann AI V15 "cinta" — belum diimplementasikan. |
-| clearchat | Command Yann AI V15 "clearchat" — belum diimplementasikan. |
-| cleardb | Command Yann AI V15 "cleardb" — belum diimplementasikan. |
-| clearlist | Command Yann AI V15 "clearlist" — belum diimplementasikan. |
-| clearprem | Command Yann AI V15 "clearprem" — belum diimplementasikan. |
-| clearreseller | Command Yann AI V15 "clearreseller" — belum diimplementasikan. |
-| clearrespon | Command Yann AI V15 "clearrespon" — belum diimplementasikan. |
 | clearsesi | Command Yann AI V15 "clearsesi" — belum diimplementasikan. |
 | clearsession | Command Yann AI V15 "clearsession" — belum diimplementasikan. |
-| closetime | Command Yann AI V15 "closetime" — belum diimplementasikan. |
 | clsesi | Command Yann AI V15 "clsesi" — belum diimplementasikan. |
 | cnbcnews | Command Yann AI V15 "cnbcnews" — belum diimplementasikan. |
 | cocoknama | Command Yann AI V15 "cocoknama" — belum diimplementasikan. |
-| cogan | Command Yann AI V15 "cogan" — belum diimplementasikan. |
-| cokelat | Command Yann AI V15 "cokelat" — belum diimplementasikan. |
 | colorize | Command Yann AI V15 "colorize" — belum diimplementasikan. |
-| confes | Command Yann AI V15 "confes" — belum diimplementasikan. |
-| configurewings | Command Yann AI V15 "configurewings" — belum diimplementasikan. |
 | convertweb | Command Yann AI V15 "convertweb" — belum diimplementasikan. |
 | copilotvoice | Command Yann AI V15 "copilotvoice" — belum diimplementasikan. |
-| copy | Command Yann AI V15 "copy" — belum diimplementasikan. |
 | coverpubg | Command Yann AI V15 "coverpubg" — belum diimplementasikan. |
-| createadp | Command Yann AI V15 "createadp" — belum diimplementasikan. |
-| creategc | Command Yann AI V15 "creategc" — belum diimplementasikan. |
-| creategroup | Command Yann AI V15 "creategroup" — belum diimplementasikan. |
-| creategrup | Command Yann AI V15 "creategrup" — belum diimplementasikan. |
 | createhtml | Command Yann AI V15 "createhtml" — belum diimplementasikan. |
 | createimage | Command Yann AI V15 "createimage" — belum diimplementasikan. |
 | createsong | Command Yann AI V15 "createsong" — belum diimplementasikan. |
 | createsubdo | Command Yann AI V15 "createsubdo" — belum diimplementasikan. |
-| crop | Command Yann AI V15 "crop" — belum diimplementasikan. |
-| custom-encrypt | Command Yann AI V15 "custom-encrypt" — belum diimplementasikan. |
-| customenc | Command Yann AI V15 "customenc" — belum diimplementasikan. |
 | customjsen | Command Yann AI V15 "customjsen" — belum diimplementasikan. |
-| cyan | Command Yann AI V15 "cyan" — belum diimplementasikan. |
-| daftarbadword | Command Yann AI V15 "daftarbadword" — belum diimplementasikan. |
 | dai | Command Yann AI V15 "dai" — belum diimplementasikan. |
-| deeppink | Command Yann AI V15 "deeppink" — belum diimplementasikan. |
 | deidara | Command Yann AI V15 "deidara" — belum diimplementasikan. |
-| delbadword | Command Yann AI V15 "delbadword" — belum diimplementasikan. |
-| delcase | Command Yann AI V15 "delcase" — belum diimplementasikan. |
-| deletepanel | Command Yann AI V15 "deletepanel" — belum diimplementasikan. |
-| deletepremgc | Command Yann AI V15 "deletepremgc" — belum diimplementasikan. |
 | deletingtext | Command Yann AI V15 "deletingtext" — belum diimplementasikan. |
-| dellimit | Command Yann AI V15 "dellimit" — belum diimplementasikan. |
-| dellist | Command Yann AI V15 "dellist" — belum diimplementasikan. |
-| delmoney | Command Yann AI V15 "delmoney" — belum diimplementasikan. |
-| delpanel | Command Yann AI V15 "delpanel" — belum diimplementasikan. |
-| delpay | Command Yann AI V15 "delpay" — belum diimplementasikan. |
 | delplugin | Command Yann AI V15 "delplugin" — belum diimplementasikan. |
 | delplugins | Command Yann AI V15 "delplugins" — belum diimplementasikan. |
 | delprefix | Command Yann AI V15 "delprefix" — belum diimplementasikan. |
-| delpremgc | Command Yann AI V15 "delpremgc" — belum diimplementasikan. |
-| delpremgrup | Command Yann AI V15 "delpremgrup" — belum diimplementasikan. |
-| delreseller | Command Yann AI V15 "delreseller" — belum diimplementasikan. |
-| delreselleram | Command Yann AI V15 "delreselleram" — belum diimplementasikan. |
-| delrespon | Command Yann AI V15 "delrespon" — belum diimplementasikan. |
-| delsewagc | Command Yann AI V15 "delsewagc" — belum diimplementasikan. |
-| delsrv | Command Yann AI V15 "delsrv" — belum diimplementasikan. |
 | delstikercmd | Command Yann AI V15 "delstikercmd" — belum diimplementasikan. |
 | delsubdo | Command Yann AI V15 "delsubdo" — belum diimplementasikan. |
 | delsubdomain | Command Yann AI V15 "delsubdomain" — belum diimplementasikan. |
-| delultah | Command Yann AI V15 "delultah" — belum diimplementasikan. |
-| deluser | Command Yann AI V15 "deluser" — belum diimplementasikan. |
 | denia | Command Yann AI V15 "denia" — belum diimplementasikan. |
 | denia-run | Command Yann AI V15 "denia-run" — belum diimplementasikan. |
 | deniarunner | Command Yann AI V15 "deniarunner" — belum diimplementasikan. |
 | developer | Command Yann AI V15 "developer" — belum diimplementasikan. |
 | dino | Command Yann AI V15 "dino" — belum diimplementasikan. |
 | dinorunner | Command Yann AI V15 "dinorunner" — belum diimplementasikan. |
-| donate | Command Yann AI V15 "donate" — belum diimplementasikan. |
-| done | Command Yann AI V15 "done" — belum diimplementasikan. |
 | doraemon | Command Yann AI V15 "doraemon" — belum diimplementasikan. |
 | downloadpin | Command Yann AI V15 "downloadpin" — belum diimplementasikan. |
 | downpin | Command Yann AI V15 "downpin" — belum diimplementasikan. |
@@ -1317,74 +1532,26 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | dsd | Command Yann AI V15 "dsd" — belum diimplementasikan. |
 | duckai | Command Yann AI V15 "duckai" — belum diimplementasikan. |
 | duckaiimage | Command Yann AI V15 "duckaiimage" — belum diimplementasikan. |
-| dzikir | Command Yann AI V15 "dzikir" — belum diimplementasikan. |
 | editai | Command Yann AI V15 "editai" — belum diimplementasikan. |
 | editimg | Command Yann AI V15 "editimg" — belum diimplementasikan. |
 | effectclouds | Command Yann AI V15 "effectclouds" — belum diimplementasikan. |
-| ehbtw | Command Yann AI V15 "ehbtw" — belum diimplementasikan. |
-| emas | Command Yann AI V15 "emas" — belum diimplementasikan. |
 | emilia | Command Yann AI V15 "emilia" — belum diimplementasikan. |
 | emoji | Command Yann AI V15 "emoji" — belum diimplementasikan. |
 | emojigif | Command Yann AI V15 "emojigif" — belum diimplementasikan. |
 | emojiwa | Command Yann AI V15 "emojiwa" — belum diimplementasikan. |
 | emojix | Command Yann AI V15 "emojix" — belum diimplementasikan. |
-| enc-custom | Command Yann AI V15 "enc-custom" — belum diimplementasikan. |
-| enc-invis | Command Yann AI V15 "enc-invis" — belum diimplementasikan. |
-| enc-invisible | Command Yann AI V15 "enc-invisible" — belum diimplementasikan. |
-| enc-siu | Command Yann AI V15 "enc-siu" — belum diimplementasikan. |
-| enc-strong | Command Yann AI V15 "enc-strong" — belum diimplementasikan. |
-| enc-ultra | Command Yann AI V15 "enc-ultra" — belum diimplementasikan. |
-| enccustom | Command Yann AI V15 "enccustom" — belum diimplementasikan. |
-| enccustomjs | Command Yann AI V15 "enccustomjs" — belum diimplementasikan. |
-| encinvis | Command Yann AI V15 "encinvis" — belum diimplementasikan. |
-| encinvisible | Command Yann AI V15 "encinvisible" — belum diimplementasikan. |
-| encjsinvis | Command Yann AI V15 "encjsinvis" — belum diimplementasikan. |
-| encrypt-custom | Command Yann AI V15 "encrypt-custom" — belum diimplementasikan. |
-| encrypt-invis | Command Yann AI V15 "encrypt-invis" — belum diimplementasikan. |
-| encrypt-invisible | Command Yann AI V15 "encrypt-invisible" — belum diimplementasikan. |
-| encrypt-siu | Command Yann AI V15 "encrypt-siu" — belum diimplementasikan. |
-| encrypt-strong | Command Yann AI V15 "encrypt-strong" — belum diimplementasikan. |
-| encrypt-ultra | Command Yann AI V15 "encrypt-ultra" — belum diimplementasikan. |
-| encryptcustom | Command Yann AI V15 "encryptcustom" — belum diimplementasikan. |
-| encryptcustomjs | Command Yann AI V15 "encryptcustomjs" — belum diimplementasikan. |
-| encryptinvis | Command Yann AI V15 "encryptinvis" — belum diimplementasikan. |
-| encryptinvisible | Command Yann AI V15 "encryptinvisible" — belum diimplementasikan. |
-| encryptsiu | Command Yann AI V15 "encryptsiu" — belum diimplementasikan. |
-| encryptstrong | Command Yann AI V15 "encryptstrong" — belum diimplementasikan. |
-| encryptultra | Command Yann AI V15 "encryptultra" — belum diimplementasikan. |
-| encsiu | Command Yann AI V15 "encsiu" — belum diimplementasikan. |
-| encsiujs | Command Yann AI V15 "encsiujs" — belum diimplementasikan. |
-| encstrong | Command Yann AI V15 "encstrong" — belum diimplementasikan. |
-| encstrongjs | Command Yann AI V15 "encstrongjs" — belum diimplementasikan. |
-| encultra | Command Yann AI V15 "encultra" — belum diimplementasikan. |
-| encultrajs | Command Yann AI V15 "encultrajs" — belum diimplementasikan. |
 | eninvisiblejs | Command Yann AI V15 "eninvisiblejs" — belum diimplementasikan. |
 | eraser | Command Yann AI V15 "eraser" — belum diimplementasikan. |
-| error | Command Yann AI V15 "error" — belum diimplementasikan. |
 | erza | Command Yann AI V15 "erza" — belum diimplementasikan. |
-| exchange | Command Yann AI V15 "exchange" — belum diimplementasikan. |
-| failed | Command Yann AI V15 "failed" — belum diimplementasikan. |
 | fakewa | Command Yann AI V15 "fakewa" — belum diimplementasikan. |
 | fakewhatsapp | Command Yann AI V15 "fakewhatsapp" — belum diimplementasikan. |
 | fakexnxx | Command Yann AI V15 "fakexnxx" — belum diimplementasikan. |
-| faktadunia | Command Yann AI V15 "faktadunia" — belum diimplementasikan. |
 | flag3dtext | Command Yann AI V15 "flag3dtext" — belum diimplementasikan. |
 | flagtext | Command Yann AI V15 "flagtext" — belum diimplementasikan. |
 | flappy | Command Yann AI V15 "flappy" — belum diimplementasikan. |
 | flappybird | Command Yann AI V15 "flappybird" — belum diimplementasikan. |
-| font1 | Command Yann AI V15 "font1" — belum diimplementasikan. |
-| font10 | Command Yann AI V15 "font10" — belum diimplementasikan. |
-| font2 | Command Yann AI V15 "font2" — belum diimplementasikan. |
-| font3 | Command Yann AI V15 "font3" — belum diimplementasikan. |
-| font4 | Command Yann AI V15 "font4" — belum diimplementasikan. |
-| font5 | Command Yann AI V15 "font5" — belum diimplementasikan. |
-| font6 | Command Yann AI V15 "font6" — belum diimplementasikan. |
-| font7 | Command Yann AI V15 "font7" — belum diimplementasikan. |
-| font8 | Command Yann AI V15 "font8" — belum diimplementasikan. |
-| font9 | Command Yann AI V15 "font9" — belum diimplementasikan. |
 | freecreate | Command Yann AI V15 "freecreate" — belum diimplementasikan. |
 | freestalk | Command Yann AI V15 "freestalk" — belum diimplementasikan. |
-| fuchsia | Command Yann AI V15 "fuchsia" — belum diimplementasikan. |
 | fwa | Command Yann AI V15 "fwa" — belum diimplementasikan. |
 | galaxian | Command Yann AI V15 "galaxian" — belum diimplementasikan. |
 | galaxy | Command Yann AI V15 "galaxy" — belum diimplementasikan. |
@@ -1396,26 +1563,20 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | gamedino | Command Yann AI V15 "gamedino" — belum diimplementasikan. |
 | gameflappy | Command Yann AI V15 "gameflappy" — belum diimplementasikan. |
 | gamesnake | Command Yann AI V15 "gamesnake" — belum diimplementasikan. |
-| gcsider | Command Yann AI V15 "gcsider" — belum diimplementasikan. |
 | generateimage | Command Yann AI V15 "generateimage" — belum diimplementasikan. |
 | genvideo | Command Yann AI V15 "genvideo" — belum diimplementasikan. |
 | get | Command Yann AI V15 "get" — belum diimplementasikan. |
 | getaudio | Command Yann AI V15 "getaudio" — belum diimplementasikan. |
-| getcase | Command Yann AI V15 "getcase" — belum diimplementasikan. |
-| getidgc | Command Yann AI V15 "getidgc" — belum diimplementasikan. |
 | getp | Command Yann AI V15 "getp" — belum diimplementasikan. |
 | getpastebin | Command Yann AI V15 "getpastebin" — belum diimplementasikan. |
 | getplugin | Command Yann AI V15 "getplugin" — belum diimplementasikan. |
 | getplugins | Command Yann AI V15 "getplugins" — belum diimplementasikan. |
-| getpp | Command Yann AI V15 "getpp" — belum diimplementasikan. |
-| getsc | Command Yann AI V15 "getsc" — belum diimplementasikan. |
 | ghibli | Command Yann AI V15 "ghibli" — belum diimplementasikan. |
 | gitclone | Command Yann AI V15 "gitclone" — belum diimplementasikan. |
 | glitchimg | Command Yann AI V15 "glitchimg" — belum diimplementasikan. |
 | glitchtext | Command Yann AI V15 "glitchtext" — belum diimplementasikan. |
 | glowingtext | Command Yann AI V15 "glowingtext" — belum diimplementasikan. |
 | goldbutton | Command Yann AI V15 "goldbutton" — belum diimplementasikan. |
-| goldenrod | Command Yann AI V15 "goldenrod" — belum diimplementasikan. |
 | gp | Command Yann AI V15 "gp" — belum diimplementasikan. |
 | gpt5plus | Command Yann AI V15 "gpt5plus" — belum diimplementasikan. |
 | gptimage | Command Yann AI V15 "gptimage" — belum diimplementasikan. |
@@ -1424,34 +1585,19 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | gradienttext | Command Yann AI V15 "gradienttext" — belum diimplementasikan. |
 | grafitti | Command Yann AI V15 "grafitti" — belum diimplementasikan. |
 | gremory | Command Yann AI V15 "gremory" — belum diimplementasikan. |
-| groupsider | Command Yann AI V15 "groupsider" — belum diimplementasikan. |
 | gtmp3 | Command Yann AI V15 "gtmp3" — belum diimplementasikan. |
-| hadits | Command Yann AI V15 "hadits" — belum diimplementasikan. |
-| hapusbadword | Command Yann AI V15 "hapusbadword" — belum diimplementasikan. |
-| hapuskode | Command Yann AI V15 "hapuskode" — belum diimplementasikan. |
 | hapusobjek | Command Yann AI V15 "hapusobjek" — belum diimplementasikan. |
-| hapussemuareseller | Command Yann AI V15 "hapussemuareseller" — belum diimplementasikan. |
 | hapuswatermark | Command Yann AI V15 "hapuswatermark" — belum diimplementasikan. |
 | hcr | Command Yann AI V15 "hcr" — belum diimplementasikan. |
 | hd2 | Command Yann AI V15 "hd2" — belum diimplementasikan. |
 | hdvid | Command Yann AI V15 "hdvid" — belum diimplementasikan. |
 | hdvideo | Command Yann AI V15 "hdvideo" — belum diimplementasikan. |
 | hestia | Command Yann AI V15 "hestia" — belum diimplementasikan. |
-| hidetagpoll | Command Yann AI V15 "hidetagpoll" — belum diimplementasikan. |
 | hiitwixtor | Command Yann AI V15 "hiitwixtor" — belum diimplementasikan. |
 | hijabpin | Command Yann AI V15 "hijabpin" — belum diimplementasikan. |
-| hijau | Command Yann AI V15 "hijau" — belum diimplementasikan. |
-| hijaugelap | Command Yann AI V15 "hijaugelap" — belum diimplementasikan. |
-| hijaulaut | Command Yann AI V15 "hijaulaut" — belum diimplementasikan. |
-| hijaulumut | Command Yann AI V15 "hijaulumut" — belum diimplementasikan. |
-| hijautua | Command Yann AI V15 "hijautua" — belum diimplementasikan. |
 | hinata | Command Yann AI V15 "hinata" — belum diimplementasikan. |
-| hitam | Command Yann AI V15 "hitam" — belum diimplementasikan. |
 | hoki | Command Yann AI V15 "hoki" — belum diimplementasikan. |
 | horor | Command Yann AI V15 "horor" — belum diimplementasikan. |
-| hotpink | Command Yann AI V15 "hotpink" — belum diimplementasikan. |
-| idch | Command Yann AI V15 "idch" — belum diimplementasikan. |
-| idgc | Command Yann AI V15 "idgc" — belum diimplementasikan. |
 | image2video | Command Yann AI V15 "image2video" — belum diimplementasikan. |
 | imagetopdf | Command Yann AI V15 "imagetopdf" — belum diimplementasikan. |
 | img2pdf | Command Yann AI V15 "img2pdf" — belum diimplementasikan. |
@@ -1464,87 +1610,41 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | infosubdo | Command Yann AI V15 "infosubdo" — belum diimplementasikan. |
 | infosubdomain | Command Yann AI V15 "infosubdomain" — belum diimplementasikan. |
 | infouser | Command Yann AI V15 "infouser" — belum diimplementasikan. |
-| infowarn | Command Yann AI V15 "infowarn" — belum diimplementasikan. |
 | inori | Command Yann AI V15 "inori" — belum diimplementasikan. |
 | installpanel | Command Yann AI V15 "installpanel" — belum diimplementasikan. |
-| intro | Command Yann AI V15 "intro" — belum diimplementasikan. |
-| invis-encrypt | Command Yann AI V15 "invis-encrypt" — belum diimplementasikan. |
-| invisenc | Command Yann AI V15 "invisenc" — belum diimplementasikan. |
-| invisible-encrypt | Command Yann AI V15 "invisible-encrypt" — belum diimplementasikan. |
-| invisibleenc | Command Yann AI V15 "invisibleenc" — belum diimplementasikan. |
 | iphonequoted | Command Yann AI V15 "iphonequoted" — belum diimplementasikan. |
 | iphonequoted2 | Command Yann AI V15 "iphonequoted2" — belum diimplementasikan. |
 | iqc3 | Command Yann AI V15 "iqc3" — belum diimplementasikan. |
-| isidompet | Command Yann AI V15 "isidompet" — belum diimplementasikan. |
 | isuzu | Command Yann AI V15 "isuzu" — belum diimplementasikan. |
 | itachi | Command Yann AI V15 "itachi" — belum diimplementasikan. |
 | itori | Command Yann AI V15 "itori" — belum diimplementasikan. |
 | jadidisney | Command Yann AI V15 "jadidisney" — belum diimplementasikan. |
 | jadigta | Command Yann AI V15 "jadigta" — belum diimplementasikan. |
 | jadipixar | Command Yann AI V15 "jadipixar" — belum diimplementasikan. |
-| jadpes | Command Yann AI V15 "jadpes" — belum diimplementasikan. |
 | jadwalkirim | Command Yann AI V15 "jadwalkirim" — belum diimplementasikan. |
 | jadwalngirimpesan | Command Yann AI V15 "jadwalngirimpesan" — belum diimplementasikan. |
-| jadwalpesan | Command Yann AI V15 "jadwalpesan" — belum diimplementasikan. |
-| jawab | Command Yann AI V15 "jawab" — belum diimplementasikan. |
-| jawabasah | Command Yann AI V15 "jawabasah" — belum diimplementasikan. |
-| jawabkuis | Command Yann AI V15 "jawabkuis" — belum diimplementasikan. |
-| jawabtebak | Command Yann AI V15 "jawabtebak" — belum diimplementasikan. |
-| jawabteka | Command Yann AI V15 "jawabteka" — belum diimplementasikan. |
-| jingga | Command Yann AI V15 "jingga" — belum diimplementasikan. |
 | jodohbali | Command Yann AI V15 "jodohbali" — belum diimplementasikan. |
-| jodohmakanan | Command Yann AI V15 "jodohmakanan" — belum diimplementasikan. |
 | joinch | Command Yann AI V15 "joinch" — belum diimplementasikan. |
 | joingcall | Command Yann AI V15 "joingcall" — belum diimplementasikan. |
-| jscustomenc | Command Yann AI V15 "jscustomenc" — belum diimplementasikan. |
-| jsinvisenc | Command Yann AI V15 "jsinvisenc" — belum diimplementasikan. |
-| jssiuenc | Command Yann AI V15 "jssiuenc" — belum diimplementasikan. |
-| jsstrongenc | Command Yann AI V15 "jsstrongenc" — belum diimplementasikan. |
-| jsultraenc | Command Yann AI V15 "jsultraenc" — belum diimplementasikan. |
-| jumlahuser | Command Yann AI V15 "jumlahuser" — belum diimplementasikan. |
 | kaga | Command Yann AI V15 "kaga" — belum diimplementasikan. |
 | kagura | Command Yann AI V15 "kagura" — belum diimplementasikan. |
 | kaori | Command Yann AI V15 "kaori" — belum diimplementasikan. |
-| kapanreset | Command Yann AI V15 "kapanreset" — belum diimplementasikan. |
 | kecocokannama | Command Yann AI V15 "kecocokannama" — belum diimplementasikan. |
 | kecocokanpasangan | Command Yann AI V15 "kecocokanpasangan" — belum diimplementasikan. |
-| kicksider | Command Yann AI V15 "kicksider" — belum diimplementasikan. |
-| kirimch | Command Yann AI V15 "kirimch" — belum diimplementasikan. |
 | kontolscan | Command Yann AI V15 "kontolscan" — belum diimplementasikan. |
-| kuis | Command Yann AI V15 "kuis" — belum diimplementasikan. |
-| kuning | Command Yann AI V15 "kuning" — belum diimplementasikan. |
 | kurumi | Command Yann AI V15 "kurumi" — belum diimplementasikan. |
-| lbmoney | Command Yann AI V15 "lbmoney" — belum diimplementasikan. |
-| leaderboardmoney | Command Yann AI V15 "leaderboardmoney" — belum diimplementasikan. |
 | lighteffects | Command Yann AI V15 "lighteffects" — belum diimplementasikan. |
-| list | Command Yann AI V15 "list" — belum diimplementasikan. |
-| listbadword | Command Yann AI V15 "listbadword" — belum diimplementasikan. |
-| listcase | Command Yann AI V15 "listcase" — belum diimplementasikan. |
-| listkode | Command Yann AI V15 "listkode" — belum diimplementasikan. |
-| listpanel | Command Yann AI V15 "listpanel" — belum diimplementasikan. |
-| listpay | Command Yann AI V15 "listpay" — belum diimplementasikan. |
 | listplugin | Command Yann AI V15 "listplugin" — belum diimplementasikan. |
 | listplugins | Command Yann AI V15 "listplugins" — belum diimplementasikan. |
 | listprefix | Command Yann AI V15 "listprefix" — belum diimplementasikan. |
-| listreseller | Command Yann AI V15 "listreseller" — belum diimplementasikan. |
-| listreselleram | Command Yann AI V15 "listreselleram" — belum diimplementasikan. |
-| listrespon | Command Yann AI V15 "listrespon" — belum diimplementasikan. |
-| listschedmsg | Command Yann AI V15 "listschedmsg" — belum diimplementasikan. |
-| listsewagc | Command Yann AI V15 "listsewagc" — belum diimplementasikan. |
 | listsubdo | Command Yann AI V15 "listsubdo" — belum diimplementasikan. |
 | listsubdomain | Command Yann AI V15 "listsubdomain" — belum diimplementasikan. |
-| listultah | Command Yann AI V15 "listultah" — belum diimplementasikan. |
-| listuser | Command Yann AI V15 "listuser" — belum diimplementasikan. |
-| listwarning | Command Yann AI V15 "listwarning" — belum diimplementasikan. |
 | logicbell | Command Yann AI V15 "logicbell" — belum diimplementasikan. |
 | logomaker | Command Yann AI V15 "logomaker" — belum diimplementasikan. |
 | lsd | Command Yann AI V15 "lsd" — belum diimplementasikan. |
 | luma | Command Yann AI V15 "luma" — belum diimplementasikan. |
 | luxurygold | Command Yann AI V15 "luxurygold" — belum diimplementasikan. |
 | madara | Command Yann AI V15 "madara" — belum diimplementasikan. |
-| magenta | Command Yann AI V15 "magenta" — belum diimplementasikan. |
-| magentagelap | Command Yann AI V15 "magentagelap" — belum diimplementasikan. |
-| maintenance | Command Yann AI V15 "maintenance" — belum diimplementasikan. |
 | makingneon | Command Yann AI V15 "makingneon" — belum diimplementasikan. |
 | manusialidi | Command Yann AI V15 "manusialidi" — belum diimplementasikan. |
 | mathchallenge | Command Yann AI V15 "mathchallenge" — belum diimplementasikan. |
@@ -1552,99 +1652,41 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | megumin | Command Yann AI V15 "megumin" — belum diimplementasikan. |
 | memekprimbon | Command Yann AI V15 "memekprimbon" — belum diimplementasikan. |
 | memekscan | Command Yann AI V15 "memekscan" — belum diimplementasikan. |
-| menu-ai | Command Yann AI V15 "menu-ai" — belum diimplementasikan. |
-| menu-anime | Command Yann AI V15 "menu-anime" — belum diimplementasikan. |
-| menu-animetheme | Command Yann AI V15 "menu-animetheme" — belum diimplementasikan. |
-| menu-asupan | Command Yann AI V15 "menu-asupan" — belum diimplementasikan. |
-| menu-cecan | Command Yann AI V15 "menu-cecan" — belum diimplementasikan. |
-| menu-download | Command Yann AI V15 "menu-download" — belum diimplementasikan. |
-| menu-ehpoto | Command Yann AI V15 "menu-ehpoto" — belum diimplementasikan. |
-| menu-enc | Command Yann AI V15 "menu-enc" — belum diimplementasikan. |
-| menu-fun | Command Yann AI V15 "menu-fun" — belum diimplementasikan. |
-| menu-game | Command Yann AI V15 "menu-game" — belum diimplementasikan. |
-| menu-group | Command Yann AI V15 "menu-group" — belum diimplementasikan. |
-| menu-islami | Command Yann AI V15 "menu-islami" — belum diimplementasikan. |
-| menu-maker | Command Yann AI V15 "menu-maker" — belum diimplementasikan. |
-| menu-nsfw | Command Yann AI V15 "menu-nsfw" — belum diimplementasikan. |
-| menu-owner | Command Yann AI V15 "menu-owner" — belum diimplementasikan. |
-| menu-panel | Command Yann AI V15 "menu-panel" — belum diimplementasikan. |
-| menu-potoanime | Command Yann AI V15 "menu-potoanime" — belum diimplementasikan. |
-| menu-prem | Command Yann AI V15 "menu-prem" — belum diimplementasikan. |
-| menu-primbon | Command Yann AI V15 "menu-primbon" — belum diimplementasikan. |
-| menu-random | Command Yann AI V15 "menu-random" — belum diimplementasikan. |
-| menu-rpg | Command Yann AI V15 "menu-rpg" — belum diimplementasikan. |
-| menu-search | Command Yann AI V15 "menu-search" — belum diimplementasikan. |
-| menu-shop | Command Yann AI V15 "menu-shop" — belum diimplementasikan. |
-| menu-stickers | Command Yann AI V15 "menu-stickers" — belum diimplementasikan. |
-| menu-stk | Command Yann AI V15 "menu-stk" — belum diimplementasikan. |
-| menu-store | Command Yann AI V15 "menu-store" — belum diimplementasikan. |
-| menu-tools | Command Yann AI V15 "menu-tools" — belum diimplementasikan. |
-| merah | Command Yann AI V15 "merah" — belum diimplementasikan. |
-| merahgelap | Command Yann AI V15 "merahgelap" — belum diimplementasikan. |
-| merahmuda | Command Yann AI V15 "merahmuda" — belum diimplementasikan. |
-| merahtua | Command Yann AI V15 "merahtua" — belum diimplementasikan. |
 | mikasa | Command Yann AI V15 "mikasa" — belum diimplementasikan. |
 | miku | Command Yann AI V15 "miku" — belum diimplementasikan. |
 | minato | Command Yann AI V15 "minato" — belum diimplementasikan. |
-| mirror | Command Yann AI V15 "mirror" — belum diimplementasikan. |
 | mirror2 | Command Yann AI V15 "mirror2" — belum diimplementasikan. |
-| mirrorimg | Command Yann AI V15 "mirrorimg" — belum diimplementasikan. |
 | mirrorimg2 | Command Yann AI V15 "mirrorimg2" — belum diimplementasikan. |
 | mixemoji | Command Yann AI V15 "mixemoji" — belum diimplementasikan. |
-| mixing | Command Yann AI V15 "mixing" — belum diimplementasikan. |
 | mobil | Command Yann AI V15 "mobil" — belum diimplementasikan. |
-| moneylb | Command Yann AI V15 "moneylb" — belum diimplementasikan. |
 | multicoloredneon | Command Yann AI V15 "multicoloredneon" — belum diimplementasikan. |
 | musikcard | Command Yann AI V15 "musikcard" — belum diimplementasikan. |
-| mutegc | Command Yann AI V15 "mutegc" — belum diimplementasikan. |
-| mutegc_proses | Command Yann AI V15 "mutegc_proses" — belum diimplementasikan. |
-| mypanel | Command Yann AI V15 "mypanel" — belum diimplementasikan. |
-| mywarn | Command Yann AI V15 "mywarn" — belum diimplementasikan. |
 | namacocok | Command Yann AI V15 "namacocok" — belum diimplementasikan. |
 | nasib | Command Yann AI V15 "nasib" — belum diimplementasikan. |
-| nasibbatere | Command Yann AI V15 "nasibbatere" — belum diimplementasikan. |
 | neko2 | Command Yann AI V15 "neko2" — belum diimplementasikan. |
 | neonglitch | Command Yann AI V15 "neonglitch" — belum diimplementasikan. |
 | news | Command Yann AI V15 "news" — belum diimplementasikan. |
 | nezuko | Command Yann AI V15 "nezuko" — belum diimplementasikan. |
 | ngl | Command Yann AI V15 "ngl" — belum diimplementasikan. |
 | nglgenerator | Command Yann AI V15 "nglgenerator" — belum diimplementasikan. |
-| niatsholat | Command Yann AI V15 "niatsholat" — belum diimplementasikan. |
 | nightstars | Command Yann AI V15 "nightstars" — belum diimplementasikan. |
 | nohoki | Command Yann AI V15 "nohoki" — belum diimplementasikan. |
 | nomerhoki | Command Yann AI V15 "nomerhoki" — belum diimplementasikan. |
-| nomorinfo | Command Yann AI V15 "nomorinfo" — belum diimplementasikan. |
-| notif | Command Yann AI V15 "notif" — belum diimplementasikan. |
 | npmjs | Command Yann AI V15 "npmjs" — belum diimplementasikan. |
 | npmstalk | Command Yann AI V15 "npmstalk" — belum diimplementasikan. |
-| nyalainstreak | Command Yann AI V15 "nyalainstreak" — belum diimplementasikan. |
 | off | Command Yann AI V15 "off" — belum diimplementasikan. |
 | on | Command Yann AI V15 "on" — belum diimplementasikan. |
 | onepiece | Command Yann AI V15 "onepiece" — belum diimplementasikan. |
-| onlygc | Command Yann AI V15 "onlygc" — belum diimplementasikan. |
-| onlygrup | Command Yann AI V15 "onlygrup" — belum diimplementasikan. |
-| onlyprem | Command Yann AI V15 "onlyprem" — belum diimplementasikan. |
-| opentime | Command Yann AI V15 "opentime" — belum diimplementasikan. |
-| orange | Command Yann AI V15 "orange" — belum diimplementasikan. |
-| oranyemerah | Command Yann AI V15 "oranyemerah" — belum diimplementasikan. |
-| oranyetua | Command Yann AI V15 "oranyetua" — belum diimplementasikan. |
 | otakudesu | Command Yann AI V15 "otakudesu" — belum diimplementasikan. |
 | own | Command Yann AI V15 "own" — belum diimplementasikan. |
 | pakustad | Command Yann AI V15 "pakustad" — belum diimplementasikan. |
 | papercutstyle | Command Yann AI V15 "papercutstyle" — belum diimplementasikan. |
 | pastebin | Command Yann AI V15 "pastebin" — belum diimplementasikan. |
-| pay | Command Yann AI V15 "pay" — belum diimplementasikan. |
-| payment | Command Yann AI V15 "payment" — belum diimplementasikan. |
 | pb | Command Yann AI V15 "pb" — belum diimplementasikan. |
-| peachpuff | Command Yann AI V15 "peachpuff" — belum diimplementasikan. |
-| perak | Command Yann AI V15 "perak" — belum diimplementasikan. |
-| perpanjangsewa | Command Yann AI V15 "perpanjangsewa" — belum diimplementasikan. |
 | photoai | Command Yann AI V15 "photoai" — belum diimplementasikan. |
 | pig | Command Yann AI V15 "pig" — belum diimplementasikan. |
 | pindown | Command Yann AI V15 "pindown" — belum diimplementasikan. |
-| pink | Command Yann AI V15 "pink" — belum diimplementasikan. |
 | pixhost | Command Yann AI V15 "pixhost" — belum diimplementasikan. |
-| planet | Command Yann AI V15 "planet" — belum diimplementasikan. |
 | play1 | Command Yann AI V15 "play1" — belum diimplementasikan. |
 | playch | Command Yann AI V15 "playch" — belum diimplementasikan. |
 | playmusik | Command Yann AI V15 "playmusik" — belum diimplementasikan. |
@@ -1656,16 +1698,11 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | pokemon | Command Yann AI V15 "pokemon" — belum diimplementasikan. |
 | polaroid | Command Yann AI V15 "polaroid" — belum diimplementasikan. |
 | posterwanted | Command Yann AI V15 "posterwanted" — belum diimplementasikan. |
-| prem | Command Yann AI V15 "prem" — belum diimplementasikan. |
-| processing | Command Yann AI V15 "processing" — belum diimplementasikan. |
-| profesiku | Command Yann AI V15 "profesiku" — belum diimplementasikan. |
-| proses | Command Yann AI V15 "proses" — belum diimplementasikan. |
 | ptv | Command Yann AI V15 "ptv" — belum diimplementasikan. |
 | ptv2 | Command Yann AI V15 "ptv2" — belum diimplementasikan. |
 | ptvch | Command Yann AI V15 "ptvch" — belum diimplementasikan. |
 | ptvtovid | Command Yann AI V15 "ptvtovid" — belum diimplementasikan. |
 | ptvtovideo | Command Yann AI V15 "ptvtovideo" — belum diimplementasikan. |
-| putih | Command Yann AI V15 "putih" — belum diimplementasikan. |
 | puzzle2048 | Command Yann AI V15 "puzzle2048" — belum diimplementasikan. |
 | qanime | Command Yann AI V15 "qanime" — belum diimplementasikan. |
 | qc1 | Command Yann AI V15 "qc1" — belum diimplementasikan. |
@@ -1673,7 +1710,6 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | qu | Command Yann AI V15 "qu" — belum diimplementasikan. |
 | quax | Command Yann AI V15 "quax" — belum diimplementasikan. |
 | quotesimg | Command Yann AI V15 "quotesimg" — belum diimplementasikan. |
-| quotesislami | Command Yann AI V15 "quotesislami" — belum diimplementasikan. |
 | ramalan | Command Yann AI V15 "ramalan" — belum diimplementasikan. |
 | ramalancinta | Command Yann AI V15 "ramalancinta" — belum diimplementasikan. |
 | ramalanjodoh | Command Yann AI V15 "ramalanjodoh" — belum diimplementasikan. |
@@ -1683,8 +1719,6 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | randomaesthetic | Command Yann AI V15 "randomaesthetic" — belum diimplementasikan. |
 | randomantiwork | Command Yann AI V15 "randomantiwork" — belum diimplementasikan. |
 | randomblackpink | Command Yann AI V15 "randomblackpink" — belum diimplementasikan. |
-| randomcecan | Command Yann AI V15 "randomcecan" — belum diimplementasikan. |
-| randomcogan | Command Yann AI V15 "randomcogan" — belum diimplementasikan. |
 | randomcosplay | Command Yann AI V15 "randomcosplay" — belum diimplementasikan. |
 | randomdadu | Command Yann AI V15 "randomdadu" — belum diimplementasikan. |
 | randomhekel | Command Yann AI V15 "randomhekel" — belum diimplementasikan. |
@@ -1704,108 +1738,45 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | randomwaifu | Command Yann AI V15 "randomwaifu" — belum diimplementasikan. |
 | randomwallhp | Command Yann AI V15 "randomwallhp" — belum diimplementasikan. |
 | randomwallml | Command Yann AI V15 "randomwallml" — belum diimplementasikan. |
-| redeem | Command Yann AI V15 "redeem" — belum diimplementasikan. |
 | rembg | Command Yann AI V15 "rembg" — belum diimplementasikan. |
 | removeobj | Command Yann AI V15 "removeobj" — belum diimplementasikan. |
 | removeobject | Command Yann AI V15 "removeobject" — belum diimplementasikan. |
 | removewatermark | Command Yann AI V15 "removewatermark" — belum diimplementasikan. |
-| renamebot | Command Yann AI V15 "renamebot" — belum diimplementasikan. |
-| renew | Command Yann AI V15 "renew" — belum diimplementasikan. |
-| renewserver | Command Yann AI V15 "renewserver" — belum diimplementasikan. |
-| renewsewa | Command Yann AI V15 "renewsewa" — belum diimplementasikan. |
-| renewsewagc | Command Yann AI V15 "renewsewagc" — belum diimplementasikan. |
-| report | Command Yann AI V15 "report" — belum diimplementasikan. |
-| req | Command Yann AI V15 "req" — belum diimplementasikan. |
-| resetdb | Command Yann AI V15 "resetdb" — belum diimplementasikan. |
-| resetjadwal | Command Yann AI V15 "resetjadwal" — belum diimplementasikan. |
-| resetlist | Command Yann AI V15 "resetlist" — belum diimplementasikan. |
-| resetreseller | Command Yann AI V15 "resetreseller" — belum diimplementasikan. |
-| resettotalchat | Command Yann AI V15 "resettotalchat" — belum diimplementasikan. |
-| resetwarn | Command Yann AI V15 "resetwarn" — belum diimplementasikan. |
 | resimg | Command Yann AI V15 "resimg" — belum diimplementasikan. |
 | resolusiimage | Command Yann AI V15 "resolusiimage" — belum diimplementasikan. |
 | resolusivideo | Command Yann AI V15 "resolusivideo" — belum diimplementasikan. |
-| restart | Command Yann AI V15 "restart" — belum diimplementasikan. |
 | resvid | Command Yann AI V15 "resvid" — belum diimplementasikan. |
 | rmobj | Command Yann AI V15 "rmobj" — belum diimplementasikan. |
 | royaltext | Command Yann AI V15 "royaltext" — belum diimplementasikan. |
-| rst | Command Yann AI V15 "rst" — belum diimplementasikan. |
-| rstdb | Command Yann AI V15 "rstdb" — belum diimplementasikan. |
-| rvo | Command Yann AI V15 "rvo" — belum diimplementasikan. |
-| rvo2 | Command Yann AI V15 "rvo2" — belum diimplementasikan. |
 | sadaudio | Keluarga command V15 sad1..N (cuplikan audio bernomor) — digabung jadi satu fitur dengan parameter nomor. |
 | sakura | Command Yann AI V15 "sakura" — belum diimplementasikan. |
-| salmon | Command Yann AI V15 "salmon" — belum diimplementasikan. |
-| sambutowner | Command Yann AI V15 "sambutowner" — belum diimplementasikan. |
 | sandsummer | Command Yann AI V15 "sandsummer" — belum diimplementasikan. |
 | sasuke | Command Yann AI V15 "sasuke" — belum diimplementasikan. |
-| save | Command Yann AI V15 "save" — belum diimplementasikan. |
 | saveplugin | Command Yann AI V15 "saveplugin" — belum diimplementasikan. |
 | saveplugins | Command Yann AI V15 "saveplugins" — belum diimplementasikan. |
 | saveweb | Command Yann AI V15 "saveweb" — belum diimplementasikan. |
 | scankontol | Command Yann AI V15 "scankontol" — belum diimplementasikan. |
 | scanmemek | Command Yann AI V15 "scanmemek" — belum diimplementasikan. |
-| schedmsg | Command Yann AI V15 "schedmsg" — belum diimplementasikan. |
-| schedule | Command Yann AI V15 "schedule" — belum diimplementasikan. |
 | schedulesend | Command Yann AI V15 "schedulesend" — belum diimplementasikan. |
 | script | Command Yann AI V15 "script" — belum diimplementasikan. |
 | sdm | Command Yann AI V15 "sdm" — belum diimplementasikan. |
 | searchanime | Command Yann AI V15 "searchanime" — belum diimplementasikan. |
 | searchchar | Command Yann AI V15 "searchchar" — belum diimplementasikan. |
-| searching | Command Yann AI V15 "searching" — belum diimplementasikan. |
 | searchtelegram | Command Yann AI V15 "searchtelegram" — belum diimplementasikan. |
 | selengkapnya | Command Yann AI V15 "selengkapnya" — belum diimplementasikan. |
 | sendtesti | Command Yann AI V15 "sendtesti" — belum diimplementasikan. |
-| separating | Command Yann AI V15 "separating" — belum diimplementasikan. |
 | sertifikat | Command Yann AI V15 "sertifikat" — belum diimplementasikan. |
 | sertifikat-tolol | Command Yann AI V15 "sertifikat-tolol" — belum diimplementasikan. |
 | sertifikattolol | Command Yann AI V15 "sertifikattolol" — belum diimplementasikan. |
-| setabsen | Command Yann AI V15 "setabsen" — belum diimplementasikan. |
-| setaudiomenu | Command Yann AI V15 "setaudiomenu" — belum diimplementasikan. |
-| setbotpp | Command Yann AI V15 "setbotpp" — belum diimplementasikan. |
-| setclose | Command Yann AI V15 "setclose" — belum diimplementasikan. |
-| setclosetime | Command Yann AI V15 "setclosetime" — belum diimplementasikan. |
-| setdaftar | Command Yann AI V15 "setdaftar" — belum diimplementasikan. |
-| setdone | Command Yann AI V15 "setdone" — belum diimplementasikan. |
-| setimage | Command Yann AI V15 "setimage" — belum diimplementasikan. |
-| setimg | Command Yann AI V15 "setimg" — belum diimplementasikan. |
-| setintro | Command Yann AI V15 "setintro" — belum diimplementasikan. |
-| setlabel | Command Yann AI V15 "setlabel" — belum diimplementasikan. |
-| setlimit | Command Yann AI V15 "setlimit" — belum diimplementasikan. |
-| setlist | Command Yann AI V15 "setlist" — belum diimplementasikan. |
-| setmenu | Command Yann AI V15 "setmenu" — belum diimplementasikan. |
-| setmoney | Command Yann AI V15 "setmoney" — belum diimplementasikan. |
-| setopen | Command Yann AI V15 "setopen" — belum diimplementasikan. |
-| setopentime | Command Yann AI V15 "setopentime" — belum diimplementasikan. |
 | setpanel | Command Yann AI V15 "setpanel" — belum diimplementasikan. |
-| setpay | Command Yann AI V15 "setpay" — belum diimplementasikan. |
-| setppgc | Command Yann AI V15 "setppgc" — belum diimplementasikan. |
-| setpppanjang | Command Yann AI V15 "setpppanjang" — belum diimplementasikan. |
-| setpppanjangbot | Command Yann AI V15 "setpppanjangbot" — belum diimplementasikan. |
-| setproses | Command Yann AI V15 "setproses" — belum diimplementasikan. |
-| setregister | Command Yann AI V15 "setregister" — belum diimplementasikan. |
-| setrestart | Command Yann AI V15 "setrestart" — belum diimplementasikan. |
-| setultah | Command Yann AI V15 "setultah" — belum diimplementasikan. |
-| sewa | Command Yann AI V15 "sewa" — belum diimplementasikan. |
 | sharkstudio | Command Yann AI V15 "sharkstudio" — belum diimplementasikan. |
 | shina | Command Yann AI V15 "shina" — belum diimplementasikan. |
 | shinka | Command Yann AI V15 "shinka" — belum diimplementasikan. |
 | shizuka | Command Yann AI V15 "shizuka" — belum diimplementasikan. |
 | shortlink-dl | Command Yann AI V15 "shortlink-dl" — belum diimplementasikan. |
 | shortlink2 | Command Yann AI V15 "shortlink2" — belum diimplementasikan. |
-| sider | Command Yann AI V15 "sider" — belum diimplementasikan. |
-| sidercek | Command Yann AI V15 "sidercek" — belum diimplementasikan. |
-| sidergc | Command Yann AI V15 "sidergc" — belum diimplementasikan. |
-| sidergroup | Command Yann AI V15 "sidergroup" — belum diimplementasikan. |
-| siderkick | Command Yann AI V15 "siderkick" — belum diimplementasikan. |
-| sidompul | Command Yann AI V15 "sidompul" — belum diimplementasikan. |
 | silverbutton | Command Yann AI V15 "silverbutton" — belum diimplementasikan. |
-| sistemsewa | Command Yann AI V15 "sistemsewa" — belum diimplementasikan. |
-| siu-encrypt | Command Yann AI V15 "siu-encrypt" — belum diimplementasikan. |
-| siuenc | Command Yann AI V15 "siuenc" — belum diimplementasikan. |
 | siujsen | Command Yann AI V15 "siujsen" — belum diimplementasikan. |
-| sjp | Command Yann AI V15 "sjp" — belum diimplementasikan. |
-| sjps | Command Yann AI V15 "sjps" — belum diimplementasikan. |
 | sketsa | Command Yann AI V15 "sketsa" — belum diimplementasikan. |
 | sketsa2 | Command Yann AI V15 "sketsa2" — belum diimplementasikan. |
 | snake | Command Yann AI V15 "snake" — belum diimplementasikan. |
@@ -1824,8 +1795,6 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | stackgame | Command Yann AI V15 "stackgame" — belum diimplementasikan. |
 | stacktower | Command Yann AI V15 "stacktower" — belum diimplementasikan. |
 | stalktiktok | Command Yann AI V15 "stalktiktok" — belum diimplementasikan. |
-| starting | Command Yann AI V15 "starting" — belum diimplementasikan. |
-| startwings | Command Yann AI V15 "startwings" — belum diimplementasikan. |
 | stele | Command Yann AI V15 "stele" — belum diimplementasikan. |
 | stickertele | Command Yann AI V15 "stickertele" — belum diimplementasikan. |
 | stickerwa | Command Yann AI V15 "stickerwa" — belum diimplementasikan. |
@@ -1853,42 +1822,20 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | stksakiti | Command Yann AI V15 "stksakiti" — belum diimplementasikan. |
 | stksantai | Command Yann AI V15 "stksantai" — belum diimplementasikan. |
 | stksombong | Command Yann AI V15 "stksombong" — belum diimplementasikan. |
-| stopallschedmsg | Command Yann AI V15 "stopallschedmsg" — belum diimplementasikan. |
-| stopjadpes | Command Yann AI V15 "stopjadpes" — belum diimplementasikan. |
-| stopjadwalpesan | Command Yann AI V15 "stopjadwalpesan" — belum diimplementasikan. |
-| stopjadwalpesanall | Command Yann AI V15 "stopjadwalpesanall" — belum diimplementasikan. |
-| stopjadwalpesansemua | Command Yann AI V15 "stopjadwalpesansemua" — belum diimplementasikan. |
-| stopschedmsg | Command Yann AI V15 "stopschedmsg" — belum diimplementasikan. |
 | storyhd | Command Yann AI V15 "storyhd" — belum diimplementasikan. |
-| streak | Command Yann AI V15 "streak" — belum diimplementasikan. |
-| strong-encrypt | Command Yann AI V15 "strong-encrypt" — belum diimplementasikan. |
-| strongenc | Command Yann AI V15 "strongenc" — belum diimplementasikan. |
 | strongjsen | Command Yann AI V15 "strongjsen" — belum diimplementasikan. |
 | suamiistri | Command Yann AI V15 "suamiistri" — belum diimplementasikan. |
 | subdo | Command Yann AI V15 "subdo" — belum diimplementasikan. |
-| success | Command Yann AI V15 "success" — belum diimplementasikan. |
 | summerbeach | Command Yann AI V15 "summerbeach" — belum diimplementasikan. |
 | sunlight | Command Yann AI V15 "sunlight" — belum diimplementasikan. |
 | svp | Command Yann AI V15 "svp" — belum diimplementasikan. |
-| swgc | Command Yann AI V15 "swgc" — belum diimplementasikan. |
 | swgc_process | Command Yann AI V15 "swgc_process" — belum diimplementasikan. |
 | swhd | Command Yann AI V15 "swhd" — belum diimplementasikan. |
 | sync | Command Yann AI V15 "sync" — belum diimplementasikan. |
 | syncsubdo | Command Yann AI V15 "syncsubdo" — belum diimplementasikan. |
-| tambahbadword | Command Yann AI V15 "tambahbadword" — belum diimplementasikan. |
-| tan | Command Yann AI V15 "tan" — belum diimplementasikan. |
-| teal | Command Yann AI V15 "teal" — belum diimplementasikan. |
 | tebakff | Command Yann AI V15 "tebakff" — belum diimplementasikan. |
-| tebakkah | Command Yann AI V15 "tebakkah" — belum diimplementasikan. |
 | telesticker | Command Yann AI V15 "telesticker" — belum diimplementasikan. |
-| tembak | Command Yann AI V15 "tembak" — belum diimplementasikan. |
 | tempo | Command Yann AI V15 "tempo" — belum diimplementasikan. |
-| terimajadian | Command Yann AI V15 "terimajadian" — belum diimplementasikan. |
-| testi | Command Yann AI V15 "testi" — belum diimplementasikan. |
-| testimoni | Command Yann AI V15 "testimoni" — belum diimplementasikan. |
-| testleft | Command Yann AI V15 "testleft" — belum diimplementasikan. |
-| testultah | Command Yann AI V15 "testultah" — belum diimplementasikan. |
-| testwelcome | Command Yann AI V15 "testwelcome" — belum diimplementasikan. |
 | text2speech | Command Yann AI V15 "text2speech" — belum diimplementasikan. |
 | th | Command Yann AI V15 "th" — belum diimplementasikan. |
 | threadsdown | Command Yann AI V15 "threadsdown" — belum diimplementasikan. |
@@ -1912,7 +1859,6 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | tofootball | Command Yann AI V15 "tofootball" — belum diimplementasikan. |
 | tojawa | Command Yann AI V15 "tojawa" — belum diimplementasikan. |
 | tokartun | Command Yann AI V15 "tokartun" — belum diimplementasikan. |
-| tolakacc | Command Yann AI V15 "tolakacc" — belum diimplementasikan. |
 | tomanga | Command Yann AI V15 "tomanga" — belum diimplementasikan. |
 | tomangu | Command Yann AI V15 "tomangu" — belum diimplementasikan. |
 | tomanhwa | Command Yann AI V15 "tomanhwa" — belum diimplementasikan. |
@@ -1921,20 +1867,14 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | tomountain | Command Yann AI V15 "tomountain" — belum diimplementasikan. |
 | top4top | Command Yann AI V15 "top4top" — belum diimplementasikan. |
 | topacar | Command Yann AI V15 "topacar" — belum diimplementasikan. |
-| topbalance | Command Yann AI V15 "topbalance" — belum diimplementasikan. |
 | topenjara | Command Yann AI V15 "topenjara" — belum diimplementasikan. |
-| topmoney | Command Yann AI V15 "topmoney" — belum diimplementasikan. |
 | toproblox | Command Yann AI V15 "toproblox" — belum diimplementasikan. |
-| topstreak | Command Yann AI V15 "topstreak" — belum diimplementasikan. |
 | toptv | Command Yann AI V15 "toptv" — belum diimplementasikan. |
 | topunk | Command Yann AI V15 "topunk" — belum diimplementasikan. |
 | toroblox | Command Yann AI V15 "toroblox" — belum diimplementasikan. |
 | tosad | Command Yann AI V15 "tosad" — belum diimplementasikan. |
 | tosatan | Command Yann AI V15 "tosatan" — belum diimplementasikan. |
 | tosunda | Command Yann AI V15 "tosunda" — belum diimplementasikan. |
-| totalchat | Command Yann AI V15 "totalchat" — belum diimplementasikan. |
-| totalpesan | Command Yann AI V15 "totalpesan" — belum diimplementasikan. |
-| totaluser | Command Yann AI V15 "totaluser" — belum diimplementasikan. |
 | toukachan | Command Yann AI V15 "toukachan" — belum diimplementasikan. |
 | touploader | Command Yann AI V15 "touploader" — belum diimplementasikan. |
 | tourl | Command Yann AI V15 "tourl" — belum diimplementasikan. |
@@ -1942,33 +1882,17 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | tourl3 | Command Yann AI V15 "tourl3" — belum diimplementasikan. |
 | tourlgh | Command Yann AI V15 "tourlgh" — belum diimplementasikan. |
 | tqto | Command Yann AI V15 "tqto" — belum diimplementasikan. |
-| trialprem | Command Yann AI V15 "trialprem" — belum diimplementasikan. |
-| trialpremium | Command Yann AI V15 "trialpremium" — belum diimplementasikan. |
 | tsunade | Command Yann AI V15 "tsunade" — belum diimplementasikan. |
 | ttmp3 | Command Yann AI V15 "ttmp3" — belum diimplementasikan. |
 | ttsbrando | Command Yann AI V15 "ttsbrando" — belum diimplementasikan. |
-| tukarkoin | Command Yann AI V15 "tukarkoin" — belum diimplementasikan. |
-| tukaruang | Command Yann AI V15 "tukaruang" — belum diimplementasikan. |
 | tvstiker | Command Yann AI V15 "tvstiker" — belum diimplementasikan. |
 | typographytext | Command Yann AI V15 "typographytext" — belum diimplementasikan. |
 | uguu | Command Yann AI V15 "uguu" — belum diimplementasikan. |
-| ultah | Command Yann AI V15 "ultah" — belum diimplementasikan. |
-| ultra-encrypt | Command Yann AI V15 "ultra-encrypt" — belum diimplementasikan. |
-| ultraenc | Command Yann AI V15 "ultraenc" — belum diimplementasikan. |
 | ultrajsen | Command Yann AI V15 "ultrajsen" — belum diimplementasikan. |
 | unblok | Command Yann AI V15 "unblok" — belum diimplementasikan. |
 | unblur | Command Yann AI V15 "unblur" — belum diimplementasikan. |
 | underwatertext | Command Yann AI V15 "underwatertext" — belum diimplementasikan. |
-| ungu | Command Yann AI V15 "ungu" — belum diimplementasikan. |
-| ungukehitaman | Command Yann AI V15 "ungukehitaman" — belum diimplementasikan. |
-| ungutua | Command Yann AI V15 "ungutua" — belum diimplementasikan. |
-| unli | Command Yann AI V15 "unli" — belum diimplementasikan. |
-| unmutegc | Command Yann AI V15 "unmutegc" — belum diimplementasikan. |
-| unmutegc_proses | Command Yann AI V15 "unmutegc_proses" — belum diimplementasikan. |
 | unresimg | Command Yann AI V15 "unresimg" — belum diimplementasikan. |
-| upchannel | Command Yann AI V15 "upchannel" — belum diimplementasikan. |
-| upchannel2 | Command Yann AI V15 "upchannel2" — belum diimplementasikan. |
-| updatelist | Command Yann AI V15 "updatelist" — belum diimplementasikan. |
 | userinfo | Command Yann AI V15 "userinfo" — belum diimplementasikan. |
 | v | Command Yann AI V15 "v" — belum diimplementasikan. |
 | veo3 | Command Yann AI V15 "veo3" — belum diimplementasikan. |
@@ -1984,13 +1908,9 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | volvideo | Command Yann AI V15 "volvideo" — belum diimplementasikan. |
 | waifu2 | Command Yann AI V15 "waifu2" — belum diimplementasikan. |
 | wanted | Command Yann AI V15 "wanted" — belum diimplementasikan. |
-| warning | Command Yann AI V15 "warning" — belum diimplementasikan. |
-| warninglist | Command Yann AI V15 "warninglist" — belum diimplementasikan. |
-| warnlist | Command Yann AI V15 "warnlist" — belum diimplementasikan. |
 | watercolortext | Command Yann AI V15 "watercolortext" — belum diimplementasikan. |
 | web2apk | Command Yann AI V15 "web2apk" — belum diimplementasikan. |
 | webtoapk | Command Yann AI V15 "webtoapk" — belum diimplementasikan. |
-| wheat | Command Yann AI V15 "wheat" — belum diimplementasikan. |
 | wood | Command Yann AI V15 "wood" — belum diimplementasikan. |
 | worm | Command Yann AI V15 "worm" — belum diimplementasikan. |
 | writetext | Command Yann AI V15 "writetext" — belum diimplementasikan. |
@@ -1999,8 +1919,6 @@ Dibuat: 2026-10-22T04:43:48.954Z
 | yannai | Command Yann AI V15 "yannai" — belum diimplementasikan. |
 | yannaimd | Command Yann AI V15 "yannaimd" — belum diimplementasikan. |
 | yannedit | Command Yann AI V15 "yannedit" — belum diimplementasikan. |
-| yannqc | Command Yann AI V15 "yannqc" — belum diimplementasikan. |
-| yanqc | Command Yann AI V15 "yanqc" — belum diimplementasikan. |
 | youtubemp4 | Command Yann AI V15 "youtubemp4" — belum diimplementasikan. |
 | ytcomment | Command Yann AI V15 "ytcomment" — belum diimplementasikan. |
 | ytgoldbutton | Command Yann AI V15 "ytgoldbutton" — belum diimplementasikan. |

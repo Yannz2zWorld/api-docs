@@ -1,7 +1,7 @@
 {
  "source": "Yann AI V15 Fixed: YannzAjah-cmd.js (case) + plugins/*/handler.command",
  "generatedAt": "2026-10-22T04:30:33.552Z",
- "v15Names": 1617,
+ "v15Names": 1564,
  "coveredByRegistry": 246,
  "items": [
   {
@@ -10,7 +10,8 @@
   },
   {
    "name": "1gb",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "2048",
@@ -18,35 +19,33 @@
   },
   {
    "name": "2gb",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "3gb",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "4gb",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "5gb",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "6gb",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "7gb",
-   "status": "planned"
-  },
-  {
-   "name": "abu",
-   "status": "planned"
-  },
-  {
-   "name": "abu-abutua",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "acc",
@@ -135,7 +134,8 @@
   },
   {
    "name": "ah-ah-ah",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
   },
   {
    "name": "aiedit",
@@ -301,10 +301,6 @@
    "status": "planned"
   },
   {
-   "name": "api",
-   "status": "planned"
-  },
-  {
    "name": "apkprem",
    "status": "disabled",
    "reason": "Penjualan akses aplikasi premium pihak ketiga — di luar cakupan."
@@ -319,39 +315,48 @@
   },
   {
    "name": "asupan",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "asupanbocil",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "asupandouyin",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "asupangeayubi",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "asupangheayubi",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "asupanhijaber",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "asupanrikagusriani",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "asupansantuy",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "asupanukhty",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "autoabsen",
@@ -449,34 +454,6 @@
    "status": "planned"
   },
   {
-   "name": "biru",
-   "status": "planned"
-  },
-  {
-   "name": "birulangit",
-   "status": "planned"
-  },
-  {
-   "name": "birulangitcerah",
-   "status": "planned"
-  },
-  {
-   "name": "birulaut",
-   "status": "planned"
-  },
-  {
-   "name": "birumuda",
-   "status": "planned"
-  },
-  {
-   "name": "birumudalangit",
-   "status": "planned"
-  },
-  {
-   "name": "birutua",
-   "status": "planned"
-  },
-  {
    "name": "blackpinklogo",
    "status": "planned"
   },
@@ -567,7 +544,8 @@
   },
   {
    "name": "broadcast",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Kirim pesan massal / anonim ke nomor sembarang — rawan spam & pelecehan."
   },
   {
    "name": "buatkode",
@@ -618,11 +596,13 @@
   },
   {
    "name": "bzirrt",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
   },
   {
    "name": "cadp",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "capcutdownload",
@@ -694,67 +674,83 @@
   },
   {
    "name": "cecan",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanchina",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanhijaber",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanindonesia",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanjapan",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanjeni",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanjiso",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanjustinaxie",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecankorea",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanmalaysia",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecannaxie",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanrandom",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanrose",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanryujin",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanthailand",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cecanvietnam",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "cekaura",
@@ -766,7 +762,8 @@
   },
   {
    "name": "cekfemboy",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Konten seksual tentang orang yang disebut namanya — tidak diimplementasikan."
   },
   {
    "name": "cekff",
@@ -817,15 +814,18 @@
   },
   {
    "name": "ceknim",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi."
   },
   {
    "name": "ceknohp",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi."
   },
   {
    "name": "ceknomor",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi."
   },
   {
    "name": "cekres",
@@ -917,11 +917,8 @@
   },
   {
    "name": "cogan",
-   "status": "planned"
-  },
-  {
-   "name": "cokelat",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "colorize",
@@ -929,11 +926,13 @@
   },
   {
    "name": "confes",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Kirim pesan massal / anonim ke nomor sembarang — rawan spam & pelecehan."
   },
   {
    "name": "configurewings",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "convertweb",
@@ -953,7 +952,8 @@
   },
   {
    "name": "createadp",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "creategc",
@@ -994,18 +994,16 @@
   },
   {
    "name": "custom-encrypt",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "customenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "customjsen",
-   "status": "planned"
-  },
-  {
-   "name": "cyan",
    "status": "planned"
   },
   {
@@ -1027,10 +1025,6 @@
    "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
   },
   {
-   "name": "deeppink",
-   "status": "planned"
-  },
-  {
    "name": "deidara",
    "status": "planned"
   },
@@ -1049,7 +1043,8 @@
   },
   {
    "name": "deletepanel",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "deletepremgc",
@@ -1073,7 +1068,8 @@
   },
   {
    "name": "delpanel",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "delpay",
@@ -1117,7 +1113,8 @@
   },
   {
    "name": "delsrv",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "delstikercmd",
@@ -1137,7 +1134,8 @@
   },
   {
    "name": "deluser",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "denia",
@@ -1217,11 +1215,8 @@
   },
   {
    "name": "ehbtw",
-   "status": "planned"
-  },
-  {
-   "name": "emas",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Membuka ulang pesan sekali lihat (view once) melanggar privasi pengirim."
   },
   {
    "name": "emilia",
@@ -1245,123 +1240,153 @@
   },
   {
    "name": "enc-custom",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "enc-invis",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "enc-invisible",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "enc-siu",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "enc-strong",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "enc-ultra",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "enccustom",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "enccustomjs",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encinvis",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encinvisible",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encjsinvis",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encrypt-custom",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encrypt-invis",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encrypt-invisible",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encrypt-siu",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encrypt-strong",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encrypt-ultra",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encryptcustom",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encryptcustomjs",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encryptinvis",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encryptinvisible",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encryptsiu",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encryptstrong",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encryptultra",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encsiu",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encsiujs",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encstrong",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encstrongjs",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encultra",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "encultrajs",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "eninvisiblejs",
@@ -1381,10 +1406,6 @@
   },
   {
    "name": "exchange",
-   "status": "planned"
-  },
-  {
-   "name": "failed",
    "status": "planned"
   },
   {
@@ -1498,10 +1519,6 @@
    "status": "planned"
   },
   {
-   "name": "fuchsia",
-   "status": "planned"
-  },
-  {
    "name": "fwa",
    "status": "planned"
   },
@@ -1600,7 +1617,8 @@
   },
   {
    "name": "getsc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Mengirim source code/session bot ke chat — risiko kebocoran kredensial."
   },
   {
    "name": "ghibli",
@@ -1624,10 +1642,6 @@
   },
   {
    "name": "goldbutton",
-   "status": "planned"
-  },
-  {
-   "name": "goldenrod",
    "status": "planned"
   },
   {
@@ -1732,31 +1746,7 @@
    "status": "planned"
   },
   {
-   "name": "hijau",
-   "status": "planned"
-  },
-  {
-   "name": "hijaugelap",
-   "status": "planned"
-  },
-  {
-   "name": "hijaulaut",
-   "status": "planned"
-  },
-  {
-   "name": "hijaulumut",
-   "status": "planned"
-  },
-  {
-   "name": "hijautua",
-   "status": "planned"
-  },
-  {
    "name": "hinata",
-   "status": "planned"
-  },
-  {
-   "name": "hitam",
    "status": "planned"
   },
   {
@@ -1770,10 +1760,6 @@
   },
   {
    "name": "horor",
-   "status": "planned"
-  },
-  {
-   "name": "hotpink",
    "status": "planned"
   },
   {
@@ -1850,19 +1836,23 @@
   },
   {
    "name": "invis-encrypt",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "invisenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "invisible-encrypt",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "invisibleenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "iphonequoted",
@@ -1946,10 +1936,6 @@
    "status": "planned"
   },
   {
-   "name": "jingga",
-   "status": "planned"
-  },
-  {
    "name": "jodohbali",
    "status": "planned"
   },
@@ -1987,23 +1973,28 @@
   },
   {
    "name": "jscustomenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "jsinvisenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "jssiuenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "jsstrongenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "jsultraenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "jumlahuser",
@@ -2065,10 +2056,6 @@
    "status": "planned"
   },
   {
-   "name": "kuning",
-   "status": "planned"
-  },
-  {
    "name": "kurumi",
    "status": "planned"
   },
@@ -2107,7 +2094,8 @@
   },
   {
    "name": "listpanel",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "listpay",
@@ -2159,7 +2147,8 @@
   },
   {
    "name": "listuser",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "listwarning",
@@ -2197,14 +2186,6 @@
   },
   {
    "name": "madara",
-   "status": "planned"
-  },
-  {
-   "name": "magenta",
-   "status": "planned"
-  },
-  {
-   "name": "magentagelap",
    "status": "planned"
   },
   {
@@ -2253,11 +2234,13 @@
   },
   {
    "name": "menu-asupan",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "menu-cecan",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "menu-download",
@@ -2293,7 +2276,8 @@
   },
   {
    "name": "menu-nsfw",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Konten seksual / eksploitasi — tidak akan diimplementasikan."
   },
   {
    "name": "menu-owner",
@@ -2301,7 +2285,8 @@
   },
   {
    "name": "menu-panel",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "menu-potoanime",
@@ -2348,22 +2333,6 @@
    "status": "planned"
   },
   {
-   "name": "merah",
-   "status": "planned"
-  },
-  {
-   "name": "merahgelap",
-   "status": "planned"
-  },
-  {
-   "name": "merahmuda",
-   "status": "planned"
-  },
-  {
-   "name": "merahtua",
-   "status": "planned"
-  },
-  {
    "name": "mikasa",
    "status": "planned"
   },
@@ -2396,10 +2365,6 @@
    "status": "planned"
   },
   {
-   "name": "mixing",
-   "status": "planned"
-  },
-  {
    "name": "mobil",
    "status": "planned"
   },
@@ -2425,7 +2390,8 @@
   },
   {
    "name": "mypanel",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "mywarn",
@@ -2495,11 +2461,13 @@
   },
   {
    "name": "nomorinfo",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi."
   },
   {
    "name": "notif",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "npmjs",
@@ -2717,18 +2685,6 @@
    "status": "planned"
   },
   {
-   "name": "orange",
-   "status": "planned"
-  },
-  {
-   "name": "oranyemerah",
-   "status": "planned"
-  },
-  {
-   "name": "oranyetua",
-   "status": "planned"
-  },
-  {
    "name": "otakudesu",
    "status": "planned"
   },
@@ -2761,14 +2717,6 @@
    "status": "planned"
   },
   {
-   "name": "peachpuff",
-   "status": "planned"
-  },
-  {
-   "name": "perak",
-   "status": "planned"
-  },
-  {
    "name": "perpanjangsewa",
    "status": "planned"
   },
@@ -2782,10 +2730,6 @@
   },
   {
    "name": "pindown",
-   "status": "planned"
-  },
-  {
-   "name": "pink",
    "status": "planned"
   },
   {
@@ -2850,10 +2794,6 @@
    "status": "planned"
   },
   {
-   "name": "processing",
-   "status": "planned"
-  },
-  {
    "name": "profesiku",
    "status": "planned"
   },
@@ -2895,10 +2835,6 @@
    "name": "pushkontak_process",
    "status": "disabled",
    "reason": "Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp)."
-  },
-  {
-   "name": "putih",
-   "status": "planned"
   },
   {
    "name": "putihkan",
@@ -2980,11 +2916,13 @@
   },
   {
    "name": "randomcecan",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "randomcogan",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan."
   },
   {
    "name": "randomcosplay",
@@ -3093,11 +3031,13 @@
   },
   {
    "name": "renew",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "renewserver",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "renewsewa",
@@ -3182,11 +3122,13 @@
   },
   {
    "name": "rvo",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Membuka ulang pesan sekali lihat (view once) melanggar privasi pengirim."
   },
   {
    "name": "rvo2",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Membuka ulang pesan sekali lihat (view once) melanggar privasi pengirim."
   },
   {
    "name": "sadaudio",
@@ -3196,10 +3138,6 @@
   },
   {
    "name": "sakura",
-   "status": "planned"
-  },
-  {
-   "name": "salmon",
    "status": "planned"
   },
   {
@@ -3277,10 +3215,6 @@
    "status": "planned"
   },
   {
-   "name": "searching",
-   "status": "planned"
-  },
-  {
    "name": "searchtelegram",
    "status": "planned"
   },
@@ -3310,10 +3244,6 @@
   },
   {
    "name": "sendtesti",
-   "status": "planned"
-  },
-  {
-   "name": "separating",
    "status": "planned"
   },
   {
@@ -3487,7 +3417,8 @@
   },
   {
    "name": "sidompul",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi."
   },
   {
    "name": "silverbutton",
@@ -3499,11 +3430,13 @@
   },
   {
    "name": "siu-encrypt",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "siuenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "siujsen",
@@ -3597,12 +3530,9 @@
    "status": "planned"
   },
   {
-   "name": "starting",
-   "status": "planned"
-  },
-  {
    "name": "startwings",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "stele",
@@ -3746,11 +3676,13 @@
   },
   {
    "name": "strong-encrypt",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "strongenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "strongjsen",
@@ -3767,10 +3699,6 @@
   },
   {
    "name": "subdo",
-   "status": "planned"
-  },
-  {
-   "name": "success",
    "status": "planned"
   },
   {
@@ -3817,14 +3745,6 @@
   },
   {
    "name": "tambahbadword",
-   "status": "planned"
-  },
-  {
-   "name": "tan",
-   "status": "planned"
-  },
-  {
-   "name": "teal",
    "status": "planned"
   },
   {
@@ -4149,11 +4069,13 @@
   },
   {
    "name": "ultra-encrypt",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "ultraenc",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot."
   },
   {
    "name": "ultrajsen",
@@ -4177,20 +4099,9 @@
    "status": "planned"
   },
   {
-   "name": "ungu",
-   "status": "planned"
-  },
-  {
-   "name": "ungukehitaman",
-   "status": "planned"
-  },
-  {
-   "name": "ungutua",
-   "status": "planned"
-  },
-  {
    "name": "unli",
-   "status": "planned"
+   "status": "disabled",
+   "reason": "Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS."
   },
   {
    "name": "unmutegc",
@@ -4306,10 +4217,6 @@
    "status": "planned"
   },
   {
-   "name": "wheat",
-   "status": "planned"
-  },
-  {
    "name": "wood",
    "status": "planned"
   },
@@ -4382,5 +4289,65 @@
    "name": "zrooart",
    "status": "planned"
   }
- ]
+ ],
+ "notCommands": {
+  "reason": "Bukan command V15: label case di switch bagian dalam (warna .yannqc / status progres voicecover).",
+  "names": [
+   "abu",
+   "abu-abutua",
+   "api",
+   "biru",
+   "birulangit",
+   "birulangitcerah",
+   "birulaut",
+   "birumuda",
+   "birumudalangit",
+   "birutua",
+   "cokelat",
+   "cyan",
+   "deeppink",
+   "emas",
+   "failed",
+   "fuchsia",
+   "goldenrod",
+   "hijau",
+   "hijaugelap",
+   "hijaulaut",
+   "hijaulumut",
+   "hijautua",
+   "hitam",
+   "hotpink",
+   "jingga",
+   "kuning",
+   "magenta",
+   "magentagelap",
+   "merah",
+   "merahgelap",
+   "merahmuda",
+   "merahtua",
+   "mixing",
+   "orange",
+   "oranyemerah",
+   "oranyetua",
+   "peachpuff",
+   "perak",
+   "pink",
+   "processing",
+   "putih",
+   "salmon",
+   "searching",
+   "separating",
+   "starting",
+   "success",
+   "tan",
+   "teal",
+   "ungu",
+   "ungugelap",
+   "ungukehitaman",
+   "ungutua",
+   "wheat"
+  ]
+ },
+ "curatedAt": "2026-10-24",
+ "v15NamesRaw": 1617
 }

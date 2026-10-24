@@ -30,7 +30,9 @@ const QUIZ = {
   tebakhero: ['tebakhero', 'Tebak hero Mobile Legends', x => ({ question: 'Hero ML siapakah ini?', image: x.img, answer: x.jawaban, info: x.deskripsi })],
   tebaklogo: ['tebaklogo', 'Tebak merek dari logonya', x => ({ question: `Merek apakah ini? (${x.deskripsi || 'logo'})`, image: x.img, answer: x.jawaban })],
   tebakmakanan: ['tebakmakanan', 'Tebak nama makanan dari gambar', x => ({ question: x.deskripsi || 'Makanan apakah ini?', image: x.img, answer: x.jawaban })],
-  tebaklagu: ['tebaklagu', 'Tebak judul lagu dari cuplikan audio', x => ({ question: 'Judul lagu apakah ini?', audio: x.soal, answer: x.jawaban, info: x.artis ? `Penyanyi: ${x.artis}` : '' })]
+  tebaklagu: ['tebaklagu', 'Tebak judul lagu dari cuplikan audio', x => ({ question: 'Judul lagu apakah ini?', audio: x.soal, answer: x.jawaban, info: x.artis ? `Penyanyi: ${x.artis}` : '' })],
+  kuis: ['kuis', 'Kuis cepat pengetahuan umum (V15)', x => ({ question: x.soal, answer: x.jawaban })],
+  tebakkah: ['tebakkah', 'Tebak-tebakan random (V15)', x => ({ question: x.soal, answer: x.jawaban })]
 };
 const REWARD = { exp: 30, money: 300 };
 const TIMEOUT = 60000;
@@ -84,17 +86,14 @@ const giveUp = feature({ id: 'game.nyerah', name: 'nyerah', aliases: ['menyerah'
     await ctx.reply(`🏳️ Menyerah. Jawabannya: *${s.answer ?? s.target ?? '-'}*`);
   } });
 
-// Hook: cek jawaban dari pesan biasa (bukan command).
-const answerHook = feature({ id: 'game.answer', name: 'gamestatus', category: 'game', description: 'Status game yang sedang berjalan di chat ini',
-  async run(ctx) { const s = games.get(ctx.m.chat); await ctx.reply(s ? `Game aktif: ${s.name} (${Math.round((Date.now() - s.startedAt) / 1000)} detik)` : 'Tidak ada game aktif.'); },
-  async onMessage(ctx) {
+// Nilai jawaban untuk game yang berjalan. true = pesan ditangani (benar/hampir benar).
+async function answer(ctx, text) {
     const m = ctx.m;
-    if (m.isCmd || !m.body) return false;
     const s = games.get(m.chat);
     if (!s) return false;
     const u = ctx.db.user(m.sender);
     if (s.type === 'quiz') {
-      const r = games.judge(s.answer, m.body);
+      const r = games.judge(s.answer, text);
       if (r === 'correct') {
         games.stop(m.chat);
         u.exp = (u.exp || 0) + s.reward.exp; u.money = (u.money || 0) + s.reward.money; ctx.db.touch();
@@ -105,7 +104,7 @@ const answerHook = feature({ id: 'game.answer', name: 'gamestatus', category: 'g
       return false;
     }
     if (s.type === 'family100') {
-      const hit = s.answers.find(a => !s.found.includes(a) && games.judge(a, m.body) === 'correct');
+      const hit = s.answers.find(a => !s.found.includes(a) && games.judge(a, text) === 'correct');
       if (!hit) return false;
       s.found.push(hit);
       u.exp = (u.exp || 0) + s.reward.exp; u.money = (u.money || 0) + s.reward.money; ctx.db.touch();
@@ -114,8 +113,21 @@ const answerHook = feature({ id: 'game.answer', name: 'gamestatus', category: 'g
       else await ctx.reply(`✅ *${hit}* benar! (+${s.reward.exp} exp)\n${board}`);
       return true;
     }
-    if (typeof s.onAnswer === 'function') return s.onAnswer(ctx, m.body);
+    if (typeof s.onAnswer === 'function') return s.onAnswer(ctx, text);
     return false;
+}
+
+// Hook: cek jawaban dari pesan biasa (bukan command).
+const answerHook = feature({ id: 'game.answer', name: 'gamestatus', category: 'game', description: 'Status game yang sedang berjalan di chat ini',
+  async run(ctx) { const s = games.get(ctx.m.chat); await ctx.reply(s ? `Game aktif: ${s.name} (${Math.round((Date.now() - s.startedAt) / 1000)} detik)` : 'Tidak ada game aktif.'); },
+  async onMessage(ctx) { return ctx.m.isCmd || !ctx.m.body ? false : answer(ctx, ctx.m.body); } });
+
+// V15: jawab lewat command (.jawabkuis, .jawabtebak, .jawabteka, .jawabasah, .jawab).
+const answerCmd = feature({ id: 'game.jawab', name: 'jawab', aliases: ['jawabkuis', 'jawabtebak', 'jawabteka', 'jawabasah'], category: 'game', description: 'Jawab game yang sedang berjalan (bisa juga langsung balas teks)', usage: '<jawaban>',
+  async run(ctx) {
+    const s = games.get(ctx.m.chat);
+    if (!s) throw new UsageError('⚠️ Belum ada soal aktif. Mulai dulu, mis. .kuis / .tebakkah / .tekateki');
+    if (!(await answer(ctx, ctx.requireText('Ketik jawabanmu: .jawab <jawaban>')))) await ctx.reply(s.type === 'quiz' ? `❌ *Salah!* Clue: jawabannya ${String(s.answer).length} huruf.` : '❌ Salah!');
   } });
 
-module.exports = [...Object.entries(QUIZ).map(([n, def]) => quizFeature(n, def)), family100, hintCmd, giveUp, answerHook];
+module.exports = [...Object.entries(QUIZ).map(([n, def]) => quizFeature(n, def)), family100, hintCmd, giveUp, answerHook, answerCmd];
