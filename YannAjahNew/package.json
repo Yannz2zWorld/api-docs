@@ -29,6 +29,7 @@
     "javascript-obfuscator": "^4.2.2"
   },
   "dependencies": {
+    "@napi-rs/canvas": "1.0.10",
     "@whiskeysockets/baileys": "^7.0.0-rc14",
     "bcryptjs": "^3.0.3",
     "chalk": "^4.1.2",

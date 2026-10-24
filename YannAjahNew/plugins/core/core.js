@@ -3,8 +3,21 @@
 const { feature } = require('../../library/plugin-kit');
 const { buildMenu, buildAllMenu } = require('../../menu');
 const { runtime, bytesToSize } = require('../../library/function');
+const media = require('../../library/mediastore');
 
 const statusOpts = ctx => ({ apiKey: ctx.api?.hasKey?.() ?? true, disabledList: ctx.config.plugin.disabled });
+
+// Gaya menu dari .setmenu (text/image/video/document); media dari .setimg, audio dari .setaudiomenu.
+async function sendMenu(ctx, text) {
+  const st = ctx.db.settings(); const style = st.menuStyle || 'text'; const imgs = st.images || {};
+  const image = media.load(imgs.menu?.name) || ctx.config.image.menu;
+  if (style === 'image' && image) await ctx.sendFile(image, { caption: text });
+  else if (style === 'video' && media.load(imgs.menuvideo?.name)) await ctx.sendFile(media.load(imgs.menuvideo.name), { caption: text, gif: true });
+  else if (style === 'document') await ctx.sendFile({ buffer: Buffer.from(text), mime: 'text/plain' }, { asDocument: true, fileName: `${ctx.config.bot.name}-menu.txt`, caption: text.slice(0, 1000) });
+  else await ctx.reply(text);
+  const audio = media.load(st.menuAudio?.name);
+  if (audio) await ctx.sendFile(audio, { mimetype: st.menuAudio.mime || 'audio/mpeg' });
+}
 
 module.exports = [
   feature({ id: 'core.menu', name: 'menu', aliases: ['help', 'start'], category: 'core', description: 'Daftar kategori & fitur bot', usage: '[kategori]', cooldown: 3, allowInMaintenance: false,
@@ -12,7 +25,7 @@ module.exports = [
       const reg = ctx.yannajah.registry;
       const text = buildMenu(reg, { prefix: ctx.prefix, category: ctx.args[0] || null, statusOpts: statusOpts(ctx), botName: ctx.config.bot.name, isOwner: ctx.isOwner });
       if (!text) return ctx.reply(`Kategori *${ctx.args[0]}* tidak ada. Ketik ${ctx.prefix}menu`);
-      await ctx.reply(text);
+      await sendMenu(ctx, text);
     } }),
   feature({ id: 'core.allmenu', name: 'allmenu', category: 'core', description: 'Semua fitur aktif per kategori', cooldown: 10,
     async run(ctx) { await ctx.reply(buildAllMenu(ctx.yannajah.registry, { prefix: ctx.prefix, statusOpts: statusOpts(ctx), isOwner: ctx.isOwner })); } }),

@@ -32,9 +32,11 @@ function splitPath(p) {
   return parts;
 }
 
-function createDatabaseFacade(store, { dailyLimit = 10 } = {}) {
+function createDatabaseFacade(store, { dailyLimit = 10, timezone = 'Asia/Jakarta' } = {}) {
   const data = () => store.data;
-  const today = () => new Date().toISOString().slice(0, 10);
+  // Hari berganti jam 00:00 di zona waktu bot (V15: reset limit 00:00 WIB).
+  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' });
+  const today = () => fmt.format(new Date());
   const facade = {
     raw: data,
     get(path, fallback = undefined) {
@@ -64,7 +66,8 @@ function createDatabaseFacade(store, { dailyLimit = 10 } = {}) {
       const users = data().users;
       if (!users[jid]) { users[jid] = { name: '', registered: false, limit: dailyLimit, limitDate: today(), premiumUntil: 0, banned: false, warn: 0, exp: 0, level: 0, money: 0, afk: null, createdAt: Date.now() }; store.markDirty(); }
       const u = users[jid];
-      if (u.limitDate !== today()) { u.limit = dailyLimit; u.limitDate = today(); store.markDirty(); }
+      // dailyLimit per user (.setlimit) menggantikan limit default; bonus (.redeem/.addlimitall hari ini) ditambahkan.
+      if (u.limitDate !== today()) { u.limit = (u.dailyLimit || dailyLimit) + (u.bonusLimitDate === today() ? u.bonusLimit || 0 : 0); u.limitDate = today(); store.markDirty(); }
       return u;
     },
     group(jid) {
@@ -89,7 +92,7 @@ function createYannajah({ config, logger, store, license, api, registry, wa = nu
     logger,
     wa,
     get socket() { return yannajah.wa?.sock || null; },
-    database: createDatabaseFacade(store, { dailyLimit: config.limit.daily }),
+    database: createDatabaseFacade(store, { dailyLimit: config.limit.daily, timezone: config.bot.timezone }),
     api,
     auth: license,
     registry,

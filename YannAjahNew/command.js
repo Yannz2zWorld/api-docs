@@ -87,6 +87,8 @@ function createRouter(yannajah, { config, logger }) {
 
     const mt = license.maintenance();
     if (mt.active && !isOwner && !feature.allowInMaintenance) return denied(m, `🛠️ ${mt.message}`);
+    // Maintenance lokal dari chat (.maintenance on) — terpisah dari maintenance dashboard.
+    if (settings.maintenance?.active && !isOwner && !feature.allowInMaintenance) return denied(m, `🛠️ ${settings.maintenance.message}`);
 
     const user = db.user(m.sender);
     if (user.banned && !isOwner) return;
@@ -94,6 +96,7 @@ function createRouter(yannajah, { config, logger }) {
       const g = db.group(m.chat);
       if (g.mute && !isOwner && !feature.allowWhenMuted) return;
       if (g.onlyAdmin && !m.isAdmin && !isOwner && !feature.allowWhenMuted) return;
+      if (g.bannedFeatures?.includes(feature.name) && !isOwner) return denied(m, `🚫 Fitur *${feature.name}* dilarang di grup ini.`);
     }
 
     const status = registry.effectiveStatus(feature, { apiKey: api?.hasKey?.() ?? true, disabledList: config.plugin.disabled });
@@ -107,7 +110,7 @@ function createRouter(yannajah, { config, logger }) {
     if (feature.permission === 'admin' && !(m.isAdmin || isOwner)) return denied(m, m.isGroup ? mess.admin : mess.group);
     if (feature.permission === 'premium' && !isPremium) return denied(m, mess.prem);
     if (feature.botAdmin && !m.isBotAdmin) return denied(m, mess.botAdmin);
-    if (config.permission.registerRequired && !user.registered && !isOwner && !feature.noRegister) return denied(m, mess.verifikasi);
+    if ((settings.registerRequired ?? config.permission.registerRequired) && !user.registered && !isOwner && !feature.noRegister) return denied(m, mess.verifikasi);
 
     if (!isOwner) {
       const sp = spam.check(m.sender);

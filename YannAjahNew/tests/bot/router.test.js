@@ -168,3 +168,28 @@ test('timeout command: dibatalkan dengan pesan, router tetap jalan', async () =>
   await t.send('.upper ok');
   assert.equal(t.replies.pop(), 'OK');
 });
+
+test('maintenance lokal (.maintenance on), banfitur per grup, setdaftar dari chat', async () => {
+  const t = setup();
+  await t.send('.maintenance on Lagi beres-beres', { sender: OWNER });
+  t.replies.length = 0;
+  await t.send('.upper a');
+  assert.deepEqual(t.replies, ['🛠️ Lagi beres-beres']);
+  await t.send('.maintenance off', { sender: OWNER });
+  t.replies.length = 0;
+  await t.send('.upper a');
+  assert.deepEqual(t.replies, ['A']);
+
+  await t.send('.banfitur upper', { isGroup: true, isAdmin: true });
+  t.replies.length = 0;
+  await t.send('.upper a', { isGroup: true });
+  assert.match(t.replies[0], /dilarang di grup ini/);
+  t.replies.length = 0;
+  await t.send('.upper a', { sender: '6281299990003@s.whatsapp.net' });   // chat pribadi tidak terpengaruh
+  assert.deepEqual(t.replies, ['A']);
+
+  await t.send('.setdaftar on', { sender: OWNER });
+  t.replies.length = 0;
+  await t.send('.lower B', { sender: '6281299990002@s.whatsapp.net' });
+  assert.match(t.replies[0], /Daftar dulu/);
+});
