@@ -49,7 +49,7 @@ it('audit log dibuat untuk tindakan sensitif dan tidak berisi secret; audit appe
   const dev = await t.login(devAcc);
   const user = (await t.as(dev).post('/api/dash/accounts', { username: 'audit-target', rank: 'RESELLER' })).json.account;
   const bot = (await t.as(dev).post('/api/dash/bots', { bot_name: 'Audit', phone_number: h.phone(), owner_id: user.id })).json.bot;
-  await t.as(dev).post(`/api/dash/accounts/${user.id}/rank`, { rank: 'PARTNER' });
+  await t.as(dev).post(`/api/dash/accounts/${user.id}/rank`, { rank: 'SUKI' });
   await t.as(dev).post(`/api/dash/bots/${bot.id}/password`, { password: 'RahasiaAudit123' });
   await t.as(dev).post(`/api/dash/bots/${bot.id}/ban`, { banned: true, reason: 'pelanggaran' });
   await t.as(dev).post(`/api/dash/bots/${bot.id}/ban`, { banned: false });
@@ -67,7 +67,8 @@ it('audit log dibuat untuk tindakan sensitif dan tidak berisi secret; audit appe
 });
 
 it('maintenance global & per bot tercatat (pelaku + waktu) dan sampai ke proses bot', async () => {
-  const ceoAcc = await t.account('CEO');
+  // Maintenance global = permission DEVELOPER (rank v2).
+  const ceoAcc = await t.account('DEVELOPER');
   const ceo = await t.login(ceoAcc);
   const owner = (await t.as(ceo).post('/api/dash/accounts', { username: 'mt-owner', rank: 'RESELLER' })).json.account;
   const bot = (await t.as(ceo).post('/api/dash/bots', { bot_name: 'MT', phone_number: h.phone(), owner_id: owner.id, password: 'MaintBot12345' })).json.bot;
@@ -86,8 +87,8 @@ it('maintenance global & per bot tercatat (pelaku + waktu) dan sampai ke proses 
   const audits = await t.db.query("SELECT action FROM audit_logs WHERE action LIKE 'maintenance.%' AND actor_id = $1", [ceoAcc.id]);
   assert.equal(audits.filter(a => a.action === 'maintenance.global.update').length, 2);
   assert.equal(audits.filter(a => a.action === 'maintenance.bot.update').length, 1);
-  // OWNER tidak punya maintenance.manage
-  const own = await t.login(await t.account('OWNER'));
+  // DEWA tidak punya maintenance.manage (khusus DEVELOPER)
+  const own = await t.login(await t.account('DEWA'));
   assert.equal((await t.as(own).put('/api/dash/maintenance', { enabled: true })).status, 403);
   // Pengecualian administratif eksplisit: bot milik rank yang dikecualikan tidak kena maintenance global.
   await t.db.query("UPDATE bots SET maintenance_enabled = false WHERE id = $1", [bot.id]);

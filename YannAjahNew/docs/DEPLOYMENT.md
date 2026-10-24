@@ -73,7 +73,7 @@ Login bot pertama kali dilakukan interaktif (`node index.js`, isi nomor bot + pa
 
 - **Health**: `GET /health` (proses hidup), `GET /health/ready` (DB + migrasi). Pasang uptime monitor ke `/health/ready`.
 - **Log**: bot → `library/database/logs/yannajah.log` (redaksi otomatis token/password/key). Rotasi: `pm2 install pm2-logrotate` atau logrotate untuk file log bot.
-- **Monitoring**: `pm2 monit`, metrik CPU/RAM/disk penyedia VPS, tab *Sistem* di dashboard (DEVELOPER/OWNER/CEO).
+- **Monitoring**: `pm2 monit`, metrik CPU/RAM/disk penyedia VPS, tab *Sistem* di dashboard (DEVELOPER).
 - **Backup terjadwal** (cron harian, simpan 14 hari di luar server):
   `pg_dump -Fc "$DATABASE_URL" > /backup/yannajah-$(date +\%F).dump` dan `node server/cli.js backup --out /backup/yannajah-$(date +\%F).json.enc`.
   Backup juga folder `session/` bot (berisi kredensial WhatsApp → enkripsi, simpan privat).

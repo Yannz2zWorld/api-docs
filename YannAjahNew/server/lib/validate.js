@@ -3,7 +3,7 @@
 
 const { badRequest } = require('./errors');
 
-const RANKS = ['MEMBER', 'RESELLER', 'PARTNER', 'OWNER', 'CEO', 'DEVELOPER'];
+const RANKS = ['MEMBER', 'RESELLER', 'SUKI', 'RAJA', 'DEWA', 'DEVELOPER'];
 const ACCOUNT_STATUSES = ['active', 'disabled', 'suspended', 'banned'];
 
 function normalizePhone(input, defaultCountry = '62') {

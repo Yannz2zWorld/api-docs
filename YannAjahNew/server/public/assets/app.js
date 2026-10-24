@@ -93,7 +93,9 @@
     );
   }
 
-  const RANK_CREATE = { MEMBER: 'user.create', RESELLER: 'reseller.create', PARTNER: 'partner.create', OWNER: 'owner.create', CEO: 'ceo.create' };
+  // Sama dengan server/services/accessControl.js. Server tetap yang memutuskan; ini hanya menyaring tombol.
+  const RANK_CREATE = { MEMBER: 'user.create', RESELLER: 'reseller.create', SUKI: 'suki.create', RAJA: 'raja.create', DEWA: 'dewa.create' };
+  const RANK_DELETE = { MEMBER: 'user.delete', RESELLER: 'reseller.delete', SUKI: 'suki.delete', RAJA: 'raja.delete', DEWA: 'dewa.delete' };
 
   async function renderAccounts(view) {
     const [{ accounts }, { ranks }] = await Promise.all([api('GET', '/api/dash/accounts'), api('GET', '/api/dash/ranks')]);
@@ -123,8 +125,12 @@
 
   function accountActions(a, ranks) {
     const box = el('div', { class: 'actions' });
-    if (can('role.assign')) box.append(el('button', { class: 'btn small', type: 'button', onclick: async () => {
-      const opts = ranks.filter(r => r.assignable && r.level < ranks.find(x => x.code === ME.account.rank).level).map(r => ({ value: r.code, label: `${r.code} (nomor ${r.max_numbers ?? '∞'}, user ${r.max_managed_users ?? '∞'})` }));
+    const myLevel = ranks.find(x => x.code === ME.account.rank).level;
+    const cur = ranks.find(x => x.code === a.rank_code);
+    // Naik ke rank X butuh izin tambah X; turun butuh izin hapus rank asal.
+    const opts = !cur || cur.level >= myLevel ? [] : ranks.filter(r => r.assignable && r.level < myLevel && r.code !== a.rank_code && (r.level > cur.level ? can(RANK_CREATE[r.code]) : can(RANK_DELETE[a.rank_code])))
+      .map(r => ({ value: r.code, label: `${r.code} (nomor ${r.max_numbers ?? '∞'}, user ${r.max_managed_users ?? '∞'})` }));
+    if (can('role.assign') && opts.length) box.append(el('button', { class: 'btn small', type: 'button', onclick: async () => {
       const v = await ask(`Ubah rank ${a.username}`, [{ name: 'rank', label: 'Rank baru', type: 'select', options: opts, value: a.rank_code }]);
       if (v) { const r = await run(() => api('POST', `/api/dash/accounts/${a.id}/rank`, v), 'Rank diubah'); if (r?.over_quota) toast('Catatan: pemakaian sudah melebihi kuota rank baru. Data lama tidak dihapus; penambahan diblokir.'); show('akun'); }
     } }, 'Rank'));
@@ -141,7 +147,7 @@
       const v = await ask(`Ubah ${a.username}`, [{ name: 'display_name', label: 'Nama tampilan', value: a.display_name, max: 80 }, { name: 'email', label: 'Email', type: 'email', value: a.email || '' }]);
       if (v && await run(() => api('PATCH', `/api/dash/accounts/${a.id}`, { display_name: v.display_name, email: v.email || null }), 'Akun diperbarui')) show('akun');
     } }, 'Edit'));
-    box.append(el('button', { class: 'btn small danger', type: 'button', onclick: async () => {
+    if (can(RANK_DELETE[a.rank_code]) && cur && cur.level < myLevel) box.append(el('button', { class: 'btn small danger', type: 'button', onclick: async () => {
       const v = await ask(`Hapus ${a.username}?`, [{ name: 'confirm', label: `Ketik "${a.username}" untuk konfirmasi`, required: true }], 'Hapus');
       if (v && v.confirm === a.username && await run(() => api('DELETE', `/api/dash/accounts/${a.id}`), 'Akun dihapus')) show('akun');
     } }, 'Hapus'));

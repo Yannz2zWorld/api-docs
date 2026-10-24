@@ -8,7 +8,7 @@
 //   node server/cli.js status
 //   node server/cli.js bootstrap-developer --username yann --email kamu@gmail.com
 //   node server/cli.js grant-developer --username yann --confirm yann
-//   node server/cli.js revoke-developer --username yann --to CEO --confirm yann
+//   node server/cli.js revoke-developer --username yann --to DEWA --confirm yann
 //   node server/cli.js login-link --username yann
 //   node server/cli.js add-bot --username yann --name "Bot Test" --phone 6281234567890
 //   node server/cli.js list-bots --username yann
@@ -92,7 +92,7 @@ async function main() {
       case 'revoke-developer': {
         if (o.confirm !== o.username) fail('Konfirmasi wajib: --confirm <username yang sama>');
         const a = await findAccount(db, o.username);
-        const to = cmd === 'grant-developer' ? 'DEVELOPER' : v.rank(o.to || 'CEO');
+        const to = cmd === 'grant-developer' ? 'DEVELOPER' : v.rank(o.to || 'DEWA');
         if (cmd === 'revoke-developer' && (a.rank_code !== 'DEVELOPER' || to === 'DEVELOPER')) fail('Akun ini bukan DEVELOPER / rank tujuan tidak valid.');
         await db.withTransaction(async tx => {
           if (cmd === 'revoke-developer') {

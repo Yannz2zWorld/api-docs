@@ -1,89 +1,95 @@
 # Rank, permission, ownership & kuota
 
-Enam rank resmi (master prompt menyebut "lima" tetapi mencantumkan enam nama — keenamnya diimplementasikan):
-`MEMBER`, `RESELLER`, `PARTNER`, `OWNER`, `CEO`, `DEVELOPER`.
+Enam rank (rank v2, `server/migrations/003_ranks_v2.sql`):
+`MEMBER` → `RESELLER` → `SUKI` → `RAJA` → `DEWA` → `DEVELOPER`.
 
-Sumber kebenaran: tabel `ranks`, `permissions`, `rank_permissions` (seed di `server/migrations/002_ranks_permissions.sql`).
-Backend memeriksa **permission eksplisit** pada setiap aksi (`server/services/accessControl.js`); level rank hanya dipakai untuk aturan
-hierarki "tidak boleh mengelola rank yang sama atau lebih tinggi". Tombol di dashboard disembunyikan hanya demi kenyamanan.
+Sumber kebenaran: tabel `ranks`, `permissions`, `rank_permissions`. Backend memeriksa **permission eksplisit** pada setiap aksi
+(`server/services/accessControl.js`); level rank hanya dipakai untuk aturan hierarki "tidak boleh mengelola rank yang sama atau lebih tinggi".
+Tombol di dashboard hanya muncul untuk aksi yang boleh dilakukan, tapi server tetap yang memutuskan.
+
+## Ringkasan
+
+| Rank | Maks nomor | Boleh menambah | Boleh menghapus akun | Didapat lewat |
+|---|---:|---|---|---|
+| MEMBER | 0 | — | — | otomatis (akun Google baru) / dibuat atasan |
+| RESELLER | 10 | nomor, member | member | dashboard |
+| SUKI | 50 | nomor, member, reseller | member | dashboard |
+| RAJA | 100 | nomor, member, reseller, suki | member, reseller | dashboard |
+| DEWA | 1000 | nomor, member, reseller, suki, raja | member, reseller, suki, raja | dashboard |
+| DEVELOPER | ∞ | semua (termasuk dewa) | semua | **hanya CLI di server** |
+
+- Semua rank yang bisa menambah nomor juga bisa **menghapus nomor**, ganti password bot, cabut sesi, dan maintenance per bot di cakupannya.
+- Member diatur oleh reseller ke atas (dibuat, diubah, dihapus oleh atasannya).
+- Aksi admin global hanya **DEVELOPER**: lihat semua akun/bot, ban/unban akun & bot, maintenance global, riwayat login, kesehatan sistem, backup/restore.
+- Kuota user (akun yang dikelola) sama dengan kuota nomor: 0 / 10 / 50 / 100 / 1000 / ∞.
 
 ## Kuota
 
-| Rank | Maks nomor (bot) | Maks user dikelola | Bisa diberikan lewat dashboard |
-|---|---:|---:|:-:|
-| MEMBER | 0 | 0 | ✅ |
-| RESELLER | 10 | 10 | ✅ |
-| PARTNER | 50 | 50 | ✅ |
-| OWNER | ∞ | ∞ | ✅ |
-| CEO | ∞ | ∞ | ✅ |
-| DEVELOPER | ∞ | ∞ | ❌ hanya CLI di server |
-
-- **Dua kuota berbeda, tidak dihitung ganda**: kuota *nomor* = jumlah baris `bots` aktif dengan `owner_id` = akun; kuota *user* = jumlah `accounts` aktif dengan `manager_id` = akun.
-- **Concurrency-safe**: penambahan dilakukan dalam transaksi yang mengunci baris akun pemilik kuota (`SELECT … FOR UPDATE`) lalu menghitung. Teruji: 25 request paralel untuk reseller kosong → tepat 10 berhasil.
-- Reseller ditolak pada resource ke-11, partner pada ke-51 (`409 QUOTA_EXCEEDED` berisi `used`/`limit`). Member tidak bisa menambah apa pun.
+- **Dua kuota terpisah**: kuota *nomor* = jumlah baris `bots` aktif dengan `owner_id` = akun; kuota *user* = jumlah `accounts` aktif dengan `manager_id` = akun.
+- **Aman dari request bersamaan**: penambahan dalam transaksi yang mengunci baris pemilik kuota (`SELECT … FOR UPDATE`). Teruji: 25 request paralel untuk reseller kosong → tepat 10 berhasil.
+- Ditolak dengan `409 QUOTA_EXCEEDED` (berisi `used`/`limit`): reseller pada nomor ke-11, suki ke-51, raja ke-101, dewa ke-1001.
 - Hapus (soft-delete) langsung membebaskan slot.
-- Perubahan rank langsung mengubah kuota efektif. Jika rank turun dan pemakaian melebihi batas baru, **data tidak dihapus**; penambahan diblokir sampai pemakaian di bawah batas (respons `over_quota: true`).
-- Kuota divalidasi di semua jalur yang membuat resource: API dashboard (`accountService.create`, `botService.create`, re-parent saat `changeRank`). CLI hanya membuat akun DEVELOPER awal.
+- Turun rank: **data tidak dihapus**, penambahan diblokir sampai pemakaian di bawah batas baru (`over_quota: true`). Naik rank langsung menambah kuota.
 - Dashboard menampilkan pemakaian sebagai `7/10`, `32/50`, atau `5/∞`.
 
 ## Ownership & cakupan
 
-- Setiap akun punya `manager_id` (atasan). **Cakupan** aktor = semua akun di bawahnya secara rekursif (pohon delegasi).
+- Setiap akun punya `manager_id` (atasan). **Cakupan** = semua akun di bawahnya secara rekursif (pohon delegasi).
+- Rank MEMBER sampai DEWA hanya mengelola akun & bot **di bawahnya sendiri**. DEWA tidak bisa menyentuh akun di bawah DEWA lain (`403 OUT_OF_SCOPE`).
+- DEVELOPER punya `scope.global` (semua akun & bot, tetap hanya rank lebih rendah).
 - Bot dimiliki `owner_id` (kuota nomor dihitung ke akun ini) dan boleh punya `user_account_id` (akun yang memakai bot).
-- Aktor boleh mengelola akun target jika: target **bukan dirinya**, rank target **lebih rendah**, dan target berada di cakupannya — atau aktor punya `scope.global` (OWNER/CEO/DEVELOPER; tetap hanya rank lebih rendah).
-- Akses lintas pemilik ditolak `403 OUT_OF_SCOPE` (teruji untuk ubah/hapus/reset password/cabut sesi antar reseller).
 
 ## Aturan rank
 
-- Membuat akun rank X butuh `<x>.create` (MEMBER → `user.create`, RESELLER → `reseller.create`, …) dan X lebih rendah dari rank aktor.
-- Mengubah rank butuh `role.assign` + `<rank tujuan>.create` (naik) atau `<rank asal>.delete` (turun).
-- Tidak ada yang bisa mengubah rank dirinya sendiri (`SELF_MANAGEMENT`).
-- Reseller tidak bisa membuat/menghapus reseller lain (tidak punya `reseller.create/delete`); partner bisa untuk reseller dalam cakupannya, tidak bisa membuat owner/CEO/developer.
-- CEO tidak bisa mengubah/menurunkan DEVELOPER (hierarki level).
-- Jika akun dinaikkan setara/lebih tinggi dari manager lamanya, akun dipindah ke bawah aktor (kuota user aktor dicek).
-- **DEVELOPER** tidak bisa didapat lewat registrasi atau API (`RANK_NOT_ASSIGNABLE`). Pemberian/pencabutan hanya lewat CLI di server (butuh akses shell) dan tercatat di audit:
-  `node server/cli.js bootstrap-developer` (hanya jika belum ada developer), `grant-developer --username X --confirm X`, `revoke-developer --username X --to CEO --confirm X` (developer terakhir tidak bisa dicabut).
-- Akun Google baru selalu **MEMBER** (rank paling aman).
+- Membuat akun rank X butuh izin tambah X (`user.create`, `reseller.create`, `suki.create`, `raja.create`, `dewa.create`) dan X lebih rendah dari rank aktor.
+- Menghapus akun rank X butuh izin hapus X (`user.delete`, `reseller.delete`, `suki.delete`, `raja.delete`, `dewa.delete`).
+- Mengubah rank butuh `role.assign` + izin tambah rank tujuan (naik) atau izin hapus rank asal (turun). Contoh: SUKI bisa menaikkan member jadi reseller, tapi tidak bisa menurunkan reseller.
+- Tidak ada yang bisa mengubah rank dirinya sendiri (`SELF_MANAGEMENT`) atau mengelola rank yang sama/lebih tinggi (`RANK_HIERARCHY`).
+- **DEVELOPER** tidak bisa didapat lewat registrasi atau dashboard (`RANK_NOT_ASSIGNABLE`). Hanya lewat CLI di server, tercatat di audit:
+  `node server/cli.js bootstrap-developer` (hanya jika belum ada developer), `grant-developer --username X --confirm X`, `revoke-developer --username X --to DEWA --confirm X` (developer terakhir tidak bisa dicabut).
+- Akun Google baru selalu **MEMBER**.
+
+## Migrasi dari rank lama
+
+`003_ranks_v2.sql` memindahkan akun lama otomatis: `PARTNER → SUKI`, `OWNER → RAJA`, `CEO → DEWA` (juga daftar pengecualian maintenance). Tidak ada akun atau bot yang dihapus; akun yang pemakaiannya melebihi kuota baru (mis. OWNER unlimited → RAJA 100) tetap menyimpan datanya, hanya penambahan baru yang diblokir. Teruji di `tests/server/rank-quota.test.js`.
 
 ## Matriks permission (dari database)
 
-| Permission | MEMBER | RESELLER | PARTNER | OWNER | CEO | DEVELOPER |
+| Permission | MEMBER | RESELLER | SUKI | RAJA | DEWA | DEVELOPER |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|
-| `audit.view` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `audit.view_all` | — | — | — | ✅ | ✅ | ✅ |
-| `backup.manage` | — | — | — | — | — | ✅ |
-| `bot.ban` | — | — | — | ✅ | ✅ | ✅ |
-| `bot.credential.reset` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `bot.maintenance` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `bot.manage` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `bot.session.revoke` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `bot.unban` | — | — | — | ✅ | ✅ | ✅ |
-| `bot.view` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `bot.view_all` | — | — | — | ✅ | ✅ | ✅ |
-| `ceo.create` | — | — | — | — | — | ✅ |
-| `ceo.delete` | — | — | — | — | — | ✅ |
-| `maintenance.manage` | — | — | — | — | ✅ | ✅ |
-| `number.create` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `number.delete` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `owner.create` | — | — | — | — | ✅ | ✅ |
-| `owner.delete` | — | — | — | — | ✅ | ✅ |
-| `partner.create` | — | — | — | ✅ | ✅ | ✅ |
-| `partner.delete` | — | — | — | ✅ | ✅ | ✅ |
-| `reseller.create` | — | — | ✅ | ✅ | ✅ | ✅ |
-| `reseller.delete` | — | — | ✅ | ✅ | ✅ | ✅ |
-| `role.assign` | — | — | ✅ | ✅ | ✅ | ✅ |
-| `scope.global` | — | — | — | ✅ | ✅ | ✅ |
-| `security.view` | — | — | — | ✅ | ✅ | ✅ |
-| `system.view` | — | — | — | ✅ | ✅ | ✅ |
-| `user.ban` | — | — | — | ✅ | ✅ | ✅ |
-| `user.create` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `user.delete` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `user.unban` | — | — | — | ✅ | ✅ | ✅ |
-| `user.update` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `user.view` | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `user.view_all` | — | — | — | ✅ | ✅ | ✅ |
-
-Catatan kebijakan yang bisa diubah lewat migrasi baru: OWNER tidak punya `maintenance.manage` (maintenance global hanya CEO & DEVELOPER); backup hanya DEVELOPER.
+| `audit.view` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `audit.view_all` | — | — | — | — | — | ✓ |
+| `backup.manage` | — | — | — | — | — | ✓ |
+| `bot.ban` | — | — | — | — | — | ✓ |
+| `bot.credential.reset` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `bot.maintenance` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `bot.manage` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `bot.session.revoke` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `bot.unban` | — | — | — | — | — | ✓ |
+| `bot.view` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `bot.view_all` | — | — | — | — | — | ✓ |
+| `dewa.create` | — | — | — | — | — | ✓ |
+| `dewa.delete` | — | — | — | — | — | ✓ |
+| `maintenance.manage` | — | — | — | — | — | ✓ |
+| `number.create` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `number.delete` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `raja.create` | — | — | — | — | ✓ | ✓ |
+| `raja.delete` | — | — | — | — | ✓ | ✓ |
+| `reseller.create` | — | — | ✓ | ✓ | ✓ | ✓ |
+| `reseller.delete` | — | — | — | ✓ | ✓ | ✓ |
+| `role.assign` | — | — | ✓ | ✓ | ✓ | ✓ |
+| `scope.global` | — | — | — | — | — | ✓ |
+| `security.view` | — | — | — | — | — | ✓ |
+| `suki.create` | — | — | — | ✓ | ✓ | ✓ |
+| `suki.delete` | — | — | — | — | ✓ | ✓ |
+| `system.view` | — | — | — | — | — | ✓ |
+| `user.ban` | — | — | — | — | — | ✓ |
+| `user.create` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `user.delete` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `user.unban` | — | — | — | — | — | ✓ |
+| `user.update` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `user.view` | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `user.view_all` | — | — | — | — | — | ✓ |
 
 ## Status akun & bot
 

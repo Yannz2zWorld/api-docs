@@ -1,6 +1,6 @@
 # YannAjahNew
 
-Bot WhatsApp modular dengan namespace `yannajah`, autentikasi bot ke **backend pusat** (nomor bot + password bot), **dashboard admin** dengan login Google, **6 rank** dengan kuota, ban/unban & maintenance yang tersinkron ke proses bot, serta integrasi **APIZ2Z** dari katalog endpoint yang terverifikasi.
+Bot WhatsApp modular dengan namespace `yannajah`, autentikasi bot ke **backend pusat** (nomor bot + password bot), **dashboard admin** dengan login Google, **6 rank** (MEMBER, RESELLER, SUKI, RAJA, DEWA, DEVELOPER) dengan kuota nomor 0/10/50/100/1000/∞, ban/unban & maintenance yang tersinkron ke proses bot, serta integrasi **APIZ2Z** dari katalog endpoint yang terverifikasi.
 
 Struktur file mengikuti base bot (referensi kedua); fitur & perilaku mengikuti Yann AI V15 Fixed. Detail audit: [docs/AUDIT.md](docs/AUDIT.md).
 

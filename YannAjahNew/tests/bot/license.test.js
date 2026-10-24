@@ -20,7 +20,7 @@ before(async () => {
   if (h.skip) return;
   t = await h.setup();
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'yan-lic-'));
-  const ownerAcc = await t.account('OWNER');
+  const ownerAcc = await t.account('DEVELOPER');   // ban & maintenance global = DEVELOPER (rank v2)
   ownerSession = await t.login(ownerAcc);
   const reseller = await t.account('RESELLER', { manager: ownerAcc.id });
   const phone = h.phone();

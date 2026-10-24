@@ -59,7 +59,8 @@ it('akun pemilik/pemakai disabled, suspended, banned -> login bot ditolak', asyn
 });
 
 it('bot banned/disabled tidak bisa login, sesi aktifnya dicabut, dan heartbeat/verify menolak (sinkron dengan proses bot)', async () => {
-  const ownerAcc = await t.account('OWNER');
+  // Ban bot = permission DEVELOPER (rank v2).
+  const ownerAcc = await t.account('DEVELOPER');
   const owner = await t.login(ownerAcc);
   const resellerAcc = await t.account('RESELLER', { manager: ownerAcc.id });
   const bot = await botWithPassword(resellerAcc);
@@ -115,16 +116,18 @@ it('rate limit / brute force login bot: kegagalan ke-6 untuk nomor yang sama dib
 });
 
 it('user tidak bisa menaikkan rank sendiri / mengelola akun setingkat', async () => {
-  const p = await t.login(await t.account('PARTNER'));
-  const self = await t.as(p).post(`/api/dash/accounts/${p.id}/rank`, { rank: 'OWNER' });
+  const p = await t.login(await t.account('SUKI'));
+  const self = await t.as(p).post(`/api/dash/accounts/${p.id}/rank`, { rank: 'RAJA' });
   assert.equal(self.status, 403);
   const selfReseller = await t.as(p).post(`/api/dash/accounts/${p.id}/rank`, { rank: 'RESELLER' });
   assert.equal(selfReseller.status, 403, 'mengubah rank sendiri dalam bentuk apa pun ditolak');
-  const ceo = await t.login(await t.account('CEO'));
-  const otherCeo = await t.account('CEO');
-  assert.equal((await t.as(ceo).post(`/api/dash/accounts/${otherCeo.id}/status`, { status: 'banned', reason: 'coba ban sesama' })).json.error, 'RANK_HIERARCHY');
-  const dev = await t.account('DEVELOPER');
-  assert.equal((await t.as(ceo).post(`/api/dash/accounts/${dev.id}/rank`, { rank: 'MEMBER' })).json.error, 'RANK_HIERARCHY', 'CEO tidak bisa menurunkan DEVELOPER');
+  const dev1 = await t.login(await t.account('DEVELOPER'));
+  const dev2 = await t.account('DEVELOPER');
+  assert.equal((await t.as(dev1).post(`/api/dash/accounts/${dev2.id}/status`, { status: 'banned', reason: 'coba ban sesama' })).json.error, 'RANK_HIERARCHY');
+  const dewa = await t.login(await t.account('DEWA'));
+  const otherDewa = await t.account('DEWA', { manager: dewa.id });
+  assert.equal((await t.as(dewa).post(`/api/dash/accounts/${otherDewa.id}/rank`, { rank: 'RAJA' })).json.error, 'RANK_HIERARCHY', 'DEWA tidak bisa mengelola DEWA lain');
+  assert.equal((await t.as(dewa).post(`/api/dash/accounts/${dev2.id}/rank`, { rank: 'MEMBER' })).json.error, 'RANK_HIERARCHY', 'DEWA tidak bisa menurunkan DEVELOPER');
 });
 
 it('akun DEVELOPER tidak bisa dibuat lewat registrasi / API biasa', async () => {
@@ -191,7 +194,7 @@ it('Google OAuth menautkan akun yang dibuat admin berdasarkan email terverifikas
 
 it('API langsung tidak bisa melewati permission UI; CSRF dan Origin wajib untuk mutasi', async () => {
   const m = await t.login(await t.account('MEMBER'));
-  const ownerAcc = await t.account('OWNER');
+  const ownerAcc = await t.account('RAJA');
   for (const [method, path, body] of [
     ['post', '/api/dash/accounts', { username: 'hacker1' }],
     ['put', '/api/dash/maintenance', { enabled: true }],
