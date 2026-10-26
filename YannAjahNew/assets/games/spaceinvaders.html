@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Space Invaders — YannAjah AI</title>
+<style>html{background:#05070d;min-height:100%}</style>
+</head>
+<body>
+<style>
+*{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;box-sizing:border-box}
+body{margin:0;padding:6px;background:transparent;font-family:Arial,sans-serif;color:#eee;touch-action:manipulation;display:flex;justify-content:center}
+.container{width:100%;max-width:480px;margin:auto}
+.card{background:#0a0c16;border:1px solid rgba(238,82,83,.3);border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.7),0 0 25px rgba(238,82,83,.15)}
+.header{padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;background:#05070e}
+.body{padding:10px}
+#game{width:100%;height:auto;aspect-ratio:440/460;background:#03050a;border:1px solid rgba(238,82,83,.2);border-radius:12px;display:block}
+.controls{display:flex;gap:10px;margin-top:10px}
+.btn-ctrl{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;color:#fff;font-size:18px;font-weight:bold;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.btn-ctrl:active{background:rgba(238,82,83,.3);transform:scale(.95)}
+.btn-fire{flex:1.5;background:linear-gradient(135deg,#ff3838,#ff4d4d);border:none;box-shadow:0 4px 15px rgba(255,56,56,.4)}
+.status{text-align:center;margin-top:6px;font-size:12px;color:rgba(255,255,255,.7)}
+</style>
+
+<div class="container">
+<div class="card">
+<div class="header">
+  <div>
+    <div style="font-size:10px;letter-spacing:1.5px;color:#ff3838;font-weight:bold">Yann Ai</div>
+    <div style="font-size:20px;font-weight:bold;color:#fff">🚀 Space Invaders</div>
+  </div>
+  <div style="text-align:right">
+    <div id="score" style="font-size:24px;font-weight:bold;color:#ff3838">0</div>
+    <div id="best" style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px">BEST 0</div>
+  </div>
+</div>
+<div class="body">
+<canvas id="game" width="440" height="460"></canvas>
+<div class="controls">
+  <div class="btn-ctrl" id="btnL">⬅️ KIRI</div>
+  <div class="btn-ctrl btn-fire" id="btnF">💥 TEMBAK</div>
+  <div class="btn-ctrl" id="btnR">KANAN ➡️</div>
+</div>
+<div id="status" class="status">Sentuh layar / tombol untuk tembak alien!</div>
+</div></div></div>
+<script>
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function playLaserSound() {
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.09);
+  } catch(e) {}
+}
+
+function playExplodeSound() {
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.21);
+  } catch(e) {}
+}
+
+const c = document.getElementById("game");
+const x = c.getContext("2d");
+const scEl = document.getElementById("score");
+const bsEl = document.getElementById("best");
+const stEl = document.getElementById("status");
+const W = 440;
+const H = 460;
+
+let player, bullets, enemyBullets, aliens, particles, stars, score = 0, best = 0, state = "idle", lastTime = 0;
+let alienDir = 1, alienSpeed = 0.8, alienDrop = 0, fireCooldown = 0;
+
+try {
+  best = parseInt(localStorage.getItem("space_best")) || 0;
+  bsEl.textContent = "BEST " + best;
+} catch(e) {}
+
+function saveB() {
+  try { localStorage.setItem("space_best", best); } catch(e) {}
+}
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 60; i++) {
+    stars.push({ x: Math.random() * W, y: Math.random() * H, s: Math.random() * 2 + 0.5 });
+  }
+}
+
+function spawnAliens() {
+  aliens = [];
+  const rows = 4;
+  const cols = 7;
+  const startX = 35;
+  const startY = 40;
+  const colors = ["#ff4d4d", "#ff9f43", "#00d2d3", "#54a0ff"];
+
+  for (let r = 0; r < rows; r++) {
+    for (let col = 0; col < cols; col++) {
+      aliens.push({
+        x: startX + col * 52,
+        y: startY + r * 36,
+        w: 32,
+        h: 22,
+        color: colors[r % colors.length],
+        alive: true
+      });
+    }
+  }
+}
+
+function reset() {
+  player = { x: W / 2 - 18, y: H - 45, w: 36, h: 26, speed: 5.5, movingL: false, movingR: false };
+  bullets = [];
+  enemyBullets = [];
+  particles = [];
+  score = 0;
+  state = "idle";
+  alienDir = 1;
+  alienSpeed = 0.9;
+  spawnAliens();
+  initStars();
+  scEl.textContent = "0";
+  stEl.textContent = "TAP Layar untuk tembak & mulai!";
+}
+
+function fire() {
+  initAudio();
+  if (state === "dead" || state === "win") {
+    reset();
+    return;
+  }
+  if (state === "idle") {
+    state = "play";
+    stEl.textContent = "Hancurkan semua alien!";
+  }
+  if (fireCooldown <= 0) {
+    bullets.push({ x: player.x + player.w / 2 - 2, y: player.y, w: 4, h: 12 });
+    playLaserSound();
+    fireCooldown = 12;
+  }
+}
+
+document.getElementById("btnF").onclick = function(e) { e.preventDefault(); fire(); };
+const btnL = document.getElementById("btnL");
+const btnR = document.getElementById("btnR");
+
+btnL.addEventListener("touchstart", function(e) { e.preventDefault(); player.movingL = true; fire(); }, { passive: false });
+btnL.addEventListener("touchend", function(e) { e.preventDefault(); player.movingL = false; }, { passive: false });
+btnR.addEventListener("touchstart", function(e) { e.preventDefault(); player.movingR = true; fire(); }, { passive: false });
+btnR.addEventListener("touchend", function(e) { e.preventDefault(); player.movingR = false; }, { passive: false });
+
+btnL.addEventListener("mousedown", function(e) { e.preventDefault(); player.movingL = true; fire(); });
+btnL.addEventListener("mouseup", function(e) { e.preventDefault(); player.movingL = false; });
+btnR.addEventListener("mousedown", function(e) { e.preventDefault(); player.movingR = true; fire(); });
+btnR.addEventListener("mouseup", function(e) { e.preventDefault(); player.movingR = false; });
+
+c.addEventListener("pointerdown", function(e) {
+  e.preventDefault();
+  let rect = c.getBoundingClientRect();
+  let clickX = (e.clientX - rect.left) * (W / rect.width);
+  if (clickX < player.x) player.x = Math.max(10, player.x - 30);
+  else if (clickX > player.x + player.w) player.x = Math.min(W - player.w - 10, player.x + 30);
+  fire();
+});
+
+document.addEventListener("keydown", function(e) {
+  if (e.code === "ArrowLeft" || e.code === "KeyA") player.movingL = true;
+  if (e.code === "ArrowRight" || e.code === "KeyD") player.movingR = true;
+  if (e.code === "Space" || e.code === "ArrowUp") { e.preventDefault(); fire(); }
+});
+
+document.addEventListener("keyup", function(e) {
+  if (e.code === "ArrowLeft" || e.code === "KeyA") player.movingL = false;
+  if (e.code === "ArrowRight" || e.code === "KeyD") player.movingR = false;
+});
+
+function createExplosion(x, y, color) {
+  for (let i = 0; i < 12; i++) {
+    particles.push({
+      x: x,
+      y: y,
+      vx: (Math.random() - 0.5) * 6,
+      vy: (Math.random() - 0.5) * 6,
+      color: color,
+      life: 20
+    });
+  }
+}
+
+function loop(currentTime) {
+  if (!lastTime) lastTime = currentTime;
+  let elapsed = currentTime - lastTime;
+  lastTime = currentTime;
+
+  let dt = elapsed / 16.67;
+  if (dt > 2.5) dt = 1.0;
+
+  x.fillStyle = "#03050a";
+  x.fillRect(0, 0, W, H);
+
+  stars.forEach(function(s) {
+    if (state === "play") s.y += s.s * 0.8 * dt;
+    if (s.y > H) s.y = 0;
+    x.fillStyle = "rgba(255, 255, 255, " + (s.s / 2.5) + ")";
+    x.fillRect(s.x, s.y, s.s, s.s);
+  });
+
+  if (state === "play") {
+    if (fireCooldown > 0) fireCooldown -= dt;
+
+    if (player.movingL) player.x = Math.max(10, player.x - player.speed * dt);
+    if (player.movingR) player.x = Math.min(W - player.w - 10, player.x + player.speed * dt);
+
+    for (let i = 0; i < bullets.length; i++) {
+      let b = bullets[i];
+      b.y -= 7.5 * dt;
+
+      for (let j = 0; j < aliens.length; j++) {
+        let a = aliens[j];
+        if (a.alive && b.x > a.x && b.x < a.x + a.w && b.y > a.y && b.y < a.y + a.h) {
+          a.alive = false;
+          bullets.splice(i, 1);
+          i--;
+          score += 10;
+          scEl.textContent = score;
+          playExplodeSound();
+          createExplosion(a.x + a.w / 2, a.y + a.h / 2, a.color);
+
+          if (score > best) {
+            best = score;
+            saveB();
+            bsEl.textContent = "BEST " + best;
+          }
+          break;
+        }
+      }
+
+      if (b && b.y < 0) {
+        bullets.splice(i, 1);
+        i--;
+      }
+    }
+
+    let edgeReached = false;
+    let aliveCount = 0;
+    aliens.forEach(function(a) {
+      if (a.alive) {
+        aliveCount++;
+        a.x += alienDir * alienSpeed * dt;
+        if ((a.x + a.w >= W - 15 && alienDir > 0) || (a.x <= 15 && alienDir < 0)) {
+          edgeReached = true;
+        }
+      }
+    });
+
+    if (edgeReached) {
+      alienDir *= -1;
+      aliens.forEach(function(a) { a.y += 16; });
+      alienSpeed = Math.min(3.5, alienSpeed + 0.15);
+    }
+
+    if (Math.random() < 0.03 * dt && aliveCount > 0) {
+      let activeAliens = aliens.filter(a => a.alive);
+      let shooter = activeAliens[Math.floor(Math.random() * activeAliens.length)];
+      if (shooter) {
+        enemyBullets.push({ x: shooter.x + shooter.w / 2, y: shooter.y + shooter.h, w: 3, h: 8 });
+      }
+    }
+
+    for (let i = 0; i < enemyBullets.length; i++) {
+      let eb = enemyBullets[i];
+      eb.y += 4.5 * dt;
+
+      if (eb.x > player.x && eb.x < player.x + player.w && eb.y > player.y && eb.y < player.y + player.h) {
+        state = "dead";
+        playExplodeSound();
+        createExplosion(player.x + player.w / 2, player.y + player.h / 2, "#ff4d4d");
+        stEl.textContent = "GAME OVER! Skor: " + score + " (Tap untuk main lagi)";
+      }
+
+      if (eb && eb.y > H) {
+        enemyBullets.splice(i, 1);
+        i--;
+      }
+    }
+
+    aliens.forEach(function(a) {
+      if (a.alive && a.y + a.h >= player.y) {
+        state = "dead";
+        playExplodeSound();
+        stEl.textContent = "GAME OVER! Alien mencapai pangkalan!";
+      }
+    });
+
+    if (aliveCount === 0) {
+      state = "win";
+      stEl.textContent = "🎉 MENANG! Wave Dibersihkan! (Tap untuk main lagi)";
+    }
+  }
+
+  if (state !== "dead") {
+    x.fillStyle = "#00d2d3";
+    x.beginPath();
+    x.moveTo(player.x + player.w / 2, player.y);
+    x.lineTo(player.x + player.w, player.y + player.h);
+    x.lineTo(player.x + player.w / 2, player.y + player.h - 6);
+    x.lineTo(player.x, player.y + player.h);
+    x.closePath();
+    x.fill();
+
+    x.fillStyle = "#ff4d4d";
+    x.fillRect(player.x + player.w / 2 - 3, player.y + 6, 6, 8);
+  }
+
+  x.fillStyle = "#ff4d4d";
+  bullets.forEach(b => x.fillRect(b.x, b.y, b.w, b.h));
+
+  x.fillStyle = "#ffd32a";
+  enemyBullets.forEach(eb => x.fillRect(eb.x, eb.y, eb.w, eb.h));
+
+  aliens.forEach(function(a) {
+    if (a.alive) {
+      x.fillStyle = a.color;
+      x.fillRect(a.x + 6, a.y, a.w - 12, a.h - 4);
+      x.fillRect(a.x + 2, a.y + 4, a.w - 4, 8);
+      x.fillRect(a.x + 4, a.y + a.h - 4, 4, 4);
+      x.fillRect(a.x + a.w - 8, a.y + a.h - 4, 4, 4);
+      x.fillStyle = "#03050a";
+      x.fillRect(a.x + 8, a.y + 6, 4, 4);
+      x.fillRect(a.x + a.w - 12, a.y + 6, 4, 4);
+    }
+  });
+
+  for (let i = 0; i < particles.length; i++) {
+    let p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+    x.fillStyle = p.color;
+    x.fillRect(p.x, p.y, 3, 3);
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+      i--;
+    }
+  }
+
+  if (state === "dead" || state === "win") {
+    x.fillStyle = "rgba(0, 0, 0, 0.65)";
+    x.fillRect(0, 0, W, H);
+
+    x.font = "900 24px Arial Black, Arial";
+    x.textAlign = "center";
+    x.fillStyle = state === "win" ? "#00d2d3" : "#ff4d4d";
+    x.fillText(state === "win" ? "VICTORY!" : "GAME OVER", W / 2, H / 2 - 20);
+
+    x.font = "900 13px Arial";
+    x.fillStyle = "#fff";
+    x.fillText("TAP UNTUK MAIN LAGI", W / 2, H / 2 + 20);
+  } else if (state === "idle") {
+    x.fillStyle = "rgba(0, 0, 0, 0.4)";
+    x.fillRect(0, 0, W, H);
+
+    x.font = "900 22px Arial Black, Arial";
+    x.textAlign = "center";
+    x.fillStyle = "#ff4d4d";
+    x.fillText("SPACE INVADERS", W / 2, H / 2 - 20);
+
+    x.font = "12px Arial";
+    x.fillStyle = "#fff";
+    x.fillText("Tap layar / tombol untuk Mulai", W / 2, H / 2 + 15);
+  }
+
+  requestAnimationFrame(loop);
+}
+
+reset();
+requestAnimationFrame(function(time) {
+  lastTime = time;
+  loop(time);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+PROMPT: BUAT BOT WHATSAPP "YANNAJAH AI" + WEB DATABASE DARI AWAL SAMPAI SIAP DEPLOY
+==================================================================================
+Salin seluruh isi file ini ke AI (coding agent) berikutnya. Kerjakan berurutan dari TAHAP 0 sampai
+TAHAP 9. Bahasa balasan ke pemilik: Indonesia santai, singkat, tanpa banyak format markdown.
+
+
+PERAN KAMU
+----------
+Kamu developer Node.js senior. Buat DUA project yang saling tersambung:
+  1. YannAjah AI       = bot WhatsApp, jalan di panel Pterodactyl.
+  2. YannAjah Web DB   = website dashboard + API lisensi + PostgreSQL, jalan di VPS.
+Hasil akhir: dua file zip siap deploy + kode di repo GitHub.
+
+Prinsip: kamu "tukang bengkel" (merapikan & memperbaiki, bukan menghapus fitur). Ikuti struktur
+referensi. Tiap tahap selesai: jalankan test sampai lolos, lalu commit & push. Laporkan jujur.
+
+
+ATURAN WAJIB
+------------
+  - Password (akun web & bot) hanya hash bcrypt (cost 12), tidak pernah di log.
+  - Secret (DATABASE_URL, SESSION_SECRET, BACKUP_ENCRYPTION_KEY) hanya dari .env server.
+  - API key jangan di-commit ke repo publik. Kalau key ditaruh di settingsbot.js, isi hanya saat
+    build paket, repo tetap kosong.
+  - .env, folder session WhatsApp, database lokal bot, token lisensi: tidak ikut zip, tidak bisa
+    dikirim lewat command getfile.
+  - Bot tidak menyimpan URL/password database. Bot hanya tahu alamat website.
+  - JANGAN buat: broadcast massal (jpm/pushkontak), pemalsuan (fake chat/struk), pesan yang
+    menyamar jadi akun resmi pihak lain, konten dewasa, edit foto orang ke situasi fitnah,
+    fitur eval/tulis kode dari chat, atau membongkar lisensi bot orang lain.
+
+
+TAHAP 0 - SIAPKAN
+-----------------
+  - Repo GitHub baru (sarankan private), branch main. Node.js 22, CommonJS.
+  - Dependency bot: @whiskeysockets/baileys, chalk, pino, qrcode-terminal, jimp,
+    @napi-rs/canvas, node-webpmux. (ffmpeg dari sistem; opsional ffmpeg-static.)
+  - Dependency web: express, pg, bcryptjs.
+  - Dev: javascript-obfuscator, node --test.
+
+
+TAHAP 1 - STRUKTUR FILE (IKUTI PERSIS)
+--------------------------------------
+Root bot (urutan seperti Yann AI V15 / Lena AI):
+  handler.js          pintu masuk event WhatsApp
+  yannajah.js         entry: login web database, pairing, koneksi (FILE INI yang diobfuscate)
+  yannai-cmd.js       pengatur command: cek izin, limit, cooldown, lalu jalankan plugin
+  package.json
+  README.md
+  settingsbot.js      pengaturan bot (gaya global.xxx, lihat TAHAP 5)
+  source/             message.js (serializer), yannai-menu.js (menu), database.js (JSON lokal)
+  lib/                kode bantu yang dipakai plugin
+  library/            inti: yannajah.js (namespace), license.js, connection.js, registry.js,
+                      converter.js (ffmpeg), canvas.js, net.js (anti-SSRF), function.js,
+                      settings-map.js, license-endpoint.js, apiz2z.js, scheduler.js
+  plugins/<kategori>/<command>.js   1 FILE = 1 COMMAND
+  data/  assets/      dataset game, gambar, font, game HTML
+
+Folder TERPISAH (TIDAK ikut paket bot):
+  server/             web database (lihat TAHAP 6)
+  tests/              test bot & server
+  tools/              build-dist, build-release, api-list, feature-report
+
+
+TAHAP 2 - MESIN PLUGIN (registry)
+---------------------------------
+  - library/registry.js memuat semua file di plugins/ secara rekursif. Satu file = satu fitur.
+  - Dukung DUA format plugin:
+    a) feature({ id, name, aliases, category, description, usage, permission, cooldown, limit,
+       run(ctx) }) -> format internal yang ringkas.
+    b) format Yann AI V15 / Lena AI:
+         let handler = async (m, { sock, text, command, prefix, isCreator, Reply }) => { ... }
+         handler.command = ['nama','alias']; handler.category='fun'; handler.owner=true; dll.
+       -> dibungkus adapter jadi fitur. Sediakan m.reply, sock(=conn=lena=alip), dan helper
+       global: isRegistered, isPrem, checkLimit, addLimit.
+  - Menu dibuat OTOMATIS dari daftar fitur (nama, kategori, deskripsi) di source/yannai-menu.js.
+  - Sediakan contoh plugin plugins/contoh/halo.js yang bisa disalin.
+
+
+TAHAP 3 - ALUR PESAN (yannai-cmd.js)
+------------------------------------
+Urutan tiap pesan masuk:
+  serializer (m) -> hook onMessage (afk, antilink, auto-ai, dll.) -> kalau command:
+  cek lisensi aktif -> cek maintenance -> cek izin (user/premium/admin/owner) -> cek scope
+  (grup/private) -> cek ban user & mute grup -> cek cooldown & anti-spam -> cek limit harian
+  (dipotong HANYA kalau sukses) -> jalankan fitur -> tangani error rapi.
+ctx yang diberikan ke fitur: m, text, args, command, prefix, isOwner, isPremium, isAdmin, db, api,
+  user, group, reply, react, sendFile, usage, media, yannajah.
+
+
+TAHAP 4 - KONEKSI + LISENSI (yannajah.js, library/license.js, connection.js)
+---------------------------------------------------------------------------
+  - Start: banner -> validasi config -> login ke web database (nomor bot + password bot) ->
+    database lokal -> muat plugin -> handler -> koneksi WhatsApp (QR / pairing code) -> heartbeat.
+  - Pairing: pilih 1 (QR) atau 2 (pairing code). Dukung input dari console panel Pterodactyl
+    (deteksi env P_SERVER_UUID / BOT_CONSOLE_INPUT), bukan cuma TTY.
+  - custompairing dari settingsbot.js (default 8 huruf, mis. "YANNAJAH").
+  - LicenseClient: verifyStored (pakai token tersimpan), login (nomor+password -> token),
+    heartbeat berkala (terima status ban/disable/maintenance). Token disimpan file 0600.
+  - Gagal aman: kalau web database tidak bisa dihubungi > grace (default 0) -> bot terkunci.
+    Error 5xx/429/DATABASE_UNAVAILABLE dianggap gangguan sementara: token TIDAK dibuang,
+    cek ulang tiap 30 detik, bot jalan lagi otomatis saat pulih. Tampilkan pesan jelas di console.
+  - Alamat web database: library/license-endpoint.js. Development pakai LICENSE_SERVER_URL (.env);
+    build menanam alamat tetap di yannajah.js (lihat TAHAP 8).
+
+
+TAHAP 5 - settingsbot.js (GAYA Yann AI V15)
+-------------------------------------------
+Isi file ini PERSIS gaya settings.js Yann AI V15: variabel global.xxx = nilai, komentar pendek,
+urutan: info bot, tempatDB, custompairing, harga, premku, sewa, limitHarian, warnGrup, SUBDO CF,
+rest api, PANEL SETTING, link, delay, saluran, payment, image, mess. Contoh baris penting:
+  global.owner='62xxxx'; global.namaOwner='...'; global.botname='...'; global.packname='...';
+  global.author='...'; global.custompairing='YANNAJAH'; global.prefix=['.','!','#','/'];
+  global.limitHarian=10; global.warnGrup=3; global.image={menu,welcome,left,reply,qris};
+  global.mess={limit,owner,verifikasi,admin,botAdmin,group,private,prem,wait,error,done}
+API utama = APIZ2Z: global.apiz2z='https://apiz2z.web.id'; global.apikeyapiz2z=''  (diisi owner).
+Baris terakhir file: module.exports = require('./library/settings-map').settingsMap(global)
+library/settings-map.js menerjemahkan global.* jadi object config { bot, owner, prefix, pairing,
+license, database, api, plugin, media, limit, ... }. .env (kalau diisi) menimpa nilai settingsbot.
+Password bot & nomor bot TIDAK di sini (diatur Developer di web database).
+
+
+TAHAP 6 - WEB DATABASE (folder server/, PostgreSQL)
+---------------------------------------------------
+  - server/index.js (Express), server/cli.js (admin), server/migrations/*.sql (append-only,
+    dijalankan runner berurutan), server/services/, server/routes/, server/public/ (dashboard),
+    server/lib/ (db.js pakai pg Pool, security.js, errors.js, env.js).
+  - Tabel inti: ranks, rank_permissions, accounts, bots, bot_credentials, maintenance_settings,
+    audit_logs. accounts & bots pakai soft-delete (deleted_at). password_hash bcrypt.
+  - ROLE (dari rendah ke tinggi), tiap atasan bisa kelola bawahannya:
+      RESELLER  kuota 10 nomor   -> hanya tambah/hapus NOMOR bot miliknya
+      SUKI      kuota 50         -> + kelola RESELLER
+      KING      kuota 100        -> + kelola SUKI
+      CEO       kuota 1000       -> + kelola KING
+      DEVELOPER tanpa batas      -> semua: password bot, nyala/mati bot, ganti nama, cabut sesi,
+                                    ban/unban, maintenance, ganti rank, audit, backup, lihat semua
+    Username & password akun BEBAS (tanpa aturan format). PASSWORD BOT hanya Developer yang buat/
+    ganti (tidak ada password otomatis). Reseller dst HANYA tambah/hapus nomor, bukan password.
+  - Login web: HANYA username (atau email) + password. TANPA Google / OAuth.
+  - API untuk bot: POST /api/bot/auth/login (nomor+password -> token), /api/bot/auth/verify,
+    /api/bot/heartbeat, /api/bot/auth/logout. Rate limit per token (banyak bot 1 IP di panel).
+  - Keamanan web: cookie session (hashed), CSRF (HMAC + cek Origin), bcrypt, rate limit + lockout,
+    header keamanan (CSP, nosniff, dll.). Database mati -> balas 503 DATABASE_UNAVAILABLE (bukan 500).
+  - MAINTENANCE 3 lapis (hanya DEVELOPER), prioritas web > per-bot > global:
+      web     : non-developer ditolak 503 WEB_MAINTENANCE (API & login), DAN semua bot berhenti
+                total (router diam, scheduler stop, startup menunggu, cek ulang tiap 30 detik).
+      per-bot : matikan / maintenance satu bot dari dashboard.
+      global  : maintenance semua bot sekaligus.
+  - cli.js: migrate, status, bootstrap-developer, set-password, login-link (darurat 15 menit),
+    add-bot, list-bots, del-bot, set-bot-password, backup (terenkripsi), restore, purge.
+
+
+TAHAP 7 - FITUR BOT
+-------------------
+Pindahkan/buat fitur gaya Yann AI V15 / Lena AI. Semua command media/AI utama lewat APIZ2Z
+(katalog endpoint di library/catalog, satu command per endpoint + alias nama V15). Fitur lokal
+(tanpa API) pakai canvas/ffmpeg/jimp: menu, grup (antilink, welcome, warn, absen, ultah, dll.),
+owner, toko/list/sewa/premium, ekonomi, game (termasuk game HTML dikirim sebagai file .html),
+efek teks, sertifikat, stiker, edit audio/video, gambar->PDF, ramalan, dll.
+JANGAN buat fitur yang dilarang di ATURAN WAJIB. Command yang sengaja tidak dibuat: tandai di
+katalog backlog beserta alasannya (jangan diam-diam hilang).
+Buat tools/api-list.js yang menghasilkan DAFTAR-API.txt: semua API, mana yang pakai key, dan di
+baris/variabel mana key diisi.
+
+
+TAHAP 8 - BUILD & OBFUSCATE
+---------------------------
+  - tools/build-dist.js: salin file bot (TANPA server/, tests/, .env, session, db lokal) ke dist/.
+    HANYA yannajah.js yang diobfuscate (javascript-obfuscator). File lain tetap kode biasa supaya
+    bisa dibaca & diedit. --license-url menanam alamat web database di yannajah.js (string
+    dikodekan). Sediakan --apiz2z-key untuk mengisi global.apikeyapiz2z di PAKET saja (repo kosong).
+  - tools/build-release.js: hasilkan dua folder + zip:
+      release/YannAjah-AI(.zip)          -> untuk panel (hasil build-dist + .env.example +
+                                            PANDUAN-PANEL.md + CARA-EDIT.txt + DAFTAR-API.txt)
+      release/YannAjah-WebDatabase(.zip) -> server/ + migrasi + install-vps.sh + pm2 + nginx +
+                                            PANDUAN-VPS.md
+    Pengaman: pastikan tidak ada .env / session / db / token ikut paket.
+
+
+TAHAP 9 - TEST, DOKUMEN, DEPLOY
+-------------------------------
+  - Test (node --test): login/role/kuota/izin web, keamanan (CSRF, rate limit), database mati 503,
+    maintenance web (bot stuck + pulih), router bot, fitur lokal (ffmpeg/canvas/jimp sungguhan),
+    APIZ2Z ditiru (mock), build dist bisa dimuat & jalan. Semua harus lolos.
+  - Dokumen: README, CARA-EDIT.txt (cara ganti nama bot/prefix/pairing & cara bikin plugin),
+    PANDUAN-PANEL.md, PANDUAN-VPS.md, DAFTAR-API.txt.
+  - Deploy web (VPS Ubuntu): bash install-vps.sh --domain lisensi.domainkamu.com [--managed-domain]
+    (pasang Node, PostgreSQL/Neon, pm2, nginx, HTTPS; buat akun Developer + password).
+  - Deploy bot (panel): upload YannAjah-AI.zip -> unarchive -> Main file yannajah.js -> isi
+    APIZ2Z key (settingsbot.js) -> Start -> ketik nomor bot + password bot -> pilih QR/kode.
+
+
+CATATAN AKHIR
+-------------
+  - Jaga agar web database mati = bot berhenti + error jelas di console, lalu jalan lagi otomatis.
+  - Kalau ada fitur yang butuh API selain APIZ2Z: JANGAN diam-diam dihapus. Tulis di DAFTAR-API.txt
+    API mana, variabel mana di settingsbot.js, dan laporkan ke pemilik supaya key-nya diisi.
+  - Selesai tiap tahap: ringkas ke pemilik apa yang sudah jadi, apa yang belum dites, langkah
+    berikutnya. Jangan mengklaim selesai kalau test belum lolos.

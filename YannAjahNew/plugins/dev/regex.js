@@ -1,0 +1,5 @@
+'use strict';
+const { UsageError } = require('../../library/errors');
+const { T } = require('../../lib/devtools');
+
+module.exports = T('regex', 'Uji regex: .regex pola|teks (flag opsional: /pola/gi|teks)', t => { const i = t.indexOf('|'); if (i < 1) throw new UsageError('Format: pola|teks'); let src = t.slice(0, i), flags = 'g'; const m = /^\/(.+)\/([gimsuy]*)$/.exec(src); if (m) { src = m[1]; flags = m[2].includes('g') ? m[2] : m[2] + 'g'; } if (src.length > 200) throw new UsageError('Pola maks 200 karakter.'); let re; try { re = new RegExp(src, flags); } catch (e) { throw new UsageError(`Regex tidak valid: ${e.message}`); } const text = t.slice(i + 1).slice(0, 2000); const found = [...text.matchAll(re)].slice(0, 30); return found.length ? `${found.length} cocok:\n` + found.map((x, n) => `${n + 1}. "${x[0]}" @${x.index}${x.length > 1 ? ` grup: ${JSON.stringify(x.slice(1))}` : ''}`).join('\n') : 'Tidak ada yang cocok.'; }, [{ input: '\\d+|a1b22', expect: '2 cocok:\n1. "1" @1\n2. "22" @3' }], { usage: '<pola>|<teks>' });

@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Flappy Bird — YannAjah AI</title>
+<style>html{background:#05070d;min-height:100%}</style>
+</head>
+<body>
+<style>
+*{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;box-sizing:border-box}
+body{margin:0;padding:6px;background:transparent;font-family:Arial,sans-serif;color:#eee;touch-action:manipulation;cursor:pointer;display:flex;justify-content:center}
+.container{width:100%;max-width:520px;margin:auto}
+.card{background:#111628;border:1px solid rgba(255,255,255,.18);border-radius:18px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.header{padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.12);display:flex;justify-content:space-between;align-items:center;background:#0c101d}
+.body{padding:10px}
+#game{width:100%;height:auto;aspect-ratio:480/460;background:#70c5ce;border:1px solid rgba(255,255,255,.15);border-radius:14px;display:block}
+.status{text-align:center;margin-top:8px;font-size:13px;font-weight:bold;color:rgba(255,255,255,.75)}
+</style>
+
+<div class="container">
+<div class="card">
+<div class="header">
+  <div>
+    <div style="font-size:10px;letter-spacing:1.5px;color:rgba(255,255,255,.5);font-weight:bold">Yann Ai</div>
+    <div style="font-size:20px;font-weight:bold;color:#fff;letter-spacing:0.5px">Flappy Bird</div>
+  </div>
+  <div style="text-align:right">
+    <div id="score" style="font-size:26px;font-weight:bold;color:#ffd32a">0</div>
+    <div id="best" style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">BEST 0</div>
+  </div>
+</div>
+<div class="body">
+<canvas id="game" width="480" height="460"></canvas>
+<div id="status" class="status">TAP untuk mulai terbang!</div>
+</div></div></div>
+<script>
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+}
+
+function playFlapSound() {
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.09);
+  } catch (e) {}
+}
+
+function playScoreSound() {
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(987.77, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.26);
+  } catch (e) {}
+}
+
+function playHitSound() {
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.16);
+  } catch (e) {}
+}
+
+const c = document.getElementById("game");
+const x = c.getContext("2d");
+x.imageSmoothingEnabled = true;
+
+const scEl = document.getElementById("score");
+const bsEl = document.getElementById("best");
+const stEl = document.getElementById("status");
+const W = 480;
+const H = 460;
+const GH = 380;
+
+let bird, pipes, score, best = 0, state = "idle", bgX = 0;
+let pipeTimer = 0;
+let lastTime = 0;
+
+const G = 0.42;
+const JMP = -7.6;
+const SPD = 2.8;
+const GAP = 150;
+const PW = 54;
+
+try {
+  best = parseInt(localStorage.getItem("fb_best")) || 0;
+  bsEl.textContent = "BEST " + best;
+} catch(e) {}
+
+function saveB() {
+  try {
+    localStorage.setItem("fb_best", best);
+  } catch(e) {}
+}
+
+function reset() {
+  bird = { x: W * 0.28, y: GH / 2, vy: 0, rot: 0, wingTimer: 0 };
+  pipes = [];
+  score = 0;
+  state = "idle";
+  pipeTimer = 0;
+  scEl.textContent = score;
+  stEl.textContent = "TAP untuk mulai!";
+}
+
+function tap() {
+  initAudio();
+  if (state === "dead") {
+    if (bird.y >= GH - 14) reset();
+    return;
+  }
+  if (state === "idle") {
+    state = "play";
+    stEl.textContent = "Terbang! Tap untuk lompat";
+    pipeTimer = 0;
+  }
+  bird.vy = JMP;
+  bird.rot = -0.45;
+  playFlapSound();
+}
+
+c.addEventListener("pointerdown", function(e) {
+  e.preventDefault();
+  tap();
+});
+
+document.addEventListener("keydown", function(e) {
+  if (e.code === "Space" || e.code === "ArrowUp") {
+    e.preventDefault();
+    tap();
+  }
+});
+
+function rect(X, Y, w, h, c) {
+  x.fillStyle = c;
+  x.fillRect(X, Y, w, h);
+}
+
+function sRect(X, Y, w, h) {
+  x.strokeRect(X, Y, w, h);
+}
+
+function drawCity() {
+  rect(0, 0, W, GH, "#70c5ce");
+  for (let i = -1; i < 5; i++) {
+    let dx = i * 140 - (bgX * 0.3) % 140;
+    rect(dx, GH - 75, 70, 75, "#d0f4f7");
+    rect(dx + 70, GH - 45, 50, 45, "#d0f4f7");
+  }
+  for (let i = -1; i < 9; i++) {
+    let dx = i * 70 - (bgX * 0.6) % 70;
+    rect(dx, GH - 45, 32, 45, "#90e0e0");
+    rect(dx + 32, GH - 70, 20, 70, "#90e0e0");
+  }
+  rect(0, GH - 10, W, 10, "#d0f4f7");
+}
+
+function drawGround() {
+  rect(0, GH, W, H - GH, "#ded895");
+  rect(0, GH, W, 16, "#73bf2e");
+  rect(0, GH + 16, W, 6, "#559015");
+  for (let i = -1; i < 16; i++) {
+    let dx = i * 40 - (bgX * SPD) % 40;
+    rect(dx, GH + 26, 20, H - GH - 26, "#d0c880");
+    rect(dx - 6, GH + 20, 30, 6, "#559015");
+  }
+  rect(0, GH, W, 3, "#559015");
+}
+
+function drawPipes() {
+  x.strokeStyle = "#543847";
+  x.lineWidth = 2.5;
+  pipes.forEach(function(p) {
+    rect(p.x, 0, PW, p.y, "#73bf2e");
+    rect(p.x - 2, p.y - 28, PW + 4, 28, "#73bf2e");
+    rect(p.x + PW - 14, 0, 14, p.y, "#559015");
+    rect(p.x + PW - 12, p.y - 28, 12, 28, "#559015");
+    rect(p.x + 4, 0, 5, p.y, "#9cfa42");
+    rect(p.x + 4, p.y - 28, 5, 28, "#9cfa42");
+
+    let by = p.y + GAP;
+    rect(p.x, by, PW, GH - by, "#73bf2e");
+    rect(p.x - 2, by, PW + 4, 28, "#73bf2e");
+    rect(p.x + PW - 14, by, 14, GH - by, "#559015");
+    rect(p.x + PW - 12, by, 12, 28, "#559015");
+    rect(p.x + 4, by, 5, GH - by, "#9cfa42");
+    rect(p.x + 4, by, 5, 28, "#9cfa42");
+
+    sRect(p.x, -2, PW, p.y + 2);
+    sRect(p.x - 2, p.y - 28, PW + 4, 28);
+    sRect(p.x, by, PW, GH - by + 2);
+    sRect(p.x - 2, by, PW + 4, 28);
+  });
+}
+
+function drawBird() {
+  x.save();
+  x.translate(bird.x, bird.y);
+  x.rotate(bird.rot);
+
+  x.strokeStyle = "#543847";
+  x.lineWidth = 2.5;
+
+  rect(-16, -12, 28, 24, "#f8db2e");
+  rect(-16, 2, 28, 10, "#f8b82e");
+  sRect(-16, -12, 28, 24);
+
+  let wy = state === "play" && bird.vy < 0 ? -5 : (state === "idle" && (bird.wingTimer % 20 < 10)) ? -2 : 3;
+  rect(-12, wy, 16, 10, "#fff");
+  sRect(-12, wy, 16, 10);
+
+  rect(4, -9, 12, 14, "#fff");
+  sRect(4, -9, 12, 14);
+  rect(10, -5, 5, 7, "#000");
+
+  rect(8, 5, 16, 7, "#f8682e");
+  sRect(8, 5, 16, 7);
+  rect(8, 8, 16, 4, "#e05010");
+
+  x.restore();
+}
+
+function loop(currentTime) {
+  if (!lastTime) lastTime = currentTime;
+  let elapsed = currentTime - lastTime;
+  lastTime = currentTime;
+
+  let dt = elapsed / 16.67;
+  if (dt > 2.5) dt = 1.0;
+
+  if (state !== "dead") bgX += dt;
+  bird.wingTimer = (bird.wingTimer || 0) + dt;
+
+  if (state === "play") {
+    bird.vy += G * dt;
+    bird.y += bird.vy * dt;
+
+    if (bird.vy < 0) {
+      bird.rot = Math.max(-0.4, bird.rot - 0.05 * dt);
+    } else {
+      bird.rot = Math.min(Math.PI / 2, bird.rot + 0.06 * dt);
+    }
+
+    if (bird.y < 14) {
+      bird.y = 14;
+      bird.vy = 0;
+    }
+
+    if (bird.y > GH - 14) {
+      bird.y = GH - 14;
+      if (state !== "dead") playHitSound();
+      state = "dead";
+      stEl.textContent = "GAME OVER (Skor: " + score + ") - Tap untuk main lagi";
+    }
+
+    pipeTimer += dt;
+    if (pipeTimer >= 85) {
+      pipeTimer = 0;
+      let min = 50, max = GH - GAP - 50;
+      pipes.push({ x: W, y: min + Math.random() * (max - min), scored: false });
+    }
+
+    for (let i = 0; i < pipes.length; i++) {
+      let p = pipes[i];
+      p.x -= SPD * dt;
+
+      let bx = bird.x, by = bird.y, r = 14;
+      if (bx + r > p.x - 2 && bx - r < p.x + PW + 2) {
+        if (by - r < p.y || by + r > p.y + GAP) {
+          if (state !== "dead") playHitSound();
+          state = "dead";
+          stEl.textContent = "GAME OVER (Skor: " + score + ") - Tap untuk main lagi";
+        }
+      }
+
+      if (p.x + PW < bx && !p.scored) {
+        p.scored = true;
+        score++;
+        playScoreSound();
+        scEl.textContent = score;
+        scEl.style.transform = "scale(1.35)";
+        setTimeout(function() { scEl.style.transform = "scale(1)"; }, 150);
+        if (score > best) {
+          best = score;
+          saveB();
+          bsEl.textContent = "BEST " + best;
+        }
+      }
+    }
+    if (pipes.length > 0 && pipes[0].x < -70) pipes.shift();
+  } else if (state === "dead") {
+    if (bird.y < GH - 14) {
+      bird.vy += G * 2 * dt;
+      bird.y += bird.vy * dt;
+      bird.rot = Math.min(Math.PI / 2, bird.rot + 0.15 * dt);
+    } else {
+      bird.y = GH - 14;
+    }
+  } else {
+    bird.y = GH / 2 + Math.sin(bird.wingTimer * 0.1) * 6;
+  }
+
+  drawCity();
+  drawPipes();
+  drawGround();
+  drawBird();
+
+  requestAnimationFrame(loop);
+}
+
+reset();
+requestAnimationFrame(function(time) {
+  lastTime = time;
+  loop(time);
+});
+</script>
+</body>
+</html>

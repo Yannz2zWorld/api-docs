@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Snake — YannAjah AI</title>
+<style>html{background:#05070d;min-height:100%}</style>
+</head>
+<body>
+<style>
+*{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;box-sizing:border-box}
+body{margin:0;padding:6px;background:transparent;font-family:Arial,sans-serif;color:#eee;touch-action:manipulation;display:flex;justify-content:center}
+.container{width:100%;max-width:480px;margin:auto}
+.card{background:#0d111e;border:1px solid rgba(0,242,254,.25);border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.6),0 0 20px rgba(0,242,254,.1)}
+.header{padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;background:#080b15}
+.body{padding:10px}
+#game{width:100%;height:auto;aspect-ratio:1;background:#05070f;border:1px solid rgba(0,242,254,.2);border-radius:12px;display:block}
+.dpad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:180px;margin:10px auto 0 auto}
+.dbtn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:18px;font-weight:bold;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.dbtn:active{background:rgba(0,242,254,.3);transform:scale(.95)}
+.status{text-align:center;margin-top:6px;font-size:12px;color:rgba(255,255,255,.7)}
+</style>
+
+<div class="container">
+<div class="card">
+<div class="header">
+  <div>
+    <div style="font-size:10px;letter-spacing:1.5px;color:#00f2fe;font-weight:bold">Yann Ai</div>
+    <div style="font-size:20px;font-weight:bold;color:#fff">🐍 Cyber Snake</div>
+  </div>
+  <div style="text-align:right">
+    <div id="score" style="font-size:24px;font-weight:bold;color:#00f2fe">0</div>
+    <div id="best" style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px">BEST 0</div>
+  </div>
+</div>
+<div class="body">
+<canvas id="game" width="400" height="400"></canvas>
+<div class="dpad">
+  <div></div>
+  <div class="dbtn" id="btnU">⬆️</div>
+  <div></div>
+  <div class="dbtn" id="btnL">⬅️</div>
+  <div class="dbtn" id="btnD">⬇️</div>
+  <div class="dbtn" id="btnR">➡️</div>
+</div>
+<div id="status" class="status">Tap tombol / Swipe layar untuk kontrol!</div>
+</div></div></div>
+<script>
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function playEatSound() {
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(950, audioCtx.currentTime + 0.05);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.13);
+  } catch(e) {}
+}
+
+function playTurnSound() {
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+  } catch(e) {}
+}
+
+function playDeadSound() {
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.25);
+    gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.26);
+  } catch(e) {}
+}
+
+const c = document.getElementById("game");
+const x = c.getContext("2d");
+const scEl = document.getElementById("score");
+const bsEl = document.getElementById("best");
+const stEl = document.getElementById("status");
+
+const GRID = 20;
+const TILE = 20;
+let snake, food, dir, nextDir, score, best = 0, state = "idle", speedTimer = 0, lastTime = 0;
+
+try {
+  best = parseInt(localStorage.getItem("snake_best")) || 0;
+  bsEl.textContent = "BEST " + best;
+} catch(e) {}
+
+function saveB() {
+  try { localStorage.setItem("snake_best", best); } catch(e) {}
+}
+
+function spawnFood() {
+  let valid = false;
+  let pos = { x: 0, y: 0 };
+  while (!valid) {
+    pos.x = Math.floor(Math.random() * GRID);
+    pos.y = Math.floor(Math.random() * GRID);
+    valid = !snake.some(function(s) { return s.x === pos.x && s.y === pos.y; });
+  }
+  return pos;
+}
+
+function reset() {
+  snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
+  dir = { x: 1, y: 0 };
+  nextDir = { x: 1, y: 0 };
+  score = 0;
+  state = "idle";
+  food = spawnFood();
+  scEl.textContent = "0";
+  stEl.textContent = "Swipe / Tap tombol untuk main!";
+}
+
+function setDirection(dx, dy) {
+  initAudio();
+  if (state === "dead") {
+    reset();
+    return;
+  }
+  if (state === "idle") {
+    state = "play";
+    stEl.textContent = "Makan buah neon!";
+  }
+  if (dx !== -dir.x && dy !== -dir.y) {
+    nextDir = { x: dx, y: dy };
+    playTurnSound();
+  }
+}
+
+document.getElementById("btnU").onclick = function(e) { e.preventDefault(); setDirection(0, -1); };
+document.getElementById("btnD").onclick = function(e) { e.preventDefault(); setDirection(0, 1); };
+document.getElementById("btnL").onclick = function(e) { e.preventDefault(); setDirection(-1, 0); };
+document.getElementById("btnR").onclick = function(e) { e.preventDefault(); setDirection(1, 0); };
+
+let touchStartX = 0, touchStartY = 0;
+c.addEventListener("touchstart", function(e) {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+c.addEventListener("touchend", function(e) {
+  let dx = e.changedTouches[0].clientX - touchStartX;
+  let dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > 20) setDirection(1, 0);
+    else if (dx < -20) setDirection(-1, 0);
+  } else {
+    if (dy > 20) setDirection(0, 1);
+    else if (dy < -20) setDirection(0, -1);
+  }
+}, { passive: true });
+
+document.addEventListener("keydown", function(e) {
+  if (e.code === "ArrowUp" || e.code === "KeyW") setDirection(0, -1);
+  else if (e.code === "ArrowDown" || e.code === "KeyS") setDirection(0, 1);
+  else if (e.code === "ArrowLeft" || e.code === "KeyA") setDirection(-1, 0);
+  else if (e.code === "ArrowRight" || e.code === "KeyD") setDirection(1, 0);
+});
+
+function loop(currentTime) {
+  if (!lastTime) lastTime = currentTime;
+  let elapsed = currentTime - lastTime;
+  lastTime = currentTime;
+
+  let dt = elapsed / 16.67;
+  if (dt > 2.5) dt = 1.0;
+
+  x.fillStyle = "#05070f";
+  x.fillRect(0, 0, 400, 400);
+
+  x.strokeStyle = "rgba(0, 242, 254, 0.04)";
+  x.lineWidth = 1;
+  for (let i = 0; i <= GRID; i++) {
+    x.beginPath(); x.moveTo(i * TILE, 0); x.lineTo(i * TILE, 400); x.stroke();
+    x.beginPath(); x.moveTo(0, i * TILE); x.lineTo(400, i * TILE); x.stroke();
+  }
+
+  if (state === "play") {
+    speedTimer += dt;
+    let stepThreshold = Math.max(5, 9 - Math.floor(score / 4));
+
+    if (speedTimer >= stepThreshold) {
+      speedTimer = 0;
+      dir = nextDir;
+
+      let head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+      if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) {
+        state = "dead";
+        playDeadSound();
+        stEl.textContent = "GAME OVER (Skor: " + score + ") - Tap tombol untuk main lagi";
+      } else if (snake.some(function(s) { return s.x === head.x && s.y === head.y; })) {
+        state = "dead";
+        playDeadSound();
+        stEl.textContent = "GAME OVER (Skor: " + score + ") - Tap tombol untuk main lagi";
+      } else {
+        snake.unshift(head);
+        if (head.x === food.x && head.y === food.y) {
+          score++;
+          playEatSound();
+          food = spawnFood();
+          scEl.textContent = score;
+          scEl.style.transform = "scale(1.3)";
+          setTimeout(function() { scEl.style.transform = "scale(1)"; }, 150);
+          if (score > best) {
+            best = score;
+            saveB();
+            bsEl.textContent = "BEST " + best;
+          }
+        } else {
+          snake.pop();
+        }
+      }
+    }
+  }
+
+  x.shadowColor = "#ff3838";
+  x.shadowBlur = 12;
+  x.fillStyle = "#ff4d4d";
+  x.beginPath();
+  x.arc(food.x * TILE + TILE / 2, food.y * TILE + TILE / 2, TILE / 2 - 2, 0, Math.PI * 2);
+  x.fill();
+  x.shadowBlur = 0;
+
+  snake.forEach(function(s, idx) {
+    let isHead = idx === 0;
+    x.fillStyle = isHead ? "#00f2fe" : "#4facfe";
+    if (isHead) {
+      x.shadowColor = "#00f2fe";
+      x.shadowBlur = 10;
+    } else {
+      x.shadowBlur = 0;
+    }
+    x.beginPath();
+    x.roundRect(s.x * TILE + 1.5, s.y * TILE + 1.5, TILE - 3, TILE - 3, 5);
+    x.fill();
+
+    if (isHead) {
+      x.fillStyle = "#000";
+      x.beginPath();
+      let eyeX = s.x * TILE + 6 + (dir.x * 3);
+      let eyeY = s.y * TILE + 6 + (dir.y * 3);
+      x.arc(eyeX, eyeY, 2, 0, Math.PI * 2);
+      x.fill();
+    }
+  });
+  x.shadowBlur = 0;
+
+  if (state === "dead") {
+    x.fillStyle = "rgba(0, 0, 0, 0.65)";
+    x.fillRect(0, 0, 400, 400);
+
+    x.font = "900 24px Arial Black, Arial";
+    x.textAlign = "center";
+    x.fillStyle = "#ff4d4d";
+    x.fillText("G A M E   O V E R", 200, 180);
+
+    x.font = "900 13px Arial";
+    x.fillStyle = "#00f2fe";
+    x.fillText("Tap tombol arah untuk main lagi", 200, 220);
+  } else if (state === "idle") {
+    x.fillStyle = "rgba(0, 0, 0, 0.35)";
+    x.fillRect(0, 0, 400, 400);
+
+    x.font = "900 22px Arial Black, Arial";
+    x.textAlign = "center";
+    x.fillStyle = "#00f2fe";
+    x.fillText("CYBER SNAKE", 200, 180);
+
+    x.font = "12px Arial";
+    x.fillStyle = "#fff";
+    x.fillText("Swipe layar / Tap tombol untuk Mulai", 200, 215);
+  }
+
+  requestAnimationFrame(loop);
+}
+
+reset();
+requestAnimationFrame(function(time) {
+  lastTime = time;
+  loop(time);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1743 @@
+# Katalog Fitur YannAjahNew
+
+> File ini DIBUAT OTOMATIS oleh `npm run features:report` dari feature registry dan hasil uji terakhir (`npm test`). Jangan diedit manual.
+
+Dibuat: 2026-10-25T09:43:01.264Z
+
+## Ringkasan
+
+| Ukuran | Jumlah |
+|---|---:|
+| Entri registry (termasuk backlog) | 1664 |
+| **Fitur unik yang berfungsi** (punya implementasi) | **1287** |
+| — lulus uji otomatis (tested) | 743 |
+| &nbsp;&nbsp;· uji unit (fungsi murni) | 203 |
+| &nbsp;&nbsp;· uji mock APIZ2Z (bukan live) | 484 |
+| &nbsp;&nbsp;· uji nyata ffmpeg/Jimp | 56 |
+| — implemented, belum ada uji otomatis | 544 |
+| — gagal uji (failed) | 0 |
+| Butuh APIZ2Z_API_KEY | 574 |
+| Jalan tanpa API key | 713 |
+| Backlog V15 (planned; sebagian alias) | 127 |
+| Dikecualikan kebijakan (disabled) | 250 |
+
+### Fitur berfungsi per kategori
+
+| Kategori | Jumlah |
+|---|---:|
+| maker | 111 |
+| text | 99 |
+| owner | 95 |
+| group | 80 |
+| tools | 75 |
+| fun | 68 |
+| ai | 64 |
+| search | 64 |
+| anime | 61 |
+| downloader | 60 |
+| image | 57 |
+| game | 40 |
+| random | 36 |
+| games | 35 |
+| core | 34 |
+| canvas | 34 |
+| media | 28 |
+| calc | 26 |
+| store | 22 |
+| dev | 21 |
+| textpro | 21 |
+| info | 19 |
+| news | 19 |
+| primbon | 19 |
+| islamic | 17 |
+| stalk | 17 |
+| convert | 13 |
+| user | 13 |
+| datetime | 10 |
+| economy | 10 |
+| productivity | 10 |
+| sticker | 3 |
+| edukasi | 2 |
+| music | 1 |
+| check | 1 |
+| ephoto | 1 |
+| movie | 1 |
+
+## Fitur berfungsi (1287)
+
+| Command | Alias | Kategori | Deskripsi | Permission | Parameter | Dependency | Status | Uji |
+|---|---|---|---|---|---|---|---|---|
+| .ai | chatgpt, gpt, openai, gpt5plus, gptonline, duckai, yannai, yannaimd | ai | ChatGPT: Chat with OpenAI ChatGPT for free without login. | user | prompt*, chatId | APIZ2Z /api/ai/chatgpt | tested | 1/1 mock |
+| .aigoogle |  | ai | Google AI Search: Performs a Google search using its AI mode (Gemini Bard Frontend) to get a comprehensive answer. | user | query* | APIZ2Z /api/ai/google | tested | 1/1 mock |
+| .aigpt |  | ai | GPT-4o: Chat with GPT-4o Mini supporting text and image input with Dragonfly session cache. | user | text*, imageUrl, chatId | APIZ2Z /api/ai/gpt | tested | 1/1 mock |
+| .aimention |  | ai | AI saat bot di-tag/di-reply: .aimention on/off (di grup: admin) | user |  | APIZ2Z /api/ai/chatgpt | implemented |  |
+| .asynt |  | ai | Asyntai AI: Ngobrol sama AI Asyntai pakai bahasa Indonesia. | user | text*, sessionId | APIZ2Z /api/ai/asynt | tested | 1/1 mock |
+| .autoai |  | ai | Auto AI (semua pesan dibalas AI): .autoai on/off (di grup: admin) | user |  | APIZ2Z /api/ai/chatgpt | implemented |  |
+| .bard |  | ai | Bard Chat: Ngobrol sama AI Bard. | user | query* | APIZ2Z /api/ai/bard | tested | 1/1 mock |
+| .bible |  | ai | Bible AI: Find Bible-based answers using Bible AI. | user | text* | APIZ2Z /api/ai/bible | tested | 1/1 mock |
+| .blackbox |  | ai | Blackbox AI: Ngobrol sama Blackbox AI, jago soal coding. | user | text* | APIZ2Z /api/ai/blackbox | tested | 1/1 mock |
+| .bypassai |  | ai | Bypass AI: Rewrite text to bypass AI detection. | user | text* | APIZ2Z /api/ai/bypassai | tested | 1/1 mock |
+| .claude |  | ai | Claude AI: Chat with Claude Haiku 4.5 via Overchat API. | user | text* | APIZ2Z /api/ai/claude | tested | 1/1 mock |
+| .claude2 |  | ai | Claude AI v2: Chat with Claude Haiku 4.5 via Overchat API. | user | text* | APIZ2Z /api/ai/claude-v2 | tested | 1/1 mock |
+| .copilot |  | ai | Copilot AI: Chat with Microsoft Copilot AI, supports Web Search, Study Mode, Conversation, and Vision. | user | prompt*, mode, conversationId, imageUrl | APIZ2Z /api/ai/copilot | tested | 1/1 mock |
+| .copilot2 |  | ai | Copilot AI v2: Chat with Microsoft Copilot AI, supports Web Search, Study Mode, Conversation, and Vision. | user | prompt* | APIZ2Z /api/ai/copilot-v2 | tested | 1/1 mock |
+| .deepai |  | ai | DeepAI Chat: Ngobrol sama chatbot DeepAI. | user | text*, model | APIZ2Z /api/ai/deepai | tested | 1/1 mock |
+| .deepsearch |  | ai | DeepSearch: Riset pakai AI: cari dari banyak sumber terus dirangkum. | user | text* | APIZ2Z /api/ai/deepsearch | tested | 1/1 mock |
+| .dracintts |  | ai | Dracin Tts: Ubah teks jadi suara ala narator drama China. | user | text*, speed, volume, music | APIZ2Z /api/ai/dracin-tts | tested | 1/1 mock |
+| .epsilon |  | ai | Epsilon: Cari jurnal/paper akademik pakai AI. | user | text* | APIZ2Z /api/ai/epsilon | tested | 1/1 mock |
+| .flux | txt2img | ai | Flux v1: Bikin gambar dari teks pakai AI Flux. | user | prompt* | APIZ2Z /api/ai/flux | tested | 1/1 mock |
+| .gandalf |  | ai | Gandalf AI: Ngobrol sama AI asisten berbahasa Indonesia. | user | q* | APIZ2Z /api/ai/gandalf | tested | 1/1 mock |
+| .gemini | bard2 | ai | Gemini: Chat with Google Gemini AI for free without login. | user | prompt*, chatId | APIZ2Z /api/ai/gemini | tested | 1/1 mock |
+| .geminitts |  | ai | Gemini Tts: Ubah teks jadi suara pakai Gemini TTS. | user | text* | APIZ2Z /api/ai/gemini-tts | tested | 1/1 mock |
+| .geminivision | analisisgambar | ai | Gemini Vision: Gemini dengan gambar: kirim teks (+ unggah gambar opsional). | user | text*, url | APIZ2Z /api/ai/gemini-vision | tested | 1/1 mock |
+| .gitagpt |  | ai | GitaGPT: Tanya jawab seputar Bhagavad Gita pakai AI. | user | text* | APIZ2Z /api/ai/gitagpt | tested | 1/1 mock |
+| .gpt35turbo |  | ai | GPT-3.5 Turbo: Ngobrol sama GPT-3.5 Turbo. | user | text* | APIZ2Z /api/ai/gpt-3.5-turbo | tested | 1/1 mock |
+| .hyperai |  | ai | HyperAI: Chat AI serbaguna (HyperAI). | user | prompt* | APIZ2Z /api/ai/hyperai | tested | 1/1 mock |
+| .ideogram |  | ai | Ideogram: Bikin gambar dari teks pakai AI Ideogram. | user | prompt* | APIZ2Z /api/ai/ideogram | tested | 1/1 mock |
+| .imagegen | genimage, createimage, generateimage, imgai, gptimage, gptimg, freecreate | ai | AI Image Generator: Bikin gambar dari teks pakai AI. | user | text* | APIZ2Z /api/ai/image-gen | tested | 1/1 mock |
+| .islamic |  | ai | Islamic: Tanya jawab seputar Islam pakai AI. | user | text* | APIZ2Z /api/ai/islamic | tested | 1/1 mock |
+| .kimi | kimiai | ai | Kimi: Ngobrol sama Kimi AI. | user | text* | APIZ2Z /api/ai/kimi | tested | 1/1 mock |
+| .lumin |  | ai | Lumin: Ngobrol sama Lumin AI. | user | text* | APIZ2Z /api/ai/lumin | tested | 1/1 mock |
+| .magicstudio |  | ai | MagicStudio: Bikin gambar dari teks pakai MagicStudio. | user | prompt* | APIZ2Z /api/ai/magicstudio | tested | 1/1 mock |
+| .mathgpt |  | ai | MathGPT: Bantu ngerjain soal matematika pakai AI. | user | text* | APIZ2Z /api/ai/mathgpt | tested | 1/1 mock |
+| .monica |  | ai | Monica: Ngobrol sama Monica AI. | user | text* | APIZ2Z /api/ai/monica | tested | 1/1 mock |
+| .morphic |  | ai | Morphic: Ngobrol sama Morphic AI, jawabannya pakai sumber dari web. | user | text* | APIZ2Z /api/ai/morphic | tested | 1/1 mock |
+| .muslimai |  | ai | Muslim AI: Quran-based Q&A using MuslimAI with Dragonfly session support. | user | query*, chatId | APIZ2Z /api/ai/muslimai | tested | 1/1 mock |
+| .muslimai2 |  | ai | Muslim AI v2: Quran-based Q&A using MuslimAI with Dragonfly session support. | user | query* | APIZ2Z /api/ai/muslimai-v2 | tested | 1/1 mock |
+| .nanobanana | banana, editai, editimg, aiedit, photoai | ai | Nano Banana Edit: Edit gambar pakai AI Nano Banana: edit, hapus background/objek/watermark, pertajam, perbesar. | user | image_url*, prompt*, mode | APIZ2Z /api/ai/nano-banana | tested | 1/1 mock |
+| .natalie |  | ai | Natalie: Ngobrol sama Natalie AI. | user | text* | APIZ2Z /api/ai/natalie | tested | 1/1 mock |
+| .nsfwcheck |  | ai | NSFW Check: Deteksi apakah sebuah gambar NSFW (unggah atau URL). | user | url* | APIZ2Z /api/ai/nsfw-check | tested | 1/1 mock |
+| .nsfwcheck2 |  | ai | NSFW Check v2: Deteksi apakah sebuah gambar NSFW (unggah atau URL). | user | url* | APIZ2Z /api/ai/nsfw-check-v2 | tested | 1/1 mock |
+| .overchat |  | ai | Overchat: Ngobrol sama Overchat AI. | user | text* | APIZ2Z /api/ai/overchat | tested | 1/1 mock |
+| .pollinations |  | ai | Pollinations Image: Bikin gambar dari teks pakai AI. | user | prompt*, width, height | APIZ2Z /api/ai/pollinations | tested | 1/1 mock |
+| .powerbrain |  | ai | PowerBrain: Chat AI PowerBrain. | user | prompt* | APIZ2Z /api/ai/powerbrain | tested | 1/1 mock |
+| .powerbrain2 |  | ai | PowerBrain v2: Chat AI PowerBrain. | user | prompt* | APIZ2Z /api/ai/powerbrain-v2 | tested | 1/1 mock |
+| .publicai |  | ai | Public AI: Chat with Public AI with Dragonfly session support. | user | text*, chatId | APIZ2Z /api/ai/publicai | tested | 1/1 mock |
+| .publicai2 |  | ai | Public AI v2: Chat with Public AI with Dragonfly session support. | user | text* | APIZ2Z /api/ai/publicai-v2 | tested | 1/1 mock |
+| .qwen |  | ai | Qwen AI: AI Assistant by Alibaba Cloud (Qwen) with universal support for Text and any File format (Image, Audio, Video, PDF, Documents) with Dragonfly session cache. | user | text*, fileUrl, chatId, search, think | APIZ2Z /api/ai/qwen | tested | 1/1 mock |
+| .screnapp |  | ai | Scren App: Tanya AI soal isi gambar: kirim gambar plus pertanyaannya. | user | url_image*, text* | APIZ2Z /api/ai/screnapp | tested | 1/1 mock |
+| .simi | simisimi | ai | Simi Simi: Ngobrol santai sama SimSimi. | user | text* | APIZ2Z /api/ai/simisimi | tested | 1/1 mock |
+| .sologo |  | ai | Sologo: Bikin logo dari deskripsi pakai AI. | user | prompt* | APIZ2Z /api/ai/sologo | tested | 1/1 mock |
+| .story |  | ai | Story: Bikin cerita dari ide kamu: pilih genre, panjang, dan tingkat kreatifnya. | user | prompt*, mode, length, creative | APIZ2Z /api/ai/story | tested | 1/1 mock |
+| .talefy |  | ai | Talefy AI Story: Generate AI stories based on prompt and genre using Talefy AI. | user | text*, genre* | APIZ2Z /api/ai/talefy | tested | 1/1 mock |
+| .texttoimage | buatgambar | ai | Figurine Generator: Bikin gambar figurine 1/7 ala BANDAI dari deskripsi karakter. | user | name* | APIZ2Z /api/ai/text-to-image | tested | 1/1 mock |
+| .turboseek |  | ai | TurboSeek AI: Searches for an answer using TurboSeek AI. | user | text* | APIZ2Z /api/ai/turboseek | tested | 1/1 mock |
+| .unlimited |  | ai | Unlimited AI: AI Chat with reasoning model from unlimitedai.chat with Dragonfly session support. | user | text*, chatId | APIZ2Z /api/ai/unlimited | tested | 1/1 mock |
+| .venice |  | ai | Venice: Chat AI Venice. | user | prompt* | APIZ2Z /api/ai/venice | tested | 1/1 mock |
+| .vider |  | ai | Vider: Bikin gambar dari teks pakai AI Vider. | user | prompt* | APIZ2Z /api/ai/vider | tested | 1/1 mock |
+| .voice |  | ai | Magic Hour AI Voice: Generate realistic speech and celebrity/character voices from text prompt using Magic Hour AI. | user | prompt*, voice* | APIZ2Z /api/ai/voice | tested | 1/1 mock |
+| .webpilot |  | ai | WebPilot AI: Web-searching AI assistant via Webpilot API with Dragonfly session support. | user | text*, threadId | APIZ2Z /api/ai/webpilot | tested | 1/1 mock |
+| .webpilot2 |  | ai | WebPilot AI v2: Web-searching AI assistant via Webpilot API with Dragonfly session support. | user | text* | APIZ2Z /api/ai/webpilot-v2 | tested | 1/1 mock |
+| .writecream |  | ai | Write Cream: Ngobrol sama AI Writecream, bisa dikasih instruksi peran (logic). | user | text*, logic* | APIZ2Z /api/ai/writecream | tested | 1/1 mock |
+| .writecreamimg |  | ai | Write Cream Image: Bikin gambar dari teks dengan pilihan rasio. | user | prompt*, ratio | APIZ2Z /api/ai/writecreamimg | tested | 1/1 mock |
+| .yannedit | yanedit | ai | Edit gambar pakai AI sesuai perintah (reply/kirim gambar): .yannedit ubah jadi anime | premium | perintah* | APIZ2Z /api/maker/bananaai | implemented |  |
+| .akiyama |  | anime | Gambar acak Akiyama Mio | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .ana |  | anime | Gambar acak Ana Coppola | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .animeakira |  | anime | Gambar acak Akira anime | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .animeanichindetail |  | anime | Anichin Detail: Ambil detail dan daftar episode anime dari Anichin.moe. | user | url* | APIZ2Z /api/anime/anichin/detail | tested | 1/1 mock |
+| .animeanichinlatest |  | anime | Anichin Latest: Ambil anime terbaru dari Anichin.moe. | user | page | APIZ2Z /api/anime/anichin/latest | tested | 1/1 mock |
+| .animeanichinsearch |  | anime | Anichin Search: Cari anime/donghua dari Anichin.moe. | user | q* | APIZ2Z /api/anime/anichin/search | tested | 1/1 mock |
+| .animeeba |  | anime | Gambar acak Eba anime | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .animekeneki |  | anime | Gambar acak Ken Kaneki | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .animekiryuusearch |  | anime | Kiryuu Manga Search: Search manga di Kiryuu. | user | q* | APIZ2Z /api/anime/kiryuu/search | tested | 1/1 mock |
+| .animekomikuchapter |  | anime | Komiku Chapter: Ambil semua gambar halaman dari satu chapter manga Komiku. | user | url* | APIZ2Z /api/anime/komiku/chapter | tested | 1/1 mock |
+| .animekomikudetail |  | anime | Komiku Detail: Detail manga Komiku: sinopsis, genre, dan daftar chapter. | user | url* | APIZ2Z /api/anime/komiku/detail | tested | 1/1 mock |
+| .animekomikupopular |  | anime | Komiku Popular: Daftar manga populer di Komiku. | user | page | APIZ2Z /api/anime/komiku/popular | tested | 1/1 mock |
+| .animekomikusearch |  | anime | Komiku Search: Cari manga di Komiku. | user | q* | APIZ2Z /api/anime/komiku/search | tested | 1/1 mock |
+| .animeoploverzongoing |  | anime | Oploverz Ongoing: Daftar anime ongoing Oploverz. | user | page | APIZ2Z /api/anime/oploverz/ongoing | tested | 1/1 mock |
+| .animeoploverzsearch |  | anime | Oploverz Search: Cari anime di Oploverz. | user | q* | APIZ2Z /api/anime/oploverz/search | tested | 1/1 mock |
+| .animesamehadakuschedule |  | anime | Samehadaku Schedule: Jadwal rilis anime mingguan dari Samehadaku. | user |  | APIZ2Z /api/anime/samehadaku/schedule | tested | 1/1 mock |
+| .animetejina |  | anime | Gambar acak Tejina-senpai anime | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .animeyotsuba |  | anime | Gambar acak Yotsuba Koiwai | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .animeyuli |  | anime | Gambar acak Yuli anime | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .animeyumeko |  | anime | Gambar acak Yumeko Jabami | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .asuna | animeasuna | anime | Gambar acak Asuna Yuuki | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .ayuzawa |  | anime | Gambar acak Ayuzawa Misaki | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .boruto |  | anime | Gambar acak Boruto Uzumaki | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .charinfo | searchchar, carikarakter | anime | Info karakter anime/manga (MyAnimeList via Jikan) | user |  |  | implemented |  |
+| .chiho |  | anime | Gambar acak Chiho Sasaki | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .chitoge |  | anime | Gambar acak Chitoge Kirisaki | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .deidara |  | anime | Gambar acak Deidara Akatsuki | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .doraemon |  | anime | Gambar acak Doraemon | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .emilia | animeemilia | anime | Gambar acak Emilia Re | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .erza |  | anime | Gambar acak Erza Scarlet | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .gremory | animegremory | anime | Gambar acak Rias Gremory | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .hestia |  | anime | Gambar acak Hestia Danmachi | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .hinata | animehinata | anime | Gambar acak Hinata Hyuga | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .inori |  | anime | Gambar acak Inori Yuzuriha | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .isuzu | animeisuzu | anime | Gambar acak Isuzu Sento | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .itachi |  | anime | Gambar acak Itachi Uchiha | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .itori | animeitori | anime | Gambar acak Itori Toaru | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .kaga |  | anime | Gambar acak Kaga Kantai | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .kagura | animekagura | anime | Gambar acak Kagura Gintama | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .kaori |  | anime | Gambar acak Kaori Miyazono | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .komikindo |  | anime | KomikIndo: Manga/manhwa dari KomikIndo: terbaru, cari, genre, detail. | user | action, q, genre, type, url, page | APIZ2Z /api/manga/komikindo | tested | 1/1 mock |
+| .kurumi |  | anime | Gambar acak Kurumi Tokisaki | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .madara |  | anime | Gambar acak Madara Uchiha | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .megumin | animemegumin | anime | Gambar acak Megumin Konosuba | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .mikasa |  | anime | Gambar acak Mikasa Ackerman | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .miku | animemiku | anime | Gambar acak Hatsune Miku | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .minato |  | anime | Gambar acak Minato Namikaze | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .neko2 |  | anime | Gambar acak neko anime | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .nezuko | animenezuko | anime | Gambar acak Nezuko Kamado | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .onepiece |  | anime | Gambar acak One Piece | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .pokemon | animepokemon | anime | Gambar acak Pokemon anime | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .sakura |  | anime | Gambar acak Sakura Haruno | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .sasuke |  | anime | Gambar acak Sasuke Uchiha | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .shina | animeshina | anime | Gambar acak Shina anime | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .shinka | animeshinka | anime | Gambar acak Shinka Nibutani | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .shizuka |  | anime | Gambar acak Shizuka Minamoto | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .toukachan | animetoukachan | anime | Gambar acak Touka Kirishima | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .tsunade |  | anime | Gambar acak Tsunade Naruto | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .waifu2 |  | anime | Gambar acak anime waifu | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .yuki |  | anime | Gambar acak Yuki Nagato | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .yuri |  | anime | Gambar acak Yuri Nakamura | user |  | APIZ2Z /api/search/pinterest | implemented |  |
+| .average | ratarata | calc | Rata-rata nilai (misal nilai rapor) | user | teks* |  | tested | 1/1 unit |
+| .basenum |  | calc | Konversi basis bilangan: .basenum 255 10 16 | user | teks* |  | tested | 1/1 unit |
+| .bmi |  | calc | Indeks massa tubuh: .bmi berat(kg) tinggi(cm) | user | teks* |  | tested | 1/1 unit |
+| .bungamajemuk |  | calc | Bunga majemuk: .bungamajemuk pokok bunga%/tahun tahun | user | teks* |  | tested | 1/1 unit |
+| .bungatunggal |  | calc | Bunga tunggal: .bungatunggal pokok bunga%/tahun tahun | user | teks* |  | tested | 1/1 unit |
+| .calc | kalkulator, hitung | calc | Kalkulator: + - * / % ^ ! sqrt sin cos log ln pi e (argumen fungsi dipisah ;) | user | teks* |  | tested | 6/6 unit |
+| .cicilan |  | calc | Cicilan per bulan (anuitas): .cicilan pokok bunga%/tahun bulan | user | teks* |  | tested | 2/2 unit |
+| .deroman |  | calc | Romawi ke angka | user | teks* |  | tested | 1/1 unit |
+| .diskon |  | calc | Harga setelah diskon: .diskon 250000 20 | user | teks* |  | tested | 1/1 unit |
+| .factorial |  | calc | Faktorial n! (maks 170, eksak sampai 25 dengan BigInt) | user | teks* |  | tested | 1/1 unit |
+| .factorize | faktorprima | calc | Faktorisasi prima | user | teks* |  | tested | 1/1 unit |
+| .fibonacci |  | calc | Deret Fibonacci n suku pertama (maks 90) | user | teks* |  | tested | 1/1 unit |
+| .gcd | fpb | calc | FPB dari beberapa bilangan | user | teks* |  | tested | 1/1 unit |
+| .isprime | prima | calc | Cek bilangan prima | user | teks* |  | tested | 2/2 unit |
+| .kuadrat |  | calc | Akar persamaan kuadrat ax²+bx+c=0: .kuadrat a b c | user | teks* |  | tested | 1/1 unit |
+| .lcm | kpk | calc | KPK dari beberapa bilangan | user | teks* |  | tested | 1/1 unit |
+| .luas |  | calc | Luas bangun: .luas persegi 4 \| persegipanjang 3 5 \| segitiga 3 4 \| lingkaran 7 \| trapesium 3 5 4 | user | teks* |  | tested | 2/2 unit |
+| .patungan |  | calc | Bagi tagihan: .patungan total orang [tip%] | user | teks* |  | tested | 1/1 unit |
+| .persen |  | calc | Hitung persen: .persen 15 200 (15% dari 200) | user | teks* |  | tested | 1/1 unit |
+| .ppn |  | calc | Hitung PPN: .ppn 100000 [tarif% default 11] | user | teks* |  | tested | 1/1 unit |
+| .pythagoras |  | calc | Sisi miring segitiga siku-siku: .pythagoras a b | user | teks* |  | tested | 1/1 unit |
+| .random | acakangka | calc | Angka acak: .random min max | user | teks* |  | tested | 1/1 unit |
+| .roman | romawi | calc | Angka ke Romawi | user | teks* |  | tested | 1/1 unit |
+| .stats |  | calc | Statistik data: rata-rata, median, modus, simpangan baku | user | teks* |  | tested | 1/1 unit |
+| .terbilang |  | calc | Angka ke kata (Bahasa Indonesia) | user | teks* |  | tested | 2/2 unit |
+| .volume |  | calc | Volume bangun ruang: .volume kubus 3 \| balok 2 3 4 \| bola 7 \| tabung 7 10 \| kerucut 7 10 \| prisma luasalas tinggi \| limas luasalas tinggi | user | teks* |  | tested | 1/1 unit |
+| .canvasquotly | qc2 | canvas | Quotly: Gambar quote chat ala Telegram dengan latar transparan. | user | text*, name*, avatar*, color* | APIZ2Z /api/canvas/quotly | tested | 1/1 mock |
+| .canvasyoutube |  | canvas | YouTube-Thumbnail: Thumbnail gaya YouTube Music: cover, judul, dan penyanyi. | user | title*, artist*, coverurl* | APIZ2Z /api/canvas/youtube | tested | 1/1 mock |
+| .goodbyecard |  | canvas | Goodbye Card: Gambar perpisahan member ala Discord. | user | username*, avatar*, guildName*, memberCount, background | APIZ2Z /api/canvas/goodbye | tested | 1/1 mock |
+| .goodbyev1 |  | canvas | Goodbye Card v1: Gambar perpisahan member, gaya sedih. | user | username*, avatar*, guildName*, memberCount, background | APIZ2Z /api/canvas/goodbyev1 | tested | 1/1 mock |
+| .goodbyev2 |  | canvas | Goodbye Card v2: Gambar perpisahan member, gaya gradien. | user | username*, avatar*, guildName* | APIZ2Z /api/canvas/goodbyev2 | tested | 1/1 mock |
+| .goodbyev3 |  | canvas | Goodbye Card v3: Gambar perpisahan member, gaya neon gelap. | user | username*, avatar*, guildName* | APIZ2Z /api/canvas/goodbyev3 | tested | 1/1 mock |
+| .goodbyev4 |  | canvas | Goodbye Card v4: Gambar perpisahan member, gaya minimalis. | user | username*, avatar*, guildName* | APIZ2Z /api/canvas/goodbyev4 | tested | 1/1 mock |
+| .goodbyev5 |  | canvas | Goodbye Card v5: Gambar perpisahan member, gradien ungu. | user | username*, avatar*, guildName* | APIZ2Z /api/canvas/goodbyev5 | tested | 1/1 mock |
+| .gura |  | canvas | Gura: Tempel foto kamu ke template Gura. | user | url* | APIZ2Z /api/canvas/gura | tested | 1/1 mock |
+| .igqc |  | canvas | Instagram Quote Chat: Gambar quote DM Instagram. | user | text, image | APIZ2Z /api/canvas/igqc | tested | 1/1 mock |
+| .iqc | iphonequoted | canvas | iPhone Quote Chat: Gambar quote chat iPhone. | user | text*, time | APIZ2Z /api/canvas/iqc | tested | 1/1 mock |
+| .iqc2 | iphonequoted2, iqc3 | canvas | iPhone Quote Chat v2: Gambar quote chat iPhone. | user | text* | APIZ2Z /api/canvas/iqc-v2 | tested | 1/1 mock |
+| .jmk |  | canvas | Tribun JMK48 Twibbon: Twibbon JMK48 dengan bingkai bulat dari foto kamu. | user | url* | APIZ2Z /api/canvas/jmk | tested | 1/1 mock |
+| .kalendercanvas |  | canvas | Kalender: Gambar kalender Indonesia lengkap sama tanggal merahnya. | user | year, month | APIZ2Z /api/canvas/kalender | tested | 1/1 mock |
+| .memebeautiful |  | canvas | Meme You're Beautiful: Meme 'You're Beautiful' pakai gambar sendiri. | user | image1*, image2 | APIZ2Z /api/canvas/meme-beautiful | tested | 1/1 mock |
+| .memedrake |  | canvas | Meme Drake: Meme Drake: nggak suka vs suka. | user | text1*, text2* | APIZ2Z /api/canvas/meme-drake | tested | 1/1 mock |
+| .memejarvis |  | canvas | Meme Jarvis: Meme 'Jarvis, tolong…'. | user | text* | APIZ2Z /api/canvas/meme-jarvis | tested | 1/1 mock |
+| .memetwobuttons |  | canvas | Meme Two Buttons: Meme dua tombol: kiri vs kanan. | user | text1*, text2* | APIZ2Z /api/canvas/meme-twobuttons | tested | 1/1 mock |
+| .musiccard | cardmusik, musikcard | canvas | Music Card: Kartu musik: judul lagu, nama penyanyi, dan foto. | user | judul*, nama*, image_url* | APIZ2Z /api/canvas/musiccard | tested | 1/1 mock |
+| .pixelart |  | canvas | Pixel Art: Ubah gambar jadi pixel art. | user | url*, grid | APIZ2Z /api/canvas/pixel-art | tested | 1/1 mock |
+| .pixelart2 |  | canvas | Pixel Art v2: Ubah gambar jadi pixel art. | user | url* | APIZ2Z /api/canvas/pixel-art-v2 | tested | 1/1 mock |
+| .profilecard |  | canvas | Profile Card: Kartu profil member ala Discord. | user | username*, avatar*, level, exp, requiredExp, rank, background | APIZ2Z /api/canvas/profile | tested | 1/1 mock |
+| .qcwa | qc1 | canvas | WhatsApp Quote Chat: Gambar quote chat WhatsApp (gelap/terang). | user | username, phone, tag, pp*, text, image, mode | APIZ2Z /api/canvas/qcwa | tested | 1/1 mock |
+| .rankcard |  | canvas | Rank Card: Kartu rank: username, avatar, level, XP, dan status. | user | username*, avatar*, currentxp*, requiredxp*, status*, level*, rank*, progressbarcolor* | APIZ2Z /api/canvas/rankcard | tested | 1/1 mock |
+| .rankup |  | canvas | Rank Up Card: Gambar naik rank. | user | username*, avatar*, oldRank*, newRank*, background | APIZ2Z /api/canvas/rankup | tested | 1/1 mock |
+| .shipcard |  | canvas | Ship Card: Gambar kecocokan dua orang (ship). | user | avatar1*, avatar2*, percentage, background | APIZ2Z /api/canvas/ship | tested | 1/1 mock |
+| .timpateks |  | canvas | Meme Timpa Teks: Meme tulisan di kertas kecil. | user | username, text* | APIZ2Z /api/canvas/timpa-teks | tested | 1/1 mock |
+| .ttqc |  | canvas | TikTok Quote Chat: Gambar quote chat TikTok. | user | username, text*, avatar | APIZ2Z /api/canvas/ttqc | tested | 1/1 mock |
+| .welcomecard |  | canvas | Welcome Card: Gambar sambutan member baru ala Discord. | user | username*, guildName*, memberCount*, avatar*, background, guildIcon | APIZ2Z /api/canvas/welcome | tested | 1/1 mock |
+| .welcomeleave |  | canvas | Welcome-Leave: Gambar welcome/leave grup: judul, deskripsi, avatar, latar. | user | title*, description*, avatar*, background*, color*, cardstroke* | APIZ2Z /api/canvas/welcomeleave | tested | 1/1 mock |
+| .welcomev2 |  | canvas | Welcome Card v2: Gambar sambutan member baru, versi ringkas. | user | username*, guildName*, memberCount*, avatar*, background | APIZ2Z /api/canvas/welcomev2 | tested | 1/1 mock |
+| .welcomev3 |  | canvas | Welcome Card v3: Gambar sambutan member baru, gaya gradien. | user | username*, guildName*, memberCount*, avatar* | APIZ2Z /api/canvas/welcomev3 | tested | 1/1 mock |
+| .welcomev4 |  | canvas | Welcome Card v4: Gambar sambutan member baru, mode gelap. | user | username*, guildName*, memberCount*, avatar*, background | APIZ2Z /api/canvas/welcomev4 | tested | 1/1 mock |
+| .welcomev5 |  | canvas | Welcome Card v5: Gambar sambutan member baru, gaya neon. | user | username*, guildName*, memberCount*, avatar* | APIZ2Z /api/canvas/welcomev5 | tested | 1/1 mock |
+| .mlstalk | stalkml, cekml | check | Cek Akun MLBB: Cek akun Mobile Legends: nickname, status first recharge, region. | user | uid*, zone* | APIZ2Z /api/check/mlbb | tested | 1/1 mock |
+| .datasize |  | convert | Konversi satuan ukuran data: bit, b, byte, kb, mb, gb, tb, kib… | user | teks* |  | tested | 1/1 unit |
+| .daya |  | convert | Konversi satuan daya: w, kw, mw, hp, pk… | user | teks* |  | tested | 1/1 unit |
+| .energi |  | convert | Konversi satuan energi: j, kj, cal, kal, kcal, kkal, wh, kwh… | user | teks* |  | tested | 1/1 unit |
+| .frekuensi |  | convert | Konversi satuan frekuensi: hz, khz, mhz, ghz, rpm… | user | teks* |  | tested | 1/1 unit |
+| .kecepatan |  | convert | Konversi satuan kecepatan: m/s, km/h, kmh, mph, knot, kn… | user | teks* |  | tested | 1/1 unit |
+| .konversiwaktu |  | convert | Konversi satuan durasi waktu: ms, s, detik, menit, min, jam, h, hari… | user | teks* |  | tested | 1/1 unit |
+| .luasan |  | convert | Konversi satuan luas: mm2, cm2, m2, are, ha, km2, ft2, acre… | user | teks* |  | tested | 1/1 unit |
+| .massa |  | convert | Konversi satuan massa / berat: mg, g, ons, kg, kuintal, ton, lb, oz… | user | teks* |  | tested | 1/1 unit |
+| .panjang |  | convert | Konversi satuan panjang: mm, cm, dm, m, km, in, inci, ft… | user | teks* |  | tested | 1/1 unit |
+| .sudut |  | convert | Konversi satuan sudut: deg, derajat, rad, grad, putaran… | user | teks* |  | tested | 1/1 unit |
+| .suhu | temperature | convert | Konversi suhu Celsius/Fahrenheit/Kelvin/Reamur | user | teks* |  | tested | 2/2 unit |
+| .tekanan |  | convert | Konversi satuan tekanan: pa, kpa, bar, atm, psi, mmhg… | user | teks* |  | tested | 1/1 unit |
+| .volumesatuan |  | convert | Konversi satuan volume: ml, cc, l, liter, dl, m3, gal, galon… | user | teks* |  | tested | 1/1 unit |
+| .allmenu |  | core | Semua fitur aktif per kategori | user |  |  | implemented |  |
+| .apistatus |  | core | Status koneksi ke APIZ2Z (tanpa memakai kuota) | owner |  |  | implemented |  |
+| .botinfo | info | core | Informasi bot, versi, statistik | user |  |  | implemented |  |
+| .cmdinfo | caracmd, infofitur | core | Detail sebuah command: deskripsi, alias, parameter, permission, status | user |  |  | implemented |  |
+| .menu | help, start | core | Daftar kategori & fitur bot | user |  |  | implemented |  |
+| .menu-ai |  | core | Menu ai (kategori: ai) | user |  |  | implemented |  |
+| .menu-anime |  | core | Menu anime (kategori: anime) | user |  |  | implemented |  |
+| .menu-animetheme |  | core | Menu animetheme (kategori: anime) | user |  |  | implemented |  |
+| .menu-download |  | core | Menu download (kategori: downloader, music) | user |  |  | implemented |  |
+| .menu-ehpoto |  | core | Menu ehpoto (kategori: ephoto, textpro) | user |  |  | implemented |  |
+| .menu-enc |  | core | Menu enc (kategori: enc) | user |  |  | implemented |  |
+| .menu-fun |  | core | Menu fun (kategori: fun, primbon) | user |  |  | implemented |  |
+| .menu-game |  | core | Menu game (kategori: game, games) | user |  |  | implemented |  |
+| .menu-group |  | core | Menu group (kategori: group) | user |  |  | implemented |  |
+| .menu-islami |  | core | Menu islami (kategori: islamic) | user |  |  | implemented |  |
+| .menu-maker |  | core | Menu maker (kategori: maker, canvas, textpro) | user |  |  | implemented |  |
+| .menu-owner |  | core | Menu owner (kategori: owner) | user |  |  | implemented |  |
+| .menu-potoanime |  | core | Menu potoanime (kategori: anime) | user |  |  | implemented |  |
+| .menu-prem |  | core | Daftar fitur khusus premium | user |  |  | implemented |  |
+| .menu-primbon |  | core | Menu primbon (kategori: primbon) | user |  |  | implemented |  |
+| .menu-random |  | core | Menu random (kategori: random) | user |  |  | implemented |  |
+| .menu-rpg |  | core | Menu rpg (kategori: economy) | user |  |  | implemented |  |
+| .menu-search |  | core | Menu search (kategori: search, stalk) | user |  |  | implemented |  |
+| .menu-shop |  | core | Menu shop (kategori: store) | user |  |  | implemented |  |
+| .menu-stickers |  | core | Menu stickers (kategori: sticker) | user |  |  | implemented |  |
+| .menu-stk |  | core | Menu stk (kategori: sticker) | user |  |  | implemented |  |
+| .menu-store |  | core | Menu store (kategori: store) | user |  |  | implemented |  |
+| .menu-tools |  | core | Menu tools (kategori: tools, convert, image, media) | user |  |  | implemented |  |
+| .owner | creator, developerbot | core | Kontak owner bot | user |  |  | implemented |  |
+| .ping | p | core | Cek respons bot | user |  |  | implemented |  |
+| .runtime | uptime | core | Lama bot berjalan | user |  |  | implemented |  |
+| .speed | server | core | Info server: CPU, memori, platform | user |  |  | implemented |  |
+| .status | lisensi | core | Status lisensi, koneksi WhatsApp, maintenance | user |  |  | implemented |  |
+| .totalfitur | fitur | core | Jumlah fitur per status dan kategori (sesuai registry) | user |  |  | implemented |  |
+| .countdown |  | datetime | Hitung mundur ke tanggal | user | teks* |  | tested | 1/1 unit |
+| .hari |  | datetime | Nama hari dari tanggal | user | teks* |  | tested | 1/1 unit |
+| .hijriah | hijri | datetime | Tanggal Hijriah (kalender Islam, perhitungan tabular — bisa beda ±1 hari dari rukyat) | user |  |  | tested | 1/1 unit |
+| .jam | waktu, time | datetime | Jam sekarang (WIB/WITA/WIT atau kota/zona IANA) | user |  |  | tested | 2/2 unit |
+| .kabisat |  | datetime | Cek tahun kabisat | user | teks* |  | tested | 2/2 unit |
+| .kalender | calendar | datetime | Kalender bulan: .kalender [bulan] [tahun] | user |  |  | tested | 1/1 unit |
+| .mingguke |  | datetime | Nomor minggu ISO dari tanggal | user | teks* |  | tested | 1/1 unit |
+| .selisihhari |  | datetime | Selisih hari dua tanggal: .selisihhari 01-01-2024 31-12-2024 | user | teks* |  | tested | 1/1 unit |
+| .tambahhari |  | datetime | Tanggal setelah N hari: .tambahhari 17-08-2024 100 | user | teks* |  | tested | 1/1 unit |
+| .umur |  | datetime | Hitung umur dari tanggal lahir | user | teks* |  | tested | 1/1 unit |
+| .chmod |  | dev | Konversi izin chmod angka ↔ simbol | user | teks* |  | tested | 2/2 unit |
+| .color | warna | dev | Konversi warna HEX ↔ RGB ↔ HSL | user | teks* |  | tested | 1/1 unit |
+| .genpassword | passgen | dev | Buat password acak kuat (8-64 karakter) | user/private |  |  | tested | 1/1 unit |
+| .hmac |  | dev | HMAC-SHA256: .hmac kunci\|pesan | user | teks* |  | tested | 1/1 unit |
+| .httpstatus | statuscode | dev | Arti kode status HTTP | user | teks* |  | tested | 1/1 unit |
+| .jsonformat | prettyjson | dev | Rapikan (pretty print) JSON | user | teks* |  | tested | 1/1 unit |
+| .jsonkeys |  | dev | Daftar path key di JSON | user | teks* |  | tested | 1/1 unit |
+| .jsonminify |  | dev | Minify JSON | user | teks* |  | tested | 1/1 unit |
+| .jsonvalidate |  | dev | Validasi JSON | user | teks* |  | tested | 2/2 unit |
+| .jwtdecode |  | dev | Decode payload JWT (TANPA verifikasi tanda tangan) | user | teks* |  | tested | 1/1 unit |
+| .md5 |  | dev | Hash MD5 (bukan untuk password!) | user | teks* |  | tested | 1/1 unit |
+| .mimetype | mime | dev | MIME type dari ekstensi file | user | teks* |  | tested | 1/1 unit |
+| .passwordcheck | cekpassword | dev | Cek kekuatan password (tidak disimpan/dicatat) | user/private | teks* |  | tested | 2/2 unit |
+| .regex |  | dev | Uji regex: .regex pola\|teks (flag opsional: /pola/gi\|teks) | user | teks* |  | tested | 1/1 unit |
+| .sha1 |  | dev | Hash SHA-1 | user | teks* |  | tested | 1/1 unit |
+| .sha256 |  | dev | Hash SHA-256 | user | teks* |  | tested | 1/1 unit |
+| .sha3 |  | dev | Hash SHA3-256 | user | teks* |  | tested | 1/1 unit |
+| .sha512 |  | dev | Hash SHA-512 | user | teks* |  | tested | 1/1 unit |
+| .timestamp | epoch | dev | Unix timestamp ↔ tanggal ISO | user |  |  | tested | 2/2 unit |
+| .urlparse |  | dev | Uraikan komponen URL | user | teks* |  | tested | 1/1 unit |
+| .uuid |  | dev | Generate UUID v4 acak (maks 20) | user |  |  | tested | 1/1 unit |
+| .aio | allinone, downloadall | downloader | AIO Downloader: Download videos and music from TikTok, YouTube, Facebook, Instagram and more in one endpoint. | user | url* | APIZ2Z /api/download/aio | tested | 1/1 mock |
+| .aio2 |  | downloader | AIO Downloader v2: Download videos and music from TikTok, YouTube, Facebook, Instagram and more in one endpoint. | user | url* | APIZ2Z /api/download/aio-v2 | tested | 1/1 mock |
+| .applemusicdl |  | downloader | Apple Music Downloader: Download Apple Music songs as MP3. | user | url* | APIZ2Z /api/download/applemusic | tested | 1/1 mock |
+| .bilibili |  | downloader | Bilibili Downloader: Download video dari Bilibili (bilibili.tv). | user | url*, quality | APIZ2Z /api/download/bilibili | tested | 1/1 mock |
+| .capcut | capcutdl, capcutdownload | downloader | CapCut Template Downloader: Download the video and metadata of a CapCut template. | user | url* | APIZ2Z /api/download/capcut | tested | 1/1 mock |
+| .capcut2 |  | downloader | CapCut Template Downloader v2: Download the video and metadata of a CapCut template. | user | url* | APIZ2Z /api/download/capcut-v2 | tested | 1/1 mock |
+| .caristikerdown | caristickerdown, caristikerpack, stikerlypack, caristiker_get | downloader | Kirim stiker dari pack Sticker.ly (maks 30): .caristikerdown <nomor dari .caristiker \| url> | user | nomor/url* | APIZ2Z /api/download/stickerly | implemented |  |
+| .dailymotion |  | downloader | Dailymotion Downloader: Download Dailymotion videos with a choice of resolutions. | user | url* | APIZ2Z /api/download/dailymotion | tested | 1/1 mock |
+| .douyin |  | downloader | Douyin Downloader: Download watermark-free videos or slide images from Douyin (TikTok China). | user | url* | APIZ2Z /api/download/douyin | tested | 1/1 mock |
+| .downloadnpm |  | downloader | NPM Package Downloader: Download paket npm jadi file .tgz. | user | package*, version | APIZ2Z /api/download/npm | tested | 1/1 mock |
+| .downloadytdl |  | downloader | YouTube Stream Extractor: Get the direct video and audio stream links with metadata of a YouTube video. | user | url* | APIZ2Z /api/download/ytdl | tested | 1/1 mock |
+| .facebook | fb, fbdl | downloader | Facebook Downloader: Download HD/SD videos or image posts from Facebook. | user | url* | APIZ2Z /api/download/facebook | tested | 1/1 mock |
+| .facebook2 |  | downloader | Facebook Downloader v2: Download HD/SD videos or image posts from Facebook. | user | url* | APIZ2Z /api/download/facebook-v2 | tested | 1/1 mock |
+| .gdrive | gdrivedl | downloader | Google Drive Downloader: Info & direct link file publik Google Drive. | user | url* | APIZ2Z /api/download/gdrive | tested | 1/1 mock |
+| .gdrive2 |  | downloader | Google Drive Downloader v2: Info & direct link file publik Google Drive. | user | url* | APIZ2Z /api/download/gdrive-v2 | tested | 1/1 mock |
+| .getsticker |  | downloader | GetStickerPack Downloader: Get the sticker image links of a getstickerpack.com pack. | user | url* | APIZ2Z /api/download/getsticker | tested | 1/1 mock |
+| .github | gitclone | downloader | GitHub Downloader: Download repo GitHub jadi ZIP, atau file-nya langsung. | user | url* | APIZ2Z /api/download/github | tested | 1/1 mock |
+| .github2 |  | downloader | GitHub Downloader v2: Download repo GitHub jadi ZIP, atau file-nya langsung. | user | url* | APIZ2Z /api/download/github-v2 | tested | 1/1 mock |
+| .instagram | ig, igdl | downloader | Instagram Downloader: Download videos and photos from Instagram Reels and posts. | user | url* | APIZ2Z /api/download/instagram | tested | 1/1 mock |
+| .iqiyi |  | downloader | iQIYI Detail: Detail dan daftar episode album iQIYI. | user | slug* | APIZ2Z /api/detail/iqiyi | tested | 1/1 mock |
+| .kolid |  | downloader | Instagram Downloader (KOL.ID): Download Instagram videos, photos, reels and stories via KOL.ID. | user | url* | APIZ2Z /api/download/kolid | tested | 1/1 mock |
+| .lahelu |  | downloader | Lahelu Downloader: Ambil media & info post Lahelu.com. | user | url* | APIZ2Z /api/download/lahelu | tested | 1/1 mock |
+| .likee |  | downloader | Likee Downloader: Download watermark-free videos from Likee. | user | url* | APIZ2Z /api/download/likee | tested | 1/1 mock |
+| .mediafire | mf | downloader | Mediafire Downloader: Get the file details and direct download link of a Mediafire file. | user | url* | APIZ2Z /api/download/mediafire | tested | 1/1 mock |
+| .mediafire2 |  | downloader | Mediafire Downloader v2: Get the file details and direct download link of a Mediafire file. | user | url* | APIZ2Z /api/download/mediafire-v2 | tested | 1/1 mock |
+| .mixcloud |  | downloader | Mixcloud Downloader: Get the metadata and stream URLs of Mixcloud music and audio. | user | url* | APIZ2Z /api/download/mixcloud | tested | 1/1 mock |
+| .pindl | pinterestdl, downloadpin, downpin, pindown | downloader | Pinterest Downloader: Download original-quality images and videos from Pinterest. | user | url* | APIZ2Z /api/download/pinterest | tested | 1/1 mock |
+| .pinterest2 |  | downloader | Pinterest Downloader v2: Download original-quality images and videos from Pinterest. | user | url* | APIZ2Z /api/download/pinterest-v2 | tested | 1/1 mock |
+| .play | song, lagu, play1, playmusik, playv2 | downloader | Play (Song Search & MP3): Search a song by title or keywords and download it as MP3 320 kbps with lyrics. | user | query* | APIZ2Z /api/download/play | tested | 1/1 mock |
+| .play2 |  | downloader | Play (Song Search & MP3) v2: Search a song by title or keywords and download it as MP3 320 kbps with lyrics. | user | query* | APIZ2Z /api/download/play-v2 | tested | 1/1 mock |
+| .play3 |  | downloader | Play (Song Search & MP3) v3: Search a song by title or keywords and download it as MP3 320 kbps with lyrics. | user | query* | APIZ2Z /api/download/play-v3 | tested | 1/1 mock |
+| .playtiktok | tiktokplay | downloader | Cari & putar video TikTok (video teratas) | user |  | APIZ2Z /api/search/tiktok | implemented |  |
+| .playtiktok2 | tiktokplay2, ptv2 | downloader | Cari & putar video TikTok acak dari hasil pencarian | user |  | APIZ2Z /api/search/tiktok | implemented |  |
+| .ptv |  | downloader | Cari video TikTok lalu kirim sebagai video bulat (PTV) | user |  | APIZ2Z /api/search/tiktok | implemented |  |
+| .reddit |  | downloader | Reddit Downloader: Download videos and images from Reddit posts. | user | url* | APIZ2Z /api/download/reddit | tested | 1/1 mock |
+| .scribd |  | downloader | Scribd Downloader: Get the image link of every page of a Scribd document. | user | url* | APIZ2Z /api/download/scribd | tested | 1/1 mock |
+| .sfile |  | downloader | Sfile Downloader: Get the direct download link of an Sfile.co file. | user | url* | APIZ2Z /api/download/sfile | tested | 1/1 mock |
+| .shopee |  | downloader | Shopee Video Downloader: Download videos and metadata from Shopee Video and shp.ee short links. | user | url* | APIZ2Z /api/download/shopee | tested | 1/1 mock |
+| .snackvideo |  | downloader | SnackVideo Downloader: Download video SnackVideo tanpa watermark. | user | url* | APIZ2Z /api/download/snackvideo | tested | 1/1 mock |
+| .soundclouddl | scdl | downloader | SoundCloud Downloader: Download lagu dari SoundCloud (MP3). | user | url* | APIZ2Z /api/download/soundcloud | tested | 1/1 mock |
+| .spotify2 |  | downloader | Spotify Downloader v2: Download a Spotify track as MP3 320 kbps with lyrics (track links only, not albums or playlists). | user | url* | APIZ2Z /api/download/spotify-v2 | tested | 1/1 mock |
+| .spotifydl | spdown | downloader | Spotify Downloader: Download a Spotify track as MP3 320 kbps with lyrics (track links only, not albums or playlists). | user | url* | APIZ2Z /api/download/spotify | tested | 1/1 mock |
+| .stickerly |  | downloader | Sticker.ly Downloader: Get the details and stickers of a Sticker.ly pack. | user | url* | APIZ2Z /api/download/stickerly | tested | 1/1 mock |
+| .telestick | stele, stickertele, telesticker | downloader | Telegram Sticker Downloader: Get the details and stickers of a Telegram sticker pack. | user | url* | APIZ2Z /api/download/telestick | tested | 1/1 mock |
+| .telestick2 |  | downloader | Telegram Sticker Downloader v2: Get the details and stickers of a Telegram sticker pack. | user | url* | APIZ2Z /api/download/telestick-v2 | tested | 1/1 mock |
+| .terabox |  | downloader | Terabox Downloader: Download files and videos from Terabox links. | user | url* | APIZ2Z /api/download/terabox | tested | 1/1 mock |
+| .threads | threadsdl, threadsdown | downloader | Threads Downloader: Download videos and images from Threads posts. | user | url* | APIZ2Z /api/download/threads | tested | 1/1 mock |
+| .tiktok | tt, ttdl, tiktokdl | downloader | Tiktok Downloader: Download video atau slideshow Tiktok tanpa watermark. | user | url* | APIZ2Z /api/download/tiktok | tested | 1/1 mock |
+| .tiktok2 |  | downloader | TikTok Downloader v2: Unduh video TikTok tanpa watermark. | user | url* | APIZ2Z /api/download/tiktok-v2 | tested | 1/1 mock |
+| .tiktok3 |  | downloader | Tiktok Downloader v3: Download video atau slideshow Tiktok tanpa watermark. | user | url* | APIZ2Z /api/download/tiktok-v3 | tested | 1/1 mock |
+| .tiktokmp3 | ttmp3, tiktokaudio | downloader | Ambil audio/musik dari video TikTok (MP3) | user |  | APIZ2Z /api/download/tiktok | implemented |  |
+| .twitter | twdl, xdl | downloader | X (Twitter) Downloader: Download videos and images with metadata from X/Twitter posts. | user | url* | APIZ2Z /api/download/twitter | tested | 1/1 mock |
+| .twitter2 |  | downloader | X (Twitter) Downloader v2: Download videos and images with metadata from X/Twitter posts. | user | url* | APIZ2Z /api/download/twitter-v2 | tested | 1/1 mock |
+| .vdko |  | downloader | VDKO / VDY.TO Downloader: Get the direct MP4 link of a VDKO or VDY.TO video. | user | url* | APIZ2Z /api/download/vdko | tested | 1/1 mock |
+| .weibo |  | downloader | Weibo Downloader: Download videos and photos from Weibo posts without logging in. | user | url* | APIZ2Z /api/download/weibo | tested | 1/1 mock |
+| .xhs |  | downloader | Xiaohongshu Downloader: Download images and videos with metadata from Xiaohongshu (RED) posts. | user | url* | APIZ2Z /api/download/xhs | tested | 1/1 mock |
+| .youtube | ytdl, yt | downloader | YouTube Downloader: Unduh video YouTube. | user | url*, type, quality | APIZ2Z /api/download/youtube | tested | 1/1 mock |
+| .youtube2 |  | downloader | YouTube Downloader v2: Unduh video YouTube. | user | url*, quality | APIZ2Z /api/download/youtube-v2 | tested | 1/1 mock |
+| .ytmp3 | yta | downloader | YouTube Audio Downloader: Download YouTube audio in the format and bitrate you choose. | user | url*, format, bitrate | APIZ2Z /api/download/ytmp3 | tested | 1/1 mock |
+| .ytmp4 | ytv, ytvideo, playvid, playvidyt, youtubemp4 | downloader | YouTube Video Downloader: Download a YouTube video in the resolution you choose. | user | url*, resolution | APIZ2Z /api/download/ytmp4 | tested | 1/1 mock |
+| .bank |  | economy | Bank koin: .bank \| .bank deposit <jumlah\|all> \| .bank withdraw <jumlah\|all> | user |  |  | implemented |  |
+| .buylimit | tukarlimit | economy | Tukar saldo virtual dengan limit (1 limit = 500 saldo) | user |  |  | implemented |  |
+| .casino |  | economy | Taruhan koin 50/50 (menang = 2x). Minimal 10.000 koin | user |  |  | implemented |  |
+| .kerja | work | economy | Bekerja untuk mendapat saldo (sekali per jam) | user |  |  | implemented |  |
+| .saldo | balance, bal, dompet | economy | Cek saldo virtual kamu (atau @user) | user |  |  | implemented |  |
+| .topbalance | topmoney, lbmoney, moneylb, leaderboardmoney | economy | Top 10 terkaya (koin + bank) | user |  |  | implemented |  |
+| .toplevel | topexp | economy | 10 besar exp | user |  |  | implemented |  |
+| .topsaldo | leaderboard, lb, richest | economy | 10 besar saldo | user |  |  | implemented |  |
+| .transfer | tf | economy | Kirim saldo virtual: .transfer @user jumlah | user |  |  | implemented |  |
+| .tukarkoin | exchange, tukaruang | economy | Tukar koin: premium (75.000/hari) atau sewagc (100.000/hari, di grup) | user |  |  | implemented |  |
+| .faktadunia |  | edukasi | Fakta dunia yang unik (56 fakta) | user |  |  | implemented |  |
+| .planet |  | edukasi | Info planet tata surya | user | teks* |  | tested | 2/2 unit |
+| .bravegreen |  | ephoto | Brave Green: Filter duotone hijau-pink buat foto. | user | url* | APIZ2Z /api/ephoto/bravegreen | tested | 1/1 mock |
+| .8ball | magicball | fun | Bola ajaib 8 menjawab pertanyaanmu | user |  |  | tested | 1/1 unit |
+| .alay2 |  | fun | Teks Alay v2: Ubah teks jadi gaya alay. | user | text* | APIZ2Z /api/fun/alay-v2 | tested | 1/1 mock |
+| .alayapi |  | fun | Teks Alay: Ubah teks jadi gaya alay. | user | text* | APIZ2Z /api/fun/alay | tested | 1/1 mock |
+| .apakah | bisakah | fun | Tanya jawab ya/tidak acak (hiburan) | user | teks* |  | tested | 1/1 unit |
+| .berapa |  | fun | Berapa ...? jawaban angka acak (hiburan) | user | teks* |  | tested | 1/1 unit |
+| .cekaura |  | fun | Penerawangan aura dari jam lahir | user | teks* |  | tested | 2/2 unit |
+| .cekbaik |  | fun | Seberapa baik hati kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekbeban |  | fun | Ukur level beban seseorang (acak) | user | teks* |  | tested | 1/1 unit |
+| .cekbucin |  | fun | Seberapa bucin kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekcantik |  | fun | Seberapa cantik kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekgalau |  | fun | Seberapa galau kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekganteng |  | fun | Seberapa ganteng kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekhoki |  | fun | Seberapa hoki hari ini kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekjodoh |  | fun | Ramalan jodoh (acak) | user |  |  | implemented |  |
+| .cekjones |  | fun | Seberapa jomblo kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekkaya |  | fun | Seberapa kaya kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekkeren |  | fun | Seberapa keren kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekkodam |  | fun | Cek "khodam" kamu hari ini (hiburan) | user |  |  | implemented |  |
+| .ceklucu |  | fun | Seberapa lucu kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekmalas |  | fun | Seberapa malas kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekmasadepan |  | fun | Ramalan masa depan (acak) | user |  |  | implemented |  |
+| .cekpasangan | mypasangan | fun | Cek pasangan (kamu atau @user) | user |  |  | implemented |  |
+| .cekpintar |  | fun | Seberapa pintar kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .ceksabar |  | fun | Seberapa sabar kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .ceksial |  | fun | Seberapa sial hari ini kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekstress |  | fun | Seberapa stress kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cekwibu |  | fun | Seberapa wibu kamu hari ini? (hiburan) | user |  |  | implemented |  |
+| .cinta |  | fun | Ramalan cinta hari ini (hiburan) | user |  |  | implemented |  |
+| .fancytext |  | fun | Fancy Text: Ubah teks jadi 40+ gaya font unik. | user | text* | APIZ2Z /api/fun/fancytext | tested | 1/1 mock |
+| .funumur |  | fun | Fakta Umur: Fakta seru dari tanggal lahir: umur detail, statistik, dan lain-lain. | user | birthdate* | APIZ2Z /api/fun/umur | tested | 1/1 mock |
+| .isidompet |  | fun | Terawang isi dompet gaib | user |  |  | implemented |  |
+| .jodohmakanan |  | fun | Ramalan jodoh dari makanan favorit | user | teks* |  | tested | 2/2 unit |
+| .kapan | kapankah | fun | Kapan sesuatu terjadi? (hiburan) | user | teks* |  | tested | 1/1 unit |
+| .livefunfact |  | fun | Live Fun Facts: Fakta seru soal tubuhmu sejak lahir berdasarkan tanggal lahir. | user | birthdate* | APIZ2Z /api/fun/livefunfact | tested | 1/1 mock |
+| .motivasi | quotesmotivasi | fun | Kata-kata motivasi acak | user |  |  | tested | 1/1 unit |
+| .nasibbatere |  | fun | Ramalan nasib dari persen baterai HP | user | teks* |  | tested | 3/3 unit |
+| .nomin |  | fun | Nama Samaran: Nama samaran acak. | user |  | APIZ2Z /api/fun/nomin | tested | 1/1 mock |
+| .pantun |  | fun | Pantun acak | user |  |  | tested | 1/1 unit |
+| .pasangan | jadian | fun | Pasangkan dua anggota grup secara acak (hiburan) | user/group |  |  | implemented |  |
+| .pilih | choose | fun | Pilihkan satu opsi: .pilih nasi\|mie\|roti | user | teks* |  | tested | 1/1 unit |
+| .profesiku |  | fun | Ramalan profesi masa depan | user |  |  | implemented |  |
+| .putus |  | fun | Putus dengan pasangan | user |  |  | implemented |  |
+| .ramalan |  | fun | Ramalan hari ini untuk nama kamu (hiburan) | user |  |  | implemented |  |
+| .ramalannasib | nasib | fun | Ramalan nasib hari ini (hiburan) | user |  |  | implemented |  |
+| .ramalansuamiistri | suamiistri | fun | Ramalan rumah tangga dua nama (hiburan) | user |  |  | implemented |  |
+| .rate | nilai | fun | Beri nilai 1-10 untuk apa saja (konsisten per hari) | user |  |  | tested | 1/1 unit |
+| .sertifikat |  | fun | Sertifikat penghargaan: .sertifikat <nama> | user |  |  | implemented |  |
+| .sertifikattolol | sertifikat-tolol | fun | Sertifikat lucu juara tolol: .sertifikattolol <nama> | user |  |  | implemented |  |
+| .ship | jodoh, cocok | fun | Persentase kecocokan dua nama (hiburan, hasil konsisten) | user | teks* |  | tested | 2/2 unit |
+| .siapa | siapakah | fun | Pilih anggota grup secara acak untuk sebuah pertanyaan | user/group |  |  | implemented |  |
+| .stkbaik |  | fun | Sertifikat: "Anda dinyatakan Baik!" | user |  |  | implemented |  |
+| .stkcantik |  | fun | Sertifikat: "Anda dinyatakan Cantik!" | user |  |  | implemented |  |
+| .stkganteng |  | fun | Sertifikat: "Anda dinyatakan Ganteng!" | user |  |  | implemented |  |
+| .stkgila |  | fun | Sertifikat: "Anda dinyatakan Gila!" | user |  |  | implemented |  |
+| .stkhitam |  | fun | Sertifikat: "Anda dinyatakan Berkelas Hitam!" | user |  |  | implemented |  |
+| .stkkaya |  | fun | Sertifikat: "Anda dinyatakan Kaya!" | user |  |  | implemented |  |
+| .stkkeren |  | fun | Sertifikat: "Anda dinyatakan Keren!" | user |  |  | implemented |  |
+| .stklucu |  | fun | Sertifikat: "Anda dinyatakan Lucu!" | user |  |  | implemented |  |
+| .stkmarah |  | fun | Sertifikat: "Anda dinyatakan Marah!" | user |  |  | implemented |  |
+| .stkmiskin |  | fun | Sertifikat: "Anda dinyatakan Miskin!" | user |  |  | implemented |  |
+| .stkmisterius |  | fun | Sertifikat: "Anda dinyatakan Misterius!" | user |  |  | implemented |  |
+| .stksabar |  | fun | Sertifikat: "Anda dinyatakan Sabar!" | user |  |  | implemented |  |
+| .stksakiti |  | fun | Sertifikat: "Anda dinyatakan Suka Menyakiti!" | user |  |  | implemented |  |
+| .stksantai |  | fun | Sertifikat: "Anda dinyatakan Santai!" | user |  |  | implemented |  |
+| .stksombong |  | fun | Sertifikat: "Anda dinyatakan Sombong!" | user |  |  | implemented |  |
+| .tembak |  | fun | Nyatakan perasaan ke @user (dia jawab .terimajadian / .tolakjadian dalam 5 menit) | user/group |  |  | implemented |  |
+| .terimajadian |  | fun | Terima tembakan | user/group |  |  | implemented |  |
+| .tolakjadian |  | fun | Tolak tembakan | user/group |  |  | implemented |  |
+| .asahotak |  | game | Asah otak: jawab pertanyaan pengetahuan umum (228 soal) | user |  | data/game/asahotak.json | implemented |  |
+| .blockblast | blockgame, blockpuzzle | game | Game Block Blast (file HTML, main di browser) | user |  | assets/games/blockblast.html | implemented |  |
+| .brickbreaker | breakout, brick, gamebrick | game | Game Brick Breaker (file HTML, main di browser) | user |  | assets/games/brickbreaker.html | implemented |  |
+| .caklontong |  | game | Teka-teki nyeleneh ala Cak Lontong (414 soal) | user |  | data/game/caklontong.json | implemented |  |
+| .dadu | dice, roll | game | Lempar dadu: .dadu [jumlah dadu] [sisi] | user |  |  | tested | 1/1 unit |
+| .dino | dinorunner, gamedino | game | Game Dino Runner (file HTML, main di browser) | user |  | assets/games/dino.html | implemented |  |
+| .family100 |  | game | Family 100: sebutkan jawaban survei sebanyak-banyaknya (7152 soal) | user |  | data/game/family100.json | implemented |  |
+| .flappybird | flappy, gameflappy | game | Game Flappy Bird (file HTML, main di browser) | user |  | assets/games/flappybird.html | implemented |  |
+| .game2048 | 2048, puzzle2048 | game | Game 2048 di chat: gabungkan angka sampai 2048 | user |  |  | implemented |  |
+| .gamestatus |  | game | Status game yang sedang berjalan di chat ini | user |  |  | implemented |  |
+| .hillclimb | hcr, mobil | game | Game Hill Climb Racing (file HTML, main di browser) | user |  | assets/games/hillclimb.html | implemented |  |
+| .hint | petunjuk, bantuan | game | Petunjuk untuk game tebak-tebakan yang sedang berjalan (hadiah berkurang) | user |  |  | implemented |  |
+| .jawab | jawabkuis, jawabtebak, jawabteka, jawabasah | game | Jawab game yang sedang berjalan (bisa juga langsung balas teks) | user |  |  | implemented |  |
+| .koin | coinflip, flip | game | Lempar koin (angka/gambar) | user |  |  | tested | 1/1 unit |
+| .kuis |  | game | Kuis cepat pengetahuan umum (V15) (15 soal) | user |  | data/game/kuis.json | implemented |  |
+| .kuismath | math, mathquiz, mathchallenge | game | Kuis matematika: .kuismath [easy\|medium\|hard] | user |  |  | implemented |  |
+| .lengkapikalimat |  | game | Lengkapi peribahasa/kalimat yang rumpang (103 soal) | user |  | data/game/lengkapikalimat.json | implemented |  |
+| .nyerah | menyerah, giveup | game | Menyerah pada game yang sedang berjalan | user |  |  | implemented |  |
+| .siapakahaku |  | game | Siapakah aku? Tebak dari ciri-cirinya (268 soal) | user |  | data/game/siapakahaku.json | implemented |  |
+| .slot |  | game | Mesin slot memakai saldo: .slot <taruhan> | user |  |  | implemented |  |
+| .snake | snakename, gamesnake | game | Game Snake (file HTML, main di browser) | user |  | assets/games/snake.html | implemented |  |
+| .spaceinvaders | spaceshooter, galaxian, space | game | Game Space Invaders (file HTML, main di browser) | user |  | assets/games/spaceinvaders.html | implemented |  |
+| .stacktower | stack, stackgame | game | Game Stack Tower (file HTML, main di browser) | user |  | assets/games/stacktower.html | implemented |  |
+| .suit | rps | game | Suit melawan bot: .suit batu\|gunting\|kertas | user |  |  | tested | 1/1 unit |
+| .susunkata |  | game | Susun huruf acak menjadi kata (353 soal) | user |  | data/game/susunkata.json | implemented |  |
+| .tebakangka |  | game | Tebak angka 1-100 dengan petunjuk lebih besar/kecil (7 kesempatan) | user |  |  | implemented |  |
+| .tebakanime |  | game | Tebak nama karakter anime dari gambar (145 soal) | user |  | data/game/tebakanime.json | implemented |  |
+| .tebakbendera |  | game | Tebak nama negara dari benderanya (254 soal) | user |  | data/game/tebakbendera.json | implemented |  |
+| .tebakgambar |  | game | Tebak kata/kalimat dari gambar (1000 soal) | user |  | data/game/tebakgambar.json | implemented |  |
+| .tebakgame |  | game | Tebak judul game dari gambar (37 soal) | user |  | data/game/tebakgame.json | implemented |  |
+| .tebakgenshin |  | game | Tebak karakter Genshin Impact (66 soal) | user |  | data/game/tebakgenshin.json | implemented |  |
+| .tebakhero |  | game | Tebak hero Mobile Legends (52 soal) | user |  | data/game/tebakhero.json | implemented |  |
+| .tebakhewan |  | game | Tebak nama hewan dari ciri-cirinya (30 soal) | user |  | data/game/tebakhewan.json | implemented |  |
+| .tebakkah |  | game | Tebak-tebakan random (V15) (10 soal) | user |  | data/game/tebakkah.json | implemented |  |
+| .tebakkata |  | game | Tebak kata dari petunjuk-petunjuk (302 soal) | user |  | data/game/tebakkata.json | implemented |  |
+| .tebaklagu |  | game | Tebak judul lagu dari cuplikan audio (750 soal) | user |  | data/game/tebaklagu.json | implemented |  |
+| .tebaklirik |  | game | Lengkapi lirik lagu yang hilang (38 soal) | user |  | data/game/tebaklirik.json | implemented |  |
+| .tebaklogo |  | game | Tebak merek dari logonya (153 soal) | user |  | data/game/tebaklogo.json | implemented |  |
+| .tebakmakanan |  | game | Tebak nama makanan dari gambar (48 soal) | user |  | data/game/tebakmakanan.json | implemented |  |
+| .tictactoe | ttt, tictactoe2, tictactoerich | game | Tictactoe 2 pemain: .tictactoe @lawan, lalu kirim angka 1-9 | user/group |  |  | implemented |  |
+| .asahotak2 |  | games | Asah Otak v2: Asah Otak kuis acak. | user |  | APIZ2Z /api/games/asahotak-v2 | tested | 1/1 mock |
+| .bluearchive |  | games | Blue Archive Database: Database karakter Blue Archive. | user | action, q | APIZ2Z /api/game/bluearchive | tested | 1/1 mock |
+| .ccsd |  | games | Cerdas Cermat SD: Kuis cc-sd. | user |  | APIZ2Z /api/games/cc-sd | tested | 1/1 mock |
+| .gamesasahotak |  | games | Asah Otak: Asah Otak kuis acak. | user |  | APIZ2Z /api/games/asahotak | tested | 1/1 mock |
+| .gamescaklontong |  | games | Cak Lontong: Cak Lontong kuis acak. | user |  | APIZ2Z /api/games/caklontong | tested | 1/1 mock |
+| .gamesfamily100 |  | games | Family 100: Family 100 quiz. | user |  | APIZ2Z /api/games/family100 | tested | 1/1 mock |
+| .gamesislamic |  | games | Islamic: Kuis seputar Islam acak. | user |  | APIZ2Z /api/games/islamic | tested | 1/1 mock |
+| .gameslengkapikalimat |  | games | Lengkapi Kalimat: Kuis lengkapikalimat. | user |  | APIZ2Z /api/games/lengkapikalimat | tested | 1/1 mock |
+| .gamesmathquiz |  | games | Math Quiz: Kuis math-quiz. | user |  | APIZ2Z /api/games/math-quiz | tested | 1/1 mock |
+| .gamessusunkata |  | games | Susun Kata: Game susun kata. | user |  | APIZ2Z /api/games/susunkata | tested | 1/1 mock |
+| .gamestebakbendera |  | games | Tebak Bendera: Game tebak bendera negara. | user |  | APIZ2Z /api/games/tebakbendera | tested | 1/1 mock |
+| .gamestebakgambar |  | games | Tebak Gambar: Game tebak gambar. | user |  | APIZ2Z /api/games/tebakgambar | tested | 1/1 mock |
+| .gamestebakgame |  | games | Tebak Game: Game tebak-tebakan seputar game. | user |  | APIZ2Z /api/games/tebakgame | tested | 1/1 mock |
+| .gamestebakhewan |  | games | Tebak Hewan: Kuis tebak-hewan. | user |  | APIZ2Z /api/games/tebak-hewan | tested | 1/1 mock |
+| .gamestebakkata |  | games | Tebak Kata: Game tebak kata. | user |  | APIZ2Z /api/games/tebakkata | tested | 1/1 mock |
+| .gamestebaklagu |  | games | Tebak Lagu: Kuis tebak-lagu. | user |  | APIZ2Z /api/games/tebak-lagu | tested | 1/1 mock |
+| .gamestebaklirik |  | games | Tebak Lirik: Kuis tebak-lirik. | user |  | APIZ2Z /api/games/tebak-lirik | tested | 1/1 mock |
+| .gamestebaklogo |  | games | Tebak Logo: Kuis tebak-logo. | user |  | APIZ2Z /api/games/tebak-logo | tested | 1/1 mock |
+| .siapadia |  | games | Siapa Dia: Kuis siapa-dia. | user |  | APIZ2Z /api/games/siapa-dia | tested | 1/1 mock |
+| .siapadia2 |  | games | Siapa Dia v2: Kuis siapa-dia. | user |  | APIZ2Z /api/games/siapa-dia-v2 | tested | 1/1 mock |
+| .susunkata2 |  | games | Susun Kata v2: Game susun kata. | user |  | APIZ2Z /api/games/susunkata-v2 | tested | 1/1 mock |
+| .tebakheroml |  | games | Tebak Hero ML: Game tebak hero Mobile Legends. | user |  | APIZ2Z /api/games/tebakheroml | tested | 1/1 mock |
+| .tebakkabupaten |  | games | Tebak Kabupaten: Kuis tebak-kabupaten. | user |  | APIZ2Z /api/games/tebak-kabupaten | tested | 1/1 mock |
+| .tebakkalimat |  | games | Tebak Kalimat: Kuis tebak-kalimat. | user |  | APIZ2Z /api/games/tebak-kalimat | tested | 1/1 mock |
+| .tebakkarakterff | tebakff | games | Tebak Karakter FF: Kuis tebak-karakter-ff. | user |  | APIZ2Z /api/games/tebak-karakter-ff | tested | 1/1 mock |
+| .tebakkartun |  | games | Tebak Kartun: Kuis tebak-kartun. | user |  | APIZ2Z /api/games/tebak-kartun | tested | 1/1 mock |
+| .tebakkimia |  | games | Tebak Kimia: Kuis tebak-kimia. | user |  | APIZ2Z /api/games/tebak-kimia | tested | 1/1 mock |
+| .tebakkimia2 |  | games | Tebak Kimia v2: Kuis tebak-kimia. | user |  | APIZ2Z /api/games/tebak-kimia-v2 | tested | 1/1 mock |
+| .tebaklirik2 |  | games | Tebak Lirik v2: Kuis tebak-lirik. | user |  | APIZ2Z /api/games/tebak-lirik-v2 | tested | 1/1 mock |
+| .tebaksiapa |  | games | Tebak Siapa: Kuis tebak-siapa. | user |  | APIZ2Z /api/games/tebak-siapa | tested | 1/1 mock |
+| .tebaktebakan |  | games | Tebak Tebak An: Kuis tebak-tebakan. | user |  | APIZ2Z /api/games/tebak-tebakan | tested | 1/1 mock |
+| .tebaktebakan2 |  | games | Tebak Tebak An v2: Kuis tebak-tebakan. | user |  | APIZ2Z /api/games/tebak-tebakan-v2 | tested | 1/1 mock |
+| .tebakwarna |  | games | Tebak Warna: Kuis tebak-warna. | user |  | APIZ2Z /api/games/tebak-warna | tested | 1/1 mock |
+| .tekateki |  | games | Teka-Teki: Teka-teki acak plus jawabannya. | user |  | APIZ2Z /api/games/tekateki | tested | 1/1 mock |
+| .tekateki2 |  | games | Teka-Teki v2: Teka-teki acak plus jawabannya. | user |  | APIZ2Z /api/games/tekateki-v2 | tested | 1/1 mock |
+| .acc | accjoin | group | Terima permintaan bergabung grup: tanpa argumen = daftar, "all" = semua | admin/group |  |  | implemented |  |
+| .add |  | group | Tambahkan anggota dengan nomor (hanya nomor yang mengizinkan) | admin/group |  |  | implemented |  |
+| .addbadword | tambahbadword | group | Tambah kata terlarang grup (pesan berisi kata itu dihapus saat .antibadword on) | admin/group |  |  | implemented |  |
+| .antibadword | antitoxic | group | Hapus otomatis pesan berisi kata terlarang (+ peringatan) | admin/group |  |  | implemented |  |
+| .antibot |  | group | Hapus (dan kick) pesan dari bot lain: .antibot delete on \| .antibot kick on | admin/group |  |  | implemented |  |
+| .antilink |  | group | Nyalakan/matikan Anti link grup WhatsApp lain: .antilink on/off | admin/group |  |  | implemented |  |
+| .antilinkstatus |  | group | Status anti-link grup ini | admin/group |  |  | implemented |  |
+| .autoabsen |  | group | Kirim poll absen otomatis setiap hari (jam default 07:00) | admin/group |  |  | implemented |  |
+| .autolevel | autolv | group | Umumkan member naik level: on/off/set <pesan> (@user @level @xp) | admin/group |  |  | implemented |  |
+| .autosholat |  | group | Pengingat waktu sholat otomatis di grup: .autosholat on Jakarta / .autosholat off | admin/group |  | APIZ2Z /api/info/jadwal-sholat | implemented |  |
+| .banfitur |  | group | Larang command tertentu di grup ini: .banfitur <cmd> \| .banfitur del <cmd> \| .banfitur | admin/group |  |  | implemented |  |
+| .buatstreak |  | group | Mulai streak harian dengan teman: .buatstreak @user | user/group |  |  | implemented |  |
+| .cekjadwal |  | group | Lihat jadwal buka/tutup grup | user/group |  |  | implemented |  |
+| .cekjadwalpesan | listschedmsg | group | Daftar jadwal pesan grup | user/group |  |  | implemented |  |
+| .ceksewagc | ceksewa | group | Cek sisa masa sewa grup ini | user/group |  |  | implemented |  |
+| .cekstreak | streak | group | Cek streak kamu (atau dengan @user) | user/group |  |  | implemented |  |
+| .cekultah | ultah | group | Hitung mundur ulang tahun (kamu atau @user) | user/group |  |  | implemented |  |
+| .closegc | tutupgrup, close | group | Tutup grup (hanya admin yang bisa kirim pesan) | admin/group |  |  | implemented |  |
+| .closetime |  | group | Ditutup grup otomatis setelah waktu tertentu: .closetime 10 menit | admin/group |  |  | implemented |  |
+| .del | delete, hapus | group | Hapus pesan yang di-reply (pesan bot, atau pesan anggota jika bot admin) | admin/group |  |  | implemented |  |
+| .delbadword | hapusbadword | group | Hapus kata terlarang | admin/group |  |  | implemented |  |
+| .delultah |  | group | Hapus tanggal ulang tahunmu (admin: @user) | user/group |  |  | implemented |  |
+| .delwarn | unwarn | group | Hapus peringatan anggota | admin/group |  |  | implemented |  |
+| .demote |  | group | Copot admin | admin/group |  |  | implemented |  |
+| .groupinfo | infogrup, gcinfo | group | Info grup: nama, anggota, admin, pengaturan bot | user/group |  |  | implemented |  |
+| .hidetag | ht, h | group | Kirim pesan yang men-tag semua anggota tanpa daftar | admin/group |  |  | implemented |  |
+| .hidetagpoll |  | group | Poll dengan tag semua member: .hidetagpoll Pertanyaan?\|Opsi1,Opsi2,Opsi3 | admin/group |  |  | implemented |  |
+| .idgc | cekidgc, getidgc | group | ID grup ini | user/group |  |  | implemented |  |
+| .intro |  | group | Tampilkan template perkenalan member grup | user/group |  |  | implemented |  |
+| .jadwalpesan | jadpes, schedmsg | group | Kirim pesan berulang tiap N menit: .jadwalpesan 60 \| Jangan lupa absen! | admin/group |  |  | implemented |  |
+| .kick | kik, tendang | group | Keluarkan anggota (tag/reply/nomor) | admin/group |  |  | implemented |  |
+| .kicksider | siderkick | group | Keluarkan member pasif: .kicksider <hari> confirm (maks 50 sekali jalan) | admin/group |  |  | implemented |  |
+| .leave | keluar | group | Bot keluar dari grup ini | owner/group |  |  | implemented |  |
+| .left |  | group | Nyalakan/matikan Pesan perpisahan: .left on/off | admin/group |  |  | implemented |  |
+| .linkgc | linkgrup | group | Link undangan grup | user/group |  |  | implemented |  |
+| .listadmin | tagadmin, admins | group | Daftar (dan tag) admin grup | user/group |  |  | implemented |  |
+| .listbadword | daftarbadword | group | Daftar kata terlarang grup | user/group |  |  | implemented |  |
+| .listultah |  | group | Daftar ulang tahun member grup | user/group |  |  | implemented |  |
+| .listwarn | cekwarn, listwarning, warninglist, warnlist, ceklistwarn | group | Daftar peringatan di grup ini | user/group |  |  | implemented |  |
+| .lockinfo |  | group | Kunci info grup (hanya admin yang bisa ubah info) | admin/group |  |  | implemented |  |
+| .mute |  | group | Nyalakan/matikan Mute bot di grup ini (bot hanya merespons owner): .mute on/off | admin/group |  |  | implemented |  |
+| .mywarn | infowarn | group | Cek jumlah peringatan (kamu atau @user) | user/group |  |  | implemented |  |
+| .nyalainstreak | nyalakanstreak | group | Nyalakan streak hari ini (dua orang harus menyalakan) | user/group |  |  | implemented |  |
+| .off |  | group | Matikan fitur grup: .off <fitur> (tanpa nama fitur = daftar) | admin/group |  |  | implemented |  |
+| .on |  | group | Nyalakan fitur grup: .on <fitur> (tanpa nama fitur = daftar) | admin/group |  |  | implemented |  |
+| .onlyadmin |  | group | Nyalakan/matikan Mode hanya admin yang bisa pakai bot: .onlyadmin on/off | admin/group |  |  | implemented |  |
+| .onlyprem |  | group | Mode grup: hanya user premium yang bisa memakai bot | admin/group |  |  | implemented |  |
+| .opengc | bukagrup, open | group | Buka grup (semua anggota bisa kirim pesan) | admin/group |  |  | implemented |  |
+| .opentime |  | group | Dibuka grup otomatis setelah waktu tertentu: .opentime 10 menit | admin/group |  |  | implemented |  |
+| .promote | jadiadmin | group | Jadikan admin | admin/group |  |  | implemented |  |
+| .resetjadwal |  | group | Hapus jadwal buka/tutup grup | admin/group |  |  | implemented |  |
+| .resetlinkgc | revoke | group | Reset link undangan grup | admin/group |  |  | implemented |  |
+| .resettotalchat |  | group | Reset hitungan chat grup | admin/group |  |  | implemented |  |
+| .resetwarn |  | group | Reset peringatan @user, atau semua member jika tanpa target | admin/group |  |  | implemented |  |
+| .schedule |  | group | Posting bulanan otomatis + hidetag: .schedule <pesan>\|<tanggal 1-31> (boleh kirim/reply media), list, delete <no>, clear | admin/group |  |  | implemented |  |
+| .setabsen |  | group | Atur jam auto absen (HH:MM, 24 jam) | admin/group |  |  | implemented |  |
+| .setclose |  | group | Pesan saat grup ditutup oleh .closetime | admin/group |  |  | implemented |  |
+| .setclosetime |  | group | Close grup otomatis setiap hari jam tertentu: .setclosetime 22:00\|Grup tutup, selamat malam | admin/group |  |  | implemented |  |
+| .setdesc | setdeskripsi | group | Ganti deskripsi grup | admin/group |  |  | implemented |  |
+| .setintro |  | group | Atur template .intro grup | admin/group |  |  | implemented |  |
+| .setleft |  | group | Atur teks perpisahan (@user @group @count) | admin/group |  |  | implemented |  |
+| .setnamagc | setsubject | group | Ganti nama grup | admin/group |  |  | implemented |  |
+| .setopen |  | group | Pesan saat grup dibuka oleh .opentime | admin/group |  |  | implemented |  |
+| .setopentime |  | group | Open grup otomatis setiap hari jam tertentu: .setopentime 22:00\|Grup tutup, selamat malam | admin/group |  |  | implemented |  |
+| .setppgc | setppgrup | group | Ganti foto grup (kirim/reply gambar) | admin/group |  |  | implemented |  |
+| .setultah |  | group | Simpan tanggal ulang tahunmu: .setultah DD/MM atau DD/MM/YYYY (bot mengucapkan jam 07:00) | user/group |  |  | implemented |  |
+| .setwelcome |  | group | Atur teks welcome (@user @group @desc @count) | admin/group |  |  | implemented |  |
+| .sider | ceksider, gcsider, groupsider, sidercek, sidergc, sidergroup | group | Daftar member pasif (tidak chat N hari, default 7) | admin/group |  |  | implemented |  |
+| .stopallschedmsg | sjps, stopjadwalpesanall, stopjadwalpesansemua | group | Hentikan semua jadwal pesan grup | admin/group |  |  | implemented |  |
+| .stopjadwalpesan | sjp, stopjadpes, stopschedmsg | group | Hentikan jadwal pesan (nomor, default terakhir) | admin/group |  |  | implemented |  |
+| .swgc | statusgrup | group | Buat status grup dari teks/gambar/video (reply media + caption) | admin/group |  |  | implemented |  |
+| .tagall | everyone | group | Tag semua anggota (dengan daftar) | admin/group |  |  | implemented |  |
+| .testleft |  | group | Tes pesan left grup | admin/group |  |  | implemented |  |
+| .testultah |  | group | Tes pesan ucapan ulang tahun | admin/group |  |  | implemented |  |
+| .testwelcome |  | group | Tes pesan welcome grup | admin/group |  |  | implemented |  |
+| .tolakacc | rejectjoin | group | Tolak permintaan bergabung grup: tanpa argumen = daftar, "all" = semua | admin/group |  |  | implemented |  |
+| .topstreak |  | group | Top 5 streak di grup | user/group |  |  | implemented |  |
+| .totalchat | totalpesan | group | Peringkat jumlah chat member grup (sejak bot mencatat) | user/group |  |  | implemented |  |
+| .warn | peringatan, warning | group | Beri peringatan; kena batas = dikeluarkan (kalau bot admin) | admin/group |  |  | implemented |  |
+| .welcome |  | group | Nyalakan/matikan Pesan selamat datang: .welcome on/off | admin/group |  |  | implemented |  |
+| .blurimg |  | image | Efek gambar: Blur gambar: .blurimg [1-50] | user |  |  | tested | 1/1 real |
+| .brightness |  | image | Efek gambar: Kecerahan: .brightness [-1..1] | user |  |  | tested | 1/1 real |
+| .circleimg |  | image | Efek gambar: Potong bulat | user |  |  | tested | 1/1 real |
+| .contrast |  | image | Efek gambar: Kontras: .contrast [-1..1] | user |  |  | tested | 1/1 real |
+| .crop |  | image | Potong gambar ke rasio: .crop 1:1 / 16:9 / 9:16 / 4:3 / 3:4 (reply gambar) | user |  |  | tested | 1/1 real |
+| .dither |  | image | Efek gambar: Efek dither | user |  |  | tested | 1/1 real |
+| .edge |  | image | Efek gambar: Deteksi tepi (sketsa garis) | user |  |  | tested | 1/1 real |
+| .emboss |  | image | Efek gambar: Efek emboss | user |  |  | tested | 1/1 real |
+| .fade |  | image | Efek gambar: Transparansi: .fade [0-1] | user |  |  | tested | 1/1 real |
+| .fliph |  | image | Efek gambar: Balik horizontal (cermin) | user |  |  | tested | 1/1 real |
+| .flipv |  | image | Efek gambar: Balik vertikal | user |  |  | tested | 1/1 real |
+| .gaussian |  | image | Efek gambar: Gaussian blur halus: .gaussian [1-10] | user |  |  | tested | 1/1 real |
+| .ghibli |  | image | Ubah foto jadi gaya Studio Ghibli | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .grayscale |  | image | Efek gambar: Hitam putih | user |  |  | tested | 1/1 real |
+| .hapusobjek | removeobj, removeobject, rmobj | image | Hapus objek dari foto (tulis objeknya) | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .hijabpin |  | image | Tambahkan hijab ke foto | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .imageascii |  | image | Image to ASCII: Ubah gambar jadi ASCII art. | user | url*, width, color | APIZ2Z /api/tools/image-ascii | tested | 1/1 mock |
+| .imageascii2 |  | image | Image to ASCII v2: Ubah gambar jadi ASCII art. | user | url* | APIZ2Z /api/tools/image-ascii-v2 | tested | 1/1 mock |
+| .imageinfo | infogambar | image | Info gambar: ukuran, resolusi, warna dominan rata-rata | user |  |  | tested | 1/1 real |
+| .imgeditpixelate |  | image | Pixelate: Ubah gambar jadi pixel (level 1-40). | user | url*, level | APIZ2Z /api/imgedit/pixelate | tested | 1/1 mock |
+| .invert |  | image | Efek gambar: Warna terbalik (negatif) | user |  |  | tested | 1/1 real |
+| .jadidisney |  | image | Ubah foto jadi gaya Disney | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .jadigta |  | image | Ubah foto jadi poster GTA | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .jadipixar |  | image | Ubah foto jadi gaya Pixar | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .lumiart |  | image | Lumi Art: Turn a photo into a Lumi Art style image. | user | imageUrl* | APIZ2Z /api/image/lumiart | tested | 1/1 mock |
+| .mirror | mirrorimg, mirror2, mirrorimg2 | image | Cermin gambar: .mirror kiri/kanan/atas/bawah (reply gambar) | user |  |  | tested | 1/1 real |
+| .normalize |  | image | Efek gambar: Normalisasi warna otomatis | user |  |  | tested | 1/1 real |
+| .pixelate |  | image | Efek gambar: Pikselasi: .pixelate [2-100] | user |  |  | tested | 1/1 real |
+| .polaroid |  | image | Ubah foto jadi photobooth polaroid 3 grid | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .posterize |  | image | Efek gambar: Posterize: .posterize [2-20] | user |  |  | tested | 1/1 real |
+| .resize |  | image | Efek gambar: Ubah ukuran: .resize <lebar> [tinggi] | user |  |  | tested | 1/1 real |
+| .rotate |  | image | Efek gambar: Putar gambar: .rotate [derajat] | user |  |  | tested | 1/1 real |
+| .sepia |  | image | Efek gambar: Efek sepia (foto jadul) | user |  |  | tested | 1/1 real |
+| .sharpen |  | image | Efek gambar: Pertajam gambar | user |  |  | tested | 1/1 real |
+| .sketch | sketsa, sketsa2 | image | Sketch: Turn a photo into a pencil sketch. | user | imageUrl* | APIZ2Z /api/image/sketch | tested | 1/1 mock |
+| .square |  | image | Efek gambar: Potong jadi persegi (tengah) | user |  |  | tested | 1/1 real |
+| .threshold |  | image | Efek gambar: Hitam-putih tegas (threshold): .threshold [0-255] | user |  |  | tested | 1/1 real |
+| .to2d | anime2d | image | Ubah foto jadi anime 2D | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .toanime |  | image | Ubah foto jadi gaya anime Jepang | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tobotak |  | image | Ubah rambut jadi botak | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tochibi |  | image | Ubah foto jadi chibi lucu | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .todino |  | image | Foto bareng dinosaurus | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .todonghua |  | image | Ubah foto jadi gaya donghua | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tofigure |  | image | Ubah foto jadi figure/action figure 1/7 | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tofootball |  | image | Ubah foto jadi pemain bola (nama\|nomor\|klub) | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tojawa |  | image | Ubah foto jadi berpakaian adat Jawa | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tokartun |  | image | Ubah foto jadi kartun | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tomanga |  | image | Ubah foto jadi gaya manga hitam putih | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tomanhwa |  | image | Ubah foto jadi gaya manhwa/webtoon | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tomirror |  | image | Ubah foto jadi mirror selfie | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tomoai |  | image | Ubah foto jadi patung moai | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tomountain |  | image | Ubah latar foto jadi di pegunungan | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .topunk |  | image | Ubah foto jadi gaya punk | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .toroblox |  | image | Ubah foto jadi karakter Roblox | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tosad |  | image | Ubah foto jadi suasana sedih sinematik | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tosatan |  | image | Ubah foto jadi gaya iblis fantasi | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .tosunda |  | image | Ubah foto jadi berpakaian adat Sunda | user |  | APIZ2Z /api/maker/bananaai | implemented |  |
+| .cuaca | cekcuaca | info | Cuaca BMKG: Info cuaca dari BMKG. | user | area | APIZ2Z /api/info/cuaca/v1 | tested | 1/1 mock |
+| .cuacav2 |  | info | Cuaca Dunia: Cuaca kota di seluruh dunia. | user | kota*, days | APIZ2Z /api/info/cuaca/v2 | tested | 1/1 mock |
+| .donate | donasi | info | Info donasi (QRIS dari settingsbot.js) | user |  |  | implemented |  |
+| .error |  | info | Report Error ke owner bot | user |  |  | implemented |  |
+| .gempa | infogempa, cekgempa | info | Info Gempa: Info gempa terbaru dari BMKG. | user | type | APIZ2Z /api/info/gempa | tested | 1/1 mock |
+| .gempa2 |  | info | Info Gempa v2: Info gempa terbaru dari BMKG. | user |  | APIZ2Z /api/info/gempa-v2 | tested | 1/1 mock |
+| .growagarden |  | info | Stok Grow a Garden: Cek stok terbaru game Grow a Garden (Roblox). | user |  | APIZ2Z /api/info/grow-a-garden | tested | 1/1 mock |
+| .growagarden2 |  | info | Stok Grow a Garden v2: Cek stok terbaru game Grow a Garden (Roblox). | user |  | APIZ2Z /api/info/grow-a-garden-v2 | tested | 1/1 mock |
+| .harilibur | libur | info | Hari Libur: Jadwal hari libur nasional. | user |  | APIZ2Z /api/info/hari-libur | tested | 1/1 mock |
+| .harilibur2 |  | info | Hari Libur v2: Jadwal hari libur nasional. | user |  | APIZ2Z /api/info/hari-libur-v2 | tested | 1/1 mock |
+| .infobilibili |  | info | Bilibili Info: Info video Bilibili + URL download. | user | url* | APIZ2Z /api/info/bilibili | tested | 1/1 mock |
+| .jadwalbola |  | info | Jadwal-Sepakbola: Jadwal pertandingan sepak bola terbaru. | user |  | APIZ2Z /api/info/jadwalbola | tested | 1/1 mock |
+| .jadwalsholat | sholat | info | Jadwal Sholat: Jadwal sholat harian & bulanan seluruh Indonesia. | user | kota, bulan, tahun | APIZ2Z /api/info/jadwal-sholat | tested | 1/1 mock |
+| .jadwalsholat2 |  | info | Jadwal Sholat v2: Jadwal sholat harian & bulanan seluruh Indonesia. | user | kota* | APIZ2Z /api/info/jadwal-sholat-v2 | tested | 1/1 mock |
+| .jadwaltv |  | info | Jadwal TV: Jadwal TV hari ini. | user |  | APIZ2Z /api/info/jadwaltv | tested | 1/1 mock |
+| .jadwaltv2 |  | info | Jadwal TV v2: Jadwal TV hari ini. | user | channel* | APIZ2Z /api/info/jadwaltv-v2 | tested | 1/1 mock |
+| .jumlahuser | totaluser | info | Jumlah user bot | user |  |  | implemented |  |
+| .report |  | info | Laporan dari User ke owner bot | user |  |  | implemented |  |
+| .req |  | info | Request Fitur ke owner bot | user |  |  | implemented |  |
+| .asmaulhusna |  | islamic | 99 Asmaul Husna: .asmaulhusna [nomor \| acak \| semua] | user |  |  | tested | 2/2 unit |
+| .ayatkursi |  | islamic | Ayat Kursi: Ayat Kursi lengkap: arab, latin, arti, sama tafsirnya. | user |  | APIZ2Z /api/islamic/ayatkursi | tested | 1/1 mock |
+| .bacaansholat |  | islamic | Bacaan Shalat: Bacaan shalat dari iftitah sampai salam: arab, latin, arti. | user |  | APIZ2Z /api/islamic/bacaanshalat | tested | 1/1 mock |
+| .doaharian | doa | islamic | Doa Harian: Kumpulan doa sehari-hari: arab, latin, arti. | user |  | APIZ2Z /api/islamic/doaharian | tested | 1/1 mock |
+| .dzikir | wirid | islamic | Wirid & dzikir setelah sholat fardhu | user |  |  | implemented |  |
+| .hadits | haditsharian | islamic | Hadits harian singkat | user |  |  | implemented |  |
+| .islamicwirid |  | islamic | Wirid: Bacaan wirid sesudah shalat lima waktu. | user |  | APIZ2Z /api/islamic/wirid | tested | 1/1 mock |
+| .kisahnabi |  | islamic | Kisah 25 nabi: .kisahnabi <nama> | user |  |  | implemented |  |
+| .kisahnabiapi |  | islamic | Kisah Nabi: Kisah 25 nabi: kelahiran, usia wafat, tempat, dan ceritanya. | user | nabi* | APIZ2Z /api/islamic/kisahnabi | tested | 1/1 mock |
+| .listnabi |  | islamic | Daftar 25 nabi dan rasul | user |  |  | tested | 1/1 unit |
+| .listsurah | daftarsurah | islamic | Daftar 114 surah Al-Quran | user |  |  | tested | 1/1 unit |
+| .murottal | audiosurah, audiosurat | islamic | Audio murottal satu surah (Mishary Rashid Alafasy) | user |  |  | implemented |  |
+| .niatsholat | niatshalat | islamic | Niat sholat fardhu (Arab, latin, terjemahan) | user | teks* |  | tested | 2/2 unit |
+| .quotesislami | quotesislam | islamic | Kata mutiara islami (25) | user |  |  | implemented |  |
+| .surah | quran | islamic | Surah Al-Qur'an: Ayat-ayat satu surah: arab, latin, arti. Nomor surah 1–114. | user | no* | APIZ2Z /api/islamic/surah | tested | 1/1 mock |
+| .surahinfo | infosurah | islamic | Info surah: nama, arti, jumlah ayat, golongan | user |  |  | tested | 2/2 unit |
+| .tahlil |  | islamic | Tahlil: Susunan bacaan tahlil lengkap sama artinya. | user |  | APIZ2Z /api/islamic/tahlil | tested | 1/1 mock |
+| .1917style |  | maker | Teks gaya poster film 1917: .1917style <teks> | user |  |  | implemented |  |
+| .abu |  | maker | Stiker quote warna abu: .abu <teks> | user |  |  | implemented |  |
+| .advancedglow |  | maker | Teks glow tingkat lanjut: .advancedglow <teks> | user |  |  | implemented |  |
+| .animediff |  | maker | Anime Diffusion: Buat gambar anime dari teks. | user | prompt* | APIZ2Z /api/maker/animediff | tested | 1/1 mock |
+| .api |  | maker | Stiker quote warna api: .api <teks> | user |  |  | implemented |  |
+| .attp |  | maker | ATTP: Teks animasi warna-warni (GIF), cocok buat stiker. | user | text* | APIZ2Z /api/maker/attp | tested | 1/1 mock |
+| .attp2 |  | maker | ATTP v2: Teks animasi warna-warni (GIF), cocok buat stiker. | user | text* | APIZ2Z /api/maker/attp-v2 | tested | 1/1 mock |
+| .balogo |  | maker | Balogo: Logo teks gaya Blue Archive. | user | text* | APIZ2Z /api/maker/balogo | tested | 1/1 mock |
+| .bananaai |  | maker | Banana Edit: Edit gambar dengan AI (unggah gambar + prompt). | user | url*, prompt* | APIZ2Z /api/maker/bananaai | tested | 1/1 mock |
+| .bananagen |  | maker | Banana Generate: Buat gambar dari teks (AI). | user | prompt*, model | APIZ2Z /api/maker/bananagen | tested | 1/1 mock |
+| .biru |  | maker | Stiker quote warna biru: .biru <teks> | user |  |  | implemented |  |
+| .birulangit |  | maker | Stiker quote warna birulangit: .birulangit <teks> | user |  |  | implemented |  |
+| .birulaut |  | maker | Stiker quote warna birulaut: .birulaut <teks> | user |  |  | implemented |  |
+| .birumuda |  | maker | Stiker quote warna birumuda: .birumuda <teks> | user |  |  | implemented |  |
+| .birutua |  | maker | Stiker quote warna birutua: .birutua <teks> | user |  |  | implemented |  |
+| .brat | bratbiasa, bratt | maker | Brat: Generate viral Brat album aesthetic meme text images. | user | text* | APIZ2Z /api/maker/brat | tested | 1/1 mock |
+| .brat2 |  | maker | Brat v2: Generate viral Brat album aesthetic meme text images. | user | text* | APIZ2Z /api/maker/brat-v2 | tested | 1/1 mock |
+| .bratanime | bratgura | maker | Brat Anime: Gambar teks brat versi anime. | user | text* | APIZ2Z /api/maker/bratanime | tested | 1/1 mock |
+| .brathd | bratbiasahd | maker | Brat HD: Gambar teks brat resolusi tinggi. | user | text* | APIZ2Z /api/maker/brathd | tested | 1/1 mock |
+| .bratvid | bratvideo | maker | Brat Video: Generate an animated Brat word-by-word video in MP4 or GIF format. | user | text*, format | APIZ2Z /api/maker/bratvid | tested | 1/1 mock |
+| .bratvid2 |  | maker | Brat Video v2: Generate an animated Brat word-by-word video in MP4 or GIF format. | user | text* | APIZ2Z /api/maker/bratvid-v2 | tested | 1/1 mock |
+| .bratvidhd |  | maker | Bratvid HD: Video teks brat resolusi tinggi. | user | text* | APIZ2Z /api/maker/bratvidhd | tested | 1/1 mock |
+| .carbon | carbonify | maker | Carbon (Code to Image): Ubah kode jadi gambar PNG tema gelap. | user | code*, lang | APIZ2Z /api/maker/carbon | tested | 1/1 mock |
+| .carbon2 |  | maker | Carbon (Code to Image) v2: Ubah kode jadi gambar PNG tema gelap. | user | code* | APIZ2Z /api/maker/carbon-v2 | tested | 1/1 mock |
+| .cokelat |  | maker | Stiker quote warna cokelat: .cokelat <teks> | user |  |  | implemented |  |
+| .cyan |  | maker | Stiker quote warna cyan: .cyan <teks> | user |  |  | implemented |  |
+| .deeppink |  | maker | Stiker quote warna deeppink: .deeppink <teks> | user |  |  | implemented |  |
+| .deletingtext |  | maker | Teks sedang dihapus (glitch): .deletingtext <teks> | user |  |  | implemented |  |
+| .dragonfire |  | maker | Teks api naga: .dragonfire <teks> | user |  |  | implemented |  |
+| .effectclouds |  | maker | Teks di awan: .effectclouds <teks> | user |  |  | implemented |  |
+| .emas |  | maker | Stiker quote warna emas: .emas <teks> | user |  |  | implemented |  |
+| .emojimix | mixemoji | maker | Emoji Mix (Emoji Kitchen): Combine two emojis into a custom Google Emoji Kitchen sticker. | user | emoji1*, emoji2* | APIZ2Z /api/maker/emojimix | tested | 1/1 mock |
+| .emojitogif | emojigif | maker | Emoji to GIF: Convert a standard emoji into an animated Google Noto GIF / WebP sticker. | user | emoji* | APIZ2Z /api/maker/emojitogif | tested | 1/1 mock |
+| .emojitogif2 |  | maker | Emoji to GIF v2: Convert a standard emoji into an animated Google Noto GIF / WebP sticker. | user | emoji* | APIZ2Z /api/maker/emojitogif-v2 | tested | 1/1 mock |
+| .fakecall |  | maker | Fake Call: Buat gambar fake call (panggilan WhatsApp) dengan foto, nama, dan jam. | user | name*, time*, photo* | APIZ2Z /api/maker/fakecall | tested | 1/1 mock |
+| .flag3dtext |  | maker | Teks 3D bendera merah putih: .flag3dtext <teks> | user |  |  | implemented |  |
+| .flagtext |  | maker | Teks bendera merah putih: .flagtext <teks> | user |  |  | implemented |  |
+| .font1 |  | maker | Gaya teks Unicode #1 (contoh: 𝓱𝓪𝓵𝓸) | user | teks* |  | tested | 1/1 unit |
+| .font10 |  | maker | Gaya teks Unicode #10 (contoh: ʜᴀʟᴏ) | user | teks* |  | tested | 1/1 unit |
+| .font2 |  | maker | Gaya teks Unicode #2 (contoh: ｈａｌｏ) | user | teks* |  | tested | 1/1 unit |
+| .font3 |  | maker | Gaya teks Unicode #3 (contoh: ⓗⓐⓛⓞ) | user | teks* |  | tested | 1/1 unit |
+| .font4 |  | maker | Gaya teks Unicode #4 (contoh: 𝐡𝐚𝐥𝐨) | user | teks* |  | tested | 1/1 unit |
+| .font5 |  | maker | Gaya teks Unicode #5 (contoh: 𝕙𝕒𝕝𝕠) | user | teks* |  | tested | 1/1 unit |
+| .font6 |  | maker | Gaya teks Unicode #6 (contoh: 𝒽𝒶𝓁ℴ) | user | teks* |  | tested | 1/1 unit |
+| .font7 |  | maker | Gaya teks Unicode #7 (contoh: 𝙝𝙖𝙡𝙤) | user | teks* |  | tested | 1/1 unit |
+| .font8 |  | maker | Gaya teks Unicode #8 (contoh: 𝚑𝚊𝚕𝚘) | user | teks* |  | tested | 1/1 unit |
+| .font9 |  | maker | Gaya teks Unicode #9 (contoh: ₕₐlₒ) | user | teks* |  | tested | 1/1 unit |
+| .fuchsia |  | maker | Stiker quote warna fuchsia: .fuchsia <teks> | user |  |  | implemented |  |
+| .galaxywallpaper |  | maker | Teks wallpaper galaksi: .galaxywallpaper <teks> | user |  |  | implemented |  |
+| .glowingtext |  | maker | Teks bercahaya (glowing): .glowingtext <teks> | user |  |  | implemented |  |
+| .goldbutton | ytgoldbutton | maker | Gold Play Button YouTube: .goldbutton <teks> | user |  |  | implemented |  |
+| .goldenrod |  | maker | Stiker quote warna goldenrod: .goldenrod <teks> | user |  |  | implemented |  |
+| .gradienttext |  | maker | Teks gradasi warna: .gradienttext <teks> | user |  |  | implemented |  |
+| .hijau |  | maker | Stiker quote warna hijau: .hijau <teks> | user |  |  | implemented |  |
+| .hijaugelap |  | maker | Stiker quote warna hijaugelap: .hijaugelap <teks> | user |  |  | implemented |  |
+| .hijaulaut |  | maker | Stiker quote warna hijaulaut: .hijaulaut <teks> | user |  |  | implemented |  |
+| .hijaulumut |  | maker | Stiker quote warna hijaulumut: .hijaulumut <teks> | user |  |  | implemented |  |
+| .hijautua |  | maker | Stiker quote warna hijautua: .hijautua <teks> | user |  |  | implemented |  |
+| .hitam |  | maker | Stiker quote warna hitam: .hitam <teks> | user |  |  | implemented |  |
+| .horor |  | maker | Teks horor berdarah: .horor <teks> | user |  |  | implemented |  |
+| .hotpink |  | maker | Stiker quote warna hotpink: .hotpink <teks> | user |  |  | implemented |  |
+| .igquote | ignote, igq, instagramquote | maker | Gambar quote ala Instagram (foto profil otomatis): .igquote <teks> atau reply pesan | user | teks* | APIZ2Z /api/canvas/igqc | implemented |  |
+| .incandescent |  | maker | Teks bohlam pijar: .incandescent <teks> | user |  |  | implemented |  |
+| .iqcpink | bratpink | maker | IQC Pink: Bikin gambar IQC Pink dari teks yang kamu kasih | user | q* | APIZ2Z /api/maker/iqc-pink | tested | 1/1 mock |
+| .jingga |  | maker | Stiker quote warna jingga: .jingga <teks> | user |  |  | implemented |  |
+| .kuning |  | maker | Stiker quote warna kuning: .kuning <teks> | user |  |  | implemented |  |
+| .landsatname |  | maker | Landsat Name: Tulis nama kamu pakai foto satelit Landsat NASA. | user | name*, variant | APIZ2Z /api/maker/landsat-name | tested | 1/1 mock |
+| .lighteffects |  | maker | Teks efek cahaya: .lighteffects <teks> | user |  |  | implemented |  |
+| .logomaker |  | maker | Logo teks sederhana: .logomaker <teks> | user |  |  | implemented |  |
+| .luxurygold |  | maker | Teks emas mewah: .luxurygold <teks> | user |  |  | implemented |  |
+| .magenta |  | maker | Stiker quote warna magenta: .magenta <teks> | user |  |  | implemented |  |
+| .makerqc | quotly | maker | Qc: Gambar quote chat: teks, nama, avatar, warna. | user | text*, name*, avatar*, color* | APIZ2Z /api/maker/qc | tested | 1/1 mock |
+| .makingneon |  | maker | Teks neon pink: .makingneon <teks> | user |  |  | implemented |  |
+| .merah |  | maker | Stiker quote warna merah: .merah <teks> | user |  |  | implemented |  |
+| .merahgelap |  | maker | Stiker quote warna merahgelap: .merahgelap <teks> | user |  |  | implemented |  |
+| .merahmuda |  | maker | Stiker quote warna merahmuda: .merahmuda <teks> | user |  |  | implemented |  |
+| .merahtua |  | maker | Stiker quote warna merahtua: .merahtua <teks> | user |  |  | implemented |  |
+| .msg |  | maker | Message: Gambar kotak pesan ala Windows. | user | message*, title, icon | APIZ2Z /api/maker/msg | tested | 1/1 mock |
+| .multicoloredneon |  | maker | Teks neon warna-warni: .multicoloredneon <teks> | user |  |  | implemented |  |
+| .nightstars |  | maker | Teks langit malam berbintang: .nightstars <teks> | user |  |  | implemented |  |
+| .nulis | tulis | maker | Nulis: Teks jadi gambar tulisan tangan di buku tulis. | user | text* | APIZ2Z /api/maker/nulis | tested | 1/1 mock |
+| .orange |  | maker | Stiker quote warna orange: .orange <teks> | user |  |  | implemented |  |
+| .papercutstyle |  | maker | Teks gaya papercut berlapis: .papercutstyle <teks> | user |  |  | implemented |  |
+| .peachpuff |  | maker | Stiker quote warna peachpuff: .peachpuff <teks> | user |  |  | implemented |  |
+| .perak |  | maker | Stiker quote warna perak: .perak <teks> | user |  |  | implemented |  |
+| .pink |  | maker | Stiker quote warna pink: .pink <teks> | user |  |  | implemented |  |
+| .putih |  | maker | Stiker quote warna putih: .putih <teks> | user |  |  | implemented |  |
+| .quoted |  | maker | Quoted Chat: Buat gambar "quoted" chat (nama + teks + foto opsional). | user | username*, text*, profile, bg | APIZ2Z /api/maker/quoted | tested | 1/1 mock |
+| .remini |  | maker | Remini: Perjelas / HD-kan foto (unggah atau URL). | user | url* | APIZ2Z /api/maker/remini | tested | 1/1 mock |
+| .remini2 |  | maker | Remini v2: Perjelas / HD-kan foto (unggah atau URL). | user | url* | APIZ2Z /api/maker/remini-v2 | tested | 1/1 mock |
+| .royaltext |  | maker | Teks royal ungu-emas: .royaltext <teks> | user |  |  | implemented |  |
+| .salmon |  | maker | Stiker quote warna salmon: .salmon <teks> | user |  |  | implemented |  |
+| .sandsummer |  | maker | Teks tulisan di pasir: .sandsummer <teks> | user |  |  | implemented |  |
+| .silverbutton | ytsilverbutton | maker | Silver Play Button YouTube: .silverbutton <teks> | user |  |  | implemented |  |
+| .silvertext |  | maker | Teks perak metalik: .silvertext <teks> | user |  |  | implemented |  |
+| .smeme | stickermeme | maker | Smeme: Bikin meme dengan teks atas dan bawah. | user | text_atas*, text_bawah*, background* | APIZ2Z /api/maker/smeme | tested | 1/1 mock |
+| .summerbeach |  | maker | Teks pantai musim panas: .summerbeach <teks> | user |  |  | implemented |  |
+| .sunlight |  | maker | Teks cahaya matahari: .sunlight <teks> | user |  |  | implemented |  |
+| .tan |  | maker | Stiker quote warna tan: .tan <teks> | user |  |  | implemented |  |
+| .teal |  | maker | Stiker quote warna teal: .teal <teks> | user |  |  | implemented |  |
+| .ttp |  | maker | TTP: Teks jadi gambar (PNG), cocok buat stiker. | user | text* | APIZ2Z /api/maker/ttp | tested | 1/1 mock |
+| .ttp2 |  | maker | TTP v2: Teks jadi gambar (PNG), cocok buat stiker. | user | text* | APIZ2Z /api/maker/ttp-v2 | tested | 1/1 mock |
+| .underwatertext |  | maker | Teks bawah laut: .underwatertext <teks> | user |  |  | implemented |  |
+| .ungu |  | maker | Stiker quote warna ungu: .ungu <teks> | user |  |  | implemented |  |
+| .wanted | buronan, posterwanted | maker | Poster WANTED dari foto (kirim/reply foto, atau tag orang): .wanted [nama]\|[hadiah] | user |  |  | implemented |  |
+| .wasted |  | maker | Wasted: Efek "WASTED" ala GTA di foto kamu. | user | url* | APIZ2Z /api/maker/wasted | tested | 1/1 mock |
+| .watercolortext |  | maker | Teks cat air: .watercolortext <teks> | user |  |  | implemented |  |
+| .wheat |  | maker | Stiker quote warna wheat: .wheat <teks> | user |  |  | implemented |  |
+| .wood |  | maker | Teks ukiran kayu: .wood <teks> | user |  |  | implemented |  |
+| .yannqc | yanqc, qc | maker | Stiker quote berwarna dari fotomu: .yannqc <warna> <teks> | user |  |  | implemented |  |
+| .ytcomment | youtubecomment | maker | Gambar komentar YouTube dengan nama & foto profilmu | user |  |  | implemented |  |
+| .8d | audio8d | media | Efek audio: Audio 8D (berputar kiri-kanan) (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .bass |  | media | Efek audio: Bass boost (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .blown |  | media | Efek audio: Suara pecah (blown) (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .chipmunk | tupai | media | Efek audio: Suara tupai (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .chorus |  | media | Efek audio: Chorus (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .deep |  | media | Efek audio: Suara berat (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .earrape |  | media | Efek audio: Sangat keras (hati-hati) (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .echo |  | media | Efek audio: Gema (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .fast |  | media | Efek audio: Dipercepat 1.5x (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .flanger |  | media | Efek audio: Flanger (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .nightcore |  | media | Efek audio: Nightcore (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .potongaudio | trimaudio, cut | media | Potong audio: .potongaudio <mulai detik> <durasi detik> | user |  | ffmpeg | tested | 1/1 real |
+| .ptvtovideo | ptvtovid | media | Ubah video bulat (PTV) jadi video biasa | user |  |  | tested | 1/1 real |
+| .radio |  | media | Efek audio: Efek radio jadul (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .reverseaudio |  | media | Efek audio: Diputar terbalik (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .robot |  | media | Efek audio: Suara robot (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .sadaudio |  | media | Efek audio: Sad (pelan + gema lembut) (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .slow |  | media | Efek audio: Diperlambat 0.75x (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .smooth |  | media | Efek audio: Halus (lowpass) (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .togif |  | media | Ubah video (maks 8 detik) jadi GIF | user |  | ffmpeg | tested | 1/1 real |
+| .toimg | topng | media | Ubah stiker jadi gambar PNG | user |  | ffmpeg | tested | 1/1 real |
+| .tomp3 | toaudio, getaudio | media | Ubah video/audio jadi MP3 | user |  | ffmpeg | tested | 1/1 real |
+| .tovideo | tomp4 | media | Ubah stiker animasi/GIF jadi video MP4 | user |  | ffmpeg | tested | 1/1 real |
+| .tovn | toptt, vn | media | Ubah audio/video jadi voice note | user |  | ffmpeg | tested | 1/1 real |
+| .tremolo |  | media | Efek audio: Tremolo (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .vibrato |  | media | Efek audio: Vibrato (reply audio/video) | user |  | ffmpeg | tested | 1/1 real |
+| .volumeaudio | setvolume, vol | media | Atur volume audio: .volumeaudio 1.5 (0.1 - 10) | user |  | ffmpeg | tested | 1/1 real |
+| .volumevideo | volvid, volvideo | media | Atur volume suara video: .volumevideo 2 (0.1 - 10) | user |  | ffmpeg | tested | 1/1 real |
+| .browse |  | movie | LK21 Browse: Daftar film LK21 (terbaru/populer). | user | mode, page | APIZ2Z /api/lk21/browse | tested | 1/1 mock |
+| .murotalapi |  | music | Murotal Al-Quran: Audio murotal Al-Quran per surat, bisa pilih qari. | user | qari, surah, rehost | APIZ2Z /api/audio/murotal | tested | 1/1 mock |
+| .antara |  | news | Antara News: Berita dari antaranews.com. | user |  | APIZ2Z /api/news/antara | tested | 1/1 mock |
+| .antara2 |  | news | Antara News v2: Berita dari antaranews.com. | user |  | APIZ2Z /api/news/antara-v2 | tested | 1/1 mock |
+| .cnbc | beritacnbc, cnbcnews | news | CNBC Indonesia: Berita terbaru dari CNBC Indonesia. | user |  | APIZ2Z /api/news/cnbc | tested | 1/1 mock |
+| .cnbc2 |  | news | CNBC Indonesia v2: Berita terbaru dari CNBC Indonesia. | user |  | APIZ2Z /api/news/cnbc-v2 | tested | 1/1 mock |
+| .cnn | berita, news | news | CNN Indonesia: Berita dari CNN Indonesia. | user |  | APIZ2Z /api/news/cnn | tested | 1/1 mock |
+| .cnn2 |  | news | CNN Indonesia v2: Berita dari CNN Indonesia. | user |  | APIZ2Z /api/news/cnn-v2 | tested | 1/1 mock |
+| .detik |  | news | Detik News: Berita terbaru dari detik.com. | user |  | APIZ2Z /api/news/detik | tested | 1/1 mock |
+| .ffnews |  | news | Free Fire News: Berita terbaru seputar Free Fire. | user |  | APIZ2Z /api/news/ffnews | tested | 1/1 mock |
+| .jkt48 |  | news | JKT48 News: Berita JKT48 terbaru. | user |  | APIZ2Z /api/news/jkt48 | tested | 1/1 mock |
+| .kompas |  | news | Kompas: Berita dari kompas.com. | user |  | APIZ2Z /api/news/kompas | tested | 1/1 mock |
+| .kompas2 |  | news | Kompas v2: Berita dari kompas.com. | user |  | APIZ2Z /api/news/kompas-v2 | tested | 1/1 mock |
+| .liputan6 |  | news | Liputan6: Berita terbaru dari Liputan6. | user |  | APIZ2Z /api/news/liputan6 | tested | 1/1 mock |
+| .merdeka |  | news | Merdeka: Berita terkini dari Merdeka. | user |  | APIZ2Z /api/news/merdeka | tested | 1/1 mock |
+| .mlbb |  | news | MLBB News: Berita terbaru seputar Mobile Legends. | user |  | APIZ2Z /api/news/mlbb | tested | 1/1 mock |
+| .okezone |  | news | Okezone News: Berita terbaru dari okezone.com. | user |  | APIZ2Z /api/news/okezone | tested | 1/1 mock |
+| .sindonews |  | news | Sindonews: Berita dari sindonews.com. | user |  | APIZ2Z /api/news/sindonews | tested | 1/1 mock |
+| .sindonews2 |  | news | Sindonews v2: Berita dari sindonews.com. | user |  | APIZ2Z /api/news/sindonews-v2 | tested | 1/1 mock |
+| .suara |  | news | Suara: Berita dari suara.com. | user |  | APIZ2Z /api/news/suara | tested | 1/1 mock |
+| .tribun |  | news | Tribunnews: Berita terbaru dari Tribunnews. | user |  | APIZ2Z /api/news/tribun | tested | 1/1 mock |
+| .acctrx | konfirmasitrx | owner | Konfirmasi order (premium/sewa langsung aktif) | owner |  |  | implemented |  |
+| .addcase | addcmd | owner | Buat command teks/media sendiri: reply pesan + .addcase <nama>, atau .addcase <nama>\|<balasan> | owner |  |  | implemented |  |
+| .addlimit |  | owner | Tambah limit user: .addlimit <nomor/@tag> <jumlah> | owner |  |  | implemented |  |
+| .addlimitall |  | owner | Tambah limit hari ini untuk semua user | owner |  |  | implemented |  |
+| .addmoney |  | owner | Tambah koin user | owner |  |  | implemented |  |
+| .addowner | addown | owner | Tambah owner bot (disimpan di database lokal) | owner |  |  | implemented |  |
+| .addprefix |  | owner | Tambah prefix bot (1-3 karakter, maks 6 prefix) | owner |  |  | implemented |  |
+| .addprem | addpremium | owner | Tambah premium: .addprem <nomor/@tag> <hari> | owner |  |  | implemented |  |
+| .addpremgc | addpremgrup, addpremiumgc | owner | Jadikan semua member grup premium N hari | owner/group |  |  | implemented |  |
+| .addreseller | addres | owner | Tambah Reseller (tag/reply/nomor) | owner |  |  | implemented |  |
+| .addreselleram |  | owner | Tambah Reseller AM (tag/reply/nomor) | owner |  |  | implemented |  |
+| .addrespon |  | owner | Reply pesan + .addrespon <kata kunci>: bot membalas pesan itu tiap ada yang mengetik kata kunci | owner |  |  | implemented |  |
+| .addsewagc |  | owner | Sewakan bot ke grup: .addsewagc <hari> (di grup) atau .addsewagc <link> <hari> | owner |  |  | implemented |  |
+| .autobackup |  | owner | Kirim backup database ke owner tiap N jam (0 = mati) | owner |  |  | implemented |  |
+| .autoreactsw | autoreadsw | owner | Otomatis baca & beri reaksi status WhatsApp kontak | owner |  |  | implemented |  |
+| .autoread |  | owner | Tandai pesan masuk sebagai dibaca otomatis | owner |  |  | implemented |  |
+| .autosambut | sambutowner | owner | Bot menyambut owner saat owner chat di grup (cooldown menit) | owner |  |  | implemented |  |
+| .autotyping |  | owner | Tampilkan "mengetik..." saat memproses command | owner |  |  | implemented |  |
+| .backupdb | backup | owner | Kirim file database lokal bot ke chat pribadi owner | owner/private |  |  | implemented |  |
+| .banuser | blacklist | owner | Blokir user dari memakai bot (lokal) | owner |  |  | implemented |  |
+| .block | blokir, blok | owner | Blokir kontak di WhatsApp | owner |  |  | implemented |  |
+| .buatkode | addkode | owner | Buat kode redeem: .buatkode <KODE> <koin\|limit\|premium>:<jumlah> <maks klaim> | owner |  |  | implemented |  |
+| .clearchat | clc | owner | Hapus chat ini dari WhatsApp bot | owner |  |  | implemented |  |
+| .cleardb | resetdb, rstdb | owner | Kosongkan database lokal bot (user, grup, data fitur). Wajib: .cleardb confirm | owner |  |  | implemented |  |
+| .clearprem |  | owner | Bersihkan data premium yang sudah kedaluwarsa | owner |  |  | implemented |  |
+| .clearreseller | resetreseller, hapussemuareseller | owner | Hapus semua reseller | owner |  |  | implemented |  |
+| .clearrespon |  | owner | Hapus semua respon otomatis | owner |  |  | implemented |  |
+| .clearsesi | clearsession, clsesi | owner | Hapus file sesi sementara WhatsApp (creds.json tetap aman) | owner |  |  | implemented |  |
+| .creategc | creategroup, creategrup | owner | Buat grup baru (kamu dijadikan member) | owner |  |  | implemented |  |
+| .delcase | delcmd | owner | Hapus command buatan sendiri | owner |  |  | implemented |  |
+| .dellimit |  | owner | Hapus limit harian permanen user | owner |  |  | implemented |  |
+| .delmoney |  | owner | Kurangi koin user | owner |  |  | implemented |  |
+| .delowner | delown | owner | Hapus owner tambahan | owner |  |  | implemented |  |
+| .delprefix |  | owner | Hapus salah satu prefix bot (minimal tersisa 1) | owner |  |  | implemented |  |
+| .delprem |  | owner | Cabut premium user | owner |  |  | implemented |  |
+| .delpremgc | delpremgrup, deletepremgc | owner | Cabut premium semua member grup | owner/group |  |  | implemented |  |
+| .delreseller |  | owner | Hapus Reseller | owner |  |  | implemented |  |
+| .delreselleram |  | owner | Hapus Reseller AM | owner |  |  | implemented |  |
+| .delrespon |  | owner | Hapus respon otomatis | owner |  |  | implemented |  |
+| .delsewagc |  | owner | Hentikan sewa grup (di grup atau dengan ID grup) | owner |  |  | implemented |  |
+| .disablefitur | matikanfitur | owner | Nonaktifkan fitur (disimpan di database) | owner |  |  | implemented |  |
+| .enablefitur | nyalakanfitur | owner | Aktifkan lagi fitur | owner |  |  | implemented |  |
+| .getcase | getcmd | owner | Lihat isi command buatan sendiri | owner |  |  | implemented |  |
+| .getfile |  | owner | Ambil file source bot: .getfile (daftar), .getfile <nomor\|path>, .getfile <kata kunci> | owner |  |  | implemented |  |
+| .getfiledest |  | owner | Kirim file source bot ke tujuan: owner / chat / grup <id> / dm <nomor> | owner |  |  | implemented |  |
+| .getfilehelp |  | owner | Cara pakai .getfile dan .getfiledest | owner |  |  | implemented |  |
+| .getplugin | getplugins, getp | owner | Kirim file plugin sebagai dokumen: .getplugin game/tebakkata atau .getplugin tebakkata | owner |  |  | implemented |  |
+| .hapuskode | delkode | owner | Hapus kode redeem | owner |  |  | implemented |  |
+| .jadwalkirim | jadwalngirimpesan, schedulesend | owner | Jadwalkan pesan sekali kirim ke nomor/grup: .jadwalkirim 628xxx 10m Halo! (waktu: 30s/10m/2h/1d atau 21:30) · .jadwalkirim list · .jadwalkirim hapus <n> | owner |  |  | implemented |  |
+| .join | joingc, joingcall | owner | Bot masuk grup lewat link undangan | owner |  |  | implemented |  |
+| .joinch | joinchannel | owner | Bot mengikuti saluran WhatsApp lewat link | owner |  |  | implemented |  |
+| .listban |  | owner | Daftar user yang diblokir dari bot | owner |  |  | implemented |  |
+| .listcase | listcmd | owner | Daftar command buatan sendiri | owner |  |  | implemented |  |
+| .listgc | listgroup | owner | Daftar grup yang diikuti bot | owner |  |  | implemented |  |
+| .listkode |  | owner | Daftar kode redeem | owner |  |  | implemented |  |
+| .listowner | listown | owner | Daftar owner | owner |  |  | implemented |  |
+| .listplugin | listplugins | owner | Daftar file plugin bot per kategori | owner |  |  | implemented |  |
+| .listprefix |  | owner | Daftar prefix bot yang aktif | owner |  |  | implemented |  |
+| .listprem |  | owner | Daftar user premium aktif | owner |  |  | implemented |  |
+| .listreseller |  | owner | Daftar Reseller | owner |  |  | implemented |  |
+| .listreselleram |  | owner | Daftar Reseller AM | owner |  |  | implemented |  |
+| .listrespon |  | owner | Daftar respon otomatis | owner |  |  | implemented |  |
+| .listsewagc |  | owner | Daftar grup sewa aktif | owner |  |  | implemented |  |
+| .listtrx |  | owner | Daftar order pending | owner |  |  | implemented |  |
+| .maintenance | mt | owner | Maintenance bot (lokal): on [pesan] / off / status. Maintenance dari dashboard tetap berlaku terpisah | owner |  |  | implemented |  |
+| .mutegc | mutegc_proses | owner | Bisukan bot di grup (di grup itu, atau dengan ID/nomor dari .listgc) | owner |  |  | implemented |  |
+| .onlygc | onlygrup, onlygroup | owner | Bot hanya merespons di grup (chat pribadi diabaikan, kecuali owner) | owner |  |  | implemented |  |
+| .perpanjangsewa | renewsewa, renewsewagc | owner | Perpanjang sewa grup N hari | owner |  |  | implemented |  |
+| .ptvch |  | owner | Cari video TikTok lalu kirim sebagai video bulat (PTV) ke saluran bot (CHANNEL_ID) | owner |  | APIZ2Z /api/search/tiktok | implemented |  |
+| .public |  | owner | Mode public: bot merespons semua orang | owner |  |  | implemented |  |
+| .renamebot | setconfig | owner | Ubah identitas bot: .renamebot <kunci> <nilai> | owner |  |  | implemented |  |
+| .resetlimitall |  | owner | Reset limit harian semua user ke nilai default | owner |  |  | implemented |  |
+| .restart | rst | owner | Restart bot (pm2 menyalakan lagi otomatis) | owner |  |  | implemented |  |
+| .save | sv | owner | Kirim kartu kontak lawan chat (untuk disimpan) | owner/private |  |  | implemented |  |
+| .self |  | owner | Mode self: bot hanya merespons owner | owner |  |  | implemented |  |
+| .setaudiomenu |  | owner | Audio yang dikirim setelah .menu: reply audio + .setaudiomenu (atau .setaudiomenu off) | owner |  |  | implemented |  |
+| .setbio |  | owner | Ganti bio/status bot | owner |  |  | implemented |  |
+| .setbotname |  | owner | Ganti nama profil WhatsApp bot | owner |  |  | implemented |  |
+| .setdaftar | setregister | owner | Wajib daftar sebelum memakai bot: on/off | owner |  |  | implemented |  |
+| .setimg | setimage | owner | Ganti gambar/video menu: reply media + .setimg menu\|menuvideo\|reply (atau .setimg reset) | owner |  |  | implemented |  |
+| .setlabel |  | owner | Atur label member bot di grup: .setlabel <id grup\|all>\|<label maks 30> | owner |  |  | implemented |  |
+| .setlimit |  | owner | Atur limit harian permanen user (0 = kembali default) | owner |  |  | implemented |  |
+| .setmenu |  | owner | Gaya tampilan .menu: text/image/video/document (v1-v10 juga diterima) | owner |  |  | implemented |  |
+| .setmoney |  | owner | Atur koin user | owner |  |  | implemented |  |
+| .setppbot |  | owner | Ganti foto profil bot (reply/kirim gambar) | owner |  |  | implemented |  |
+| .setpppanjang | setpppanjangbot, setppfull, setbotpp | owner | Ganti foto profil bot tanpa crop persegi (reply gambar) | owner |  |  | implemented |  |
+| .setprefix |  | owner | Atur prefix (pisah spasi, 1-3 karakter). Kosong = kembali ke settingsbot.js | owner |  |  | implemented |  |
+| .setreplystyle | setreply | owner | Gaya balasan bot: text (biasa) atau card (kartu link) | owner |  |  | implemented |  |
+| .setrestart | autorestart | owner | Restart otomatis tiap N jam (0 = mati) | owner |  |  | implemented |  |
+| .sistemsewa |  | owner | Sistem sewa: bot hanya melayani grup yang sewa | owner |  |  | implemented |  |
+| .tolaktrx |  | owner | Tolak order | owner |  |  | implemented |  |
+| .unbanuser | unblacklist | owner | Buka blokir user | owner |  |  | implemented |  |
+| .unblock | unblok | owner | Buka blokir kontak di WhatsApp | owner |  |  | implemented |  |
+| .unmutegc | unmutegc_proses | owner | Aktifkan lagi bot di grup (di grup itu, atau dengan ID/nomor dari .listgc) | owner |  |  | implemented |  |
+| .upchannel | upch, kirimch, upchannel2 | owner | Kirim teks/media ke channel bot (links.channelId) | owner |  |  | implemented |  |
+| .artinama | arti-nama | primbon | Arti Nama: Cari arti nama berdasarkan numerologi Jawa. | user | nama* | APIZ2Z /api/primbon/artinama | tested | 1/1 mock |
+| .artinama2 |  | primbon | Arti Nama v2: Cari arti nama berdasarkan numerologi Jawa. | user | nama* | APIZ2Z /api/primbon/artinama-v2 | tested | 1/1 mock |
+| .cocokpasangan | kecocokanpasangan, kecocokannama, namacocok, cocoknama | primbon | Kecocokan Pasangan: Cek kecocokan pasangan berdasarkan nama (Neptuni Jawa). | user | nama1*, nama2* | APIZ2Z /api/primbon/cocokpasangan | tested | 1/1 mock |
+| .cocokpasangan2 |  | primbon | Kecocokan Pasangan v2: Cek kecocokan pasangan berdasarkan nama (Neptuni Jawa). | user | nama1*, nama2* | APIZ2Z /api/primbon/cocokpasangan-v2 | tested | 1/1 mock |
+| .nomorhoki | nomerhoki, nohoki | primbon | Nomor Hoki: Cek nomor HP kamu hoki atau nggak. | user | nomor* | APIZ2Z /api/primbon/nomorhoki | tested | 1/1 mock |
+| .nomorhoki2 |  | primbon | Nomor Hoki v2: Cek nomor HP kamu hoki atau nggak. | user | nomor* | APIZ2Z /api/primbon/nomorhoki-v2 | tested | 1/1 mock |
+| .penyakit |  | primbon | Potensi Penyakit: Cek potensi penyakit dari tanggal lahir. | user | tanggal* | APIZ2Z /api/primbon/penyakit | tested | 1/1 mock |
+| .penyakit2 |  | primbon | Potensi Penyakit v2: Cek potensi penyakit dari tanggal lahir. | user | tanggal*, bulan*, tahun* | APIZ2Z /api/primbon/penyakit-v2 | tested | 1/1 mock |
+| .ramalanjodohbali | jodohbali | primbon | Ramalan Jodoh Bali: Ramalan kecocokan jodoh metode Bali. | user | nama1*, tgl1*, bln1*, thn1*, nama2*, tgl2*, bln2*, thn2* | APIZ2Z /api/primbon/ramalan-jodoh-bali | tested | 1/1 mock |
+| .ramalanjodohbali2 |  | primbon | Ramalan Jodoh Bali v2: Ramalan kecocokan jodoh metode Bali. | user | nama1*, tanggal1*, bulan1*, tahun1*, nama2*, tanggal2*, bulan2*, tahun2* | APIZ2Z /api/primbon/ramalan-jodoh-bali-v2 | tested | 1/1 mock |
+| .ramaljodoh | ramalanjodoh, ramalancinta | primbon | Ramal Jodoh: Ramal jodoh berdasarkan nama (Neptuni Jawa). | user | nama1*, nama2* | APIZ2Z /api/primbon/ramaljodoh | tested | 1/1 mock |
+| .ramaljodoh2 |  | primbon | Ramal Jodoh v2: Ramal jodoh berdasarkan nama (Neptuni Jawa). | user | nama1*, tanggal1*, bulan1*, tahun1*, nama2*, tanggal2*, bulan2*, tahun2* | APIZ2Z /api/primbon/ramaljodoh-v2 | tested | 1/1 mock |
+| .rezekihoki | hoki | primbon | Rezeki & Hoki: Cek rejeki dan hoki berdasarkan weton lahir. | user | tanggal* | APIZ2Z /api/primbon/rezeki-hoki | tested | 1/1 mock |
+| .rezekihoki2 |  | primbon | Rezeki & Hoki v2: Cek rejeki dan hoki berdasarkan weton lahir. | user | tanggal*, bulan*, tahun* | APIZ2Z /api/primbon/rezeki-hoki-v2 | tested | 1/1 mock |
+| .sifatusaha |  | primbon | Sifat Usaha: Cek sifat usaha/bisnis berdasarkan tanggal lahir. | user | tanggal* | APIZ2Z /api/primbon/sifat-usaha | tested | 1/1 mock |
+| .sifatusaha2 |  | primbon | Sifat Usaha v2: Cek sifat usaha/bisnis berdasarkan tanggal lahir. | user | tanggal*, bulan*, tahun* | APIZ2Z /api/primbon/sifat-usaha-v2 | tested | 1/1 mock |
+| .tafsirmimpi | mimpi | primbon | Tafsir Mimpi: Tafsir mimpi dari primbon Jawa. | user | mimpi* | APIZ2Z /api/primbon/tafsir-mimpi | tested | 1/1 mock |
+| .zodiac2 |  | primbon | Zodiak v2: Cek zodiak dari tanggal lahir. | user | zodiak* | APIZ2Z /api/primbon/zodiac-v2 | tested | 1/1 mock |
+| .zodiak | zodiac, ramalanzodiak | primbon | Zodiak: Cek zodiak dari tanggal lahir. | user | tanggal* | APIZ2Z /api/primbon/zodiac | tested | 1/1 mock |
+| .bersihtodo | cleartodo | productivity | Hapus to-do yang sudah selesai | user |  |  | implemented |  |
+| .catat | addnote | productivity | Simpan catatan pribadi | user |  |  | implemented |  |
+| .catatan | notes, listnote | productivity | Daftar catatan kamu | user |  |  | implemented |  |
+| .hapuscatatan | delnote | productivity | Hapus catatan: .hapuscatatan <nomor\|semua> | user |  |  | implemented |  |
+| .hapusingat | delreminder | productivity | Hapus pengingat | user |  |  | implemented |  |
+| .ingatkan | remind, reminder | productivity | Pengingat: .ingatkan 30m minum obat (s/m/jam/hari, maks 30 hari) | user |  |  | implemented |  |
+| .listingat | myreminders | productivity | Daftar pengingat aktif | user |  |  | implemented |  |
+| .selesai | donetodo | productivity | Tandai to-do selesai | user |  |  | implemented |  |
+| .todo | addtodo | productivity | Tambah to-do | user |  |  | implemented |  |
+| .todolist | listtodo | productivity | Daftar to-do | user |  |  | implemented |  |
+| .aesthetic | randomaesthetic | random | Gambar aesthetic acak (200 gambar) | user |  | data/random/aesthetic.json | implemented |  |
+| .anime |  | random | Anime: Gambar anime acak sesuai kategori (waifu, neko, hug, dan lainnya). | user | type* | APIZ2Z /api/random/anime | tested | 1/1 mock |
+| .animequote | quotesanime, qanime, animequotes, randomquotenime | random | Anime Quote: Quote anime acak. | user |  | APIZ2Z /api/random/anime-quote | tested | 1/1 mock |
+| .anjing |  | random | Random Anjing: Foto anjing. | user |  | APIZ2Z /api/random/anjing | tested | 1/1 mock |
+| .ba |  | random | Blue-Archive: Gambar karakter Blue Archive acak. | user |  | APIZ2Z /api/random/ba | tested | 1/1 mock |
+| .cerpen |  | random | Random Cerpen: Cerpen (cerita pendek). | user |  | APIZ2Z /api/random/cerpen | tested | 1/1 mock |
+| .dadustiker | randomdadu | random | Stiker dadu acak 1-6 | user |  |  | implemented |  |
+| .dare |  | random | Dare: Tantangan dare acak buat main truth or dare. | user |  | APIZ2Z /api/random/dare | tested | 1/1 mock |
+| .fakta | faktaunik | random | Random Fakta: Fakta unik. | user |  | APIZ2Z /api/random/fakta | tested | 1/1 mock |
+| .katamotivasi |  | random | Kata Motivasi: Kata motivasi dan inspirasi harian. | user |  | APIZ2Z /api/random/kata-motivasi | tested | 1/1 mock |
+| .kucing |  | random | Random Kucing: Gambar kucing. | user |  | APIZ2Z /api/random/kucing | tested | 1/1 mock |
+| .meme | randommeme | random | Meme Random: Gambar meme acak. | user |  | APIZ2Z /api/random/meme | tested | 1/1 mock |
+| .nasehat |  | random | Random Nasehat: Nasehat bijak. | user |  | APIZ2Z /api/random/nasehat | tested | 1/1 mock |
+| .neko |  | random | Random Neko: Gambar neko acak. | user |  | APIZ2Z /api/random/neko | tested | 1/1 mock |
+| .philosopherquotes |  | random | Quote Filsuf: Kutipan filsuf acak. | user |  | APIZ2Z /api/random/philosopher-quotes | tested | 1/1 mock |
+| .puisi |  | random | Random Puisi: Puisi. | user |  | APIZ2Z /api/random/puisi | tested | 1/1 mock |
+| .quotes |  | random | Random Quotes: Quote acak. | user |  | APIZ2Z /api/random/quotes | tested | 1/1 mock |
+| .randomanjing |  | random | Foto anjing acak (100 gambar) | user |  | data/random/anjing.json | implemented |  |
+| .randomantiwork |  | random | Meme antiwork acak (16 gambar) | user |  | data/random/antiwork.json | implemented |  |
+| .randomblackpink |  | random | Foto BLACKPINK acak (29 gambar) | user |  | data/random/blackpink.json | implemented |  |
+| .randomboneka |  | random | Foto boneka acak (100 gambar) | user |  | data/random/boneka.json | implemented |  |
+| .randomcosplay |  | random | Foto cosplay acak (99 gambar) | user |  | data/random/cosplay.json | implemented |  |
+| .randomhekel |  | random | Gambar hacker acak (100 gambar) | user |  | data/random/hekel.json | implemented |  |
+| .randomkpop |  | random | Foto idol K-Pop acak (52 gambar) | user |  | data/random/kpop.json | implemented |  |
+| .randomkucing |  | random | Foto kucing acak (100 gambar) | user |  | data/random/kucing.json | implemented |  |
+| .randommobil |  | random | Foto mobil acak (100 gambar) | user |  | data/random/mobil.json | implemented |  |
+| .randommotor | randommontor | random | Foto motor acak (100 gambar) | user |  | data/random/montor.json | implemented |  |
+| .randomnotnot |  | random | Gambar notnot acak (100 gambar) | user |  | data/random/notnot.json | implemented |  |
+| .randomrose |  | random | Foto Rosé BLACKPINK acak (100 gambar) | user |  | data/random/rose.json | implemented |  |
+| .randomryujin |  | random | Foto Ryujin ITZY acak (100 gambar) | user |  | data/random/ryujin.json | implemented |  |
+| .tokohquotes |  | random | Quote Tokoh: Kutipan bijak tokoh dunia & filsuf. | user | type, count | APIZ2Z /api/random/tokoh-quotes | tested | 1/1 mock |
+| .truth |  | random | Truth: Pertanyaan truth acak buat main truth or dare. | user |  | APIZ2Z /api/random/truth | tested | 1/1 mock |
+| .waifu | randomwaifu | random | Random Waifu: Gambar waifu anime acak (aman). | user | count | APIZ2Z /api/random/waifu | tested | 1/1 mock |
+| .wallpaperhp | randomwallhp | random | Wallpaper HP acak (100 gambar) | user |  | data/random/wallhp.json | implemented |  |
+| .wallpaperml | randomwallml | random | Wallpaper Mobile Legends acak (200 gambar) | user |  | data/random/wallml.json | implemented |  |
+| .wallpaperpubg | randompubg | random | Wallpaper PUBG acak (100 gambar) | user |  | data/random/pubg.json | implemented |  |
+| .an1 |  | search | AN1 APK Search: Cari APK di AN1.com. | user | q* | APIZ2Z /api/apk/an1 | tested | 1/1 mock |
+| .apkmody |  | search | APKMODY Search: Cari aplikasi/game mod di APKMODY. | user | q*, limit | APIZ2Z /api/apk/apkmody | tested | 1/1 mock |
+| .apkplaystore |  | search | Play Store Search: Cari aplikasi di Google Play Store. | user | q*, limit | APIZ2Z /api/apk/playstore | tested | 1/1 mock |
+| .apkpure |  | search | APKPure Search: Cari aplikasi & game di APKPure. | user | q*, limit | APIZ2Z /api/search/apkpure | tested | 1/1 mock |
+| .applemusic |  | search | Apple Music: Cari lagu di Apple Music. | user | q* | APIZ2Z /api/search/applemusic | tested | 1/1 mock |
+| .brave |  | search | Web Search (Bing): Cari apa aja di web, hasilnya cepat. | user | q*, count | APIZ2Z /api/search/brave | tested | 1/1 mock |
+| .caristiker | caristicker | search | Cari sticker pack Sticker.ly: .caristiker kucing, lalu .caristikerdown <nomor> | user | kata kunci* | APIZ2Z /api/search/stickerly | implemented |  |
+| .cookpad |  | search | Cookpad Resep: Cari resep masakan di Cookpad Indonesia. | user | q* | APIZ2Z /api/search/cookpad | tested | 1/1 mock |
+| .deviantart |  | search | DeviantArt Search: Cari artwork di DeviantArt. | user | q*, limit | APIZ2Z /api/search/deviantart | tested | 1/1 mock |
+| .douyinhot |  | search | Douyin Trending: Topik & video yang lagi trending di Douyin. | user |  | APIZ2Z /api/douyin/hot | tested | 1/1 mock |
+| .duckduckgo |  | search | DuckDuckGo Search: Mesin pencari web DuckDuckGo. | user | q* | APIZ2Z /api/search/duckduckgo | tested | 1/1 mock |
+| .gimage | image | search | Image Search: Cari gambar di internet (safe search nyala). | user | q*, limit, size | APIZ2Z /api/search/image | tested | 1/1 mock |
+| .githubsearch |  | search | GitHub Repo Search: Cari repository di GitHub. | user | q*, limit | APIZ2Z /api/search/github | tested | 1/1 mock |
+| .google |  | search | Google Search: Cari di web: judul, link, sama cuplikannya. | user | q* | APIZ2Z /api/search/google | tested | 1/1 mock |
+| .groupsor | carigrupwa, carigrupwav2, carigrupwav3, carigroupv2, carigroupv3 | search | Groupsor: Cari link grup WhatsApp publik. | user | q* | APIZ2Z /api/search/groupsor | tested | 1/1 mock |
+| .gsmarena |  | search | GSMArena Search: Cari info HP di GSMArena. | user | q* | APIZ2Z /api/search/gsmarena | tested | 1/1 mock |
+| .happymood |  | search | HappyMood: Cari aplikasi mod di HappyMod. | user | q* | APIZ2Z /api/search/happymood | tested | 1/1 mock |
+| .istock |  | search | iStock: Cari foto di iStock. | user | q* | APIZ2Z /api/search/istock | tested | 1/1 mock |
+| .kbbi |  | search | KBBI: Cari arti kata di KBBI (Bahasa Indonesia). | user | q* | APIZ2Z /api/search/kbbi | tested | 1/1 mock |
+| .lirik | lyrics, lyric | search | Spotify Lyrics: Cari lirik lagu. | user | title* | APIZ2Z /api/search/spotify-lirik | tested | 1/1 mock |
+| .mal | myanimelist, carianime, searchanime, animeinfo | search | MyAnimeList Search: Cari anime di MyAnimeList. | user | q* | APIZ2Z /api/search/myanimelist | tested | 1/1 mock |
+| .mcpedl |  | search | MCPEDL Detail: Detail addon MCPEDL plus link download-nya. | user | slug* | APIZ2Z /api/detail/mcpedl | tested | 1/1 mock |
+| .movie |  | search | Movie Search (Cinesubz): Cari film di Cinesubz. | user | q* | APIZ2Z /api/search/movie | tested | 1/1 mock |
+| .myinstant |  | search | Myinstants Search: Cari sound button & soundboard Myinstants. | user | q*, limit | APIZ2Z /api/search/myinstant | tested | 1/1 mock |
+| .npm2 |  | search | NPM Search v2: Cari paket di npm. | user | q* | APIZ2Z /api/search/npm-v2 | tested | 1/1 mock |
+| .npm3 |  | search | NPM Search v3: Cari paket di npm. | user | q* | APIZ2Z /api/search/npm-v3 | tested | 1/1 mock |
+| .npm4 |  | search | NPM Search v4: Cari paket di npm. | user | q* | APIZ2Z /api/search/npm-v4 | tested | 1/1 mock |
+| .npmsearch | npm, npmjs, npmstalk | search | NPM Search: Cari paket di npm. | user | q* | APIZ2Z /api/search/npm | tested | 1/1 mock |
+| .pexels |  | search | Pexels Search: Cari foto/video gratis di Pexels. | user | q*, type | APIZ2Z /api/search/pexels | tested | 1/1 mock |
+| .pinedrama |  | search | PineDrama Search: Cari drama Korea/China/Asia (PineDrama). | user | q* | APIZ2Z /api/search/pinedrama | tested | 1/1 mock |
+| .pinterest | pin | search | Pinterest Search: Cari gambar di Pinterest. | user | q* | APIZ2Z /api/search/pinterest | tested | 1/1 mock |
+| .pinterestvideo |  | search | Pinterest Video: Cari video di Pinterest. | user | q* | APIZ2Z /api/search/pinterestvideo | tested | 1/1 mock |
+| .pixiv |  | search | Pixiv Search: Cari artwork/ilustrasi di Pixiv (konten aman aja). | user | q*, page, order | APIZ2Z /api/search/pixiv | tested | 1/1 mock |
+| .pixivdetail |  | search | Pixiv Detail: Detail artwork Pixiv (gambar, tag, penulis). | user | id* | APIZ2Z /api/pixiv/detail | tested | 1/1 mock |
+| .resep |  | search | Resep Masakan: Cari resep masakan: bahan, langkah, dan fotonya. | user | q* | APIZ2Z /api/search/resep | tested | 1/1 mock |
+| .resep2 |  | search | Resep Masakan v2: Cari resep masakan: bahan, langkah, dan fotonya. | user | q* | APIZ2Z /api/search/resep-v2 | tested | 1/1 mock |
+| .searchbilibili |  | search | Bilibili: Cari video di Bilibili. | user | q* | APIZ2Z /api/search/bilibili | tested | 1/1 mock |
+| .searchcapcut |  | search | CapCut: Cari template CapCut. | user | q* | APIZ2Z /api/search/capcut | tested | 1/1 mock |
+| .searchdouyin |  | search | Douyin: Cari video di Douyin. | user | q* | APIZ2Z /api/search/douyin | tested | 1/1 mock |
+| .searchgithub2 |  | search | GitHub Repo Search v2: Cari repository di GitHub. | user | q* | APIZ2Z /api/search/github-v2 | tested | 1/1 mock |
+| .searchiqiyi |  | search | iQIYI Search: Cari drama, anime, dan film di iQIYI. | user | q* | APIZ2Z /api/search/iqiyi | tested | 1/1 mock |
+| .searchmcpedl |  | search | MCPEDL Search: Cari map/addon/skin Minecraft PE (MCPEDL) + link unduh. | user | q*, page, detail | APIZ2Z /api/search/mcpedl | tested | 1/1 mock |
+| .searchpinterest2 |  | search | Pinterest Search v2: Cari gambar di Pinterest. | user | q* | APIZ2Z /api/search/pinterest-v2 | tested | 1/1 mock |
+| .searchsfile |  | search | SFile: Cari file di SFile. | user | q* | APIZ2Z /api/search/sfile | tested | 1/1 mock |
+| .searchspotify2 |  | search | Spotify Search v2: Cari lagu di Spotify. | user | q* | APIZ2Z /api/search/spotify-v2 | tested | 1/1 mock |
+| .searchtelestick | caritele, searchtelegram | search | Telegram Sticker Search: Search Telegram sticker packs by keyword. | user | q* | APIZ2Z /api/search/telestick | tested | 1/1 mock |
+| .searchtiktok2 |  | search | TikTok Search v2: Cari video TikTok. | user | q* | APIZ2Z /api/search/tiktok-v2 | tested | 1/1 mock |
+| .searchyoutube2 |  | search | YouTube Search v2: Cari video YouTube. | user | q* | APIZ2Z /api/search/youtube-v2 | tested | 1/1 mock |
+| .soundcloud | scsearch | search | SoundCloud Search: Search lagu di SoundCloud. | user | q*, limit | APIZ2Z /api/search/soundcloud | tested | 1/1 mock |
+| .soundcloud2 |  | search | SoundCloud Search v2: Search lagu di SoundCloud. | user | q* | APIZ2Z /api/search/soundcloud-v2 | tested | 1/1 mock |
+| .spotify | spsearch | search | Spotify Search: Cari lagu di Spotify. | user | q* | APIZ2Z /api/search/spotify | tested | 1/1 mock |
+| .spotifylirik2 |  | search | Spotify Lyrics v2: Cari lirik lagu. | user | title* | APIZ2Z /api/search/spotify-lirik-v2 | tested | 1/1 mock |
+| .stickerly2 |  | search | Sticker.ly Search v2: Search sticker packs on Sticker.ly by keyword. | user | q* | APIZ2Z /api/search/stickerly-v2 | tested | 1/1 mock |
+| .stickersearch |  | search | Sticker.ly Search: Search sticker packs on Sticker.ly by keyword. | user | q* | APIZ2Z /api/search/stickerly | tested | 1/1 mock |
+| .tiktokphoto |  | search | TikTok Photo: Cari postingan foto (slide) di TikTok. | user | q* | APIZ2Z /api/search/tiktokphoto | tested | 1/1 mock |
+| .tiktoktrend |  | search | TikTok Trending: Video TikTok yang lagi trending di satu negara. | user | id* | APIZ2Z /api/search/tiktoktrend | tested | 1/1 mock |
+| .topmyanimelist |  | search | Top Anime MyAnimeList: Top anime dari MyAnimeList (peringkat global). | user |  | APIZ2Z /api/top/myanimelist | tested | 1/1 mock |
+| .ttsearch | tiktoksearch | search | TikTok Search: Cari video TikTok. | user | q* | APIZ2Z /api/search/tiktok | tested | 1/1 mock |
+| .unsplash |  | search | Wallpaper & Photo Search: Cari wallpaper & foto gratis. | user | q*, count, orientation | APIZ2Z /api/search/unsplash | tested | 1/1 mock |
+| .wallcraft |  | search | Wallcraft: Cari wallpaper di Wallcraft. | user | q* | APIZ2Z /api/search/wallcraft | tested | 1/1 mock |
+| .wiki | wikipedia | search | Wikipedia Search: Cari artikel Wikipedia. | user | q* | APIZ2Z /api/search/wikipedia | tested | 1/1 mock |
+| .wikipedia2 |  | search | Wikipedia Search v2: Cari artikel Wikipedia. | user | q* | APIZ2Z /api/search/wikipedia-v2 | tested | 1/1 mock |
+| .x8font |  | search | 8 Font: Cari font di 8font. | user | q*, page | APIZ2Z /api/search/8font | tested | 1/1 mock |
+| .yts | ytsearch | search | YouTube Search: Cari video YouTube. | user | q* | APIZ2Z /api/search/youtube | tested | 1/1 mock |
+| .ffstalk | stalkff, cekff | stalk | Free Fire Stalk: Cek nickname akun Free Fire dari ID. | user | id* | APIZ2Z /api/stalk/freefire | tested | 1/1 mock |
+| .genshin |  | stalk | Genshin Stalk: Stalk profil Genshin Impact (UID). | user | uid* | APIZ2Z /api/stalk/genshin | tested | 1/1 mock |
+| .genshin2 |  | stalk | Genshin Stalk v2: Stalk profil Genshin Impact (UID). | user | uid* | APIZ2Z /api/stalk/genshin-v2 | tested | 1/1 mock |
+| .githubstalk | stalkgithub | stalk | GitHub Stalk: Info profil GitHub publik. | user | username* | APIZ2Z /api/stalk/github | tested | 1/1 mock |
+| .igstalk | instagramstalk | stalk | Instagram Stalk: Info profil Instagram publik. | user | username* | APIZ2Z /api/stalk/instagram | tested | 1/1 mock |
+| .roblox2 |  | stalk | Roblox Stalk v2: Stalk profil Roblox. | user | user* | APIZ2Z /api/stalk/roblox-v2 | tested | 1/1 mock |
+| .robloxstalk | stalkroblox | stalk | Roblox Stalk: Stalk profil Roblox. | user | user* | APIZ2Z /api/stalk/roblox | tested | 1/1 mock |
+| .stalkfacebook |  | stalk | Facebook Stalk: Info halaman Facebook publik: nama & jumlah followers. | user | username* | APIZ2Z /api/stalk/facebook | tested | 1/1 mock |
+| .stalkgithub2 |  | stalk | GitHub Stalk v2: Info profil GitHub publik. | user | username* | APIZ2Z /api/stalk/github-v2 | tested | 1/1 mock |
+| .stalkpinterest |  | stalk | Pinterest: Info profil Pinterest. | user | username* | APIZ2Z /api/stalk/pinterest | tested | 1/1 mock |
+| .stalkthreads |  | stalk | Threads: Info profil Threads. | user | username* | APIZ2Z /api/stalk/threads | tested | 1/1 mock |
+| .stalktiktok2 |  | stalk | TikTok Stalk v2: Info profil TikTok publik. | user | username* | APIZ2Z /api/stalk/tiktok-v2 | tested | 1/1 mock |
+| .stalkyoutube2 |  | stalk | YouTube Stalk v2: Info channel YouTube: subscriber, jumlah video, video terbaru. | user | username* | APIZ2Z /api/stalk/youtube-v2 | tested | 1/1 mock |
+| .tiktokposts |  | stalk | TikTok Posts: Daftar video yang diposting akun TikTok. | user | user* | APIZ2Z /api/stalk/tiktok-posts | tested | 1/1 mock |
+| .tiktokstalk | ttstalk, stalktiktok | stalk | TikTok Stalk: Info profil TikTok publik. | user | username* | APIZ2Z /api/stalk/tiktok | tested | 1/1 mock |
+| .twitterstalk |  | stalk | X (Twitter) Stalk: Info profil X (Twitter): nama, bio, followers, avatar. | user | username* | APIZ2Z /api/stalk/twitter | tested | 1/1 mock |
+| .ytstalk |  | stalk | YouTube Stalk: Info channel YouTube: subscriber, jumlah video, video terbaru. | user | username* | APIZ2Z /api/stalk/youtube | tested | 1/1 mock |
+| .getexif | infostiker | sticker | Lihat metadata pack/author sebuah stiker | user |  | ffmpeg | tested | 1/1 real |
+| .sticker | s, stiker, sk | sticker | Buat stiker dari gambar/video/GIF (video maks 8 detik). Opsional: .s pack\|author | user |  | ffmpeg | tested | 1/1 real |
+| .take | wm, swm, colong | sticker | Ganti nama pack/author stiker: .take pack\|author | user |  | ffmpeg | tested | 1/1 real |
+| .addlist |  | store | Tambah item list grup: .addlist nama\|deskripsi (boleh kirim/reply gambar, video, audio, stiker) | admin/group |  |  | implemented |  |
+| .addpay | setpay | store | Tambah metode bayar grup: .addpay dana\|DANA 0812xxx a.n. Budi (boleh kirim/reply gambar QR) | admin/group |  |  | implemented |  |
+| .bataltrx | batalkantrx | store | Batalkan order kamu yang masih pending | user |  |  | implemented |  |
+| .buyprem | buypremium, beliprem, belipremium | store | Beli premium (order dikonfirmasi owner): .buyprem <hari 7-365> | user |  |  | implemented |  |
+| .buysewagc |  | store | Sewa bot untuk grup (order dikonfirmasi owner): .buysewagc <link grup> <hari 7-365> | user |  |  | implemented |  |
+| .cektrx |  | store | Cek status order premium/sewa: .cektrx <id order> | user | id order* |  | implemented |  |
+| .clearlist |  | store | Hapus semua item list grup ini | admin/group |  |  | implemented |  |
+| .dellist |  | store | Hapus item list (nama atau nomor urut) | admin/group |  |  | implemented |  |
+| .delpay |  | store | Hapus payment grup | admin/group |  |  | implemented |  |
+| .done |  | store | Kirim pesan selesai ke pembeli (reply pesan pembeli): .done <item> | admin/group |  |  | implemented |  |
+| .list | daftarlist, store | store | Tampilkan list item grup (ketik nama item untuk detail) | user/group |  |  | implemented |  |
+| .listpay |  | store | Daftar keyword payment grup | user/group |  |  | implemented |  |
+| .pay | payment | store | Tampilkan semua metode pembayaran grup | user/group |  |  | implemented |  |
+| .prem | hargaprem, pricelist | store | Info & harga premium / sewa bot | user |  |  | implemented |  |
+| .proses |  | store | Kirim pesan proses ke pembeli (reply pesan pembeli): .proses <item> | admin/group |  |  | implemented |  |
+| .resetlist |  | store | Kembalikan template .list ke bawaan | admin/group |  |  | implemented |  |
+| .setdone |  | store | Atur template pesan .done (variabel: @tanggal @jam @status @item @user @group) | admin/group |  |  | implemented |  |
+| .setlist |  | store | Atur template .list (variabel @name @group @time @date @fulldate @daytime @x, baris "@prefix <simbol>") | admin/group |  |  | implemented |  |
+| .setproses |  | store | Atur template pesan .proses (variabel: @tanggal @jam @status @item @user @group) | admin/group |  |  | implemented |  |
+| .sewa | sewabot | store | Info sewa bot ke grup | user |  |  | implemented |  |
+| .testimoni | testi | store | Buat kartu testimoni: .testimoni nama\|produk\|harga | user |  |  | implemented |  |
+| .updatelist | editlist | store | Ubah deskripsi item: .updatelist nama\|deskripsi baru (kirim/reply media untuk ganti media) | admin/group |  |  | implemented |  |
+| .acronym |  | text | Buat singkatan dari huruf awal kata | user | teks* |  | tested | 1/1 unit |
+| .alay |  | text | Ubah teks jadi gaya alay | user | teks* |  | tested | 1/1 unit |
+| .anagram |  | text | Cek anagram: .anagram kata1\|kata2 | user | teks* |  | tested | 2/2 unit |
+| .atbash |  | text | Sandi Atbash (A↔Z) | user | teks* |  | tested | 1/1 unit |
+| .base32 |  | text | Encode teks ke Base32 (RFC 4648) | user | teks* |  | tested | 1/1 unit |
+| .base64 | enc64 | text | Encode teks ke Base64 | user | teks* |  | tested | 1/1 unit |
+| .base64url |  | text | Encode teks ke Base64URL | user | teks* |  | tested | 1/1 unit |
+| .binary | tobinary | text | Encode teks ke biner | user | teks* |  | tested | 1/1 unit |
+| .caesar |  | text | Sandi Caesar: .caesar 3\|teks | user | teks* |  | tested | 1/1 unit |
+| .camelcase |  | text | ubahKeCamelCase | user | teks* |  | tested | 1/1 unit |
+| .charcode | unicode | text | Kode Unicode setiap karakter | user | teks* |  | tested | 1/1 unit |
+| .constantcase |  | text | UBAH_KE_CONSTANT_CASE | user | teks* |  | tested | 1/1 unit |
+| .countchar |  | text | Hitung jumlah karakter | user | teks* |  | tested | 1/1 unit |
+| .countword |  | text | Hitung jumlah kata | user | teks* |  | tested | 1/1 unit |
+| .debase32 |  | text | Decode Base32 | user | teks* |  | tested | 1/1 unit |
+| .debase64 | dec64 | text | Decode Base64 ke teks | user | teks* |  | tested | 1/1 unit |
+| .debase64url |  | text | Decode Base64URL | user | teks* |  | tested | 1/1 unit |
+| .debinary |  | text | Decode biner ke teks | user | teks* |  | tested | 1/1 unit |
+| .dehex |  | text | Decode hex ke teks | user | teks* |  | tested | 1/1 unit |
+| .demorse |  | text | Kode Morse ke teks | user | teks* |  | tested | 1/1 unit |
+| .devigenere |  | text | Dekripsi Vigenère: .devigenere kunci\|teks | user | teks* |  | tested | 1/1 unit |
+| .diffline |  | text | Bandingkan dua teks per baris: teks1 \|\|\| teks2 | user | teks* |  | tested | 1/1 unit |
+| .dotcase |  | text | ubah.ke.dot.case | user | teks* |  | tested | 1/1 unit |
+| .fancy | font | text | Tampilkan teks dalam semua gaya huruf | user | teks* |  | tested | 1/1 unit |
+| .fontbold |  | text | Gaya huruf: Huruf tebal serif | user | teks* |  | tested | 1/1 unit |
+| .fontboldfraktur |  | text | Gaya huruf: Gotik tebal | user | teks* |  | tested | 1/1 unit |
+| .fontbolditalic |  | text | Gaya huruf: Tebal miring serif | user | teks* |  | tested | 1/1 unit |
+| .fontboldscript |  | text | Gaya huruf: Huruf sambung tebal | user | teks* |  | tested | 1/1 unit |
+| .fontbubble |  | text | Gaya huruf: Gelembung (lingkaran kosong huruf kecil) | user | teks* |  | tested | 1/1 unit |
+| .fontcircled |  | text | Gaya huruf: Huruf dalam lingkaran | user | teks* |  | tested | 1/1 unit |
+| .fontdoublestruck |  | text | Gaya huruf: Garis ganda (blackboard) | user | teks* |  | tested | 1/1 unit |
+| .fontfraktur |  | text | Gaya huruf: Gotik (fraktur) | user | teks* |  | tested | 1/1 unit |
+| .fontfullwidth |  | text | Gaya huruf: Lebar penuh (vaporwave) | user | teks* |  | tested | 1/1 unit |
+| .fontitalic |  | text | Gaya huruf: Huruf miring serif | user | teks* |  | tested | 1/1 unit |
+| .fontmonospace |  | text | Gaya huruf: Monospace | user | teks* |  | tested | 1/1 unit |
+| .fontnegsquared |  | text | Gaya huruf: Kotak hitam | user | teks* |  | tested | 1/1 unit |
+| .fontsans |  | text | Gaya huruf: Sans-serif | user | teks* |  | tested | 1/1 unit |
+| .fontsansbold |  | text | Gaya huruf: Sans-serif tebal | user | teks* |  | tested | 1/1 unit |
+| .fontsansbolditalic |  | text | Gaya huruf: Sans-serif tebal miring | user | teks* |  | tested | 1/1 unit |
+| .fontsansitalic |  | text | Gaya huruf: Sans-serif miring | user | teks* |  | tested | 1/1 unit |
+| .fontscript |  | text | Gaya huruf: Huruf sambung | user | teks* |  | tested | 1/1 unit |
+| .fontsmallcaps |  | text | Gaya huruf: Kapital kecil | user | teks* |  | tested | 1/1 unit |
+| .fontsquared |  | text | Gaya huruf: Huruf dalam kotak | user | teks* |  | tested | 1/1 unit |
+| .fontstrike |  | text | Gaya huruf: Coret | user | teks* |  | tested | 1/1 unit |
+| .fontsubscript |  | text | Gaya huruf: Subskrip | user | teks* |  | tested | 1/1 unit |
+| .fontsuperscript |  | text | Gaya huruf: Superskrip | user | teks* |  | tested | 1/1 unit |
+| .fontunderline |  | text | Gaya huruf: Garis bawah | user | teks* |  | tested | 1/1 unit |
+| .fontupsidedown |  | text | Gaya huruf: Terbalik (upside down) | user | teks* |  | tested | 1/1 unit |
+| .fromcharcode |  | text | Angka kode Unicode ke karakter: .fromcharcode 72 105 | user | teks* |  | tested | 1/1 unit |
+| .hex | tohex | text | Encode teks ke hex | user | teks* |  | tested | 1/1 unit |
+| .htmlescape |  | text | Escape karakter HTML | user | teks* |  | tested | 1/1 unit |
+| .htmlunescape |  | text | Unescape entitas HTML | user | teks* |  | tested | 1/1 unit |
+| .kebabcase |  | text | ubah-ke-kebab-case | user | teks* |  | tested | 1/1 unit |
+| .leet |  | text | 1337 sp34k (leet) | user | teks* |  | tested | 1/1 unit |
+| .longestword |  | text | Kata terpanjang dalam teks | user | teks* |  | tested | 1/1 unit |
+| .lorem |  | text | Generate teks lorem ipsum: .lorem [jumlah kata] | user |  |  | tested | 1/1 unit |
+| .lower | kecil | text | Ubah teks jadi huruf kecil | user | teks* |  | tested | 1/1 unit |
+| .mock |  | text | tEkS gAyA mEnGeJeK (selang-seling) | user | teks* |  | tested | 1/1 unit |
+| .morse |  | text | Teks ke kode Morse | user | teks* |  | tested | 1/1 unit |
+| .nato |  | text | Ejaan alfabet fonetik NATO | user | teks* |  | tested | 1/1 unit |
+| .nospace |  | text | Hapus semua spasi | user | teks* |  | tested | 1/1 unit |
+| .numberlines |  | text | Beri nomor setiap baris | user | teks* |  | tested | 1/1 unit |
+| .octal |  | text | Encode teks ke oktal | user | teks* |  | tested | 1/1 unit |
+| .onlyletter |  | text | Ambil hurufnya saja | user | teks* |  | tested | 1/1 unit |
+| .onlynumber |  | text | Ambil angkanya saja | user | teks* |  | tested | 1/1 unit |
+| .palindrome |  | text | Cek apakah teks palindrom | user | teks* |  | tested | 2/2 unit |
+| .pascalcase |  | text | UbahKePascalCase | user | teks* |  | tested | 1/1 unit |
+| .piglatin |  | text | Ubah ke Pig Latin (bahasa Inggris) | user | teks* |  | tested | 1/1 unit |
+| .readmore | selengkapnya, spoiler | text | Teks "Baca selengkapnya" WhatsApp: .readmore depan\|belakang | user | teks* |  | tested | 1/1 unit |
+| .readtime |  | text | Perkiraan waktu baca (200 kata/menit) | user | teks* |  | tested | 1/1 unit |
+| .removeemoji |  | text | Hapus emoji dari teks | user | teks* |  | tested | 1/1 unit |
+| .removenumber |  | text | Hapus angka dari teks | user | teks* |  | tested | 1/1 unit |
+| .removepunct |  | text | Hapus tanda baca | user | teks* |  | tested | 1/1 unit |
+| .repeat |  | text | Ulangi teks: .repeat 3\|teks | user | teks* |  | tested | 1/1 unit |
+| .reverse | balik | text | Balik urutan huruf | user | teks* |  | tested | 1/1 unit |
+| .reverseeach |  | text | Balik huruf di setiap kata | user | teks* |  | tested | 1/1 unit |
+| .reversewords |  | text | Balik urutan kata | user | teks* |  | tested | 1/1 unit |
+| .rot13 |  | text | Sandi ROT13 (encode = decode) | user | teks* |  | tested | 1/1 unit |
+| .rot47 |  | text | Sandi ROT47 (ASCII 33-126) | user | teks* |  | tested | 1/1 unit |
+| .sentencecase |  | text | Huruf besar di awal setiap kalimat | user | teks* |  | tested | 1/1 unit |
+| .shufflelines |  | text | Acak urutan baris | user | teks* |  | tested | 1/1 unit |
+| .shufflewords |  | text | Acak urutan kata | user | teks* |  | tested | 1/1 unit |
+| .slug |  | text | Buat slug URL dari teks | user | teks* |  | tested | 1/1 unit |
+| .snakecase |  | text | ubah_ke_snake_case | user | teks* |  | tested | 1/1 unit |
+| .sortlines |  | text | Urutkan baris A-Z | user | teks* |  | tested | 1/1 unit |
+| .sortlinesdesc |  | text | Urutkan baris Z-A | user | teks* |  | tested | 1/1 unit |
+| .swapcase |  | text | Tukar besar/kecil setiap huruf | user | teks* |  | tested | 1/1 unit |
+| .textstat | hitungteks | text | Statistik teks: karakter, kata, kalimat, baris | user | teks* |  | tested | 1/1 unit |
+| .titlecase |  | text | Setiap Kata Diawali Huruf Besar | user | teks* |  | tested | 1/1 unit |
+| .trimspace |  | text | Rapikan spasi berlebih | user | teks* |  | tested | 1/1 unit |
+| .uniquelines |  | text | Hapus baris duplikat | user | teks* |  | tested | 1/1 unit |
+| .upper | kapital | text | Ubah teks jadi HURUF BESAR | user | teks* |  | tested | 1/1 unit |
+| .urldecode |  | text | URL-decode teks | user | teks* |  | tested | 1/1 unit |
+| .urlencode |  | text | URL-encode teks | user | teks* |  | tested | 1/1 unit |
+| .vigenere |  | text | Enkripsi Vigenère: .vigenere kunci\|teks | user | teks* |  | tested | 1/1 unit |
+| .vowelcount |  | text | Hitung huruf vokal & konsonan | user | teks* |  | tested | 1/1 unit |
+| .wordfreq |  | text | Frekuensi kata terbanyak | user | teks* |  | tested | 1/1 unit |
+| .wrap |  | text | Bungkus teks per N karakter: .wrap 20\|teks | user | teks* |  | tested | 1/1 unit |
+| .zalgo |  | text | T̷e̶k̸s̵ ̶z̴a̷l̵g̸o̶ (glitch) | user | teks* |  | tested | 1/1 unit |
+| .avengers |  | textpro | Avengers: Logo teks gaya Avengers (dua teks). | user | text1*, text2* | APIZ2Z /api/textpro/avengers | tested | 1/1 mock |
+| .bear |  | textpro | Bear: Efek teks gaya beruang. | user | text* | APIZ2Z /api/textpro/bear | tested | 1/1 mock |
+| .blackpink | blackpinklogo, blackpinkstyle | textpro | BlackPink: Efek teks gaya BLACKPINK. | user | text* | APIZ2Z /api/textpro/blackpink | tested | 1/1 mock |
+| .cartoongraffiti | cartoonstyle | textpro | Cartoon Graffiti: Efek teks graffiti kartun. | user | text* | APIZ2Z /api/textpro/cartoon-graffiti | tested | 1/1 mock |
+| .comic |  | textpro | Comic: Efek teks gaya komik. | user | text* | APIZ2Z /api/textpro/comic | tested | 1/1 mock |
+| .devilwings |  | textpro | Devil Wings: Efek teks sayap iblis. | user | text* | APIZ2Z /api/textpro/devil-wings | tested | 1/1 mock |
+| .dragonball |  | textpro | Dragon Ball: Efek teks gaya Dragon Ball. | user | text* | APIZ2Z /api/textpro/dragonball | tested | 1/1 mock |
+| .foggyglass |  | textpro | Foggy Glass: Tulisan tangan di kaca berembun, ada pilihan latar. | user | text*, background | APIZ2Z /api/textpro/foggy-glass | tested | 1/1 mock |
+| .glitch | glitchtext, neonglitch | textpro | Glitch: Efek teks glitch digital. | user | text* | APIZ2Z /api/textpro/glitch | tested | 1/1 mock |
+| .graffiti | grafitti | textpro | Graffiti v1: Efek teks graffiti dengan dua teks. | user | text1*, text2* | APIZ2Z /api/textpro/graffiti | tested | 1/1 mock |
+| .graffiti2 |  | textpro | Graffiti v5: Efek teks graffiti dengan satu teks. | user | text* | APIZ2Z /api/textpro/graffiti-v2 | tested | 1/1 mock |
+| .marvel |  | textpro | Marvel: Logo teks gaya Marvel (dua teks), ada pilihan latar. | user | text1*, text2*, background | APIZ2Z /api/textpro/marvel | tested | 1/1 mock |
+| .mascot |  | textpro | Mascot: Logo maskot (dua teks) dengan 90+ pilihan gaya. | user | text1*, text2*, style | APIZ2Z /api/textpro/mascot | tested | 1/1 mock |
+| .naruto |  | textpro | Naruto: Efek teks gaya Naruto. | user | text* | APIZ2Z /api/textpro/naruto | tested | 1/1 mock |
+| .painting |  | textpro | Painting: Efek teks lukisan (dua teks). | user | text1*, text2* | APIZ2Z /api/textpro/painting | tested | 1/1 mock |
+| .pavement |  | textpro | Pavement: Efek tulisan di aspal. | user | text* | APIZ2Z /api/textpro/pavement | tested | 1/1 mock |
+| .pixelglitch |  | textpro | Pixel Glitch: Efek teks pixel glitch. | user | text* | APIZ2Z /api/textpro/pixel-glitch | tested | 1/1 mock |
+| .typography | typographytext | textpro | Typography: Efek teks tipografi. | user | text* | APIZ2Z /api/textpro/typography | tested | 1/1 mock |
+| .wetglass |  | textpro | Wet Glass: Efek tulisan di kaca basah. | user | text* | APIZ2Z /api/textpro/wetglass | tested | 1/1 mock |
+| .wolfgalaxy | galaxy, galaxystyle | textpro | Wolf Galaxy: Logo serigala galaksi (dua teks). | user | text1*, text2* | APIZ2Z /api/textpro/wolf-galaxy | tested | 1/1 mock |
+| .writegraffiti | writetext | textpro | Write Graffiti: Efek tulisan graffiti di tembok. | user | text* | APIZ2Z /api/textpro/write-graffiti | tested | 1/1 mock |
+| .alightmotion |  | tools | Alight-Motion: Info project Alight Motion dari link-nya. | user | url* | APIZ2Z /api/tools/alightmotion | tested | 1/1 mock |
+| .ambilsw | sw | tools | Simpan gambar/video dari status WhatsApp yang kamu reply | user |  |  | implemented |  |
+| .base642text |  | tools | Base64 to Text: Konversi base64 ke teks. | user | base64* | APIZ2Z /api/tools/base642text | tested | 1/1 mock |
+| .binary2text |  | tools | Binary to Text: Konversi binary ke teks. | user | binary* | APIZ2Z /api/tools/binary2text | tested | 1/1 mock |
+| .blurface |  | tools | Blur-Face: Blur wajah di foto otomatis. | user | url* | APIZ2Z /api/tools/blurface | tested | 1/1 mock |
+| .catbox |  | tools | Upload media ke Catbox (link permanen) | user |  |  | implemented |  |
+| .commentstiktok |  | tools | TikTok Comments: Ambil semua komentar video TikTok, plus balasannya. | user | url*, replies, limit | APIZ2Z /api/comments/tiktok | tested | 1/1 mock |
+| .comparephone |  | tools | Compare Phone: Bandingkan spesifikasi dua HP berdampingan. | user | phone1*, phone2* | APIZ2Z /api/tools/compare-phone | tested | 1/1 mock |
+| .compress | kompres | tools | Image Compress: Kecilin ukuran gambar JPEG/WebP. | user | url, quality | APIZ2Z /api/tools/compress | tested | 1/1 mock |
+| .convert |  | tools | Image Convert: Ubah format gambar (webp/jpeg/png/tiff). | user | url, format | APIZ2Z /api/tools/convert | tested | 1/1 mock |
+| .convert2 |  | tools | Image Convert v2: Ubah format gambar (webp/jpeg/png/tiff). | user | url*, format | APIZ2Z /api/tools/convert-v2 | tested | 1/1 mock |
+| .copy | salin | tools | Salin teks pesan yang di-reply (nomor & link dipisah agar mudah disalin) | user |  |  | implemented |  |
+| .countryinfo | infonegara | tools | Country Info: Info lengkap tentang suatu negara. | user | name* | APIZ2Z /api/tools/countryinfo | tested | 1/1 mock |
+| .dewatermark | hapuswm, removewm, hapuswatermark, removewatermark | tools | DeWatermark: Hapus watermark dari gambar. | user | url* | APIZ2Z /api/tools/dewatermark | tested | 1/1 mock |
+| .dns |  | tools | DNS Lookup: Cek record DNS sebuah domain. | user | domain*, type | APIZ2Z /api/tools/dns | tested | 1/1 mock |
+| .enhance |  | tools | Photo Enhance: Bikin foto lebih cerah, lebih hidup, dan lebih tajam. | user | url, brightness, saturation | APIZ2Z /api/tools/enhance | tested | 1/1 mock |
+| .enhancer |  | tools | Enhancer: Perjelas kualitas gambar. | user | url* | APIZ2Z /api/tools/enhancer | tested | 1/1 mock |
+| .fontinterceptor |  | tools | Font Detector: Cek font apa aja yang dipakai sebuah website. | user | url* | APIZ2Z /api/tools/font-interceptor | tested | 1/1 mock |
+| .getpp | getprofile | tools | Ambil foto profil WhatsApp (tag/reply/nomor) | user |  |  | implemented |  |
+| .githubroast |  | tools | GitHub Roast: Roast profil GitHub pakai AI. | user | user* | APIZ2Z /api/tools/github-roast | tested | 1/1 mock |
+| .grammarchecker |  | tools | Grammar Checker: Cek & benerin grammar bahasa Inggris. | user | text* | APIZ2Z /api/tools/grammar-checker | tested | 1/1 mock |
+| .grammarchecker2 |  | tools | Grammar Checker v2: Cek & benerin grammar bahasa Inggris. | user | text* | APIZ2Z /api/tools/grammar-checker-v2 | tested | 1/1 mock |
+| .idch | cekidch | tools | Info & ID channel WhatsApp dari link | user |  |  | implemented |  |
+| .iloveimgcrop |  | tools | Image Crop: Potong gambar. | user | url, x, y, width, height | APIZ2Z /api/tools/iloveimg-crop | tested | 1/1 mock |
+| .iloveimgrotate |  | tools | Image Rotate: Putar gambar. | user | url*, degrees | APIZ2Z /api/tools/iloveimg-rotate | tested | 1/1 mock |
+| .imagetopdf | img2pdf, gambartopdf, topdf | tools | Ubah gambar jadi file PDF (A4) | user |  |  | implemented |  |
+| .imagetoprompt2 |  | tools | Image to Prompt v2: Ubah gambar jadi prompt AI (Midjourney, DALL-E, Stable Diffusion, Flux). | user | url* | APIZ2Z /api/tools/image-to-prompt-v2 | tested | 1/1 mock |
+| .ipinfo | trackip | tools | Track IP: Info lokasi dan jaringan sebuah IP atau domain. | user | target* | APIZ2Z /api/tools/trackip | tested | 1/1 mock |
+| .jawa |  | tools | Bahasa Jawa: Terjemahin ke bahasa Jawa (ngoko/krama) atau ubah ke aksara Jawa. | user | text*, mode, from, to, direction | APIZ2Z /api/tools/jawa | tested | 1/1 mock |
+| .kodepos |  | tools | Kode Pos: Cari kode pos Indonesia. | user | kota | APIZ2Z /api/tools/kodepos | tested | 1/1 mock |
+| .kurs | currency | tools | Currency Converter: Konversi mata uang. | user | amount, from, to | APIZ2Z /api/tools/currency | tested | 1/1 mock |
+| .ocr |  | tools | OCR: Baca teks dari gambar (unggah atau URL). | user | url* | APIZ2Z /api/tools/ocr | tested | 1/1 mock |
+| .ocr2 |  | tools | OCR v2: Baca teks dari gambar (unggah atau URL). | user | url* | APIZ2Z /api/tools/ocr-v2 | tested | 1/1 mock |
+| .pastebin | getpastebin | tools | Ambil isi teks dari link Pastebin | user |  |  | implemented |  |
+| .qr | qrcode, text2qr | tools | Text to QR: Bikin QR code dari teks atau link. | user | text* | APIZ2Z /api/tools/text2qr | tested | 1/1 mock |
+| .removebg | rbg, nobg, hapusbg, rembg | tools | Remove Background: Hapus background gambar pakai AI. | user | url* | APIZ2Z /api/tools/removebg | tested | 1/1 mock |
+| .removebg2 |  | tools | Remove Background v2: Hapus background gambar pakai AI. | user | url* | APIZ2Z /api/tools/removebg-v2 | tested | 1/1 mock |
+| .removevokal | vocalremover | tools | Remove Vocal: Pisahin vokal dari musik (audio). | user | url* | APIZ2Z /api/tools/removevokal | tested | 1/1 mock |
+| .screenshot2 | ssp | tools | Website Screenshot v2: Screenshot halaman web (PNG). | user | url*, width, height, device_scale | APIZ2Z /api/tools/screenshot-v2 | tested | 1/1 mock |
+| .shortlink | shorturl | tools | Shortlink: Pendekin link panjang. | user | url* | APIZ2Z /api/tools/shortlink | tested | 1/1 mock |
+| .skiplink | shortlink-dl | tools | Skip Link: Lewatin link shortener, langsung ke tujuannya. | user | url* | APIZ2Z /api/tools/skiplink | tested | 1/1 mock |
+| .ssweb | screenshot | tools | Website Screenshot: Screenshot halaman web (PNG). | user | url*, width, height, device | APIZ2Z /api/tools/screenshot | tested | 1/1 mock |
+| .subdomainfinder |  | tools | Subdomain Finder: Cari subdomain publik sebuah domain. | user | domain* | APIZ2Z /api/tools/subdomainfinder | tested | 1/1 mock |
+| .text2base64 |  | tools | Text to Base64: Konversi teks ke base64. | user | text* | APIZ2Z /api/tools/text2base64 | tested | 1/1 mock |
+| .text2binary |  | tools | Text to Binary: Konversi teks ke binary. | user | text* | APIZ2Z /api/tools/text2binary | tested | 1/1 mock |
+| .text2qr2 |  | tools | Text to QR v2: Bikin QR code dari teks atau link. | user | text* | APIZ2Z /api/tools/text2qr-v2 | tested | 1/1 mock |
+| .tiktokearnings |  | tools | TikTok Earnings: Perkiraan penghasilan dan statistik akun TikTok. | user | username* | APIZ2Z /api/tools/tiktokearnings | tested | 1/1 mock |
+| .tiktokhashtag |  | tools | TikTok Hashtag Analyzer: Analisis hashtag TikTok: top 10, yang terkait, dan yang lagi trending. | user | tag* | APIZ2Z /api/analyze/tiktok-hashtag | tested | 1/1 mock |
+| .tiktokhashtag2 |  | tools | TikTok Hashtag Analyzer v2: Analisis hashtag TikTok: top 10, yang terkait, dan yang lagi trending. | user | tag* | APIZ2Z /api/analyze/tiktok-hashtag-v2 | tested | 1/1 mock |
+| .tinyurl | shortlink2 | tools | TinyURL: Pendekin link pakai TinyURL. | user | url* | APIZ2Z /api/tools/tinyurl | tested | 1/1 mock |
+| .toolsemojitogif |  | tools | Emoji to GIF: Ubah emoji jadi GIF animasi. | user | emoji* | APIZ2Z /api/tools/emojitogif | tested | 1/1 mock |
+| .toolsping |  | tools | Ping: Cek API key/sesi dan sisa kuota harian tanpa memanggil layanan pihak ketiga. | user |  | APIZ2Z /api/tools/ping | tested | 1/1 mock |
+| .toolsresize |  | tools | Image Resize: Ubah ukuran gambar, rasionya tetap. | user | url, width, height | APIZ2Z /api/tools/resize | tested | 1/1 mock |
+| .toprompt | imagetoprompt, img2prompt | tools | Image to Prompt: Ubah gambar jadi prompt AI (Midjourney, DALL-E, Stable Diffusion, Flux). | user | url*, model, language | APIZ2Z /api/tools/image-to-prompt | tested | 1/1 mock |
+| .tourl | touploader, tourl2, tourl3 | tools | Upload media jadi link (Catbox, cadangan Uguu) | user |  |  | implemented |  |
+| .translate | tr, terjemah | tools | Translate: Terjemahin teks, bahasa asalnya dideteksi otomatis. | user | text*, source, target | APIZ2Z /api/tools/translate | tested | 1/1 mock |
+| .translate2 |  | tools | Translate v2: Terjemahin teks, bahasa asalnya dideteksi otomatis. | user | text*, target* | APIZ2Z /api/tools/translate-v2 | tested | 1/1 mock |
+| .tts | texttospeech, aitts, text2speech | tools | Text to Speech: Ubah teks jadi suara. | user | text*, voice | APIZ2Z /api/tools/text-to-speech | tested | 1/1 mock |
+| .uguu |  | tools | Upload media ke Uguu (link sementara ±3 jam) | user |  |  | implemented |  |
+| .upscale | hd, hdr, hd2, unblur, resimg, resolusiimage | tools | Image Upscale: Perbesar gambar 2x atau 4x. | user | url*, factor | APIZ2Z /api/tools/upscale | tested | 1/1 mock |
+| .upscale2 |  | tools | Image Upscale v2: Perbesar gambar 2x atau 4x. | user | url* | APIZ2Z /api/tools/upscale-v2 | tested | 1/1 mock |
+| .upscale2x |  | tools | Perbesar resolusi gambar 2x (kirim/reply gambar) | user |  | APIZ2Z /api/tools/upscale | implemented |  |
+| .upscale3 |  | tools | Image Upscale v3: Perbesar gambar 2x atau 4x. | user | url*, resolusi* | APIZ2Z /api/tools/upscale-v3 | tested | 1/1 mock |
+| .upscale4x |  | tools | Perbesar resolusi gambar 4x (kirim/reply gambar) | user |  | APIZ2Z /api/tools/upscale | implemented |  |
+| .upscaler | imageupscaler | tools | Perbesar resolusi gambar 2x/4x (kirim/reply gambar, default 4x) | user | skala | APIZ2Z /api/tools/upscale | implemented |  |
+| .usernamegen |  | tools | Username Generator: Bikin ide username/gamertag. | user | keyword*, mode, theme, word2 | APIZ2Z /api/tools/username-gen | tested | 1/1 mock |
+| .usernamegen2 |  | tools | Username Generator v2: Bikin ide username/gamertag. | user | keyword*, mode, theme | APIZ2Z /api/tools/username-gen-v2 | tested | 1/1 mock |
+| .vision |  | tools | AI Vision: Analisis gambar pakai AI: deskripsi, baca teks, atau jadi prompt. | user | url*, mode, lang, question | APIZ2Z /api/tools/vision | tested | 1/1 mock |
+| .webphishing |  | tools | Web Phishing: Cek apakah sebuah link termasuk situs phishing. | user | url* | APIZ2Z /api/tools/webphishing | tested | 1/1 mock |
+| .webtozip | saveweb | tools | Web to ZIP: Download isi website jadi file ZIP. | user | url* | APIZ2Z /api/tools/webtozip | tested | 1/1 mock |
+| .whatmusic | whatmusik | tools | Whats-Music: Kenali judul lagu dari link audio. | user | url* | APIZ2Z /api/tools/whatsmusic | tested | 1/1 mock |
+| .winratemlbb |  | tools | Hitung Winrate MLBB: Hitung berapa kali menang beruntun buat ngejar target winrate MLBB. | user | total_match*, wr_now*, wr_target* | APIZ2Z /api/tools/winrate-mlbb | tested | 1/1 mock |
+| .youtubesummarize2 |  | tools | YouTube Summarize v2: Ringkas isi video YouTube. | user | url* | APIZ2Z /api/tools/youtube-summarize-v2 | tested | 1/1 mock |
+| .ytsummarizer | ytsummary | tools | YouTube Summarize: Ringkas isi video YouTube. | user | url* | APIZ2Z /api/tools/youtube-summarize | tested | 1/1 mock |
+| .yttranscribe |  | tools | YouTube Transcribe: Ambil transkrip/subtitle video YouTube. | user | url* | APIZ2Z /api/tools/yt-transcribe | tested | 1/1 mock |
+| .afk |  | user | Set status AFK; yang menyebut kamu akan diberi tahu | user |  |  | implemented |  |
+| .cekprem | premium | user | Cek status premium | user |  |  | implemented |  |
+| .cekres | isreseller | user | Cek apakah user reseller | user |  |  | implemented |  |
+| .claim | daily | user | Klaim bonus harian: +5 limit, +500 saldo, +50 exp (sekali per hari) | user |  |  | tested | 1/1 unit |
+| .daftar | register, reg | user | Daftar sebagai user bot: .daftar nama,umur | user |  |  | tested | 2/2 unit |
+| .infouser | userinfo | user | Info user (tag/reply/nomor, atau diri sendiri): status bot, level, saldo, admin grup | user |  |  | implemented |  |
+| .kapanreset |  | user | Kapan limit harian di-reset | user |  |  | implemented |  |
+| .level | mylevel, exp | user | Naik level berdasarkan exp (exp didapat dari claim & game) | user |  |  | implemented |  |
+| .limit | ceklimit | user | Sisa limit harian | user |  |  | implemented |  |
+| .profile | profil, me, myprofile | user | Profil kamu: limit, premium, level, saldo | user |  |  | implemented |  |
+| .redeem | klaimkode | user | Tukar kode redeem | user |  |  | implemented |  |
+| .trialprem | trialpremium | user | Coba premium gratis 1 hari (sekali seumur hidup) | user |  |  | implemented |  |
+| .unreg |  | user | Hapus data pendaftaran kamu | user |  |  | implemented |  |
+
+## Dikecualikan (disabled) (250)
+
+| Command V15 | Alasan |
+|---|---|
+| 1gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 2gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 3gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 4gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 5gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 6gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| 7gb | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| addaksesprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| addp | Menulis/menghapus kode plugin lewat chat (setara eval) — edit file di panel. |
+| addplug | Menulis/menghapus kode plugin lewat chat (setara eval) — edit file di panel. |
+| addplugin | Menulis/menghapus kode plugin lewat chat (setara eval) — edit file di panel. |
+| addplugins | Menulis/menghapus kode plugin lewat chat (setara eval) — edit file di panel. |
+| ah-ah-ah | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| aiundress | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| amprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| animensfwloli | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| animeshota | Konten seksual / melibatkan anak — tidak disediakan. |
+| apkprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| asupan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupanbocil | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupandouyin | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupangeayubi | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupangheayubi | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupanhijaber | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupanrikagusriani | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupansantuy | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| asupanukhty | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| batalpremku | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| bayar_apk | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| beliapk | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| bom | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| broadcast | Kirim pesan massal / anonim ke nomor sembarang — rawan spam & pelecehan. |
+| bugil | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| bugilin | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| buyapkprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| bzirrt | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| cadp | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| cecan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanchina | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanhijaber | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanindonesia | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanjapan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanjeni | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanjiso | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanjustinaxie | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecankorea | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanmalaysia | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecannaxie | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanrandom | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanrose | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanryujin | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanthailand | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cecanvietnam | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| cekfemboy | Konten seksual tentang orang yang disebut namanya — tidak diimplementasikan. |
+| cekgay | Konten vulgar / merendahkan — tidak akan diimplementasikan. |
+| cekkontol | Konten vulgar / merendahkan — tidak akan diimplementasikan. |
+| cekmemek | Konten vulgar / merendahkan — tidak akan diimplementasikan. |
+| ceknim | Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi. |
+| ceknohp | Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi. |
+| ceknomor | Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi. |
+| cogan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| confes | Kirim pesan massal / anonim ke nomor sembarang — rawan spam & pelecehan. |
+| configurewings | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| createadp | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| culikmember | Mengambil alih / memindahkan anggota grup tanpa izin — tidak akan diimplementasikan. |
+| custom-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| customenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| darkjoke | Konten vulgar / merendahkan — tidak akan diimplementasikan. |
+| deepnude | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| delaksesprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| deletepanel | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| delpanel | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| delplugin | Menulis/menghapus kode plugin lewat chat (setara eval) — edit file di panel. |
+| delplugins | Menulis/menghapus kode plugin lewat chat (setara eval) — edit file di panel. |
+| delsrv | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| deluser | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| ehbtw | Membuka ulang pesan sekali lihat (view once) melanggar privasi pengirim. |
+| enc-custom | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enc-invis | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enc-invisible | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enc-siu | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enc-strong | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enc-ultra | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enccustom | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| enccustomjs | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encinvis | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encinvisible | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encjsinvis | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-custom | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-invis | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-invisible | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-siu | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-strong | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encrypt-ultra | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptcustom | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptcustomjs | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptinvis | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptinvisible | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptsiu | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptstrong | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encryptultra | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encsiu | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encsiujs | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encstrong | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encstrongjs | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encultra | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| encultrajs | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| fakedana | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
+| fakeff | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
+| fakeml | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
+| fakereply | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
+| fakestory | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
+| fakewa | Tangkapan chat WhatsApp palsu (pemalsuan). |
+| fakewhatsapp | Tangkapan chat WhatsApp palsu (pemalsuan). |
+| fakexnxx | Konten seksual / melibatkan anak — tidak disediakan. |
+| fitnah | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
+| fwa | Tangkapan chat WhatsApp palsu (pemalsuan). |
+| gamebom | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| getsc | Mengirim source code/session bot ke chat — risiko kebocoran kredensial. |
+| gore | Konten kekerasan ekstrem — tidak akan diimplementasikan. |
+| hitamin | Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan. |
+| invis-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| invisenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| invisible-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| invisibleenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| jawabbom | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| joinallgc | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| jpm | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| jpmexec | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| jpmtesti | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| jscustomenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| jsinvisenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| jssiuenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| jsstrongenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| jsultraenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| kirimchat | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| kirimchatvo | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| kontolscan | Konten seksual / melibatkan anak — tidak disediakan. |
+| kudeta | Mengambil alih / memindahkan anggota grup tanpa izin — tidak akan diimplementasikan. |
+| listaksesprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| listpanel | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| listuser | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| logoporn | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| loli | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| memekprimbon | Konten seksual / melibatkan anak — tidak disediakan. |
+| memekscan | Konten seksual / melibatkan anak — tidak disediakan. |
+| menu-asupan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| menu-cecan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| menu-nsfw | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| menu-panel | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| mypanel | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| naked | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nglspam | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| nomorinfo | Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi. |
+| notif | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| nsfw | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwahegao | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwass | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwbdsm | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwblowjob | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwcuckold | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwcum | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfweba | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwero | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwfemdom | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwfoot | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwgangbang | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwgay | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwgifs | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwglasses | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwhentai | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwjahy | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwkasedaiki | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwloli | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwmanga | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwmanstrubation | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwmasturbation | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwneko | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwneko2 | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwopai | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwopaianime | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfworgy | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwpanties | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwpussy | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwtentacles | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwthighs | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwyuri | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nsfwzettai | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nude | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| nyerahbom | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| pornhublogo | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| pushkontak | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| pushkontak_process | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| pushkontak2 | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| putihkan | Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan. |
+| quitbom | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| randomcecan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| randomcogan | Foto/video acak orang sungguhan (bukan publik figur) tanpa persetujuan; sebagian menyasar anak — tidak diimplementasikan. |
+| randomgore | Konten kekerasan ekstrem — tidak akan diimplementasikan. |
+| randomjustina | Foto acak orang biasa (bukan publik figur) tanpa izin. |
+| randomkayes | Foto acak orang biasa (bukan publik figur) tanpa izin. |
+| randomppcp | Foto acak orang biasa (bukan publik figur) tanpa izin. |
+| randomprofil | Foto acak orang biasa (bukan publik figur) tanpa izin. |
+| randomprofile | Foto acak orang biasa (bukan publik figur) tanpa izin. |
+| renew | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| renewserver | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| rgore | Konten kekerasan ekstrem — tidak akan diimplementasikan. |
+| rvo | Membuka ulang pesan sekali lihat (view once) melanggar privasi pengirim. |
+| rvo2 | Membuka ulang pesan sekali lihat (view once) melanggar privasi pengirim. |
+| savekontak | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| savekontak2 | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| saveplugin | Menulis/menghapus kode plugin lewat chat (setara eval) — edit file di panel. |
+| saveplugins | Menulis/menghapus kode plugin lewat chat (setara eval) — edit file di panel. |
+| scankontol | Konten seksual / melibatkan anak — tidak disediakan. |
+| scanmemek | Konten seksual / melibatkan anak — tidak disediakan. |
+| sendchat | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| sendchatvo | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| sendmessage | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| sendmessagevo | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| shota | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| sidompul | Pencarian data pribadi pemilik nomor (OSINT/NIK) — melanggar privasi. |
+| siu-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| siuenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| sp | Menulis/menghapus kode plugin lewat chat (setara eval) — edit file di panel. |
+| sprem | Penjualan akses aplikasi premium pihak ketiga — di luar cakupan. |
+| startwings | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| strong-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| strongenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| struk | Pemalsuan bukti transaksi / pesan / akun — tidak akan diimplementasikan. |
+| svp | Menulis/menghapus kode plugin lewat chat (setara eval) — edit file di panel. |
+| swgc_allprocess | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| swgcall | Pengiriman massal / spam / pesan ke nomor sembarang — dinonaktifkan (melanggar ketentuan WhatsApp). |
+| telanjang | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| toaktivis | Edit foto orang nyata ke situasi yang bisa jadi fitnah/hoaks (penjara, demo, parlemen, pasangan palsu). |
+| tobabi | Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan. |
+| todemo | Edit foto orang nyata ke situasi yang bisa jadi fitnah/hoaks (penjara, demo, parlemen, pasangan palsu). |
+| todemojalanan | Edit foto orang nyata ke situasi yang bisa jadi fitnah/hoaks (penjara, demo, parlemen, pasangan palsu). |
+| todemonstrasi | Edit foto orang nyata ke situasi yang bisa jadi fitnah/hoaks (penjara, demo, parlemen, pasangan palsu). |
+| todpr | Edit foto orang nyata ke situasi yang bisa jadi fitnah/hoaks (penjara, demo, parlemen, pasangan palsu). |
+| tohitam | Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan. |
+| tomangu | Edit foto orang nyata ke situasi yang bisa jadi fitnah/hoaks (penjara, demo, parlemen, pasangan palsu). |
+| tomonyet | Mengubah foto orang nyata secara merendahkan (warna kulit / hewan) — tidak akan diimplementasikan. |
+| topacar | Edit foto orang nyata ke situasi yang bisa jadi fitnah/hoaks (penjara, demo, parlemen, pasangan palsu). |
+| topenjara | Edit foto orang nyata ke situasi yang bisa jadi fitnah/hoaks (penjara, demo, parlemen, pasangan palsu). |
+| ultra-encrypt | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| ultraenc | Obfuscator kode pihak ketiga dari chat — di luar cakupan; pakai build:dist bawaan untuk melindungi kode bot. |
+| uncensored | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| unli | Panel Pterodactyl (jual/kelola server) — di luar cakupan bot dan dilarang aturan VPS. |
+| unsensored | Konten seksual / eksploitasi — tidak akan diimplementasikan. |
+| wormgpt | AI tanpa batasan untuk kegiatan berbahaya — tidak akan diimplementasikan. |
+
+## Backlog V15 (planned) (127)
+
+| Command V15 | Catatan |
+|---|---|
+| ailabs | Command Yann AI V15 "ailabs" — belum diimplementasikan. |
+| airealtime | Command Yann AI V15 "airealtime" — belum diimplementasikan. |
+| aivideo | Command Yann AI V15 "aivideo" — belum diimplementasikan. |
+| amai | Command Yann AI V15 "amai" — belum diimplementasikan. |
+| anubis | Command Yann AI V15 "anubis" — belum diimplementasikan. |
+| autocorrect | Command Yann AI V15 "autocorrect" — belum diimplementasikan. |
+| batalkostum | Command Yann AI V15 "batalkostum" — belum diimplementasikan. |
+| batalpolaroid | Command Yann AI V15 "batalpolaroid" — belum diimplementasikan. |
+| bintang | Command Yann AI V15 "bintang" — belum diimplementasikan. |
+| boost | Command Yann AI V15 "boost" — belum diimplementasikan. |
+| bratgambar | Command Yann AI V15 "bratgambar" — belum diimplementasikan. |
+| bratgambar3 | Command Yann AI V15 "bratgambar3" — belum diimplementasikan. |
+| bratgambarhd | Command Yann AI V15 "bratgambarhd" — belum diimplementasikan. |
+| bratimg3 | Command Yann AI V15 "bratimg3" — belum diimplementasikan. |
+| buatlagu | Command Yann AI V15 "buatlagu" — belum diimplementasikan. |
+| buatvideo | Command Yann AI V15 "buatvideo" — belum diimplementasikan. |
+| carigrouptele | Command Yann AI V15 "carigrouptele" — belum diimplementasikan. |
+| carigruptele | Command Yann AI V15 "carigruptele" — belum diimplementasikan. |
+| cfsub | Command Yann AI V15 "cfsub" — belum diimplementasikan. |
+| colorize | Command Yann AI V15 "colorize" — belum diimplementasikan. |
+| convertweb | Command Yann AI V15 "convertweb" — belum diimplementasikan. |
+| copilotvoice | Command Yann AI V15 "copilotvoice" — belum diimplementasikan. |
+| coverpubg | Command Yann AI V15 "coverpubg" — belum diimplementasikan. |
+| createhtml | Command Yann AI V15 "createhtml" — belum diimplementasikan. |
+| createsong | Command Yann AI V15 "createsong" — belum diimplementasikan. |
+| createsubdo | Command Yann AI V15 "createsubdo" — belum diimplementasikan. |
+| customjsen | Command Yann AI V15 "customjsen" — belum diimplementasikan. |
+| dai | Command Yann AI V15 "dai" — belum diimplementasikan. |
+| delstikercmd | Command Yann AI V15 "delstikercmd" — belum diimplementasikan. |
+| delsubdo | Command Yann AI V15 "delsubdo" — belum diimplementasikan. |
+| delsubdomain | Command Yann AI V15 "delsubdomain" — belum diimplementasikan. |
+| denia | Command Yann AI V15 "denia" — belum diimplementasikan. |
+| denia-run | Command Yann AI V15 "denia-run" — belum diimplementasikan. |
+| deniarunner | Command Yann AI V15 "deniarunner" — belum diimplementasikan. |
+| developer | Command Yann AI V15 "developer" — belum diimplementasikan. |
+| dsd | Command Yann AI V15 "dsd" — belum diimplementasikan. |
+| duckaiimage | Command Yann AI V15 "duckaiimage" — belum diimplementasikan. |
+| emoji | Command Yann AI V15 "emoji" — belum diimplementasikan. |
+| emojiwa | Command Yann AI V15 "emojiwa" — belum diimplementasikan. |
+| emojix | Command Yann AI V15 "emojix" — belum diimplementasikan. |
+| eninvisiblejs | Command Yann AI V15 "eninvisiblejs" — belum diimplementasikan. |
+| eraser | Command Yann AI V15 "eraser" — belum diimplementasikan. |
+| freestalk | Command Yann AI V15 "freestalk" — belum diimplementasikan. |
+| genvideo | Command Yann AI V15 "genvideo" — belum diimplementasikan. |
+| get | Command Yann AI V15 "get" — belum diimplementasikan. |
+| glitchimg | Command Yann AI V15 "glitchimg" — belum diimplementasikan. |
+| gp | Command Yann AI V15 "gp" — belum diimplementasikan. |
+| gtmp3 | Command Yann AI V15 "gtmp3" — belum diimplementasikan. |
+| hdvid | Command Yann AI V15 "hdvid" — belum diimplementasikan. |
+| hdvideo | Command Yann AI V15 "hdvideo" — belum diimplementasikan. |
+| hiitwixtor | Command Yann AI V15 "hiitwixtor" — belum diimplementasikan. |
+| image2video | Command Yann AI V15 "image2video" — belum diimplementasikan. |
+| img2video | Command Yann AI V15 "img2video" — belum diimplementasikan. |
+| imgquotes | Command Yann AI V15 "imgquotes" — belum diimplementasikan. |
+| infosubdo | Command Yann AI V15 "infosubdo" — belum diimplementasikan. |
+| infosubdomain | Command Yann AI V15 "infosubdomain" — belum diimplementasikan. |
+| installpanel | Command Yann AI V15 "installpanel" — belum diimplementasikan. |
+| listsubdo | Command Yann AI V15 "listsubdo" — belum diimplementasikan. |
+| listsubdomain | Command Yann AI V15 "listsubdomain" — belum diimplementasikan. |
+| logicbell | Command Yann AI V15 "logicbell" — belum diimplementasikan. |
+| lsd | Command Yann AI V15 "lsd" — belum diimplementasikan. |
+| luma | Command Yann AI V15 "luma" — belum diimplementasikan. |
+| manusialidi | Command Yann AI V15 "manusialidi" — belum diimplementasikan. |
+| mbg | Command Yann AI V15 "mbg" — belum diimplementasikan. |
+| ngl | Command Yann AI V15 "ngl" — belum diimplementasikan. |
+| nglgenerator | Command Yann AI V15 "nglgenerator" — belum diimplementasikan. |
+| otakudesu | Command Yann AI V15 "otakudesu" — belum diimplementasikan. |
+| own | Command Yann AI V15 "own" — belum diimplementasikan. |
+| pakustad | Command Yann AI V15 "pakustad" — belum diimplementasikan. |
+| pb | Command Yann AI V15 "pb" — belum diimplementasikan. |
+| pig | Command Yann AI V15 "pig" — belum diimplementasikan. |
+| pixhost | Command Yann AI V15 "pixhost" — belum diimplementasikan. |
+| playch | Command Yann AI V15 "playch" — belum diimplementasikan. |
+| qu | Command Yann AI V15 "qu" — belum diimplementasikan. |
+| quax | Command Yann AI V15 "quax" — belum diimplementasikan. |
+| quotesimg | Command Yann AI V15 "quotesimg" — belum diimplementasikan. |
+| resolusivideo | Command Yann AI V15 "resolusivideo" — belum diimplementasikan. |
+| resvid | Command Yann AI V15 "resvid" — belum diimplementasikan. |
+| script | Command Yann AI V15 "script" — belum diimplementasikan. |
+| sdm | Command Yann AI V15 "sdm" — belum diimplementasikan. |
+| sendtesti | Command Yann AI V15 "sendtesti" — belum diimplementasikan. |
+| setpanel | Command Yann AI V15 "setpanel" — belum diimplementasikan. |
+| sharkstudio | Command Yann AI V15 "sharkstudio" — belum diimplementasikan. |
+| siujsen | Command Yann AI V15 "siujsen" — belum diimplementasikan. |
+| sora | Command Yann AI V15 "sora" — belum diimplementasikan. |
+| soraai | Command Yann AI V15 "soraai" — belum diimplementasikan. |
+| soundaudio | Keluarga command V15 sound1..N (cuplikan audio bernomor) — digabung jadi satu fitur dengan parameter nomor. |
+| stickerwa | Command Yann AI V15 "stickerwa" — belum diimplementasikan. |
+| stikeranime | Command Yann AI V15 "stikeranime" — belum diimplementasikan. |
+| stikercmd | Command Yann AI V15 "stikercmd" — belum diimplementasikan. |
+| stikerdinokuning | Command Yann AI V15 "stikerdinokuning" — belum diimplementasikan. |
+| stikergojo | Command Yann AI V15 "stikergojo" — belum diimplementasikan. |
+| stikermeme | Command Yann AI V15 "stikermeme" — belum diimplementasikan. |
+| stikermukalu | Command Yann AI V15 "stikermukalu" — belum diimplementasikan. |
+| stikerpentol | Command Yann AI V15 "stikerpentol" — belum diimplementasikan. |
+| stikerrandom | Command Yann AI V15 "stikerrandom" — belum diimplementasikan. |
+| stikerspongebob | Command Yann AI V15 "stikerspongebob" — belum diimplementasikan. |
+| storyhd | Command Yann AI V15 "storyhd" — belum diimplementasikan. |
+| strongjsen | Command Yann AI V15 "strongjsen" — belum diimplementasikan. |
+| subdo | Command Yann AI V15 "subdo" — belum diimplementasikan. |
+| swgc_process | Command Yann AI V15 "swgc_process" — belum diimplementasikan. |
+| swhd | Command Yann AI V15 "swhd" — belum diimplementasikan. |
+| sync | Command Yann AI V15 "sync" — belum diimplementasikan. |
+| syncsubdo | Command Yann AI V15 "syncsubdo" — belum diimplementasikan. |
+| tempo | Command Yann AI V15 "tempo" — belum diimplementasikan. |
+| th | Command Yann AI V15 "th" — belum diimplementasikan. |
+| top4top | Command Yann AI V15 "top4top" — belum diimplementasikan. |
+| toproblox | Command Yann AI V15 "toproblox" — belum diimplementasikan. |
+| toptv | Command Yann AI V15 "toptv" — belum diimplementasikan. |
+| tourlgh | Command Yann AI V15 "tourlgh" — belum diimplementasikan. |
+| tqto | Command Yann AI V15 "tqto" — belum diimplementasikan. |
+| ttsbrando | Command Yann AI V15 "ttsbrando" — belum diimplementasikan. |
+| tvstiker | Command Yann AI V15 "tvstiker" — belum diimplementasikan. |
+| ultrajsen | Command Yann AI V15 "ultrajsen" — belum diimplementasikan. |
+| unresimg | Command Yann AI V15 "unresimg" — belum diimplementasikan. |
+| v | Command Yann AI V15 "v" — belum diimplementasikan. |
+| veo3 | Command Yann AI V15 "veo3" — belum diimplementasikan. |
+| videy | Command Yann AI V15 "videy" — belum diimplementasikan. |
+| videydl | Command Yann AI V15 "videydl" — belum diimplementasikan. |
+| vignet | Command Yann AI V15 "vignet" — belum diimplementasikan. |
+| vignette | Command Yann AI V15 "vignette" — belum diimplementasikan. |
+| voicecover | Command Yann AI V15 "voicecover" — belum diimplementasikan. |
+| web2apk | Command Yann AI V15 "web2apk" — belum diimplementasikan. |
+| webtoapk | Command Yann AI V15 "webtoapk" — belum diimplementasikan. |
+| worm | Command Yann AI V15 "worm" — belum diimplementasikan. |
+| yandl | Command Yann AI V15 "yandl" — belum diimplementasikan. |
+| zrooart | Command Yann AI V15 "zrooart" — belum diimplementasikan. |

@@ -1,0 +1,58 @@
+YANNAJAH AI - CARA EDIT BOT
+===========================
+
+1. FILE UTAMA
+   handler.js        pintu masuk pesan WhatsApp (jarang perlu diubah)
+   yannajah.js       start bot: login web database, pairing, koneksi (file ini yang diacak/obfuscate)
+   yannai-cmd.js     pengatur command: cek izin, limit, cooldown, lalu menjalankan plugin
+   settingsbot.js    SEMUA PENGATURAN BOT (lihat no. 2)
+   package.json      daftar library
+   source/           message.js (isi pesan), yannai-menu.js (tampilan menu), database.js
+   plugins/          semua fitur, 1 file = 1 command, dikelompokkan per folder kategori
+   lib/  library/    kode bantu yang dipakai plugin (biasanya tidak perlu diubah)
+   data/  assets/    dataset game, gambar, font, game HTML
+
+2. GANTI NAMA BOT, OWNER, PREFIX, PAIRING, DLL
+   Buka settingsbot.js, ganti nilai setelah tanda "=" lalu restart bot. Contoh:
+     global.owner = '6281234567890'
+     global.botname = 'Bot Keren'
+     global.packname = 'Bot Keren'
+     global.prefix = ['.', '!']
+     global.custompairing = 'BOTKEREN'      (tepat 8 huruf/angka)
+     global.pairing = 'ask'                  (ask = ditanya 1 QR / 2 kode)
+     global.limitHarian = 20
+     global.image = { menu: 'link gambar menu', ... }
+     global.mess = { owner: 'pesan khusus owner', ... }
+   Password bot dan nomor bot TIDAK diatur di sini (diatur Developer di web database).
+   API key APIZ2Z: settingsbot.js -> global.apikeyapiz2z = 'key kamu'
+
+3. MEMBUAT COMMAND BARU (gaya Yann AI / Lena AI)
+   Salin plugins/contoh/halo.js ke folder kategori, misalnya plugins/fun/sapa.js, lalu ubah:
+
+     let handler = async (m, { sock, text, command, prefix, isCreator, Reply }) => {
+       if (!text) return Reply(`Contoh: ${prefix}${command} Budi`)
+       await Reply(`Halo ${text}!`)
+     }
+     handler.command = ['sapa', 'hello']     nama command + alias
+     handler.category = 'fun'                kategori di menu
+     handler.description = 'Bot menyapa'
+     handler.limit = true                    potong 1 limit (opsional)
+     handler.owner = true                    khusus owner (opsional)
+     handler.group = true                    khusus grup (opsional)
+     module.exports = handler
+
+   Yang tersedia di dalam handler:
+     m.chat, m.sender, m.text, m.quoted, m.isGroup, m.pushName, m.reply('teks')
+     sock (= conn = lena = alip)  koneksi WhatsApp, contoh: sock.sendMessage(m.chat, { text: 'hai' })
+     text, command, prefix, args, isCreator (owner?), isPremium, Reply('teks')
+     global.botname, global.owner, global.mess, global.image ... (dari settingsbot.js)
+   Restart bot, command baru langsung muncul di menu.
+
+4. MENGEDIT / MEMATIKAN COMMAND YANG SUDAH ADA
+   Edit  : cari file-nya di plugins/<kategori>/<nama>.js (dari chat: .getplugin <nama>)
+   Matikan sementara: settingsbot.js -> global.fiturMati = ['tiktok', 'ai']
+   Hapus : hapus file plugin-nya lalu restart.
+
+5. MENU
+   Isi menu dibuat otomatis dari plugin (nama, kategori, deskripsi).
+   Tampilan menu diatur di source/yannai-menu.js, gambar menu di settingsbot.js (global.image.menu).

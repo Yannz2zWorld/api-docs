@@ -1,0 +1,6 @@
+'use strict';
+const { UsageError } = require('../../library/errors');
+const { fmt } = require('../../library/mathexpr');
+const { T } = require('../../lib/calc');
+
+module.exports = T('stats', 'Statistik data: rata-rata, median, modus, simpangan baku', t => { const a = t.trim().split(/[\s,;]+/).map(Number); if (a.length < 1 || a.some(x => !Number.isFinite(x))) throw new UsageError('Masukkan daftar angka.'); const s = [...a].sort((x, y) => x - y); const mean = a.reduce((x, y) => x + y, 0) / a.length; const med = s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; const cnt = {}; a.forEach(x => (cnt[x] = (cnt[x] || 0) + 1)); const mx = Math.max(...Object.values(cnt)); const mode = Object.keys(cnt).filter(k => cnt[k] === mx).join(', '); const sd = Math.sqrt(a.reduce((x, y) => x + (y - mean) ** 2, 0) / a.length); return `n: ${a.length}\nMin: ${s[0]}  Max: ${s[s.length - 1]}\nRata-rata: ${fmt(mean)}\nMedian: ${fmt(med)}\nModus: ${mx > 1 ? mode : '-'}\nSimpangan baku: ${fmt(sd)}`; }, [{ input: '2 4 4 4 5 5 7 9', expect: o => o.includes('Rata-rata: 5') && o.includes('Median: 4,5') && o.includes('Modus: 4') && o.includes('Simpangan baku: 2') }], { usage: '<angka...>' });

@@ -1,0 +1,44 @@
+{
+  "name": "yannajahnew",
+  "version": "1.0.0",
+  "description": "YannAjahNew - WhatsApp bot modular dengan namespace yannajah, auth lisensi pusat, dan integrasi APIZ2Z",
+  "main": "yannajah.js",
+  "type": "commonjs",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node yannajah.js",
+    "start:qr": "node yannajah.js --qr",
+    "start:pairing": "node yannajah.js --pairing-code",
+    "dashboard": "node server/index.js",
+    "migrate": "node server/cli.js migrate",
+    "admin:bootstrap": "node server/cli.js bootstrap-developer",
+    "admin:login-link": "node server/cli.js login-link",
+    "check": "node tools/syntax-check.js",
+    "test": "node --test --test-concurrency=1 \"tests/server/*.test.js\" \"tests/bot/*.test.js\"",
+    "test:bot": "node --test --test-concurrency=1 \"tests/bot/*.test.js\"",
+    "test:server": "node --test --test-concurrency=1 \"tests/server/*.test.js\"",
+    "features:report": "node tools/feature-report.js",
+    "catalog:sync": "node tools/sync-apiz2z-catalog.js",
+    "build:dist": "node tools/build-dist.js",
+    "release": "node tools/build-release.js"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "javascript-obfuscator": "^4.2.2"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "1.0.10",
+    "@whiskeysockets/baileys": "^7.0.0-rc14",
+    "bcryptjs": "^3.0.3",
+    "chalk": "^4.1.2",
+    "express": "^4.22.3",
+    "jimp": "^1.6.1",
+    "node-webpmux": "^3.2.1",
+    "pg": "^8.23.1",
+    "pino": "^9.14.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

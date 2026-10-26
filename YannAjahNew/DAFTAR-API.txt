@@ -1,0 +1,176 @@
+YANNAJAH AI - DAFTAR API
+========================
+Dibuat otomatis dari kode bot (node tools/api-list.js). Total command yang memakai API key: 574.
+
+
+1. APIZ2Z  (API UTAMA, PAKAI KEY)
+   Alamat : https://apiz2z.web.id
+   Key    : buat di https://apiz2z.web.id -> menu API key
+   Tempat : settingsbot.js, baris:
+              global.apikeyapiz2z = "isi_key_kamu"
+            (atau file .env: APIZ2Z_API_KEY=isi_key_kamu, kalau diisi .env yang dipakai)
+   Kalau kosong: bot tetap jalan, tapi command di bawah membalas "Fitur ini butuh API key APIZ2Z".
+   Command yang memakai APIZ2Z (574), per kategori:
+
+   [ai] 64 command
+   ai, aigoogle, aigpt, aimention, asynt, autoai, bard, bible, blackbox, bypassai,
+   claude, claude2, copilot, copilot2, deepai, deepsearch, dracintts, epsilon, flux,
+   gandalf, gemini, geminitts, geminivision, gitagpt, gpt35turbo, hyperai, ideogram,
+   imagegen, islamic, kimi, lumin, magicstudio, mathgpt, monica, morphic, muslimai,
+   muslimai2, nanobanana, natalie, nsfwcheck, nsfwcheck2, overchat, pollinations,
+   powerbrain, powerbrain2, publicai, publicai2, qwen, screnapp, simi, sologo, story,
+   talefy, texttoimage, turboseek, unlimited, venice, vider, voice, webpilot, webpilot2,
+   writecream, writecreamimg, yannedit
+
+   [anime] 60 command
+   akiyama, ana, animeakira, animeanichindetail, animeanichinlatest, animeanichinsearch,
+   animeeba, animekeneki, animekiryuusearch, animekomikuchapter, animekomikudetail,
+   animekomikupopular, animekomikusearch, animeoploverzongoing, animeoploverzsearch,
+   animesamehadakuschedule, animetejina, animeyotsuba, animeyuli, animeyumeko, asuna,
+   ayuzawa, boruto, chiho, chitoge, deidara, doraemon, emilia, erza, gremory, hestia,
+   hinata, inori, isuzu, itachi, itori, kaga, kagura, kaori, komikindo, kurumi, madara,
+   megumin, mikasa, miku, minato, neko2, nezuko, onepiece, pokemon, sakura, sasuke,
+   shina, shinka, shizuka, toukachan, tsunade, waifu2, yuki, yuri
+
+   [canvas] 34 command
+   canvasquotly, canvasyoutube, goodbyecard, goodbyev1, goodbyev2, goodbyev3, goodbyev4,
+   goodbyev5, gura, igqc, iqc, iqc2, jmk, kalendercanvas, memebeautiful, memedrake,
+   memejarvis, memetwobuttons, musiccard, pixelart, pixelart2, profilecard, qcwa,
+   rankcard, rankup, shipcard, timpateks, ttqc, welcomecard, welcomeleave, welcomev2,
+   welcomev3, welcomev4, welcomev5
+
+   [check] 1 command
+   mlstalk
+
+   [downloader] 60 command
+   aio, aio2, applemusicdl, bilibili, capcut, capcut2, caristikerdown, dailymotion,
+   douyin, downloadnpm, downloadytdl, facebook, facebook2, gdrive, gdrive2, getsticker,
+   github, github2, instagram, iqiyi, kolid, lahelu, likee, mediafire, mediafire2,
+   mixcloud, pindl, pinterest2, play, play2, play3, playtiktok, playtiktok2, ptv, reddit,
+   scribd, sfile, shopee, snackvideo, soundclouddl, spotify2, spotifydl, stickerly,
+   telestick, telestick2, terabox, threads, tiktok, tiktok2, tiktok3, tiktokmp3, twitter,
+   twitter2, vdko, weibo, xhs, youtube, youtube2, ytmp3, ytmp4
+
+   [ephoto] 1 command
+   bravegreen
+
+   [fun] 6 command
+   alay2, alayapi, fancytext, funumur, livefunfact, nomin
+
+   [games] 35 command
+   asahotak2, bluearchive, ccsd, gamesasahotak, gamescaklontong, gamesfamily100,
+   gamesislamic, gameslengkapikalimat, gamesmathquiz, gamessusunkata, gamestebakbendera,
+   gamestebakgambar, gamestebakgame, gamestebakhewan, gamestebakkata, gamestebaklagu,
+   gamestebaklirik, gamestebaklogo, siapadia, siapadia2, susunkata2, tebakheroml,
+   tebakkabupaten, tebakkalimat, tebakkarakterff, tebakkartun, tebakkimia, tebakkimia2,
+   tebaklirik2, tebaksiapa, tebaktebakan, tebaktebakan2, tebakwarna, tekateki, tekateki2
+
+   [group] 1 command
+   autosholat
+
+   [image] 32 command
+   ghibli, hapusobjek, hijabpin, imageascii, imageascii2, imgeditpixelate, jadidisney,
+   jadigta, jadipixar, lumiart, polaroid, sketch, to2d, toanime, tobotak, tochibi,
+   todino, todonghua, tofigure, tofootball, tojawa, tokartun, tomanga, tomanhwa,
+   tomirror, tomoai, tomountain, topunk, toroblox, tosad, tosatan, tosunda
+
+   [info] 14 command
+   cuaca, cuacav2, gempa, gempa2, growagarden, growagarden2, harilibur, harilibur2,
+   infobilibili, jadwalbola, jadwalsholat, jadwalsholat2, jadwaltv, jadwaltv2
+
+   [islamic] 7 command
+   ayatkursi, bacaansholat, doaharian, islamicwirid, kisahnabiapi, surah, tahlil
+
+   [maker] 32 command
+   animediff, attp, attp2, balogo, bananaai, bananagen, brat, brat2, bratanime, brathd,
+   bratvid, bratvid2, bratvidhd, carbon, carbon2, emojimix, emojitogif, emojitogif2,
+   fakecall, igquote, iqcpink, landsatname, makerqc, msg, nulis, quoted, remini, remini2,
+   smeme, ttp, ttp2, wasted
+
+   [movie] 1 command
+   browse
+
+   [music] 1 command
+   murotalapi
+
+   [news] 19 command
+   antara, antara2, cnbc, cnbc2, cnn, cnn2, detik, ffnews, jkt48, kompas, kompas2,
+   liputan6, merdeka, mlbb, okezone, sindonews, sindonews2, suara, tribun
+
+   [owner] 1 command
+   ptvch
+
+   [primbon] 19 command
+   artinama, artinama2, cocokpasangan, cocokpasangan2, nomorhoki, nomorhoki2, penyakit,
+   penyakit2, ramalanjodohbali, ramalanjodohbali2, ramaljodoh, ramaljodoh2, rezekihoki,
+   rezekihoki2, sifatusaha, sifatusaha2, tafsirmimpi, zodiac2, zodiak
+
+   [random] 18 command
+   anime, animequote, anjing, ba, cerpen, dare, fakta, katamotivasi, kucing, meme,
+   nasehat, neko, philosopherquotes, puisi, quotes, tokohquotes, truth, waifu
+
+   [search] 64 command
+   an1, apkmody, apkplaystore, apkpure, applemusic, brave, caristiker, cookpad,
+   deviantart, douyinhot, duckduckgo, gimage, githubsearch, google, groupsor, gsmarena,
+   happymood, istock, kbbi, lirik, mal, mcpedl, movie, myinstant, npm2, npm3, npm4,
+   npmsearch, pexels, pinedrama, pinterest, pinterestvideo, pixiv, pixivdetail, resep,
+   resep2, searchbilibili, searchcapcut, searchdouyin, searchgithub2, searchiqiyi,
+   searchmcpedl, searchpinterest2, searchsfile, searchspotify2, searchtelestick,
+   searchtiktok2, searchyoutube2, soundcloud, soundcloud2, spotify, spotifylirik2,
+   stickerly2, stickersearch, tiktokphoto, tiktoktrend, topmyanimelist, ttsearch,
+   unsplash, wallcraft, wiki, wikipedia2, x8font, yts
+
+   [stalk] 17 command
+   ffstalk, genshin, genshin2, githubstalk, igstalk, roblox2, robloxstalk, stalkfacebook,
+   stalkgithub2, stalkpinterest, stalkthreads, stalktiktok2, stalkyoutube2, tiktokposts,
+   tiktokstalk, twitterstalk, ytstalk
+
+   [textpro] 21 command
+   avengers, bear, blackpink, cartoongraffiti, comic, devilwings, dragonball, foggyglass,
+   glitch, graffiti, graffiti2, marvel, mascot, naruto, painting, pavement, pixelglitch,
+   typography, wetglass, wolfgalaxy, writegraffiti
+
+   [tools] 66 command
+   alightmotion, base642text, binary2text, blurface, commentstiktok, comparephone,
+   compress, convert, convert2, countryinfo, dewatermark, dns, enhance, enhancer,
+   fontinterceptor, githubroast, grammarchecker, grammarchecker2, iloveimgcrop,
+   iloveimgrotate, imagetoprompt2, ipinfo, jawa, kodepos, kurs, ocr, ocr2, qr, removebg,
+   removebg2, removevokal, screenshot2, shortlink, skiplink, ssweb, subdomainfinder,
+   text2base64, text2binary, text2qr2, tiktokearnings, tiktokhashtag, tiktokhashtag2,
+   tinyurl, toolsemojitogif, toolsping, toolsresize, toprompt, translate, translate2,
+   tts, upscale, upscale2, upscale2x, upscale3, upscale4x, upscaler, usernamegen,
+   usernamegen2, vision, webphishing, webtozip, whatmusic, winratemlbb,
+   youtubesummarize2, ytsummarizer, yttranscribe
+
+
+2. API TANPA KEY (sudah jalan, tidak perlu diisi)
+   https://catbox.moe        upload file      (.tourl, .catbox)
+   https://uguu.se           upload file      (.tourl cadangan, .uguu)
+   https://api.jikan.moe     info anime       (.charinfo / .searchchar)
+   https://pastebin.com      ambil teks       (.pastebin)
+   WhatsApp                  koneksi bot (Baileys)
+   Web database YannAjah     login bot, ban, maintenance (alamat tertanam di yannajah.js)
+
+
+3. API LAMA DARI YANN AI V15 (ADA DI settingsbot.js, BELUM DIPAKAI FITUR MANA PUN)
+   Variabelnya tetap ada di settingsbot.js di tempat aslinya, key-nya dikosongkan.
+   Kalau kamu isi, bilang ke saya fitur mana yang mau memakainya, nanti saya sambungkan.
+
+   Variabel di settingsbot.js        Alamat / keterangan                 Pakai key?
+   global.apialip / apikeyalip       https://api.clutch.web.id           ya (apikeyalip)
+   global.btc / apibotcahx           https://api.botcahx.eu.org          ya (apibotcahx)
+   global.dongtubeapi / apikeydongtube  https://api.dongtube.id          ya (apikeydongtube)
+   global.termai / apitermai         https://api.termai.cc               ya (apitermai)
+   global.apiPitu / PituKey          https://api.pitucode.com            ya (PituKey)
+   global.Theresav / TheresaApi      https://api.theresav.eu             ya (TheresaApi)
+   global.ramsapikey                 API rams                             ya
+   global.pakasir.project / apiKey   payment gateway Pakasir             ya
+   global.premku                     apikey premku (apk prem)             ya
+   global.amPremApikey               https://alipshop.clutch.web.id      ya
+   global.cloudflareZoneId / ApiToken / Domain   Cloudflare (subdomain)  ya
+   global.egg / nestid / loc / domain / apikey / capikey   panel Pterodactyl   ya (ptla/ptlc)
+
+
+4. YANG TIDAK PAKAI API (LOKAL)
+   Game, efek teks, sertifikat, stiker, efek audio/video (ffmpeg), edit gambar lokal, menu, grup,
+   owner, toko/list, ekonomi, ramalan, dll. Tidak butuh key apa pun.
