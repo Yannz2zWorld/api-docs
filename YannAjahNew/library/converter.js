@@ -28,14 +28,14 @@ function ffmpeg(input, args, opts = {}) {
   return queue.run(() => runFfmpeg(input, args, opts));
 }
 
-async function runFfmpeg(input, args, { inExt, outExt, timeoutMs = 90000 } = {}) {
+async function runFfmpeg(input, args, { inExt, outExt, timeoutMs = 90000, preArgs = [] } = {}) {
   const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'yan-'));
   const inFile = path.join(dir, `in.${inExt || sniffMime(input)?.ext || 'bin'}`);
   const outFile = path.join(dir, `out.${outExt}`);
   try {
     await fs.promises.writeFile(inFile, input);
     await new Promise((resolve, reject) => {
-      const p = spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-threads', THREADS, '-i', inFile, ...args, '-threads', THREADS, outFile], { stdio: ['ignore', 'ignore', 'pipe'] });
+      const p = spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-threads', THREADS, ...preArgs, '-i', inFile, ...args, '-threads', THREADS, outFile], { stdio: ['ignore', 'ignore', 'pipe'] });
       let stderr = '';
       p.stderr.on('data', d => { stderr = (stderr + d).slice(-2000); });
       const t = setTimeout(() => { p.kill('SIGKILL'); reject(err('MEDIA_TIMEOUT', 'ffmpeg timeout', { userMessage: 'Proses media terlalu lama.' })); }, timeoutMs);
@@ -96,4 +96,24 @@ async function toWebpSticker(buf, { animated = false } = {}) {
   return out;
 }
 
-module.exports = { ffmpeg, AUDIO_FILTERS, toMp3, toOpus, toGif, toMp4, toPng, setVolume, trimAudio, toWebpSticker };
+// Ubah tempo audio 0.5-2.0x (V15: .tempo). atempo menjaga kualitas & tidak mengubah pitch berlebihan.
+function audioTempo(buf, speed) {
+  if (!(speed >= 0.5 && speed <= 2.0)) throw err('INVALID_TEMPO', 'tempo', { userMessage: 'Kecepatan harus 0.5 - 2.0.' });
+  return ffmpeg(buf, ['-vn', '-filter:a', `atempo=${Number(speed).toFixed(3)}`, '-f', 'mp3'], { outExt: 'mp3' });
+}
+
+// Upscale video ke 720p + sedikit penajaman (V15: .hdvideo). Audio disalin apa adanya.
+function videoHD(buf) {
+  return ffmpeg(buf, ['-vf', "scale=-2:720:flags=lanczos,unsharp=3:3:1.0:3:3:0.0", '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'copy'], { outExt: 'mp4', timeoutMs: 180000 });
+}
+
+// Gambar -> video pendek dengan efek zoom (V15: .luma / .img2video).
+function imageToVideo(buf, { motion = 'zoom-in' } = {}) {
+  const base = ":d=125:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=720x1280";
+  const vf = motion === 'zoom-out'
+    ? `zoompan=z='if(lte(zoom,1.0),1.25,max(1.0,zoom-0.0015))'${base}`
+    : `zoompan=z='min(zoom+0.0015,1.25)'${base}`;
+  return ffmpeg(buf, ['-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100', '-vf', vf, '-c:v', 'libx264', '-t', '5', '-pix_fmt', 'yuv420p', '-preset', 'fast', '-c:a', 'aac', '-shortest', '-map', '0:v', '-map', '1:a'], { outExt: 'mp4', inExt: 'jpg', preArgs: ['-loop', '1'], timeoutMs: 120000 });
+}
+
+module.exports = { ffmpeg, AUDIO_FILTERS, toMp3, toOpus, toGif, toMp4, toPng, setVolume, trimAudio, toWebpSticker, audioTempo, videoHD, imageToVideo };

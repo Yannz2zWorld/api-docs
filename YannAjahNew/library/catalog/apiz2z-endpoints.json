@@ -1,12 +1,12 @@
 {
  "source": "api-docs repository (platform apiz2z.web.id), folder plugin/",
- "generatedAt": "2026-10-22T04:29:47.782Z",
+ "generatedAt": "2026-10-26T04:25:50.906Z",
  "auth": {
   "header": "Authorization: Bearer <APIZ2Z_API_KEY>",
   "alt": "x-api-key"
  },
  "uploads": "Endpoint upload:true menerima POST body file mentah (maks 8 MB) dengan Content-Type file, parameter lain lewat query.",
- "count": 487,
+ "count": 488,
  "endpoints": [
   {
    "path": "/api/ai/asynt",
@@ -277,6 +277,20 @@
    "desc": "Bikin gambar dari teks pakai AI Flux.",
    "category": "AI",
    "source": "nexray",
+   "upload": false,
+   "params": [
+    {
+     "name": "prompt",
+     "required": true
+    }
+   ]
+  },
+  {
+   "path": "/api/ai/gambar",
+   "name": "AI Gambar",
+   "desc": "Bikin gambar dari teks pakai AI Gemini, hasilnya disimpan di CDN 24 jam.",
+   "category": "AI",
+   "source": "ai-gambar",
    "upload": false,
    "params": [
     {
@@ -4871,8 +4885,7 @@
      "name": "email",
      "required": true
     }
-   ],
-   "excluded": "Aktivasi premium aplikasi pihak ketiga — di luar cakupan bot."
+   ]
   },
   {
    "path": "/api/premium/alightmotion-verify",
@@ -4894,8 +4907,7 @@
      "name": "orderid",
      "required": false
     }
-   ],
-   "excluded": "Aktivasi premium aplikasi pihak ketiga — di luar cakupan bot."
+   ]
   },
   {
    "path": "/api/primbon/artinama",

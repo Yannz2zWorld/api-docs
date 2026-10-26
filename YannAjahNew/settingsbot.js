@@ -82,6 +82,16 @@ global.api = {
         key: global.apitermai
     }
 }
+// API publik tanpa key yang dipakai fitur Lena AI v15 (tidak perlu diisi, ganti kalau domainnya pindah)
+global.apisiputzx = "https://api.siputzx.my.id"
+global.apinexray = "https://api.nexray.eu.cc"
+global.apitaka = "https://api.taka.my.id"
+global.apifaa = "https://api-faa.my.id"
+global.apinekorinn = "https://api.nekorinn.my.id"
+// Upload ke GitHub (.tourlgh) — token isi di .env (GITHUB_UPLOAD_TOKEN), JANGAN di sini
+global.githubUploadOwner = ""
+global.githubUploadRepos = ['dat1', 'dat2', 'dat3', 'dat4']
+// Semua key di atas boleh dikosongkan di sini lalu diisi di .env (lihat .env.example & DAFTAR-API.txt)
 
 // API utama YannAjah = APIZ2Z
 global.apiz2z = "https://apiz2z.web.id"
@@ -95,9 +105,8 @@ global.egg = "15" // Egg ID
 global.nestid = "5" // nest ID
 global.loc = "1" // Location ID
 global.domain = "https://" // Domain lu
-global.apikey = "-" //ptla
-global.capikey = "-" //ptlc
-// ========================================
+global.apikey = "-" //ptla (lebih aman isi di .env: PANEL_APP_KEY)
+global.capikey = "-" //ptlc (lebih aman isi di .env: PANEL_CLIENT_KEY)// ========================================
 
 // Settings Link / Tautan
 global.linkOwner = "https://wa.me/6281249703469"

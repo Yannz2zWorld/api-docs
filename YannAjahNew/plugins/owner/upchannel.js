@@ -3,7 +3,7 @@
 const { UsageError } = require('../../library/errors');
 const { O } = require('../../lib/owner-settings');
 
-module.exports = O({ id: 'owner.upchannel', name: 'upchannel', aliases: ['upch', 'kirimch', 'upchannel2'], description: 'Kirim teks/media ke channel bot (links.channelId)', usage: '<teks> (atau reply media)',
+module.exports = O({ id: 'owner.upchannel', name: 'upchannel', aliases: ['upch', 'upch2', 'kirimch', 'upchannel2'], description: 'Kirim teks/media ke channel bot (links.channelId)', usage: '<teks> (atau reply media)',
   async run(ctx) {
     const ch = ctx.config.links.channelId; if (!/@newsletter$/.test(ch || '')) throw new UsageError('ID channel belum diatur (renamebot idsaluran ...@newsletter).');
     const md = ctx.media();

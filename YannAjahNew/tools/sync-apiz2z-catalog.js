@@ -12,7 +12,9 @@ const fs = require('fs');
 const path = require('path');
 const Module = require('module');
 
-const src = process.argv[2] || process.env.APIZ2Z_SOURCE_DIR;
+// Di repo api-docs, YannAjahNew ada di subfolder: default ke folder induk kalau berisi plugin/.
+const parentDefault = fs.existsSync(path.join(__dirname, '..', '..', 'plugin')) ? path.join(__dirname, '..', '..') : null;
+const src = process.argv[2] || process.env.APIZ2Z_SOURCE_DIR || parentDefault;
 if (!src) { console.error('Pakai: node tools/sync-apiz2z-catalog.js <path-ke-clone-repo-api-docs>'); process.exit(2); }
 const root = path.resolve(src);
 const pluginDir = path.join(root, 'plugin');
@@ -20,10 +22,9 @@ const out = path.join(__dirname, '..', 'library', 'catalog', 'apiz2z-endpoints.j
 
 // Endpoint yang sengaja TIDAK dijadikan command (kebijakan konten/keamanan). Tercatat di katalog sebagai excluded.
 const EXCLUDED = {
-  '/api/ai/deepnude-ai': 'Konten seksual dari foto orang nyata tanpa persetujuan — tidak diimplementasikan.',
-  '/api/premium/alightmotion-send-prem': 'Aktivasi premium aplikasi pihak ketiga — di luar cakupan bot.',
-  '/api/premium/alightmotion-verify': 'Aktivasi premium aplikasi pihak ketiga — di luar cakupan bot.'
+  '/api/ai/deepnude-ai': 'Konten seksual dari foto orang nyata tanpa persetujuan — tidak diimplementasikan.'
 };
+// Endpoint premium Alight Motion (milik APIZ2Z sendiri) sekarang ikut jadi command (owner/premium), dulu dikecualikan.
 
 if (!fs.existsSync(pluginDir)) {
   console.error(`Folder plugin APIZ2Z tidak ditemukan: ${pluginDir}`);

@@ -32,6 +32,28 @@ const HOSTS = {
       if (!/^https:\/\//.test(u || '')) throw err('UPLOAD_FAILED', 'uguu: respons tidak dikenal', { userMessage: 'Upload ke Uguu gagal.' });
       return u;
     }
+  },
+  quax: {
+    label: 'Qu.ax (permanen)',
+    async upload(buf, mime, timeoutMs) {
+      const f = new FormData(); f.append('files[]', new Blob([buf], { type: mime }), `file.${extOf(mime)}`); f.append('expiry', '-1');
+      const j = JSON.parse(await post('https://qu.ax/upload.php', f, timeoutMs));
+      const u = j?.files?.[0]?.url;
+      if (!/^https:\/\//.test(u || '')) throw err('UPLOAD_FAILED', 'qu.ax: respons tidak dikenal', { userMessage: 'Upload ke Qu.ax gagal.' });
+      return u;
+    }
+  },
+  top4top: {
+    label: 'Top4Top (permanen)',
+    async upload(buf, mime, timeoutMs) {
+      const f = new FormData(); const ext = extOf(mime);
+      f.append('file_1_', new Blob([buf], { type: mime }), `file.${ext}`); f.append('submitr', '[ رفع الملفات ]');
+      const html = await post('https://top4top.io/index.php', f, timeoutMs);
+      const vals = [...html.matchAll(/value="(https?:\/\/[^"]+?)"/g)].map(m => m[1]);
+      const u = vals.find(v => v.endsWith(ext)) || vals.find(v => /\.(jpg|jpeg|png|webp|gif|mp4|mp3|pdf)$/i.test(v));
+      if (!u) throw err('UPLOAD_FAILED', 'top4top: link tidak ditemukan', { userMessage: 'Upload ke Top4Top gagal.' });
+      return u;
+    }
   }
 };
 

@@ -9,7 +9,51 @@ const envBool = (name, fallback) => { const v = env(name); return v === undefine
 const envList = (name, fallback = []) => { const v = env(name); return v ? String(v).split(',').map(s => s.trim()).filter(Boolean) : fallback; };
 const or = (v, d) => (v === undefined || v === null ? d : v);
 
+// API selain APIZ2Z yang dipakai fitur Lena AI v15 / Yann AI V15. Nama global.* sama dengan settings.js Lena
+// supaya plugin format lama tetap jalan. Key boleh diisi di settingsbot.js ATAU .env (lebih aman); .env menang.
+// Daftar lengkap command per API: DAFTAR-API.txt (npm run api:list).
+const EXTERNAL_KEYS = [
+  // [global.*, ENV, keterangan]
+  ['apikeyalip', 'ALIP_API_KEY', 'API Alip/Clutch (global.apialip)'],
+  ['apialip', 'ALIP_API_URL', 'URL API Alip/Clutch'],
+  ['apibotcahx', 'BOTCAHX_API_KEY', 'API BotcahX (global.btc)'],
+  ['btc', 'BOTCAHX_API_URL', 'URL API BotcahX'],
+  ['apitermai', 'TERMAI_API_KEY', 'API Termai (global.termai)'],
+  ['termai', 'TERMAI_API_URL', 'URL API Termai'],
+  ['apikeydongtube', 'DONGTUBE_API_KEY', 'API Dongtube'],
+  ['PituKey', 'PITU_API_KEY', 'API Pitucode'],
+  ['TheresaApi', 'THERESAV_API_KEY', 'API Theresav'],
+  ['ramsapikey', 'RAMS_API_KEY', 'API Rams'],
+  ['premku', 'PREMKU_API_KEY', 'API Premku (toko aplikasi premium)'],
+  ['amPremApikey', 'AMPREM_API_KEY', 'API alipshop (akses premium Alight Motion)'],
+  ['cloudflareZoneId', 'CLOUDFLARE_ZONE_ID', 'Cloudflare zone (subdomain)'],
+  ['cloudflareApiToken', 'CLOUDFLARE_API_TOKEN', 'Cloudflare API token (subdomain)'],
+  ['cloudflareDomain', 'CLOUDFLARE_DOMAIN', 'Domain Cloudflare (subdomain)'],
+  ['domain', 'PANEL_DOMAIN', 'Domain panel Pterodactyl'],
+  ['apikey', 'PANEL_APP_KEY', 'Pterodactyl Application API key (ptla_)'],
+  ['capikey', 'PANEL_CLIENT_KEY', 'Pterodactyl Client API key (ptlc_)'],
+  ['egg', 'PANEL_EGG', 'Pterodactyl egg ID'],
+  ['nestid', 'PANEL_NEST', 'Pterodactyl nest ID'],
+  ['loc', 'PANEL_LOCATION', 'Pterodactyl location ID'],
+  ['githubUploadToken', 'GITHUB_UPLOAD_TOKEN', 'Token GitHub untuk .tourlgh'],
+  ['githubUploadOwner', 'GITHUB_UPLOAD_OWNER', 'Pemilik repo GitHub untuk .tourlgh'],
+  ['smtpUser', 'SMTP_USER', 'Email pengirim notif panel'],
+  ['smtpPass', 'SMTP_PASS', 'Password aplikasi email notif panel']
+];
+
+function applyEnvSecrets(g = global) {
+  for (const [key, name] of EXTERNAL_KEYS) {
+    const v = env(name);
+    if (v !== undefined) g[key] = v;
+    else if (g[key] === undefined) g[key] = '';
+  }
+  // global.api (format Lena) mengikuti nilai terbaru
+  g.api = { ...(g.api || {}), xterm: { url: g.termai, key: g.apitermai }, alip: { url: g.apialip, key: g.apikeyalip } };
+  return g;
+}
+
 function settingsMap(g = global) {
+  applyEnvSecrets(g);
   return {
     bot: {
       projectName: 'YannAjahNew',
@@ -80,6 +124,27 @@ function settingsMap(g = global) {
     concurrency: { commandsPerUser: 2, globalCommands: 24 },
     retry: { sendMessage: 2 },
     timeout: { commandMs: 120000 },
+    // API selain APIZ2Z (fitur Lena v15). Key dari settingsbot.js/.env (lihat EXTERNAL_KEYS & DAFTAR-API.txt).
+    extapi: {
+      alip: { url: g.apialip || 'https://api.clutch.web.id', key: g.apikeyalip || '' },
+      botcahx: { url: g.btc || 'https://api.botcahx.eu.org', key: g.apibotcahx || '' },
+      termai: { url: g.termai || 'https://api.termai.cc', key: g.apitermai || '' },
+      dongtube: { url: g.dongtubeapi || 'https://api.dongtube.id', key: g.apikeydongtube || '' },
+      theresav: { url: g.Theresav || 'https://api.theresav.eu', key: g.TheresaApi || '' },
+      siputzx: g.apisiputzx || 'https://api.siputzx.my.id',
+      nexray: g.apinexray || 'https://api.nexray.eu.cc',
+      taka: g.apitaka || 'https://api.taka.my.id',
+      faa: g.apifaa || 'https://api-faa.my.id',
+      nekorinn: g.apinekorinn || 'https://api.nekorinn.my.id',
+      github: { token: g.githubUploadToken || '', owner: g.githubUploadOwner || '', repos: g.githubUploadRepos || ['dat1', 'dat2', 'dat3', 'dat4'] }
+    },
+    panel: {
+      domain: g.domain && g.domain !== 'https://' ? g.domain : '',
+      appKey: g.apikey && g.apikey !== '-' ? g.apikey : '',
+      clientKey: g.capikey && g.capikey !== '-' ? g.capikey : '',
+      egg: g.egg || '', nest: g.nestid || '', location: g.loc || '',
+      smtp: { user: g.smtpUser || '', pass: g.smtpPass || '' }
+    },
     harga: g.harga,
     sewa: g.sewa,
     links: { owner: g.linkOwner, group: g.linkGrup, channel: g.linkSaluran, channelId: g.idSaluran, channelName: g.namaSaluran },
@@ -96,4 +161,4 @@ function settingsMap(g = global) {
   };
 }
 
-module.exports = { settingsMap };
+module.exports = { settingsMap, applyEnvSecrets, EXTERNAL_KEYS };

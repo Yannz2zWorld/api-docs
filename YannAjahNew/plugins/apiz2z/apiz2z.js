@@ -77,8 +77,23 @@ const V15_ALIASES = {
   '/api/maker/emojimix': ['mixemoji'], '/api/maker/emojitogif': ['emojigif'], '/api/games/tebak-karakter-ff': ['tebakff'], '/api/stalk/freefire': ['cekff'],
   '/api/random/anime-quote': ['qanime', 'animequotes', 'randomquotenime'], '/api/random/waifu': ['randomwaifu'], '/api/random/meme': ['randommeme'],
   '/api/download/threads': ['threadsdown'], '/api/stalk/tiktok': ['stalktiktok'], '/api/download/spotify': ['spdown'], '/api/ai/chatgpt': ['gpt5plus', 'gptonline', 'duckai', 'yannai', 'yannaimd'],
-  '/api/download/aio': ['yannaidl', 'yanndl']
+  '/api/download/aio': ['yannaidl', 'yanndl', 'lenadl', 'alipdl']
 };
+// Nama command Lena AI v15 yang fungsinya sama dengan endpoint APIZ2Z (lihat docs/LENA-MIGRATION.md).
+// DIGABUNG (append) ke V15_ALIASES di bawah — jangan pakai key duplikat di objek literal (bisa menimpa alias lama).
+const LENA_ALIASES = {
+  '/api/random/fakta': ['tahukahkamu'], '/api/tools/countryinfo': ['country'], '/api/info/gempa': ['bmkg'],
+  '/api/download/threads': ['th'], '/api/stalk/freefire': ['freestalk'], '/api/maker/brathd': ['bratgambarhd'],
+  '/api/maker/brat': ['bratgambar'], '/api/maker/emojimix': ['emojix'], '/api/maker/smeme': ['stikermeme'],
+  '/api/primbon/zodiac': ['bintang'], '/api/ai/nano-banana': ['lenaedit', 'alipedit']
+};
+// Endpoint yang tidak boleh dipakai semua orang (default 'user').
+const PERMISSION = { '/api/premium/alightmotion-send-prem': 'premium', '/api/premium/alightmotion-verify': 'premium' };
+NAMES['/api/ai/gambar'] = ['aigambar', ['gambarai', 'geminigambar']];
+NAMES['/api/premium/alightmotion-send-prem'] = ['amprem', ['alightprem', 'amsend']];
+NAMES['/api/premium/alightmotion-verify'] = ['amverify', ['alightverify', 'amcek']];
+// Gabung alias Lena ke V15_ALIASES tanpa menimpa alias lama (append array).
+for (const [p, list] of Object.entries(LENA_ALIASES)) V15_ALIASES[p] = [...(V15_ALIASES[p] || []), ...list];
 
 // Kata kategori di path yang dibuang saat membuat nama otomatis.
 const GENERIC = new Set(['download', 'search', 'ai', 'tools', 'maker', 'canvas', 'stalk', 'news', 'games', 'game', 'random', 'info', 'primbon', 'textpro', 'islamic', 'fun', 'image', 'imgedit', 'ephoto', 'check', 'analyze', 'comments', 'apk', 'detail', 'top', 'audio', 'lk21', 'manga']);
@@ -151,6 +166,7 @@ function build(registry) {
         usage: usageOf(ep),
         params: ep.params.map(p => ({ name: p.name, required: p.required, file: Boolean(p.file), options: p.options })),
         dependencies: { apiz2z: ep.path },
+        permission: PERMISSION[ep.path] || 'user',
         limit: 1, cooldown: 5,
         endpoint: ep,
         async run(ctx) {

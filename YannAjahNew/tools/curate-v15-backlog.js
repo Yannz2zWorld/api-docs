@@ -35,9 +35,14 @@ const DISABLE = {
   'menu-nsfw': R.sexual, 'menu-panel': R.panel, 'menu-asupan': R.realPeople, 'menu-cecan': R.realPeople,
   configurewings: R.panel, startwings: R.panel, cadp: R.panel, createadp: R.panel, delpanel: R.panel, deletepanel: R.panel,
   delsrv: R.panel, deluser: R.panel, listpanel: R.panel, listuser: R.panel, mypanel: R.panel, notif: R.panel, renew: R.panel, renewserver: R.panel, unli: R.panel,
-  cogan: R.realPeople, randomcecan: R.realPeople, randomcogan: R.realPeople
+  cogan: R.realPeople, randomcecan: R.realPeople, randomcogan: R.realPeople,
+  tebakjorok: R.sexual, jpm2: R.spam, swgc_process: R.spam, swgc_allprocess: R.spam,
+  suspend: R.panel, unsuspend: R.panel, cekserver: R.panel, detailsrv: R.panel, totalserver: R.panel,
+  listsrvoff: R.panel, clearoff: R.panel, delusr: R.panel, startsrv: R.panel, restartsrv: R.panel,
+  stopsrv: R.panel, reinstallsrv: R.panel, notifmode: R.panel, setsmtp: R.panel, ceksmtp: R.panel,
+  setpanel: R.panel, installpanel: R.panel, instalpanel: R.panel
 };
-const DISABLE_RE = [[/^(\d+gb)$/, R.panel], [/^cecan/, R.realPeople], [/^asupan/, R.realPeople], [/(enc|encrypt).*(custom|invis|siu|strong|ultra)|(custom|invis|siu|strong|ultra).*(enc|encrypt)|^(enc|encrypt)(custom|invis|siu|strong|ultra)|js(custom|invis|siu|strong|ultra)enc|^en?c(custom|invis|siu|strong|ultra)/, R.obf]];
+const DISABLE_RE = [[/^(\d+gb)$/, R.panel], [/^cecan/, R.realPeople], [/^asupan/, R.realPeople], [/^(read)?viewonce$|^rvo/, R.viewonce], [/(enc|encrypt).*(custom|invis|siu|strong|ultra)|(custom|invis|siu|strong|ultra).*(enc|encrypt)|^(enc|encrypt)(custom|invis|siu|strong|ultra)|js(custom|invis|siu|strong|ultra)enc|^en?c(custom|invis|siu|strong|ultra)|jsen$/, R.obf]];
 
 const data = JSON.parse(fs.readFileSync(FILE, 'utf8'));
 const notCmd = new Set(NOT_COMMANDS.names);

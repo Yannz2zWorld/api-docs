@@ -1,6 +1,6 @@
 YANNAJAH AI - DAFTAR API
 ========================
-Dibuat otomatis dari kode bot (node tools/api-list.js). Total command yang memakai API key: 574.
+Dibuat otomatis dari kode bot (node tools/api-list.js). Total command yang memakai API key: 580.
 
 
 1. APIZ2Z  (API UTAMA, PAKAI KEY)
@@ -10,17 +10,17 @@ Dibuat otomatis dari kode bot (node tools/api-list.js). Total command yang memak
               global.apikeyapiz2z = "isi_key_kamu"
             (atau file .env: APIZ2Z_API_KEY=isi_key_kamu, kalau diisi .env yang dipakai)
    Kalau kosong: bot tetap jalan, tapi command di bawah membalas "Fitur ini butuh API key APIZ2Z".
-   Command yang memakai APIZ2Z (574), per kategori:
+   Command yang memakai APIZ2Z (580), per kategori:
 
-   [ai] 64 command
-   ai, aigoogle, aigpt, aimention, asynt, autoai, bard, bible, blackbox, bypassai,
-   claude, claude2, copilot, copilot2, deepai, deepsearch, dracintts, epsilon, flux,
-   gandalf, gemini, geminitts, geminivision, gitagpt, gpt35turbo, hyperai, ideogram,
-   imagegen, islamic, kimi, lumin, magicstudio, mathgpt, monica, morphic, muslimai,
-   muslimai2, nanobanana, natalie, nsfwcheck, nsfwcheck2, overchat, pollinations,
-   powerbrain, powerbrain2, publicai, publicai2, qwen, screnapp, simi, sologo, story,
-   talefy, texttoimage, turboseek, unlimited, venice, vider, voice, webpilot, webpilot2,
-   writecream, writecreamimg, yannedit
+   [ai] 65 command
+   ai, aigambar, aigoogle, aigpt, aimention, asynt, autoai, bard, bible, blackbox,
+   bypassai, claude, claude2, copilot, copilot2, deepai, deepsearch, dracintts, epsilon,
+   flux, gandalf, gemini, geminitts, geminivision, gitagpt, gpt35turbo, hyperai,
+   ideogram, imagegen, islamic, kimi, lumin, magicstudio, mathgpt, monica, morphic,
+   muslimai, muslimai2, nanobanana, natalie, nsfwcheck, nsfwcheck2, overchat,
+   pollinations, powerbrain, powerbrain2, publicai, publicai2, qwen, screnapp, simi,
+   sologo, story, talefy, texttoimage, turboseek, unlimited, venice, vider, voice,
+   webpilot, webpilot2, writecream, writecreamimg, yannedit
 
    [anime] 60 command
    akiyama, ana, animeakira, animeanichindetail, animeanichinlatest, animeanichinsearch,
@@ -60,19 +60,19 @@ Dibuat otomatis dari kode bot (node tools/api-list.js). Total command yang memak
    [games] 35 command
    asahotak2, bluearchive, ccsd, gamesasahotak, gamescaklontong, gamesfamily100,
    gamesislamic, gameslengkapikalimat, gamesmathquiz, gamessusunkata, gamestebakbendera,
-   gamestebakgambar, gamestebakgame, gamestebakhewan, gamestebakkata, gamestebaklagu,
-   gamestebaklirik, gamestebaklogo, siapadia, siapadia2, susunkata2, tebakheroml,
-   tebakkabupaten, tebakkalimat, tebakkarakterff, tebakkartun, tebakkimia, tebakkimia2,
+   gamestebakgambar, gamestebakgame, gamestebakhewan, gamestebakkalimat, gamestebakkata,
+   gamestebaklagu, gamestebaklirik, gamestebaklogo, siapadia, siapadia2, susunkata2,
+   tebakheroml, tebakkabupaten, tebakkarakterff, tebakkartun, tebakkimia, tebakkimia2,
    tebaklirik2, tebaksiapa, tebaktebakan, tebaktebakan2, tebakwarna, tekateki, tekateki2
 
    [group] 1 command
    autosholat
 
-   [image] 32 command
+   [image] 34 command
    ghibli, hapusobjek, hijabpin, imageascii, imageascii2, imgeditpixelate, jadidisney,
-   jadigta, jadipixar, lumiart, polaroid, sketch, to2d, toanime, tobotak, tochibi,
-   todino, todonghua, tofigure, tofootball, tojawa, tokartun, tomanga, tomanhwa,
-   tomirror, tomoai, tomountain, topunk, toroblox, tosad, tosatan, tosunda
+   jadigta, jadipixar, lumiart, polaroid, sdm, sharkstudio, sketch, to2d, toanime,
+   tobotak, tochibi, todino, todonghua, tofigure, tofootball, tojawa, tokartun, tomanga,
+   tomanhwa, tomirror, tomoai, tomountain, topunk, toroblox, tosad, tosatan, tosunda
 
    [info] 14 command
    cuaca, cuacav2, gempa, gempa2, growagarden, growagarden2, harilibur, harilibur2,
@@ -97,8 +97,11 @@ Dibuat otomatis dari kode bot (node tools/api-list.js). Total command yang memak
    antara, antara2, cnbc, cnbc2, cnn, cnn2, detik, ffnews, jkt48, kompas, kompas2,
    liputan6, merdeka, mlbb, okezone, sindonews, sindonews2, suara, tribun
 
-   [owner] 1 command
-   ptvch
+   [owner] 2 command
+   playch, ptvch
+
+   [premium] 2 command
+   amprem, amverify
 
    [primbon] 19 command
    artinama, artinama2, cocokpasangan, cocokpasangan2, nomorhoki, nomorhoki2, penyakit,
@@ -143,16 +146,40 @@ Dibuat otomatis dari kode bot (node tools/api-list.js). Total command yang memak
    youtubesummarize2, ytsummarizer, yttranscribe
 
 
-2. API TANPA KEY (sudah jalan, tidak perlu diisi)
+2. API SELAIN APIZ2Z YANG DIPAKAI FITUR (dari kode bot)
+   Command Lena AI v15 yang butuh endpoint non-APIZ2Z. Semua request lewat library/net (anti-SSRF).
+   [alip] copilotvoice
+   [botcahx] tvstiker
+   [faa] airealtime, ttsbrando
+   [github-raw] sad, sound
+   [jsdelivr] emojiwa
+   [nekorinn] bratgambar3
+   [roblox] toproblox
+   [siputzx] tebakjkt
+   [t2v] aivideo
+   [taka] nglgenerator, pakustad
+   [termai] logicbell
+   [webtonative] web2apk
+   [zroo] zrooart
+
+   Yang BUTUH key (kalau kosong fitur tetap ada tapi minta owner isi key di .env):
+   ALIP_API_KEY  -> copilotvoice
+   BOTCAHX_API_KEY  -> tvstiker
+   TERMAI_API_KEY  -> logicbell
+
+
+3. API TANPA KEY (sudah jalan, tidak perlu diisi)
    https://catbox.moe        upload file      (.tourl, .catbox)
    https://uguu.se           upload file      (.tourl cadangan, .uguu)
+   https://qu.ax             upload file      (.quax / .qu)
+   https://top4top.io        upload file      (.top4top)
    https://api.jikan.moe     info anime       (.charinfo / .searchchar)
    https://pastebin.com      ambil teks       (.pastebin)
    WhatsApp                  koneksi bot (Baileys)
    Web database YannAjah     login bot, ban, maintenance (alamat tertanam di yannajah.js)
 
 
-3. API LAMA DARI YANN AI V15 (ADA DI settingsbot.js, BELUM DIPAKAI FITUR MANA PUN)
+4. API LAMA DARI YANN AI V15 (ADA DI settingsbot.js, BELUM DIPAKAI FITUR MANA PUN)
    Variabelnya tetap ada di settingsbot.js di tempat aslinya, key-nya dikosongkan.
    Kalau kamu isi, bilang ke saya fitur mana yang mau memakainya, nanti saya sambungkan.
 
@@ -171,6 +198,6 @@ Dibuat otomatis dari kode bot (node tools/api-list.js). Total command yang memak
    global.egg / nestid / loc / domain / apikey / capikey   panel Pterodactyl   ya (ptla/ptlc)
 
 
-4. YANG TIDAK PAKAI API (LOKAL)
+5. YANG TIDAK PAKAI API (LOKAL)
    Game, efek teks, sertifikat, stiker, efek audio/video (ffmpeg), edit gambar lokal, menu, grup,
    owner, toko/list, ekonomi, ramalan, dll. Tidak butuh key apa pun.

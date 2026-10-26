@@ -30,7 +30,7 @@ function autoAiFeature(kind) {
   const key = kind === 'autoai' ? 'autoAi' : 'aiMention';
   const label = kind === 'autoai' ? 'Auto AI (semua pesan dibalas AI)' : 'AI saat bot di-tag/di-reply';
   return feature({
-    id: `ai.${kind}`, name: kind, category: 'ai', description: `${label}: .${kind} on/off (di grup: admin)`, usage: 'on/off', cooldown: 2,
+    id: `ai.${kind}`, name: kind, aliases: kind === 'aimention' ? ['amai'] : [], category: 'ai', description: `${label}: .${kind} on/off (di grup: admin)`, usage: 'on/off', cooldown: 2,
     dependencies: { apiz2z: '/api/ai/chatgpt' },
     async run(ctx) {
       if (ctx.m.isGroup && !ctx.isAdmin && !ctx.isOwner) return ctx.reply(ctx.config.mess.admin || 'Khusus admin grup.');

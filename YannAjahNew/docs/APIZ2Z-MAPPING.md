@@ -2,7 +2,7 @@
 
 > Dibuat otomatis oleh `npm run features:report` dari `library/catalog/apiz2z-endpoints.json`. Semua endpoint di bawah diverifikasi dari source platform (bukan karangan). Kolom Uji = hasil uji mock terakhir (bukan uji live).
 
-Total: 484 command.
+Total: 487 command.
 
 | Endpoint | Command | Alias | Kategori | Parameter (* wajib) | Uji |
 |---|---|---|---|---|---|
@@ -21,6 +21,7 @@ Total: 484 command.
 | `/api/ai/dracin-tts` | .dracintts |  | ai | text*, speed, volume, music | 1/1 mock |
 | `/api/ai/epsilon` | .epsilon |  | ai | text* | 1/1 mock |
 | `/api/ai/flux` | .flux | txt2img | ai | prompt* | 1/1 mock |
+| `/api/ai/gambar` | .aigambar | gambarai, geminigambar | ai | prompt* | 1/1 mock |
 | `/api/ai/gandalf` | .gandalf |  | ai | q* | 1/1 mock |
 | `/api/ai/gemini` | .gemini | bard2 | ai | prompt*, chatId | 1/1 mock |
 | `/api/ai/gemini-tts` | .geminitts |  | ai | text* | 1/1 mock |
@@ -41,7 +42,7 @@ Total: 484 command.
 | `/api/ai/morphic` | .morphic |  | ai | text* | 1/1 mock |
 | `/api/ai/muslimai` | .muslimai |  | ai | query*, chatId | 1/1 mock |
 | `/api/ai/muslimai-v2` | .muslimai2 |  | ai | query* | 1/1 mock |
-| `/api/ai/nano-banana` | .nanobanana | banana, editai, editimg, aiedit, photoai | ai | image_url*, prompt*, mode | 1/1 mock |
+| `/api/ai/nano-banana` | .nanobanana | banana, editai, editimg, aiedit, photoai, yannaiedit, lenaedit, alipedit | ai | image_url*, prompt*, mode | 1/1 mock |
 | `/api/ai/natalie` | .natalie |  | ai | text* | 1/1 mock |
 | `/api/ai/nsfw-check` | .nsfwcheck |  | ai | url* | 1/1 mock |
 | `/api/ai/nsfw-check-v2` | .nsfwcheck2 |  | ai | url* | 1/1 mock |
@@ -123,7 +124,7 @@ Total: 484 command.
 | `/api/detail/iqiyi` | .iqiyi |  | downloader | slug* | 1/1 mock |
 | `/api/detail/mcpedl` | .mcpedl |  | search | slug* | 1/1 mock |
 | `/api/douyin/hot` | .douyinhot |  | search |  | 1/1 mock |
-| `/api/download/aio` | .aio | allinone, downloadall | downloader | url* | 1/1 mock |
+| `/api/download/aio` | .aio | allinone, downloadall, yannaidl, yanndl, lenadl, alipdl | downloader | url* | 1/1 mock |
 | `/api/download/aio-v2` | .aio2 |  | downloader | url* | 1/1 mock |
 | `/api/download/applemusic` | .applemusicdl |  | downloader | url* | 1/1 mock |
 | `/api/download/bilibili` | .bilibili |  | downloader | url*, quality | 1/1 mock |
@@ -163,7 +164,7 @@ Total: 484 command.
 | `/api/download/telestick` | .telestick | stele, stickertele, telesticker | downloader | url* | 1/1 mock |
 | `/api/download/telestick-v2` | .telestick2 |  | downloader | url* | 1/1 mock |
 | `/api/download/terabox` | .terabox |  | downloader | url* | 1/1 mock |
-| `/api/download/threads` | .threads | threadsdl, threadsdown | downloader | url* | 1/1 mock |
+| `/api/download/threads` | .threads | threadsdl, threadsdown, th | downloader | url* | 1/1 mock |
 | `/api/download/tiktok` | .tiktok | tt, ttdl, tiktokdl | downloader | url* | 1/1 mock |
 | `/api/download/tiktok-v2` | .tiktok2 |  | downloader | url* | 1/1 mock |
 | `/api/download/tiktok-v3` | .tiktok3 |  | downloader | url* | 1/1 mock |
@@ -199,7 +200,7 @@ Total: 484 command.
 | `/api/games/susunkata-v2` | .susunkata2 |  | games |  | 1/1 mock |
 | `/api/games/tebak-hewan` | .gamestebakhewan |  | games |  | 1/1 mock |
 | `/api/games/tebak-kabupaten` | .tebakkabupaten |  | games |  | 1/1 mock |
-| `/api/games/tebak-kalimat` | .tebakkalimat |  | games |  | 1/1 mock |
+| `/api/games/tebak-kalimat` | .gamestebakkalimat |  | games |  | 1/1 mock |
 | `/api/games/tebak-karakter-ff` | .tebakkarakterff | tebakff | games |  | 1/1 mock |
 | `/api/games/tebak-kartun` | .tebakkartun |  | games |  | 1/1 mock |
 | `/api/games/tebak-kimia` | .tebakkimia |  | games |  | 1/1 mock |
@@ -225,7 +226,7 @@ Total: 484 command.
 | `/api/info/bilibili` | .infobilibili |  | info | url* | 1/1 mock |
 | `/api/info/cuaca/v1` | .cuaca | cekcuaca | info | area | 1/1 mock |
 | `/api/info/cuaca/v2` | .cuacav2 |  | info | kota*, days | 1/1 mock |
-| `/api/info/gempa` | .gempa | infogempa, cekgempa | info | type | 1/1 mock |
+| `/api/info/gempa` | .gempa | infogempa, cekgempa, bmkg | info | type | 1/1 mock |
 | `/api/info/gempa-v2` | .gempa2 |  | info |  | 1/1 mock |
 | `/api/info/grow-a-garden` | .growagarden |  | info |  | 1/1 mock |
 | `/api/info/grow-a-garden-v2` | .growagarden2 |  | info |  | 1/1 mock |
@@ -250,16 +251,16 @@ Total: 484 command.
 | `/api/maker/balogo` | .balogo |  | maker | text* | 1/1 mock |
 | `/api/maker/bananaai` | .bananaai |  | maker | url*, prompt* | 1/1 mock |
 | `/api/maker/bananagen` | .bananagen |  | maker | prompt*, model | 1/1 mock |
-| `/api/maker/brat` | .brat | bratbiasa, bratt | maker | text* | 1/1 mock |
+| `/api/maker/brat` | .brat | bratbiasa, bratt, bratgambar | maker | text* | 1/1 mock |
 | `/api/maker/brat-v2` | .brat2 |  | maker | text* | 1/1 mock |
 | `/api/maker/bratanime` | .bratanime | bratgura | maker | text* | 1/1 mock |
-| `/api/maker/brathd` | .brathd | bratbiasahd | maker | text* | 1/1 mock |
+| `/api/maker/brathd` | .brathd | bratbiasahd, bratgambarhd | maker | text* | 1/1 mock |
 | `/api/maker/bratvid` | .bratvid | bratvideo | maker | text*, format | 1/1 mock |
 | `/api/maker/bratvid-v2` | .bratvid2 |  | maker | text* | 1/1 mock |
 | `/api/maker/bratvidhd` | .bratvidhd |  | maker | text* | 1/1 mock |
 | `/api/maker/carbon` | .carbon | carbonify | maker | code*, lang | 1/1 mock |
 | `/api/maker/carbon-v2` | .carbon2 |  | maker | code* | 1/1 mock |
-| `/api/maker/emojimix` | .emojimix | mixemoji | maker | emoji1*, emoji2* | 1/1 mock |
+| `/api/maker/emojimix` | .emojimix | mixemoji, emojix | maker | emoji1*, emoji2* | 1/1 mock |
 | `/api/maker/emojitogif` | .emojitogif | emojigif | maker | emoji* | 1/1 mock |
 | `/api/maker/emojitogif-v2` | .emojitogif2 |  | maker | emoji* | 1/1 mock |
 | `/api/maker/fakecall` | .fakecall |  | maker | name*, time*, photo* | 1/1 mock |
@@ -271,7 +272,7 @@ Total: 484 command.
 | `/api/maker/quoted` | .quoted |  | maker | username*, text*, profile, bg | 1/1 mock |
 | `/api/maker/remini` | .remini |  | maker | url* | 1/1 mock |
 | `/api/maker/remini-v2` | .remini2 |  | maker | url* | 1/1 mock |
-| `/api/maker/smeme` | .smeme | stickermeme | maker | text_atas*, text_bawah*, background* | 1/1 mock |
+| `/api/maker/smeme` | .smeme | stickermeme, stikermeme | maker | text_atas*, text_bawah*, background* | 1/1 mock |
 | `/api/maker/ttp` | .ttp |  | maker | text* | 1/1 mock |
 | `/api/maker/ttp-v2` | .ttp2 |  | maker | text* | 1/1 mock |
 | `/api/maker/wasted` | .wasted |  | maker | url* | 1/1 mock |
@@ -296,6 +297,8 @@ Total: 484 command.
 | `/api/news/suara` | .suara |  | news |  | 1/1 mock |
 | `/api/news/tribun` | .tribun |  | news |  | 1/1 mock |
 | `/api/pixiv/detail` | .pixivdetail |  | search | id* | 1/1 mock |
+| `/api/premium/alightmotion-send-prem` | .amprem | alightprem, amsend | premium | email* | 1/1 mock |
+| `/api/premium/alightmotion-verify` | .amverify | alightverify, amcek | premium | email*, link*, orderid | 1/1 mock |
 | `/api/primbon/artinama` | .artinama | arti-nama | primbon | nama* | 1/1 mock |
 | `/api/primbon/artinama-v2` | .artinama2 |  | primbon | nama* | 1/1 mock |
 | `/api/primbon/cocokpasangan` | .cocokpasangan | kecocokanpasangan, kecocokannama, namacocok, cocoknama | primbon | nama1*, nama2* | 1/1 mock |
@@ -313,7 +316,7 @@ Total: 484 command.
 | `/api/primbon/sifat-usaha` | .sifatusaha |  | primbon | tanggal* | 1/1 mock |
 | `/api/primbon/sifat-usaha-v2` | .sifatusaha2 |  | primbon | tanggal*, bulan*, tahun* | 1/1 mock |
 | `/api/primbon/tafsir-mimpi` | .tafsirmimpi | mimpi | primbon | mimpi* | 1/1 mock |
-| `/api/primbon/zodiac` | .zodiak | zodiac, ramalanzodiak | primbon | tanggal* | 1/1 mock |
+| `/api/primbon/zodiac` | .zodiak | zodiac, ramalanzodiak, bintang | primbon | tanggal* | 1/1 mock |
 | `/api/primbon/zodiac-v2` | .zodiac2 |  | primbon | zodiak* | 1/1 mock |
 | `/api/random/anime` | .anime |  | random | type* | 1/1 mock |
 | `/api/random/anime-quote` | .animequote | quotesanime, qanime, animequotes, randomquotenime | random |  | 1/1 mock |
@@ -321,7 +324,7 @@ Total: 484 command.
 | `/api/random/ba` | .ba |  | random |  | 1/1 mock |
 | `/api/random/cerpen` | .cerpen |  | random |  | 1/1 mock |
 | `/api/random/dare` | .dare |  | random |  | 1/1 mock |
-| `/api/random/fakta` | .fakta | faktaunik | random |  | 1/1 mock |
+| `/api/random/fakta` | .fakta | faktaunik, tahukahkamu | random |  | 1/1 mock |
 | `/api/random/kata-motivasi` | .katamotivasi |  | random |  | 1/1 mock |
 | `/api/random/kucing` | .kucing |  | random |  | 1/1 mock |
 | `/api/random/meme` | .meme | randommeme | random |  | 1/1 mock |
@@ -390,7 +393,7 @@ Total: 484 command.
 | `/api/search/youtube` | .yts | ytsearch | search | q* | 1/1 mock |
 | `/api/search/youtube-v2` | .searchyoutube2 |  | search | q* | 1/1 mock |
 | `/api/stalk/facebook` | .stalkfacebook |  | stalk | username* | 1/1 mock |
-| `/api/stalk/freefire` | .ffstalk | stalkff, cekff | stalk | id* | 1/1 mock |
+| `/api/stalk/freefire` | .ffstalk | stalkff, cekff, freestalk | stalk | id* | 1/1 mock |
 | `/api/stalk/genshin` | .genshin |  | stalk | uid* | 1/1 mock |
 | `/api/stalk/genshin-v2` | .genshin2 |  | stalk | uid* | 1/1 mock |
 | `/api/stalk/github` | .githubstalk | stalkgithub | stalk | username* | 1/1 mock |
@@ -435,7 +438,7 @@ Total: 484 command.
 | `/api/tools/compress` | .compress | kompres | tools | url, quality | 1/1 mock |
 | `/api/tools/convert` | .convert |  | tools | url, format | 1/1 mock |
 | `/api/tools/convert-v2` | .convert2 |  | tools | url*, format | 1/1 mock |
-| `/api/tools/countryinfo` | .countryinfo | infonegara | tools | name* | 1/1 mock |
+| `/api/tools/countryinfo` | .countryinfo | infonegara, country | tools | name* | 1/1 mock |
 | `/api/tools/currency` | .kurs | currency | tools | amount, from, to | 1/1 mock |
 | `/api/tools/dewatermark` | .dewatermark | hapuswm, removewm, hapuswatermark, removewatermark | tools | url* | 1/1 mock |
 | `/api/tools/dns` | .dns |  | tools | domain*, type | 1/1 mock |

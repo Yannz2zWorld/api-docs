@@ -39,13 +39,17 @@ after(() => {
 // fitur -> [fixture, mime fixture, args, regex mime hasil]
 function plan(f) {
   if (f.source !== 'internal' || f.dependencies?.apiz2z) return null;   // butuh APIZ2Z: diuji di apiz2z.test.js
-  if (f.category === 'image') { const extra = { resize: ['60'], mirror: ['kiri'], crop: ['1:1'], rotate: ['90'] }; return f.name === 'imageinfo' ? ['image', 'image/png', [], null] : ['image', 'image/png', extra[f.name] || [], /^image\/png$/]; }
+  if (f.dependencies?.apis) return null;   // butuh API/host eksternal (mis. .sound, .sad), bukan ffmpeg lokal
+  if (f.category === 'image') { if (f.name === 'batalkostum') return null; const extra = { resize: ['60'], mirror: ['kiri'], crop: ['1:1'], rotate: ['90'] }; return f.name === 'imageinfo' ? ['image', 'image/png', [], null] : ['image', 'image/png', extra[f.name] || [], /^image\/png$/]; }
   if (f.category === 'sticker') {
     if (f.name === 'sticker') return ['image', 'image/png', [], /^image\/webp$/];
     if (f.name === 'take') return ['webp', 'image/webp', ['Pack', '|', 'Me'], /^image\/webp$/];
     return ['webp', 'image/webp', [], null];
   }
   if (f.category === 'media') {
+    if (f.name === 'tempo') return ['audio', 'audio/mpeg', ['1.25'], /^audio\/mpeg$/];
+    if (f.name === 'hdvideo') return ['video', 'video/mp4', [], /^video\/mp4$/];
+    if (f.name === 'img2video') return ['image', 'image/png', [], /^video\/mp4$/];
     if (f.name === 'toimg') return ['webp', 'image/webp', [], /^image\/png$/];
     if (f.name === 'tovideo') return ['video', 'video/mp4', [], /^video\/mp4$/];
     if (f.name === 'togif') return ['video', 'video/mp4', [], /^video\/mp4$/];
