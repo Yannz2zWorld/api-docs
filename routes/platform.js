@@ -234,6 +234,43 @@ router.post('/cdn/server/finish', serverToken, async (req, res) => {
   catch (e) { return cdnFail(res, e); }
 });
 
+// ---------------------------------------------------------------- CDN uploads from WhatsApp bots (permanent)
+// Server to server, no login: "Authorization: Bearer <CDN_BOT_TOKEN>" (at least 32 characters, set in the
+// site's env, and baked into the bot's obfuscated index.js). Unlike /cdn/server/* these files never expire
+// (ttlHours: 0). Each upload may pass ?bot=<number> which is logged so abuse can be traced, and the token
+// can be rotated to cut every bot off at once. Files belong to no account; served like any /cdn/<id> link.
+//   <= 4 MB: POST /cdn/bot/upload?name=<file>&bot=<number> with the raw file as body
+//   larger : POST /cdn/bot/start {name,type,size,bot} -> PUT the file to upload.url -> POST /cdn/bot/finish {id}
+function botToken(req, res, next) {
+  const want = String(process.env.CDN_BOT_TOKEN || '');
+  if (want.length < 32) return fail(res, 503, 'CDN_BOT_DISABLED', 'Upload dari bot belum aktif: isi CDN_BOT_TOKEN (minimal 32 karakter) di environment.');
+  const given = Buffer.from(String(req.get('authorization') || '')), expected = Buffer.from(`Bearer ${want}`);
+  if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) return fail(res, 401, 'UNAUTHORIZED', 'Token upload salah.');
+  next();
+}
+const botTag = req => { const b = String(req.query.bot || req.body?.bot || '').replace(/[^0-9]/g, '').slice(0, 20); if (b) console.log('CDN bot upload:', b); return b || null; };
+router.post('/cdn/bot/upload', botToken, async (req, res) => {
+  const buf = Buffer.isBuffer(req.body) && req.body.length ? req.body : null;
+  if (!buf) return fail(res, 400, 'NO_FILE', 'File-nya kosong.');
+  botTag(req);
+  try {
+    const saved = await cdn.store({ buffer: buf, name: typeof req.query.name === 'string' ? req.query.name : null, type: req.get('content-type'), ownerId: null, ttlHours: 0 });
+    return res.json(resultJson(req, saved));
+  } catch (e) { return cdnFail(res, e); }
+});
+router.post('/cdn/bot/start', botToken, async (req, res) => {
+  const b = req.body || {};
+  botTag(req);
+  try {
+    const started = await cdn.startLarge({ name: typeof b.name === 'string' ? b.name : null, type: typeof b.type === 'string' ? b.type : null, size: b.size, ownerId: null, isOwner: true, ttlHours: 0 });
+    return res.json({ success: true, id: started.id, upload: started.upload });
+  } catch (e) { return cdnFail(res, e); }
+});
+router.post('/cdn/bot/finish', botToken, async (req, res) => {
+  try { return res.json(resultJson(req, await cdn.finishLarge({ id: String(req.body?.id || ''), ownerId: null }))); }
+  catch (e) { return cdnFail(res, e); }
+});
+
 // ---------------------------------------------------------------- last opened endpoints (dashboard)
 // The endpoints this account called most recently (Sandbox, Playground or its API keys), newest
 // first, from activity_log (migration 009). Endpoints since removed from the registry are skipped.
