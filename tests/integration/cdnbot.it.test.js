@@ -37,3 +37,17 @@ it('with the token the file is stored permanently and served at its /cdn link', 
 it('an empty body is refused', async () => {
   assert.equal((await up(Buffer.alloc(0), `Bearer ${TOKEN}`)).status, 400);
 });
+
+it('keeps working while the site is in maintenance (the token is the check)', async () => {
+  await h.db().query("UPDATE server_settings SET maintenance_enabled=true, maintenance_message='Lagi maintenance' WHERE id=1");
+  await new Promise(r => setTimeout(r, 5200));   // maintenance state is cached for 5 s
+  try {
+    assert.equal((await up(Buffer.from('x'))).status, 401, 'no token is still refused');
+    const r = await up(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]), `Bearer ${TOKEN}`);
+    assert.equal(r.status, 200, r.text);
+    const site = await app.request('GET', '/api/endpoints', { headers: { accept: 'application/json' } });
+    assert.equal(site.status, 503, 'the rest of the site is still in maintenance');
+  } finally {
+    await h.db().query('UPDATE server_settings SET maintenance_enabled=false WHERE id=1');
+  }
+});

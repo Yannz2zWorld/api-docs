@@ -326,7 +326,8 @@ app.locals.maintenance = maintenance;
 // While on, every page and endpoint answers 503 with the maintenance notice, except for the
 // owner (OWNER_EMAIL) and what the owner needs to sign in. Sign-in itself is checked again in
 // each handler (password routes by the email given, Google after the token is verified), so
-// calling an endpoint directly cannot get around it.
+// calling an endpoint directly cannot get around it. Token-authorised server uploads (/cdn/bot/*, /cdn/server/*:
+// the owner's WhatsApp bots and other servers) keep working; their tokens are checked in routes/platform.js.
 const MAINTENANCE_OPEN = new Set(['/health', '/health/database', '/api/logo-proxy', '/api/set', '/auth/config', '/auth/announce', '/auth/me', '/auth/logout', '/owner-login', '/developer-login', '/auth/google', '/auth/google/callback', '/auth/google/credential', '/favicon.ico']);
 const MAINTENANCE_SIGN_IN = new Set(['/auth/login', '/auth/register', '/auth/email/verify', '/auth/email/resend', '/auth/password/forgot', '/auth/password/reset']);
 const SITE_PAGES = new Set(['/', '/home', '/keys', '/billing', '/pricing', '/profile', '/upload', '/custom-ui', '/owner', '/api', '/api/playground', '/3d', '/scythe', '/usage']);
@@ -349,7 +350,7 @@ function sendMaintenance(req, res, message, since) {
 }
 app.locals.sendMaintenance = sendMaintenance;
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/assets/') || req.path.startsWith('/views/') || req.path.startsWith('/webhooks/') || (req.method === 'GET' && req.path.startsWith('/cdn/')) || MAINTENANCE_OPEN.has(req.path)) return next();
+  if (req.path.startsWith('/assets/') || req.path.startsWith('/views/') || req.path.startsWith('/webhooks/') || (req.method === 'GET' && req.path.startsWith('/cdn/')) || req.path.startsWith('/cdn/bot/') || req.path.startsWith('/cdn/server/') || MAINTENANCE_OPEN.has(req.path)) return next();
   let m;
   try { m = await maintenance.state(); } catch { return next(); }
   if (!m.enabled) return next();
