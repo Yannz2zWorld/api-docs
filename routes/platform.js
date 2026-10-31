@@ -241,6 +241,19 @@ router.post('/cdn/server/finish', serverToken, async (req, res) => {
 // can be rotated to cut every bot off at once. Files belong to no account; served like any /cdn/<id> link.
 //   <= 4 MB: POST /cdn/bot/upload?name=<file>&bot=<number> with the raw file as body
 //   larger : POST /cdn/bot/start {name,type,size,bot} -> PUT the file to upload.url -> POST /cdn/bot/finish {id}
+// Every bot upload leaves one log line (status, bot number, size, error code) so failures can be read in the
+// Vercel runtime logs without the bot's console.
+function botLog(req, res, next) {
+  const started = Date.now();
+  const json = res.json.bind(res);
+  res.json = body => { res.locals.cdnBody = body; return json(body); };
+  res.on('finish', () => {
+    const b = res.locals.cdnBody || {};
+    console.log('CDN bot', req.path.split('/').pop(), JSON.stringify({ status: res.statusCode, bot: String(req.query.bot || req.body?.bot || '').replace(/[^0-9]/g, '').slice(0, 20) || null, bytes: Buffer.isBuffer(req.body) ? req.body.length : null, type: req.get('content-type') || null, error: b.error || null, ms: Date.now() - started }));
+  });
+  next();
+}
+router.use('/cdn/bot', botLog);
 function botToken(req, res, next) {
   const want = String(process.env.CDN_BOT_TOKEN || '');
   if (want.length < 32) return fail(res, 503, 'CDN_BOT_DISABLED', 'Upload dari bot belum aktif: isi CDN_BOT_TOKEN (minimal 32 karakter) di environment.');
@@ -248,11 +261,9 @@ function botToken(req, res, next) {
   if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) return fail(res, 401, 'UNAUTHORIZED', 'Token upload salah.');
   next();
 }
-const botTag = req => { const b = String(req.query.bot || req.body?.bot || '').replace(/[^0-9]/g, '').slice(0, 20); if (b) console.log('CDN bot upload:', b); return b || null; };
 router.post('/cdn/bot/upload', botToken, async (req, res) => {
   const buf = Buffer.isBuffer(req.body) && req.body.length ? req.body : null;
   if (!buf) return fail(res, 400, 'NO_FILE', 'File-nya kosong.');
-  botTag(req);
   try {
     const saved = await cdn.store({ buffer: buf, name: typeof req.query.name === 'string' ? req.query.name : null, type: req.get('content-type'), ownerId: null, ttlHours: 0 });
     return res.json(resultJson(req, saved));
@@ -260,7 +271,6 @@ router.post('/cdn/bot/upload', botToken, async (req, res) => {
 });
 router.post('/cdn/bot/start', botToken, async (req, res) => {
   const b = req.body || {};
-  botTag(req);
   try {
     const started = await cdn.startLarge({ name: typeof b.name === 'string' ? b.name : null, type: typeof b.type === 'string' ? b.type : null, size: b.size, ownerId: null, isOwner: true, ttlHours: 0 });
     return res.json({ success: true, id: started.id, upload: started.upload });
