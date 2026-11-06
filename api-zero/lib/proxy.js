@@ -10,7 +10,13 @@ const TIMEOUT_MS = Number(process.env.UPSTREAM_TIMEOUT_MS || 55000);
 const STREAM_TYPE = /^(image|video|audio)\/|^application\/(octet-stream|pdf|zip|vnd\.android|x-|ogg)/i;
 
 const fail = (res, status, error, message) => res.status(status).json({ status: false, creator: process.env.SITE_NAME || 'API Zero', error, message });
-const keyOf = p => (p.keyMode === 'none' ? 'none' : process.env[p.keyEnv]);
+const keyOf = p => (p.keyMode === 'none' ? 'none' : p.key || process.env[p.keyEnv]);
+// Endpoint buatan developer yang menunjuk ke URL bebas (server: 'custom').
+function providerOf(spec) {
+  if (spec.server !== 'custom') return PROVIDERS[spec.server];
+  const mode = spec.keyValue ? (spec.keyMode === 'header' ? 'header' : 'query') : 'none';
+  return { base: '', keyMode: mode, keyName: spec.keyParam || 'apikey', key: spec.keyValue || '', strip: PROVIDERS.nexray.strip };
+}
 const origin = req => (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
 
 function readParams(spec, input) {
@@ -34,7 +40,7 @@ function readParams(spec, input) {
 }
 
 async function callUpstream(spec, values, file) {
-  const provider = PROVIDERS[spec.server];
+  const provider = providerOf(spec);
   const key = keyOf(provider);
   const query = {};
   for (const [k, v] of Object.entries(values)) query[spec.rename?.[k] || k] = v;
@@ -45,7 +51,7 @@ async function callUpstream(spec, values, file) {
 
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
-  const url = provider.base.replace(/\/+$/, '') + spec.upstream;
+  const url = spec.server === 'custom' ? spec.url : provider.base.replace(/\/+$/, '') + spec.upstream;
   try {
     let r;
     if (spec.multipart) {
@@ -54,7 +60,7 @@ async function callUpstream(spec, values, file) {
       if (file) form.append(spec.file.field, new Blob([file.buf], { type: file.type }), file.name);
       r = await fetch(url, { method: 'POST', body: form, headers, signal: ctl.signal });
     } else {
-      r = await fetch(url + '?' + new URLSearchParams(query), { headers, signal: ctl.signal });
+      r = await fetch(url + (url.includes('?') ? '&' : '?') + new URLSearchParams(query), { headers, signal: ctl.signal });
     }
     return { r, done: () => clearTimeout(timer) };
   } catch (e) {
@@ -64,8 +70,8 @@ async function callUpstream(spec, values, file) {
 }
 
 async function handle(spec, req, res) {
-  const provider = PROVIDERS[spec.server];
-  if (!keyOf(provider)) return fail(res, 503, 'NOT_CONFIGURED', 'Endpoint ini belum aktif di server.');
+  const provider = providerOf(spec);
+  if (!provider || !keyOf(provider)) return fail(res, 503, 'NOT_CONFIGURED', 'Endpoint ini belum aktif di server.');
 
   const input = { ...(req.query || {}), ...(req.body && !Buffer.isBuffer(req.body) && typeof req.body === 'object' ? req.body : {}) };
   const fileParam = spec.file?.param;

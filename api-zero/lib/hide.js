@@ -12,7 +12,7 @@ const NAMES = /\b(dongtube|botcahx|theresav|nexray|api-faa|faa api)\b/gi;
 const SITE = () => process.env.SITE_NAME || 'API Zero';
 
 function secret() {
-  const base = process.env.APP_SECRET || ['api-zero', ...Object.values(PROVIDERS).map(p => (p.keyEnv && process.env[p.keyEnv]) || '')].join('|');
+  const base = process.env.APP_SECRET || process.env.AUTH_SECRET || ['api-zero', ...Object.values(PROVIDERS).map(p => (p.keyEnv && process.env[p.keyEnv]) || '')].join('|');
   return crypto.createHash('sha256').update(base).digest();
 }
 const isProviderHost = host => DOMAINS.some(d => host === d || host.endsWith('.' + d));

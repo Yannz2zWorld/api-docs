@@ -1,91 +1,93 @@
 # API Zero
 
-REST API gateway dengan UI kartun. Semua fitur dipanggil lewat satu format:
+REST API platform dengan UI kartun (tanpa 3D). Semua fitur dipanggil lewat satu format:
 
 ```
-https://api-zero.web.id/api/(path)/(fitur)?param=...
+https://api-zero.web.id/api/(path)/(fitur)?apikey=KEY_KAMU&param=...
 ```
 
-Contoh: `/api/download/tiktok-v3?url=...`, `/api/ai/gpt?text=halo`, `/api/maker/attp?text=halo`
+## Halaman
 
-- **456 endpoint** dalam 21 kategori (AI, Downloader, Maker, Canvas, Tools, Search, …)
-- **Provider asli disembunyikan**: alamat, nama, dan key provider hanya ada di server. Field
-  branding (`creator`, `author`, `channel`, …) dibuang, dan link file dari provider diganti jadi
-  `/api/media/<token>` di domain sendiri (token terenkripsi AES-256-GCM).
-- **Respons**: JSON, gambar, video, audio, file — media di-stream langsung (support Range / seek).
-- **UI**: cari fitur, filter kategori, form parameter, tombol "Coba sekarang", preview respons
-  (JSON berwarna, gambar, video, audio, URL media di dalam JSON), tombol salin di mana-mana.
-- **Contoh kode**: cURL, JavaScript (fetch), Node.js (axios), Python, PHP, Go, Ruby, Java, Dart.
+| Halaman | Isi |
+|---|---|
+| `/login` | Masuk (username/email + sandi), Daftar (username, sandi, no HP, email), Login Google, Lupa sandi (kode via SMTP). Bubble maintenance mengambang saat maintenance. |
+| `/home` | Sapaan, plan, kuota hari ini, saldo, API key + contoh request. |
+| `/playground` | Taman endpoint: cari, filter kategori/plan, coba langsung, preview JSON/gambar/video/audio, contoh kode (cURL, JS, Node.js, Python, PHP, Go, Ruby, Java, Dart) + tombol salin. Endpoint premium bergembok. |
+| `/profile` | ID, foto profil, saldo, tier, ganti username & sandi, kelola API key (custom key mulai Premium), riwayat pesanan. |
+| `/price` | Beli plan pakai saldo (langsung aktif) atau transfer manual (DANA/GoPay/… diatur developer), top up saldo. |
+| `/chat` | Live chat semua user + developer; tiap pesan menampilkan foto, username, tier, dan ID. |
+| `/developer` | Developer panel (khusus developer). |
 
-## Endpoint bawaan
+## Plan
 
-| Path | Isi |
-|------|-----|
-| `GET /api/list` | Daftar semua endpoint (tanpa info provider) |
-| `GET /api/status` | Status server |
-| `GET /api/media/:token` | File media dari provider, lewat domain sendiri |
-| `GET\|POST /api/(path)/(fitur)` | Fitur. Endpoint upload juga menerima `POST` body file mentah |
+| Plan | Harga / 30 hari | Request/hari | API key | Custom key | Endpoint |
+|---|---|---|---|---|---|
+| Free | gratis | 100 | 1 | – | plan Free |
+| Basic | Rp5.000 | 1.000 | 3 | – | plan Basic |
+| Premium | Rp10.000 | 5.000 | 5 | ✔ | + plan Premium |
+| Super | Rp15.000 | 10.000 | 10 | ✔ | + plan Super |
+| Nebula | Rp20.000 | 20.000 | 25 | ✔ | + plan Nebula |
+| Freedom | Rp25.000 | 50.000 | ∞ | ✔ | semua |
+| Developer | tersembunyi | ∞ | ∞ | ✔ | semua + panel (tier hanya terlihat di live chat) |
 
-Upload file (endpoint yang punya badge `GET/POST`):
+Plan diatur di `lib/tiers.js`. Tiap endpoint punya plan minimal; user bisa memakai endpoint kalau plannya
+setara atau lebih tinggi. Plan bawaan endpoint ada di `lib/catalog.js` (provider tidak menandai endpoint
+premium secara terbuka, jadi ini pilihan awal) dan bisa diubah per endpoint di Developer panel.
 
-```bash
-curl -X POST "https://api-zero.web.id/api/ai/gpt?text=apa+ini" \
-  -H "Content-Type: image/jpeg" --data-binary @foto.jpg
-```
+## Developer panel
 
-## Jalankan lokal
+- **Ringkasan**: statistik + **maintenance** (on/off + teks bubble). Saat on, API menjawab 503 untuk semua user kecuali developer.
+- **User**: cari, tambah user, atur plan + durasi, tambah/kurangi saldo, ganti username, reset sandi, ban (opsional blacklist email/HP/username), hapus.
+- **Endpoint**: cari & filter, atur plan, kunci, sembunyikan, hapus/pulihkan, tambah endpoint sendiri (form, tanpa AI) ke provider yang ada atau URL bebas, edit endpoint buatan sendiri.
+- **Pesanan**: terima/tolak transfer manual (plan langsung aktif / saldo masuk).
+- **Pembayaran**: metode pembayaran (mis. DANA · a.n. W\*\* N\*\*\* H\*\*\* · 0812…).
+- **Blacklist**: email / no HP / username yang tidak boleh daftar/login.
+
+Akun developer = username/email di env `DEVELOPER_USERNAMES` / `DEVELOPER_EMAILS` (otomatis jadi tier Developer saat login).
+
+## Provider disembunyikan
+
+Alamat, nama, dan key provider hanya ada di server (`lib/providers.js` + env). Field branding (`creator`,
+`author`, `channel`, …) dibuang, nama provider di teks diganti, dan link file dari provider diganti jadi
+`/api/media/<token>` di domain sendiri (token terenkripsi AES-256-GCM, support Range/seek).
+
+## Respons API
+
+- Sukses JSON: `{ "status": true, "creator": "API Zero", ... }`
+- Media (gambar/video/audio/file) dikirim langsung dengan `Content-Type` aslinya.
+- Error: `{ "status": false, "error": "KODE", "message": "..." }`, mis. `APIKEY_REQUIRED`, `INVALID_APIKEY`,
+  `PLAN_REQUIRED` (+ `requiredPlan`), `ENDPOINT_LOCKED`, `QUOTA_EXCEEDED`, `MAINTENANCE`, `RATE_LIMITED`.
+- Header `X-Quota-Limit` / `X-Quota-Remaining`. Request yang gagal tidak memotong kuota.
+- Endpoint upload juga menerima `POST` body file mentah: `curl -X POST "…/api/ai/gpt?text=apa+ini&apikey=KEY" -H "Content-Type: image/jpeg" --data-binary @foto.jpg`
+
+## Deploy ke Vercel
+
+1. Buat database PostgreSQL gratis (mis. [Neon](https://neon.tech)), salin connection string-nya.
+2. Vercel → **Add New → Project** → pilih repo ini → **Root Directory: `api-zero`**.
+3. **Settings → Environment Variables** (lihat `.env.example`): wajib `DATABASE_URL`, `AUTH_SECRET`,
+   `DEVELOPER_USERNAMES`, key provider. Opsional `GOOGLE_CLIENT_ID`, SMTP (lupa sandi), `PUBLIC_BASE_URL`.
+4. Deploy. Tabel database dibuat otomatis saat request pertama.
+5. **Settings → Domains** → tambah `api-zero.web.id`.
+6. Daftar di `/login` dengan username developer → buka `/developer`, isi metode pembayaran.
+
+## Lokal
 
 ```bash
 cd api-zero
 npm install
-cp .env.example .env   # isi key provider
-npm start              # http://localhost:3000
-npm test
+cp .env.example .env     # isi DATABASE_URL, AUTH_SECRET, DEVELOPER_USERNAMES, key provider
+npm start                # http://localhost:3000
+TEST_DATABASE_URL=postgres://...db_kosong npm test
 ```
-
-## Deploy ke Vercel
-
-1. Vercel → **Add New → Project** → pilih repo ini.
-2. **Root Directory: `api-zero`** (penting, supaya situs lama di root nggak ikut).
-3. **Settings → Environment Variables** (Production + Preview):
-   - `THERESAV_API_KEY`, `BOTCAHX_API_KEY`, `DONGTUBE_API_KEY`
-   - `PUBLIC_BASE_URL=https://api-zero.web.id`
-   - `APP_SECRET` = string acak panjang (untuk enkripsi link media)
-4. Deploy, lalu **Settings → Domains** → tambah `api-zero.web.id` dan arahkan DNS sesuai petunjuk Vercel.
-
-Key **tidak pernah** ditulis di kode; kalau key provider kosong, endpoint provider itu menjawab
-`503 NOT_CONFIGURED`.
 
 ## Struktur
 
 ```
 api-zero/
-├── index.js              # server Express + route /api/*
-├── lib/providers.js      # alamat & cara kirim key tiap provider (server-only)
-├── lib/catalog.js        # katalog publik (tanpa info provider)
-├── lib/proxy.js          # teruskan request + bersihkan respons
-├── lib/hide.js           # buang branding, enkripsi link media provider
-├── lib/fetchFile.js      # ambil file dari URL (anti-SSRF) untuk endpoint upload
-├── data/endpoints.json   # spec endpoint (server-only)
-└── public/               # UI kartun (index.html, style.css, app.js)
+├── index.js            # server + halaman
+├── routes/             # auth, me (profil/key), billing, chat, dev (panel), gateway (/api/*)
+├── lib/                # db, schema.sql, auth (sesi), tiers, keys (kuota), endpoints, proxy, hide, settings, mailer
+├── data/endpoints.json # spec endpoint bawaan (server-only)
+├── views/              # halaman HTML
+└── public/             # CSS + JS halaman
 ```
-
-## Tambah endpoint
-
-Tambah satu objek di `data/endpoints.json`:
-
-```json
-{
-  "server": "faa",
-  "category": "Downloader",
-  "name": "TikTok Downloader v4",
-  "desc": "Download video TikTok tanpa watermark.",
-  "path": "/api/download/tiktok-v4",
-  "upstream": "/faa/tiktok",
-  "params": [{ "name": "url", "required": true, "placeholder": "https://vt.tiktok.com/..." }],
-  "sample": { "url": "https://vt.tiktok.com/xxxx" }
-}
-```
-
-`server` salah satu dari `theresav`, `botcahx`, `dongtube`, `nexray`, `faa` (lihat `lib/providers.js`).
-Opsional: `rename` (`{"url":"link"}` kalau nama parameter di provider beda), `fixed` (parameter tetap).

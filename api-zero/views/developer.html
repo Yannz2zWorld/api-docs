@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="id">
+<head>
+<!--HEAD-->
+<title>Developer · API Zero</title>
+<style>
+  .dtabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 18px; }
+  .dtabs button { border: var(--border); background: var(--paper); color: var(--ink); border-radius: 12px; padding: 8px 14px; font: 600 15px Fredoka, sans-serif; cursor: pointer; box-shadow: 3px 3px 0 var(--line); }
+  .dtabs button.active { background: var(--pink); color: #1d1a2f; }
+  .switch { position: relative; display: inline-block; width: 56px; height: 30px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch span { position: absolute; inset: 0; background: #ddd; border: 3px solid var(--line); border-radius: 999px; cursor: pointer; transition: .15s; }
+  .switch span::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border: 2px solid var(--line); border-radius: 50%; transition: .15s; }
+  .switch input:checked + span { background: var(--orange); }
+  .switch input:checked + span::before { transform: translateX(25px); }
+  .ep-row td:first-child { min-width: 220px; }
+  .ep-row.deleted { opacity: .5; }
+  td select { padding: 4px 6px; font-size: 13px; width: auto; }
+  .param-row { display: grid; grid-template-columns: 1.2fr 1.6fr .9fr auto auto; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .param-row input, .param-row select { padding: 7px 9px; font-size: 14px; }
+  .pay-row { display: grid; grid-template-columns: 1fr 1.3fr 1.3fr 1.5fr auto; gap: 6px; margin-bottom: 6px; }
+  .pay-row input { padding: 7px 9px; font-size: 14px; }
+  @media (max-width: 700px) { .param-row, .pay-row { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main class="wrap page">
+  <div class="page-head"><h1>🛠️ Developer panel</h1><p class="muted" style="margin:0">Atur user, plan, endpoint, maintenance, dan pembayaran.</p></div>
+  <nav class="dtabs" id="tabs">
+    <button data-tab="overview" class="active">📊 Ringkasan</button>
+    <button data-tab="users">👥 User</button>
+    <button data-tab="endpoints">🔌 Endpoint</button>
+    <button data-tab="orders">🧾 Pesanan</button>
+    <button data-tab="payments">💳 Pembayaran</button>
+    <button data-tab="blacklist">⛔ Blacklist</button>
+  </nav>
+
+  <section data-panel="overview">
+    <div class="stats" id="stats"></div>
+    <div class="card" style="margin-top:20px">
+      <div class="row"><h2 style="margin:0">🛠️ Maintenance server</h2><span class="spacer"></span><label class="switch"><input type="checkbox" id="mtOn"><span></span></label></div>
+      <p class="muted small">Saat aktif: API menjawab 503 untuk semua user (developer tetap bisa), dan teks di bawah muncul sebagai bubble mengambang di halaman login &amp; semua halaman.</p>
+      <div class="field"><label for="mtMsg">Teks maintenance</label><textarea id="mtMsg" maxlength="500"></textarea></div>
+      <button class="btn btn-pink" id="mtSave">Simpan maintenance</button>
+    </div>
+  </section>
+
+  <section data-panel="users" class="hidden">
+    <div class="row" style="margin-bottom:12px">
+      <input id="userQ" type="search" placeholder="Cari username, email, ID, no HP…" style="flex:1;min-width:200px">
+      <button class="btn btn-green" id="addUserBtn">+ Tambah user</button>
+    </div>
+    <p class="muted small" id="userTotal"></p>
+    <div class="table-wrap"><table><thead><tr><th>User</th><th>Plan</th><th>Saldo</th><th>Hari ini</th><th>Kontak</th><th>Status</th><th></th></tr></thead><tbody id="userRows"></tbody></table></div>
+  </section>
+
+  <section data-panel="endpoints" class="hidden">
+    <div class="row" style="margin-bottom:12px">
+      <input id="epQ" type="search" placeholder="Cari endpoint (nama, path, kategori, server)…" style="flex:1;min-width:200px">
+      <select id="epFilter" style="width:auto"><option value="">Semua</option><option value="locked">Dikunci</option><option value="hidden">Disembunyikan</option><option value="deleted">Dihapus</option><option value="custom">Buatan sendiri</option><option value="paid">Berbayar</option></select>
+      <button class="btn btn-green" id="addEpBtn">+ Tambah endpoint</button>
+    </div>
+    <p class="muted small" id="epTotal"></p>
+    <div class="table-wrap" style="max-height:70vh"><table><thead><tr><th>Endpoint</th><th>Plan</th><th>Kunci</th><th>Sembunyi</th><th>Sumber</th><th></th></tr></thead><tbody id="epRows"></tbody></table></div>
+  </section>
+
+  <section data-panel="orders" class="hidden">
+    <div class="row" style="margin-bottom:12px"><select id="orderStatus" style="width:auto"><option value="pending">Menunggu</option><option value="approved">Berhasil</option><option value="rejected">Ditolak</option><option value="">Semua</option></select></div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>User</th><th>Pesanan</th><th>Jumlah</th><th>Metode · Pengirim</th><th>Tanggal</th><th></th></tr></thead><tbody id="orderRows"></tbody></table></div>
+  </section>
+
+  <section data-panel="payments" class="hidden">
+    <div class="card">
+      <h2>💳 Metode pembayaran</h2>
+      <p class="muted small">Tampil di halaman Price saat user transfer manual. Contoh: DANA · a.n. W** N*** H*** · 0812xxxx.</p>
+      <div class="pay-row small muted" style="font-weight:800"><span>Nama</span><span>Atas nama</span><span>Nomor / rekening</span><span>Catatan</span><span></span></div>
+      <div id="payRows"></div>
+      <div class="row"><button class="btn btn-ghost btn-sm" id="payAdd">+ Tambah metode</button><span class="spacer"></span><button class="btn btn-pink" id="paySave">Simpan</button></div>
+    </div>
+  </section>
+
+  <section data-panel="blacklist" class="hidden">
+    <div class="card">
+      <h2>⛔ Blacklist</h2>
+      <p class="muted small">Email, no HP, atau username di sini tidak bisa daftar/login lagi. Ban user dengan opsi blacklist mengisi ini otomatis.</p>
+      <div class="row" style="margin-bottom:12px">
+        <select id="blKind" style="width:auto"><option value="email">Email</option><option value="phone">No HP</option><option value="username">Username</option></select>
+        <input id="blValue" placeholder="nilai" style="flex:1;min-width:160px"><input id="blReason" placeholder="alasan (opsional)" style="flex:1;min-width:160px">
+        <button class="btn btn-red" id="blAdd">Blokir</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Nilai</th><th>Jenis</th><th>Alasan</th><th>Tanggal</th><th></th></tr></thead><tbody id="blRows"></tbody></table></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="userModal" class="modal sm">
+  <form method="dialog"><button class="btn modal-close" aria-label="Tutup">✕</button></form>
+  <div class="modal-body" id="userBody"></div>
+</dialog>
+<dialog id="epModal" class="modal">
+  <form method="dialog"><button class="btn modal-close" aria-label="Tutup">✕</button></form>
+  <div class="modal-body">
+    <h2 id="epTitle" style="padding-right:50px">Tambah endpoint</h2>
+    <form id="epForm" onsubmit="return false">
+      <div class="form-grid">
+        <div class="field"><label>Nama <span class="req">*</span></label><input name="name" required maxlength="60" placeholder="TikTok Downloader v4"></div>
+        <div class="field"><label>Path publik <span class="req">*</span></label><input name="path" required placeholder="/api/download/tiktok-v4"></div>
+        <div class="field"><label>Kategori</label><input name="category" placeholder="Downloader" list="catList"><datalist id="catList"></datalist></div>
+        <div class="field"><label>Output</label><select name="output"><option>json</option><option>image</option><option>video</option><option>audio</option></select></div>
+        <div class="field"><label>Plan</label><select name="plan" id="epPlanSel"></select></div>
+        <div class="field"><label>Server sumber</label><select name="server" id="epServer"></select></div>
+      </div>
+      <div class="field"><label>Deskripsi</label><input name="desc" maxlength="300" placeholder="Download video TikTok tanpa watermark."></div>
+      <div id="upProvider" class="field"><label>Path di server sumber <span class="req">*</span></label><input name="upstream" placeholder="/downloader/tiktok"><div class="hint">Key server dipakai otomatis dari env; user tidak pernah melihat server aslinya.</div></div>
+      <div id="upCustom" class="hidden">
+        <div class="field"><label>URL tujuan lengkap <span class="req">*</span></label><input name="url" placeholder="https://api.contoh.com/tiktok"></div>
+        <div class="form-grid">
+          <div class="field"><label>API key server (opsional)</label><input name="keyValue" placeholder="kosongkan = tidak berubah / tanpa key" autocomplete="off"></div>
+          <div class="field"><label>Nama param key</label><input name="keyParam" placeholder="apikey"></div>
+          <div class="field"><label>Kirim key lewat</label><select name="keyMode"><option value="query">Query (?apikey=)</option><option value="header">Header</option></select></div>
+        </div>
+      </div>
+      <div class="section-title">🧩 Parameter</div>
+      <div class="param-row small muted" style="font-weight:800"><span>Nama</span><span>Placeholder</span><span>Pilihan (a,b,c)</span><span>Wajib</span><span></span></div>
+      <div id="paramRows"></div>
+      <button class="btn btn-ghost btn-sm" type="button" id="paramAdd">+ Parameter</button>
+      <div class="field" style="margin-top:12px"><label>Contoh nilai (JSON, opsional)</label><input name="sample" placeholder='{"url":"https://vt.tiktok.com/xxx"}'></div>
+      <div class="actions"><button class="btn btn-pink" id="epSave" type="button">Simpan endpoint</button></div>
+    </form>
+  </div>
+</dialog>
+<script src="/assets/common.js"></script>
+<script src="/assets/developer.js"></script>
+</body>
+</html>

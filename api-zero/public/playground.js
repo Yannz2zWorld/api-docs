@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const $ = (s, el = document) => el.querySelector(s);
+  const $ = Z.$;
   const ORIGIN = location.origin;
   const ICONS = { AI: '🤖', Downloader: '📥', Search: '🔎', Tools: '🛠️', Maker: '🎨', Canvas: '🖼️', Textpro: '✍️', Ephoto: '📸', Primbon: '🔮', Games: '🎮', Random: '🎲', Stalk: '👀', News: '📰', Islamic: '🕌', Info: 'ℹ️', Anime: '🌸', Fun: '🎉', Image: '🌈', Movie: '🎬', Music: '🎵', Check: '✅' };
   const LANGS = ['cURL', 'JavaScript', 'Node.js', 'Python', 'PHP', 'Go', 'Ruby', 'Java', 'Dart'];
@@ -8,55 +8,28 @@
 
   let ALL = [];
   let cat = 'Semua';
-  let lang = safeGet('az-lang') || 'cURL';
+  let lang = Z.store.get('az-lang') || 'cURL';
 
-  function safeGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
-  function safeSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const esc = Z.esc;
 
-  // ---------------------------------------------------------------- theme
-  const themeBtn = $('#themeBtn');
-  function applyTheme(t) {
-    if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
-    const dark = t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-    themeBtn.textContent = dark ? '☀️' : '🌙';
-  }
-  applyTheme(safeGet('az-theme'));
-  themeBtn.onclick = () => {
-    const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-    const t = dark ? 'light' : 'dark';
-    safeSet('az-theme', t); applyTheme(t);
-  };
-
-  // ---------------------------------------------------------------- copy + toast
+  const toast = Z.toast, copy = Z.copy;
   const modal = $('#modal');
-  let toastTimer;
-  function toast(msg) {
-    const t = $('#toast'); const host = modal.open ? modal : document.body; if (t.parentNode !== host) host.appendChild(t); t.textContent = msg; t.classList.add('show');
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
-  }
-  async function copy(text) {
-    try { await navigator.clipboard.writeText(text); }
-    catch {
-      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch {} ta.remove();
-    }
-    toast('Tersalin! ✨');
-  }
-  document.addEventListener('click', e => {
-    const b = e.target.closest('[data-copy-target]');
-    if (b) copy($('#' + b.dataset.copyTarget).textContent);
-    const t = e.target.closest('[data-copy-text]');
-    if (t) copy(t.dataset.copyText);
-  });
+  const RANK = { free: 0, basic: 1, premium: 2, super: 3, nebula: 4, freedom: 5, developer: 9 };
+  const PLAN_NAME = { free: 'Free', basic: 'Basic', premium: 'Premium', super: 'Super', nebula: 'Nebula', freedom: 'Freedom' };
+  let ME = null, KEY = '';
+  let planFilter = 'all';
+  const canUse = e => ME && (ME.user.isDeveloper || (!e.locked && RANK[ME.plan.id] >= RANK[e.plan || 'free']));
 
   // ---------------------------------------------------------------- list
-  $('#baseUrl').textContent = `${ORIGIN}/api/(path)/(fitur)`;
-
-  fetch('/api/list').then(r => r.json()).then(d => {
+  Z.nav(); Z.maintenanceBubble();
+  Promise.all([fetch('/api/list').then(r => r.json()), Z.me()]).then(([d, me]) => {
+    ME = me;
     ALL = d.endpoints || [];
-    $('#statTotal').textContent = ALL.length;
-    $('#statCats').textContent = (d.categories || []).length;
+    const saved = Z.store.get('az-key');
+    KEY = (me.keys.find(k => k.key === saved) || me.keys[0] || {}).key || '';
+    $('#keySel').innerHTML = me.keys.length ? me.keys.map(k => `<option value="${esc(k.key)}"${k.key === KEY ? ' selected' : ''}>${esc(k.label || 'Key')} · ${esc(k.key.slice(0, 14))}…</option>`).join('') : '<option value="">Belum ada key</option>';
+    $('#keySel').onchange = e => { KEY = e.target.value; Z.store.set('az-key', KEY); };
+    $('#planInfo').innerHTML = `${Z.tierBadge(me.user.tier, me.user.tierName)} <span class="muted small">${me.usage.limit ? `${Z.num(me.usage.today)} / ${Z.num(me.usage.limit)} request hari ini` : 'request tanpa batas'}</span>`;
     renderChips(d.categories || []);
     render();
     openFromHash();
@@ -79,7 +52,8 @@
 
   function render() {
     const q = $('#search').value.trim().toLowerCase();
-    const items = ALL.filter(e => (cat === 'Semua' || e.category === cat) && (!q || `${e.name} ${e.path} ${e.desc} ${e.category}`.toLowerCase().includes(q)));
+    const items = ALL.filter(e => (cat === 'Semua' || e.category === cat) && (!q || `${e.name} ${e.path} ${e.desc} ${e.category}`.toLowerCase().includes(q))
+      && (planFilter === 'all' || (planFilter === 'free' ? (e.plan || 'free') === 'free' : planFilter === 'premium' ? (e.plan || 'free') !== 'free' : canUse(e))));
     $('#resultInfo').textContent = `${items.length} endpoint ditemukan`;
     if (!items.length) { $('#list').innerHTML = '<div class="card empty"><div class="big">🙈</div><p>Nggak ketemu. Coba kata kunci lain ya!</p></div>'; return; }
     const groups = {};
@@ -87,12 +61,13 @@
     $('#list').innerHTML = Object.entries(groups).map(([c, list]) => `
       <section class="group">
         <h2 class="group-title">${ICONS[c] || '📦'} ${esc(c)} <span class="count">${list.length}</span></h2>
-        <div class="grid">${list.map(card).join('')}</div>
+        <div class="ep-grid">${list.map(card).join('')}</div>
       </section>`).join('');
   }
   function card(e) {
-    return `<button class="card ep" data-path="${esc(e.path)}">
-      <div class="ep-top"><span class="tag tag-${e.upload ? 'post' : 'get'}">${e.method}</span><span class="tag tag-${e.output}">${e.output}</span></div>
+    const ok = canUse(e);
+    return `<button class="ep${ok ? '' : ' off'}" data-path="${esc(e.path)}">
+      <div class="row" style="gap:6px"><span class="tag tag-${e.upload ? 'post' : 'get'}">${e.method}</span><span class="tag tag-${e.output}">${e.output}</span>${planTags(e)}</div>
       <div class="ep-name">${esc(e.name)}</div>
       <code class="ep-path">${esc(e.path)}</code>
       <p class="ep-desc">${esc(e.desc || '')}</p>
@@ -103,6 +78,15 @@
     const ep = ALL.find(x => x.path === b.dataset.path);
     if (ep) { history.replaceState(null, '', '#' + ep.path); open(ep); }
   });
+  function planTags(e) {
+    let t = '';
+    if ((e.plan || 'free') !== 'free') t += `<span class="tier tier-${e.plan}">💎 ${PLAN_NAME[e.plan]}</span>`;
+    if (e.locked) t += '<span class="tag tag-lock">🔒 dikunci</span>';
+    if (e.hidden) t += '<span class="tag tag-hidden">👻 hidden</span>';
+    if (!canUse(e) && !e.locked) t += '<span class="tag tag-lock">🔒</span>';
+    return t;
+  }
+  $('#planFilter').onchange = e => { planFilter = e.target.value; render(); };
   function openFromHash() {
     const p = decodeURIComponent(location.hash.slice(1));
     const ep = p && ALL.find(x => x.path === p);
@@ -133,14 +117,16 @@
     }).join('');
 
     $('#modalBody').innerHTML = `
-      <div class="ep-top"><span class="tag tag-${ep.upload ? 'post' : 'get'}">${ep.method}</span><span class="tag tag-${ep.output}">${ep.output}</span><span class="badge">${ICONS[ep.category] || '📦'} ${esc(ep.category)}</span></div>
-      <h2>${esc(ep.name)}</h2>
-      <p class="desc">${esc(ep.desc || '')}</p>
+      <div class="row" style="gap:6px"><span class="tag tag-${ep.upload ? 'post' : 'get'}">${ep.method}</span><span class="tag tag-${ep.output}">${ep.output}</span><span class="badge">${ICONS[ep.category] || '📦'} ${esc(ep.category)}</span>${planTags(ep)}</div>
+      <h2 style="margin-top:8px;padding-right:50px">${esc(ep.name)}</h2>
+      <p class="muted" style="margin-top:0">${esc(ep.desc || '')}</p>
+      ${canUse(ep) ? '' : `<div class="card" style="background:var(--orange);color:#1d1a2f;box-shadow:var(--shadow);padding:12px 14px">🔒 ${ep.locked ? 'Endpoint ini sedang dikunci developer.' : `Endpoint ini khusus plan <b>${PLAN_NAME[ep.plan]}</b> ke atas.`} ${ep.locked ? '' : '<a class="btn btn-sm" href="/price" style="margin-left:6px">Upgrade</a>'}</div>`}
+      ${KEY ? '' : '<p class="small" style="font-weight:800">⚠️ Kamu belum punya API key. <a href="/profile#keys">Buat di Profile</a>.</p>'}
 
       <div class="section-title">🔗 Request URL</div>
       <div class="urlbox"><code id="reqUrl"></code><button class="btn btn-sm" data-copy-target="reqUrl">Salin URL</button><a class="btn btn-sm btn-blue" id="openUrl" target="_blank" rel="noopener">Buka ↗</a></div>
 
-      ${ep.params.length ? `<div class="section-title">🧩 Parameter</div><form class="form" id="paramForm" onsubmit="return false">${fields}</form>` : '<p class="desc" style="margin-top:12px">Endpoint ini nggak butuh parameter. Langsung panggil aja!</p>'}
+      ${ep.params.length ? `<div class="section-title">🧩 Parameter</div><form class="form-grid" id="paramForm" onsubmit="return false">${fields}</form>` : '<p class="muted" style="margin-top:12px">Endpoint ini nggak butuh parameter selain apikey. Langsung panggil aja!</p>'}
       <div class="actions"><button class="btn btn-pink" id="tryBtn">▶ Coba sekarang</button><button class="btn btn-ghost" id="resetBtn">↺ Reset contoh</button></div>
 
       <div class="section-title">💻 Contoh kode</div>
@@ -154,7 +140,7 @@
     if (form) form.addEventListener('input', update);
     $('#tabs').onclick = e => {
       const t = e.target.closest('.tab'); if (!t) return;
-      lang = t.dataset.lang; safeSet('az-lang', lang);
+      lang = t.dataset.lang; Z.store.set('az-lang', lang);
       document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
       update();
     };
@@ -171,8 +157,8 @@
     return out;
   }
   function buildUrl(v) {
-    const qs = new URLSearchParams(v).toString();
-    return `${ORIGIN}${current.path}${qs ? '?' + qs : ''}`;
+    const qs = new URLSearchParams({ ...v, apikey: KEY || 'KEY_KAMU' }).toString();
+    return `${ORIGIN}${current.path}?${qs}`;
   }
   function update() {
     const url = buildUrl(values());
@@ -342,9 +328,9 @@ void main() async {
     try {
       let res;
       if (file) {
-        const q = { ...v }; delete q[current.upload.param];
+        const q = { ...v, apikey: KEY }; delete q[current.upload.param];
         const qs = new URLSearchParams(q).toString();
-        res = await fetch(current.path + (qs ? '?' + qs : ''), { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file });
+        res = await fetch(current.path + '?' + qs, { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file });
       } else {
         res = await fetch(buildUrl(v));
       }
@@ -381,12 +367,6 @@ void main() async {
       btn.disabled = false; btn.textContent = '▶ Coba sekarang';
     }
   }
-
-  // Copy JSON copies the raw pretty text, not the highlighted HTML.
-  document.addEventListener('click', e => {
-    const b = e.target.closest('[data-copy-target="respJson"]');
-    if (b) { e.stopImmediatePropagation(); const pre = $('#respJson'); copy(pre.dataset.raw || pre.textContent); }
-  }, true);
 
   function fmtSize(n) { return n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(2)} MB`; }
 
@@ -433,6 +413,6 @@ void main() async {
     const el = m.kind === 'image' ? `<img src="${u}" alt="" loading="lazy" referrerpolicy="no-referrer">`
       : m.kind === 'video' ? `<video src="${u}" controls playsinline preload="metadata"></video>`
       : `<audio src="${u}" controls preload="none"></audio>`;
-    return `<div class="mf"><div class="mf-head"><span class="tag tag-${m.kind}">${m.kind}</span><a href="${u}" target="_blank" rel="noopener">${u}</a><button class="btn btn-sm" data-copy-text="${u}">Salin</button></div>${el}</div>`;
+    return `<div class="mf"><div class="mf-head"><span class="tag tag-${m.kind}">${m.kind}</span><a href="${u}" target="_blank" rel="noopener">${u}</a><button class="btn btn-sm" data-copy="${u}">Salin</button></div>${el}</div>`;
   }
 })();

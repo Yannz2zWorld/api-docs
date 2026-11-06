@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="id">
+<head>
+<!--HEAD-->
+<title>Profile · API Zero</title>
+<style>
+  .pf-top { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .pf-top h1 { margin: 0; }
+  .kv { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; font-size: 15px; }
+  .kv dt { font-weight: 800; color: var(--ink-soft); }
+  .kv dd { margin: 0; overflow-wrap: anywhere; font-weight: 700; }
+  .key-item { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 0; border-bottom: 2px dashed var(--bg-dot); }
+  .key-item:last-child { border-bottom: 0; }
+  .key-item code { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; background: var(--field); border: 2px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 13px; }
+</style>
+</head>
+<body>
+<main class="wrap page">
+  <section class="card pf-top" id="top"><div class="loading"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></section>
+
+  <div class="grid2" style="margin-top:20px">
+    <section class="card">
+      <h2>📇 Data akun</h2>
+      <dl class="kv" id="info"></dl>
+    </section>
+    <section class="card">
+      <h2>🖼️ Foto profil</h2>
+      <p class="muted small">PNG/JPG/WEBP. Otomatis dikecilkan ke 256×256.</p>
+      <div class="row"><input type="file" id="avatarFile" accept="image/*" style="flex:1"><button class="btn btn-sm btn-ghost" id="avatarDel">Hapus foto</button></div>
+    </section>
+    <section class="card">
+      <h2>✏️ Ganti username</h2>
+      <form id="nameForm"><div class="field"><label for="newName">Username baru</label><input id="newName" pattern="[a-z0-9_]{3,20}" required></div><button class="btn btn-blue">Simpan</button></form>
+    </section>
+    <section class="card">
+      <h2>🔒 Ganti sandi</h2>
+      <form id="passForm">
+        <div class="field" id="curWrap"><label for="curPass">Sandi lama</label><input id="curPass" type="password" autocomplete="current-password"></div>
+        <div class="field"><label for="newPass">Sandi baru</label><input id="newPass" type="password" minlength="6" required autocomplete="new-password"></div>
+        <button class="btn btn-pink">Ganti sandi</button>
+        <p class="hint">Perangkat lain yang sedang login akan otomatis keluar.</p>
+      </form>
+    </section>
+  </div>
+
+  <section class="card" id="keys" style="margin-top:20px">
+    <div class="row"><h2 style="margin:0">🔑 API key</h2><span class="spacer"></span><span class="badge" id="keyCount"></span></div>
+    <div id="keyList" style="margin:10px 0"></div>
+    <form id="keyForm" class="form-grid" style="align-items:end">
+      <div class="field"><label for="keyLabel">Label (opsional)</label><input id="keyLabel" maxlength="40" placeholder="mis. Bot WA"></div>
+      <div class="field"><label for="keyCustom">Custom key <span class="muted small" id="customNote"></span></label><input id="keyCustom" maxlength="40" placeholder="kosongkan = acak"></div>
+      <div class="field"><button class="btn btn-green btn-block">+ Buat key</button></div>
+    </form>
+  </section>
+
+  <section class="card" style="margin-top:20px">
+    <h2>🧾 Riwayat pesanan</h2>
+    <div id="orders"></div>
+  </section>
+</main>
+<script src="/assets/common.js"></script>
+<script src="/assets/profile.js"></script>
+</body>
+</html>
