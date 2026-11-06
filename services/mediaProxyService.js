@@ -180,13 +180,27 @@ async function keep(prefix, { buffer, type, name }) {
 // Sends a file that lives elsewhere (a big media file, a large CDN upload kept in R2 / catbox, the
 // site's background song) through our own domain: the visitor never leaves it. Range requests are
 // passed on so videos can be skipped through.
+// The type a big media link is, when its source labels it application/octet-stream.
+function guessTypeFromUrl(url) {
+  try {
+    const u = new URL(url);
+    const fromParam = (u.searchParams.get('mime') || u.searchParams.get('type') || '').toLowerCase();
+    if (/^(audio|video)\/[a-z0-9.+-]+$/.test(fromParam)) return fromParam === 'audio/mp3' ? 'audio/mpeg' : fromParam;
+    const ext = (/\.([a-z0-9]{2,4})$/i.exec(u.pathname) || [])[1];
+    const map = { mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', ogg: 'audio/ogg', opus: 'audio/ogg', wav: 'audio/wav', flac: 'audio/flac' };
+    return ext ? map[ext.toLowerCase()] || null : null;
+  } catch {
+    return null;
+  }
+}
 const INLINE = /^(image\/(png|jpeg|gif|webp|bmp|avif)|video\/(mp4|webm|quicktime|ogg)|audio\/(mpeg|mp4|aac|ogg|wav|flac|webm|x-m4a)|application\/pdf)$/;
 async function stream(req, res, url, { safeHeaders, cache = 'public, max-age=86400', range } = {}) {
   let r;
   const want = range || req.get('range');
   try { r = await fetchSource(url, want ? { Range: want } : {}); }
   catch { res.set('Cache-Control', 'no-store'); return res.status(502).json({ status: false, error: 'MEDIA_UNAVAILABLE', message: 'File-nya lagi nggak bisa diambil. Coba lagi nanti.' }); }
-  const type = (r.headers.get('content-type') || 'application/octet-stream').split(';')[0].trim().toLowerCase();
+  let type = (r.headers.get('content-type') || 'application/octet-stream').split(';')[0].trim().toLowerCase();
+  if (!INLINE.test(type)) type = guessTypeFromUrl(url) || type;   // e.g. googlevideo ?mime=audio%2Fmp4, or a .mp3 link
   const inline = INLINE.test(type);
   res.status(r.status === 206 ? 206 : 200);
   res.set('Cache-Control', cache);

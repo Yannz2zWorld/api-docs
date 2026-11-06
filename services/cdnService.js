@@ -37,6 +37,28 @@ function sniff(buf) {
   return null;
 }
 
+// Audio / video dikenali dari isinya juga, karena banyak sumber melabeli file media sebagai
+// application/octet-stream atau melabeli M4A sebagai audio/mpeg. Terpisah dari sniff() supaya
+// pemeriksaan "khusus gambar" (imagesOnly) tetap hanya menerima gambar.
+function sniffMedia(buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 12) return null;
+  const head4 = buf.toString('ascii', 0, 4);
+  if (buf.toString('ascii', 4, 8) === 'ftyp') {
+    const brand = buf.toString('ascii', 8, 12);
+    return /^(M4A |M4B |M4P |mp4a|F4A )/.test(brand) ? { mime: 'audio/mp4', ext: 'm4a' } : brand === 'qt  ' ? { mime: 'video/quicktime', ext: 'mov' } : { mime: 'video/mp4', ext: 'mp4' };
+  }
+  if (head4 === 'ID3' + String.fromCharCode(buf[3]) || (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0 && (buf[1] & 0x06) !== 0)) return { mime: 'audio/mpeg', ext: 'mp3' };
+  if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) {
+    const awal = buf.toString('latin1', 0, Math.min(buf.length, 64));
+    return /matroska/.test(awal) ? { mime: 'video/x-matroska', ext: 'mkv' } : { mime: 'video/webm', ext: 'webm' };
+  }
+  if (head4 === 'OggS') return { mime: 'audio/ogg', ext: 'ogg' };
+  if (head4 === 'fLaC') return { mime: 'audio/flac', ext: 'flac' };
+  if (head4 === 'RIFF' && buf.toString('ascii', 8, 12) === 'WAVE') return { mime: 'audio/wav', ext: 'wav' };
+  if (buf[0] === 0xff && (buf[1] & 0xf6) === 0xf0) return { mime: 'audio/aac', ext: 'aac' };
+  return null;
+}
+
 function fail(code) { const e = new Error(code); e.code = code; return e; }
 
 // Nama file aman untuk disimpan/ditampilkan: tanpa path, tanpa karakter kontrol, maks 120 karakter.
@@ -52,10 +74,12 @@ function extOf(name) {
 // Jenis file dari nama/Content-Type (gambar dideteksi dari isinya kalau buffer ada).
 function kindOf({ name, type, buffer }) {
   const image = buffer ? sniff(buffer) : null;
+  const media = !image && buffer ? sniffMedia(buffer) : null;
   const fileName = cleanName(name);
   const clientType = String(type || '').split(';')[0].trim().toLowerCase();
-  const ext = image ? image.ext : (extOf(fileName) || MIME_EXT[clientType] || 'bin');
-  const mime = image ? image.mime : (TYPES[ext] || 'application/octet-stream');
+  const found = image || media;
+  const ext = found ? found.ext : (extOf(fileName) || MIME_EXT[clientType] || 'bin');
+  const mime = found ? found.mime : (TYPES[ext] || 'application/octet-stream');
   return { image, fileName, ext, mime, inline: INLINE.has(ext) };
 }
 const newId = ext => crypto.randomBytes(16).toString('hex') + '.' + ext;
@@ -240,4 +264,5 @@ function absoluteUrl(req, id) {
   return `${base}/cdn/${id}`;
 }
 
-module.exports = { kindOf, store, startLarge, finishLarge, registerCatbox, catboxEnabled, accountUsage, fetchFile, purgeExpired, removeFile, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };
+module.exports = {
+  sniffMedia, kindOf, store, startLarge, finishLarge, registerCatbox, catboxEnabled, accountUsage, fetchFile, purgeExpired, removeFile, absoluteUrl, isValidId, sniff, MAX_BYTES, MAX_LARGE_BYTES, accountLimitBytes, largeEnabled: () => r2.isConfigured() };

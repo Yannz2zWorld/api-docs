@@ -32,6 +32,10 @@
   .code-box { position: relative; }
   .code-box pre { margin: 0; padding: 16px 16px 16px 16px; padding-right: 96px; min-height: 120px; max-height: 420px; overflow: auto; white-space: pre; font: 12.5px/1.6 "DM Mono", monospace; background: #070708; border: 2px solid var(--edge-soft); border-radius: 12px; }
   .code-copy { position: absolute; top: 10px; right: 10px; }
+  .code-box pre, .term pre, .url-box pre { color: #f4f4f5; }
+  .code-box .code-copy, .term-foot button { background: #f4f4f5; color: #141414; border-color: #f4f4f5; }
+  .code-box .code-copy:hover, .term-foot button:hover { color: #141414; }
+  .media .media-error { font: 12px "DM Mono", monospace; color: var(--ui-bad, #fecaca); text-align: center; }
   @media (max-width: 640px) { .code-box pre { padding: 50px 14px 14px; } .code-copy { top: 8px; right: 8px; } }
   .code-note { margin: 10px 0 0; font-size: 12px; }
   .url-box pre { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -299,21 +303,21 @@ async function executeApiSandbox() {
       sessionInfo.usage = { used: limit - Number(remaining), limit, remaining: Number(remaining) };
       renderSessionStatus();
     }
-    if (type.includes('application/json')) {
-      const data = await res.json();
-      setConsoleText(JSON.stringify(data, null, 2));
-      if (!ok || data.status === false || data.success === false) showConsoleError(...describeApiError(res.status, data));
-      else showJsonMedia(data);
-    } else if (/^(image|audio|video)\//.test(type)) {
-      const blob = await res.blob();
-      mediaUrl = URL.createObjectURL(blob);
-      const kind = type.split('/')[0];
-      $('#output-media').innerHTML = kind === 'image' ? `<img src="${mediaUrl}" alt="Hasil">` : kind === 'audio' ? `<audio controls src="${mediaUrl}"></audio>` : `<video controls playsinline src="${mediaUrl}"></video>`;
-      $('#output-media').insertAdjacentHTML('beforeend', `<a class="btn sm" href="${mediaUrl}" download>Download</a>`);
-      $('#output-media').hidden = false;
-      setConsoleText(`[${kind}] ${num(blob.size)} byte · ${blob.type}`);
+    if (/^(image|audio|video)\//.test(type)) {
+      showBlobMedia(await res.blob(), type);
     } else {
-      setConsoleText(await res.text());
+      const raw = await res.text();
+      let data = null;
+      try { data = raw.trim() ? JSON.parse(raw) : null; } catch { data = null; }
+      if (data && typeof data === 'object') {
+        setConsoleText(JSON.stringify(data, null, 2));
+        if (!ok || data.status === false || data.success === false) showConsoleError(...describeApiError(res.status, data));
+        else showJsonMedia(data);
+      } else {
+        setConsoleText(raw || '(respons kosong)');
+        if (!ok) showConsoleError(`Server menjawab ${res.status} tanpa JSON.`, type.includes('html') ? 'Biasanya server lagi sibuk atau timeout, coba lagi sebentar.' : '');
+        else if (type.includes('application/json')) showConsoleError('Respons bukan JSON yang valid.');
+      }
     }
   } catch (err) {
     showConsoleError(`Koneksi putus: ${err.message || err}`);
@@ -323,6 +327,42 @@ async function executeApiSandbox() {
   }
 }
 $('#execute-btn').addEventListener('click', executeApiSandbox);
+
+// Media answers: the real type comes from the file's first bytes, since some upstreams label
+// an M4A as audio/mpeg or a video as application/octet-stream.
+async function sniffMediaType(blob, fallback) {
+  try {
+    const h = new Uint8Array(await blob.slice(0, 16).arrayBuffer());
+    const txt = String.fromCharCode(...h);
+    if (h[0] === 0xff && h[1] === 0xd8) return 'image/jpeg';
+    if (txt.startsWith('\x89PNG')) return 'image/png';
+    if (txt.startsWith('GIF8')) return 'image/gif';
+    if (txt.startsWith('RIFF') && txt.slice(8, 12) === 'WEBP') return 'image/webp';
+    if (txt.startsWith('RIFF') && txt.slice(8, 12) === 'WAVE') return 'audio/wav';
+    if (txt.startsWith('ID3') || (h[0] === 0xff && (h[1] & 0xe0) === 0xe0)) return 'audio/mpeg';
+    if (txt.startsWith('OggS')) return /video/.test(fallback) ? 'video/ogg' : 'audio/ogg';
+    if (txt.startsWith('fLaC')) return 'audio/flac';
+    if (h[0] === 0x1a && h[1] === 0x45 && h[2] === 0xdf && h[3] === 0xa3) return /audio/.test(fallback) ? 'audio/webm' : 'video/webm';
+    if (txt.slice(4, 8) === 'ftyp') return /^(M4A |M4B |mp4a)/.test(txt.slice(8, 12)) || /audio/.test(fallback) ? 'audio/mp4' : 'video/mp4';
+  } catch {}
+  return fallback;
+}
+async function showBlobMedia(blob, type) {
+  const real = await sniffMediaType(blob, type.split(';')[0]);
+  const typed = blob.type === real ? blob : new Blob([blob], { type: real });
+  mediaUrl = URL.createObjectURL(typed);
+  const kind = real.split('/')[0];
+  const box = $('#output-media');
+  box.innerHTML = '';
+  const node = kind === 'image' ? el('img', { src: mediaUrl, alt: 'Hasil' })
+    : kind === 'audio' ? el('audio', { controls: true, preload: 'metadata', src: mediaUrl })
+    : el('video', { controls: true, playsInline: true, preload: 'metadata', src: mediaUrl });
+  node.addEventListener('error', () => box.append(el('p', { className: 'media-error', textContent: 'Browser ini nggak bisa memutar format ini. Pakai tombol Download.' })));
+  const ext = (real.split('/')[1] || 'bin').replace('mpeg', 'mp3').replace('jpeg', 'jpg').replace('quicktime', 'mov');
+  box.append(node, el('div', { className: 'media-actions' }, [el('a', { className: 'btn sm', href: mediaUrl, download: `hasil.${ext}`, textContent: 'Download' })]));
+  box.hidden = false;
+  setConsoleText(`[${kind}] ${num(blob.size)} byte · ${real}${real !== type.split(';')[0] ? ` (server bilang ${type.split(';')[0]})` : ''}`);
+}
 
 // ---------------------------------------------------------------- media inside JSON results
 // Endpoints like the TikTok downloader answer with JSON that links to the actual video/photos.
@@ -359,8 +399,12 @@ function findMedia(data) {
   const found = [...byUrl.values()];
   const decor = /avatar|author|profile|icon|logo/i;
   const images = found.filter(m => m.kind === 'image');
+  const seenVideo = new Set();
+  const videos = found.filter(m => m.kind === 'video').sort((a, b) => rank(a.label) - rank(b.label))
+    .filter(v => { const k = (VARIANT_LABEL[v.label] || v.label || '').toLowerCase(); if (seenVideo.has(k)) return false; seenVideo.add(k); return true; })
+    .slice(0, 3);
   return {
-    videos: found.filter(m => m.kind === 'video').sort((a, b) => rank(a.label) - rank(b.label)),
+    videos,
     photos: images.filter(m => /photo|image|slide/i.test(m.label) || !/cover|thumb|poster/i.test(m.label)).filter(m => !decor.test(m.label)),
     poster: images.find(m => /cover|thumb|poster/i.test(m.label)),
     audio: found.find(m => m.kind === 'audio')
@@ -404,7 +448,7 @@ function showJsonMedia(data) {
       if (next >= 0) play(next); else fallback('Video nggak bisa diputar di browser.');
     });
     box.append(video);
-    if (m.videos.length > 1) box.append(variants);
+    if (m.videos.length > 1 && m.videos.every(v => VARIANT_LABEL[v.label])) box.append(variants);
     box.append(actions);
     play(0);
   } else if (m.photos.length) {
@@ -419,8 +463,23 @@ function showJsonMedia(data) {
     box.append(gallery, el('div', { className: 'media-actions' }, [jsonToggle]));
   }
   if (m.audio) {
-    const audio = el('audio', { controls: true, preload: 'none', src: m.audio.url });
-    audio.addEventListener('error', () => audio.parentElement && audio.parentElement.remove());
+    const audio = el('audio', { controls: true, preload: 'metadata', src: m.audio.url });
+    audio.referrerPolicy = 'no-referrer';
+    let viaBlob = false;
+    audio.addEventListener('error', async () => {
+      if (!viaBlob) {
+        viaBlob = true;
+        try {
+          const r = await fetch(m.audio.url, { referrerPolicy: 'no-referrer' });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const b = await r.blob();
+          const real = await sniffMediaType(b, (b.type || 'audio/mpeg').split(';')[0]);
+          audio.src = URL.createObjectURL(new Blob([b], { type: /^audio\//.test(real) ? real : 'audio/mpeg' }));
+          return;
+        } catch {}
+      }
+      audio.replaceWith(el('p', { className: 'media-error', textContent: 'Audio nggak bisa diputar di browser ini. Buka lewat tautan di bawah.' }), open(m.audio.url));
+    });
     box.append(el('div', { className: 'music' }, [el('span', { textContent: m.videos.length || m.photos.length ? 'Musik' : 'Audio' }), audio]));
     if (!m.videos.length && !m.photos.length) box.append(el('div', { className: 'media-actions' }, [open(m.audio.url), jsonToggle]));
   }
@@ -430,7 +489,21 @@ function showJsonMedia(data) {
 
 // data-idle keeps the Indonesian label, so the translator still knows the restored text.
 const flash = (btn, text) => { const old = btn.dataset.idle || btn.textContent; btn.textContent = text; setTimeout(() => { btn.textContent = old; }, 1400); };
-$('#copy-url').addEventListener('click', e => navigator.clipboard.writeText($('#active-request-url').textContent).then(() => flash(e.target, 'Tersalin ✓')));
+// Copy that also works where navigator.clipboard is missing or blocked (in-app browsers, http).
+function salinTeks(text) {
+  const cadangan = () => new Promise((resolve, reject) => {
+    const area = document.createElement('textarea');
+    area.value = text; area.setAttribute('readonly', ''); area.style.position = 'fixed'; area.style.opacity = '0';
+    document.body.append(area); area.select(); area.setSelectionRange(0, text.length);
+    const ok = document.execCommand && document.execCommand('copy');
+    area.remove();
+    ok ? resolve() : reject(new Error('copy failed'));
+  });
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).catch(cadangan);
+  return cadangan();
+}
+const salinDengan = (btn, text) => salinTeks(text).then(() => flash(btn, 'Tersalin ✓'), () => flash(btn, 'Gagal menyalin'));
+$('#copy-url').addEventListener('click', e => salinDengan(e.target, $('#active-request-url').textContent));
 // ---------------------------------------------------------------- code snippets
 // cURL / Node.js / Python / PHP for the selected endpoint, with the parameters filled in so far
 // (empty ones show VALUE). A file endpoint is a POST with the file as the request body.
@@ -492,11 +565,11 @@ document.querySelector('.code-tabs').addEventListener('click', e => {
   try { localStorage.setItem('yannz-code-lang', codeLang); } catch {}
   renderSnippet();
 });
-$('#copy-code').addEventListener('click', e => navigator.clipboard.writeText($('#code-snippet').textContent).then(() => flash(e.target, 'Tersalin ✓')));
+$('#copy-code').addEventListener('click', e => salinDengan(e.target, $('#code-snippet').textContent));
 $('#sandbox-apikey-input')?.addEventListener('input', renderSnippet);
 $('#copy-output').addEventListener('click', e => {
   const text = $('#output-error').hidden ? $('#sandbox-output-text').textContent : $('#output-error').textContent + '\n\n' + $('#sandbox-output-text').textContent;
-  navigator.clipboard.writeText(text).then(() => flash(e.target, 'Tersalin ✓'));
+  salinDengan(e.target, text);
 });
 </script>
 <script src="/assets/select.js?v=3" defer></script>
