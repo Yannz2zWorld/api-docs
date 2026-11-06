@@ -2,6 +2,8 @@
 (() => {
   'use strict';
   const $ = (s, el = document) => el.querySelector(s);
+  // Ikon Material Symbols (set ikon yang dipakai di UI Chrome/Google).
+  const ms = (name, cls = '') => `<span class="ms${cls ? ' ' + cls : ''}" aria-hidden="true">${name}</span>`;
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -15,7 +17,7 @@
   }
   applyTheme();
   const isDark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  function toggleTheme() { store.set('az-theme', isDark() ? 'light' : 'dark'); applyTheme(); document.querySelectorAll('[data-theme-btn]').forEach(b => { b.textContent = isDark() ? '☀️' : '🌙'; }); }
+  function toggleTheme() { store.set('az-theme', isDark() ? 'light' : 'dark'); applyTheme(); document.querySelectorAll('[data-theme-btn]').forEach(b => { b.innerHTML = ms(isDark() ? 'light_mode' : 'dark_mode'); }); }
 
   // ---------------------------------------------------------------- toast + copy
   let toastTimer;
@@ -33,7 +35,7 @@
       const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
       (document.querySelector('dialog[open]') || document.body).appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch {} ta.remove();
     }
-    toast('Tersalin! ✨');
+    toast('Tersalin!');
   }
   document.addEventListener('click', e => {
     const a = e.target.closest('[data-copy]'); if (a) { copy(a.dataset.copy); return; }
@@ -53,7 +55,7 @@
   }
   // Run an async action from a button: disables it, shows errors as toast.
   async function busy(btn, fn) {
-    if (btn) { btn.disabled = true; btn.dataset.label = btn.innerHTML; btn.innerHTML = '⏳ …'; }
+    if (btn) { btn.disabled = true; btn.dataset.label = btn.innerHTML; btn.innerHTML = ms('progress_activity', 'spin') + ' Memproses'; }
     try { return await fn(); }
     catch (e) { toast(e.message, true); }
     finally { if (btn) { btn.disabled = false; btn.innerHTML = btn.dataset.label; } }
@@ -70,24 +72,44 @@
   let mePromise = null;
   const me = (fresh = false) => (!mePromise || fresh) ? (mePromise = api('/me')) : mePromise;
 
+  // ---------------------------------------------------------------- profil situs (diatur di Developer panel)
+  const SITE = window.SITE || { name: 'API Zero', logoText: '0', links: {} };
+  const logo = () => SITE.logoUrl ? `<span class="logo-badge logo-img"><img src="${esc(SITE.logoUrl)}" alt=""></span>` : `<span class="logo-badge">${esc(SITE.logoText || '0')}</span>`;
+  const LINK_META = { whatsapp: ['call', 'WhatsApp'], channel: ['campaign', 'Saluran'], telegram: ['send', 'Telegram'], instagram: ['photo_camera', 'Instagram'], github: ['code', 'GitHub'], email: ['mail', 'Email'] };
+  function linkHref(k, v) {
+    if (k === 'email') return 'mailto:' + v;
+    if (k === 'whatsapp' && !/^https?:/.test(v)) return 'https://wa.me/' + v.replace(/\D/g, '');
+    return /^https:\/\//.test(v) ? v : '#';
+  }
+  function footer() {
+    if (document.querySelector('.site-footer')) return;
+    const links = Object.entries(SITE.links || {}).filter(([, v]) => v);
+    const f = document.createElement('footer');
+    f.className = 'site-footer';
+    f.innerHTML = `<div class="wrap"><span>© ${new Date().getFullYear()} ${esc(SITE.name)}${SITE.footer ? ' · ' + esc(SITE.footer) : ''}</span><span class="spacer"></span>
+      ${links.map(([k, v]) => `<a href="${esc(linkHref(k, v))}" target="_blank" rel="noopener">${ms(LINK_META[k][0])} ${LINK_META[k][1]}</a>`).join('')}</div>`;
+    document.body.appendChild(f);
+  }
+
   // ---------------------------------------------------------------- nav
-  const LINKS = [['/home', '🏠 Home'], ['/playground', '🎡 Playground'], ['/price', '💎 Price'], ['/chat', '💬 Live Chat'], ['/profile', '👤 Profile']];
+  const LINKS = [['/home', '<span class="ms">home</span> Home'], ['/playground', '<span class="ms">attractions</span> Playground'], ['/price', '<span class="ms">diamond</span> Price'], ['/chat', '<span class="ms">chat</span> Live Chat'], ['/profile', '<span class="ms">person</span> Profile']];
   async function nav() {
     const path = location.pathname.toLowerCase();
     const el = document.createElement('header');
     el.className = 'nav';
     el.innerHTML = `<div class="wrap nav-inner">
-      <a class="brand" href="/home"><span class="logo-badge">0</span> API Zero</a>
+      <a class="brand" href="/home">${logo()} ${esc(SITE.name)}</a>
       <nav class="nav-links" id="navLinks">${LINKS.map(([h, t]) => `<a href="${h}" class="${path === h ? 'active' : ''}">${t}</a>`).join('')}</nav>
-      <div class="nav-user"><button class="btn btn-ghost btn-sm icon-btn" data-theme-btn title="Ganti tema">${isDark() ? '☀️' : '🌙'}</button><a href="/profile" id="navAvatar" title="Profile"><span class="avatar">…</span></a>
+      <div class="nav-user"><button class="btn btn-ghost btn-sm icon-btn" data-theme-btn title="Ganti tema" aria-label="Ganti tema">${ms(isDark() ? 'light_mode' : 'dark_mode')}</button><a href="/profile" id="navAvatar" title="Profile"><span class="avatar">…</span></a>
       <button class="btn btn-sm btn-pink" id="logoutBtn" title="Keluar">Keluar</button></div></div>`;
     document.body.prepend(el);
+    footer();
     el.querySelector('[data-theme-btn]').onclick = toggleTheme;
     el.querySelector('#logoutBtn').onclick = async () => { try { await api('/auth/logout', { method: 'POST', body: {} }); } catch {} location.href = '/login'; };
     try {
       const d = await me();
       el.querySelector('#navAvatar').innerHTML = avatar(d.user);
-      if (d.user.isDeveloper) el.querySelector('#navLinks').insertAdjacentHTML('beforeend', `<a href="/developer" class="${path === '/developer' ? 'active' : ''}">🛠️ Developer</a>`);
+      if (d.user.isDeveloper) el.querySelector('#navLinks').insertAdjacentHTML('beforeend', `<a href="/developer" class="${path === '/developer' ? 'active' : ''}"><span class="ms">build</span> Developer</a>`);
     } catch {}
   }
 
@@ -100,12 +122,12 @@
       if (sessionStorage.getItem('az-mt-closed') === m.message) return;
       const b = document.createElement('div');
       b.className = 'mt-bubble'; b.setAttribute('role', 'status');
-      b.innerHTML = `<b>🛠️ Maintenance</b><span>${esc(m.message)}</span><button aria-label="Tutup">×</button>`;
+      b.innerHTML = `<b><span class="ms">build</span> Maintenance</b><span>${esc(m.message)}</span><button aria-label="Tutup">${ms('close')}</button>`;
       b.querySelector('button').onclick = () => { b.remove(); try { sessionStorage.setItem('az-mt-closed', m.message); } catch {} };
       document.body.appendChild(b);
     } catch {}
   }
 
-  document.querySelectorAll('[data-theme-btn]').forEach(b => { b.textContent = isDark() ? '☀️' : '🌙'; b.onclick = toggleTheme; });
-  window.Z = { $, esc, store, toast, copy, api, busy, rupiah, num, date, dateTime, tierBadge, avatar, me, nav, maintenanceBubble, isDark, toggleTheme };
+  document.querySelectorAll('[data-theme-btn]').forEach(b => { b.innerHTML = ms(isDark() ? 'light_mode' : 'dark_mode'); b.onclick = toggleTheme; });
+  window.Z = { $, ms, esc, SITE, logo, footer, store, toast, copy, api, busy, rupiah, num, date, dateTime, tierBadge, avatar, me, nav, maintenanceBubble, isDark, toggleTheme };
 })();

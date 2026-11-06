@@ -14,19 +14,19 @@
     return `<div class="msg${mine ? ' me' : ''}${m.user.tier === 'developer' ? ' dev' : ''}" data-id="${esc(m.id)}">
       <span data-user="${esc(m.user.id)}">${avatar(m.user)}</span>
       <div><div class="who"><b data-user="${esc(m.user.id)}">${esc(m.user.username)}</b>${tierBadge(m.user.tier, m.user.tierName)}<span class="uid">${esc(m.user.id)}</span></div>
-      <div class="bubble">${esc(m.text)}</div><time>${t}</time>${mine || isDev ? `<button class="del" data-del="${esc(m.id)}" title="Hapus">🗑</button>` : ''}</div></div>`;
+      <div class="bubble">${esc(m.text)}</div><time>${t}</time>${mine || isDev ? `<button class="del" data-del="${esc(m.id)}" title="Hapus"><span class="ms">delete</span></button>` : ''}</div></div>`;
   }
   async function poll() {
     try {
       const d = await api('/chat/messages' + (last ? '?after=' + last : ''));
       me = d.me; isDev = d.developer;
       const stick = first || nearBottom();
-      if (first) box.innerHTML = d.messages.length ? '' : '<p class="empty" id="emptyNote">Belum ada pesan. Sapa duluan! 👋</p>';
+      if (first) box.innerHTML = d.messages.length ? '' : '<p class="empty" id="emptyNote">Belum ada pesan. Sapa duluan!</p>';
       if (d.messages.length) { $('#emptyNote')?.remove(); box.insertAdjacentHTML('beforeend', d.messages.map(row).join('')); last = d.messages[d.messages.length - 1].id; }
       while (box.children.length > 300) box.firstElementChild.remove();
       if (stick) box.scrollTop = box.scrollHeight;
       first = false;
-    } catch (e) { if (first) box.innerHTML = `<p class="empty">😵 ${esc(e.message)}</p>`; }
+    } catch (e) { if (first) box.innerHTML = `<p class="empty"><span class="ms">error</span> ${esc(e.message)}</p>`; }
   }
   setInterval(() => { if (!document.hidden) poll(); }, 3000);
   poll();

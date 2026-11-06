@@ -177,3 +177,21 @@ td .row { gap: 5px; flex-wrap: nowrap; }
 }
 .actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 @media (max-width: 760px) { .stat { padding: 10px 12px; } .stat b { font-size: 21px; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+
+/* ikon Material Symbols (gaya ikon Chrome/Google) */
+.ms { font-family: "Material Symbols Rounded"; font-weight: normal; font-style: normal; font-size: 1.25em; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; direction: ltr; vertical-align: -0.22em; font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24; -webkit-font-smoothing: antialiased; user-select: none; }
+.btn .ms { font-size: 1.2em; vertical-align: 0; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty .big .ms { font-size: 52px; }
+.icon-btn .ms { font-size: 20px; }
+.modal-close .ms, .mt-bubble button .ms { font-size: 18px; vertical-align: middle; }
+.logo-badge.logo-img { padding: 0; overflow: hidden; background: #fff; }
+.logo-badge.logo-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.site-footer { border-top: var(--border); background: var(--paper); padding: 18px 0; margin-top: 30px; }
+.site-footer .wrap { display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center; color: var(--ink-soft); font-weight: 700; font-size: 14px; }
+.site-footer a { text-decoration: none; display: inline-flex; gap: 4px; align-items: center; }
+.site-footer a:hover { text-decoration: underline; }
+.announce { background: var(--blue); color: #1d1a2f; display: flex; gap: 10px; align-items: flex-start; }
+.announce .ms { font-size: 26px; }
+.grid2 > .card + .card, .stats > .card + .card { margin-top: 0; }

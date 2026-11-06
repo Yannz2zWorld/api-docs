@@ -19,11 +19,11 @@ r.get('/api/list', wrap(async (req, res) => {
   const viewer = await userFromSession(req).catch(() => null);
   const list = await endpoints.list({ includeHidden: isDev(viewer) });
   res.set('Cache-Control', 'private, max-age=30');
-  res.json({ status: true, creator: process.env.SITE_NAME || 'API Zero', total: list.length, categories: [...new Set(list.map(e => e.category))].sort(), plans: tiers.ENDPOINT_PLANS, endpoints: list });
+  res.json({ status: true, creator: settings.peek('site').creator, total: list.length, categories: [...new Set(list.map(e => e.category))].sort(), plans: tiers.ENDPOINT_PLANS, endpoints: list });
 }));
 r.get('/api/status', wrap(async (req, res) => {
   const m = await settings.get('maintenance').catch(() => ({ on: false }));
-  res.json({ status: true, creator: process.env.SITE_NAME || 'API Zero', maintenance: Boolean(m.on), uptime: Math.round(process.uptime()), time: new Date().toISOString() });
+  res.json({ status: true, creator: settings.peek('site').creator, maintenance: Boolean(m.on), uptime: Math.round(process.uptime()), time: new Date().toISOString() });
 }));
 
 // File dari provider lewat domain kita; alamat aslinya terenkripsi di token.
@@ -60,7 +60,7 @@ r.all('/api/*', perIp, wrap(async (req, res) => {
   if (user.banned) return fail(res, 403, 'BANNED', 'Akun pemilik key ini diblokir.');
   const dev = isDev(user);
 
-  const m = await settings.get('maintenance');
+  const [m] = await Promise.all([settings.get('maintenance'), settings.get('site')]);
   if (m.on && !dev) return fail(res, 503, 'MAINTENANCE', m.message);
   if (spec.locked && !dev) return fail(res, 403, 'ENDPOINT_LOCKED', 'Endpoint ini sedang dikunci developer.');
   if (!dev && !tiers.canUse(user, spec.plan)) {

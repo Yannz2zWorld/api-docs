@@ -2,7 +2,7 @@
   'use strict';
   const { $, esc, api, busy, toast, rupiah, num } = Z;
   Z.nav(); Z.maintenanceBubble();
-  const EMOJI = { free: '🌱', basic: '⭐', premium: '💎', super: '🚀', nebula: '🌌', freedom: '👑' };
+  const ICON = { free: 'eco', basic: 'star', premium: 'diamond', super: 'rocket_launch', nebula: 'auto_awesome', freedom: 'crown' };
   let PAY = [], PLANS = [], order = null;
 
   async function load() {
@@ -13,13 +13,13 @@
     const cur = me.user.tier;
     $('#plans').innerHTML = d.plans.map(p => `<div class="card plan${p.id === cur ? ' current' : ''}">
       ${p.id === cur ? '<span class="badge ok ribbon">Plan kamu</span>' : p.id === 'premium' ? '<span class="badge wait ribbon">Populer</span>' : ''}
-      <div class="row"><span style="font-size:30px">${EMOJI[p.id] || '✨'}</span><span class="tier tier-${p.id}">${esc(p.name)}</span></div>
+      <div class="row"><span class="plan-ico">${Z.ms(ICON[p.id] || 'star')}</span><span class="tier tier-${p.id}">${esc(p.name)}</span></div>
       <div class="price">${p.price ? rupiah(p.price) : 'Gratis'}${p.price ? `<small> / ${d.days} hari</small>` : ''}</div>
       <ul>${p.perks.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
       ${p.price ? `<button class="btn btn-pink btn-block" data-buy="${p.id}">Bayar pakai saldo</button>
         <button class="btn btn-ghost btn-block" data-manual="${p.id}">Transfer manual</button>` : '<button class="btn btn-ghost btn-block" disabled>Sudah termasuk</button>'}
     </div>`).join('');
-    if (me.user.isDeveloper) $('#plans').insertAdjacentHTML('afterbegin', '<div class="card" style="grid-column:1/-1;background:#1d1a2f;color:#ffd84d">🛠️ Kamu developer: finansial freedom, semua endpoint sudah terbuka.</div>');
+    if (me.user.isDeveloper) $('#plans').insertAdjacentHTML('afterbegin', '<div class="card" style="grid-column:1/-1;background:#1d1a2f;color:#ffd84d"><span class="ms">build</span> Kamu developer: finansial freedom, semua endpoint sudah terbuka.</div>');
   }
 
   function openPay(kind, tier, amount) {

@@ -256,4 +256,43 @@ r.post('/orders/:id/:action(approve|reject)', wrap(async (req, res) => {
   res.json({ status: true });
 }));
 
+// ---------------------------------------------------------------- profil web (nama, logo, favicon, warna, link)
+const str = (v, max) => String(v ?? '').trim().slice(0, max);
+r.get('/site', wrap(async (req, res) => {
+  const s = await settings.get('site');
+  res.json({ status: true, site: { ...settings.publicSite(s), hasLogo: Boolean(s.logo), hasFavicon: Boolean(s.favicon) } });
+}));
+r.put('/site', wrap(async (req, res) => {
+  const b = req.body || {};
+  const cur = await settings.get('site');
+  const hex = (v, d) => /^#[0-9a-f]{6}$/i.test(v || '') ? v : d;
+  const name = str(b.name, 40);
+  if (!name) return fail(res, 400, 'INVALID_NAME', 'Nama web wajib diisi.');
+  const links = {};
+  for (const k of Object.keys(settings.DEFAULT_SITE.links)) {
+    const v = str(b.links?.[k], 200);
+    if (v && k !== 'email' && k !== 'whatsapp' && !/^https:\/\//.test(v)) return fail(res, 400, 'INVALID_LINK', `Link ${k} harus diawali https://`);
+    links[k] = v;
+  }
+  const next = { ...cur, name, tagline: str(b.tagline, 120), description: str(b.description, 300), creator: str(b.creator, 40) || name,
+    logoText: str(b.logoText, 3) || name[0], color: hex(b.color, cur.color), accent: hex(b.accent, cur.accent),
+    announcement: str(b.announcement, 500), footer: str(b.footer, 200), links, v: (cur.v || 0) + 1 };
+  const saved = await settings.set('site', next);
+  res.json({ status: true, site: settings.publicSite(saved) });
+}));
+// Logo / favicon: data URL gambar (maks 200 KB), atau null untuk kembali ke bawaan.
+r.post('/site/image', wrap(async (req, res) => {
+  const kind = req.body?.kind;
+  if (!['logo', 'favicon'].includes(kind)) return fail(res, 400, 'INVALID_KIND', 'Pilih logo atau favicon.');
+  const image = req.body?.image ?? null;
+  if (image !== null) {
+    const m = /^data:image\/(png|jpeg|webp|gif|svg\+xml|x-icon|vnd\.microsoft\.icon);base64,([A-Za-z0-9+/=]+)$/.exec(String(image));
+    if (!m) return fail(res, 400, 'INVALID_IMAGE', 'File harus gambar PNG/JPG/WEBP/GIF/SVG/ICO.');
+    if (Buffer.byteLength(m[2], 'base64') > 200 * 1024) return fail(res, 413, 'IMAGE_TOO_LARGE', 'Gambar maksimal 200 KB.');
+  }
+  const cur = await settings.get('site');
+  const saved = await settings.set('site', { ...cur, [kind]: image, v: (cur.v || 0) + 1 });
+  res.json({ status: true, site: settings.publicSite(saved) });
+}));
+
 module.exports = r;

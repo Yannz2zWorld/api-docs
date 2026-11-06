@@ -25,7 +25,7 @@
         <span class="small muted">${k.lastUsedAt ? 'dipakai ' + dateTime(k.lastUsedAt) : 'belum dipakai'}</span>
         <button class="btn btn-sm" data-copy="${esc(k.key)}">Salin</button>
         <button class="btn btn-sm btn-red" data-del-key="${esc(k.id)}">Hapus</button></div>`).join('')
-      : '<p class="empty">Belum ada key. Buat satu di bawah ✨</p>';
+      : '<p class="empty">Belum ada key. Buat satu di bawah</p>';
     $('#keyCustom').disabled = !p.customKey;
     $('#customNote').textContent = p.customKey ? '' : '(mulai plan Premium)';
 
@@ -46,7 +46,7 @@
   });
   $('#keyForm').onsubmit = e => { e.preventDefault(); busy(e.submitter, async () => {
     await api('/me/keys', { method: 'POST', body: { label: $('#keyLabel').value, custom: $('#keyCustom').value.trim() || undefined } });
-    $('#keyLabel').value = ''; $('#keyCustom').value = ''; toast('Key baru dibuat! 🔑'); await load();
+    $('#keyLabel').value = ''; $('#keyCustom').value = ''; toast('Key baru dibuat!'); await load();
   }); };
   $('#nameForm').onsubmit = e => { e.preventDefault(); busy(e.submitter, async () => { const d = await api('/me', { method: 'PATCH', body: { username: $('#newName').value.trim().toLowerCase() } }); toast(d.message); await load(); }); };
   $('#passForm').onsubmit = e => { e.preventDefault(); busy(e.submitter, async () => {
@@ -65,7 +65,7 @@
       let data = c.toDataURL('image/webp', 0.85);
       if (!data.startsWith('data:image/webp')) data = c.toDataURL('image/jpeg', 0.85);
       await api('/me/avatar', { method: 'POST', body: { image: data } });
-      URL.revokeObjectURL(img.src); toast('Foto profil diganti! 📸'); location.reload();
+      URL.revokeObjectURL(img.src); toast('Foto profil diganti!'); location.reload();
     });
     img.onerror = () => toast('File itu bukan gambar.', true);
     img.src = URL.createObjectURL(f);

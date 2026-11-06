@@ -2,7 +2,7 @@
   'use strict';
   const $ = Z.$;
   const ORIGIN = location.origin;
-  const ICONS = { AI: '🤖', Downloader: '📥', Search: '🔎', Tools: '🛠️', Maker: '🎨', Canvas: '🖼️', Textpro: '✍️', Ephoto: '📸', Primbon: '🔮', Games: '🎮', Random: '🎲', Stalk: '👀', News: '📰', Islamic: '🕌', Info: 'ℹ️', Anime: '🌸', Fun: '🎉', Image: '🌈', Movie: '🎬', Music: '🎵', Check: '✅' };
+  const ICONS = Object.fromEntries(Object.entries({ AI: 'smart_toy', Downloader: 'download', Search: 'search', Tools: 'build', Maker: 'palette', Canvas: 'image', Textpro: 'text_fields', Ephoto: 'photo_camera', Primbon: 'auto_awesome', Games: 'sports_esports', Random: 'casino', Stalk: 'person_search', News: 'newspaper', Islamic: 'mosque', Info: 'info', Anime: 'animation', Fun: 'mood', Image: 'imagesmode', Movie: 'movie', Music: 'music_note', Check: 'task_alt' }).map(([k, v]) => [k, Z.ms(v)]));
   const LANGS = ['cURL', 'JavaScript', 'Node.js', 'Python', 'PHP', 'Go', 'Ruby', 'Java', 'Dart'];
   const MEDIA_RE = /\.(jpe?g|png|gif|webp|bmp|svg|mp4|webm|mov|mkv|m3u8|mp3|m4a|ogg|opus|wav|aac|flac)(?=$|[?#])/i;
 
@@ -33,12 +33,12 @@
     renderChips(d.categories || []);
     render();
     openFromHash();
-  }).catch(() => { $('#list').innerHTML = '<div class="card empty"><div class="big">😵</div><p>Daftar endpoint gagal dimuat. Coba refresh.</p></div>'; });
+  }).catch(() => { $('#list').innerHTML = '<div class="card empty"><div class="big"><span class="ms">error</span></div><p>Daftar endpoint gagal dimuat. Coba refresh.</p></div>'; });
 
   function renderChips(cats) {
     const counts = ALL.reduce((a, e) => (a[e.category] = (a[e.category] || 0) + 1, a), {});
     const items = ['Semua', ...cats];
-    $('#chips').innerHTML = items.map(c => `<button class="chip${c === cat ? ' active' : ''}" data-cat="${esc(c)}">${ICONS[c] || (c === 'Semua' ? '✨' : '📦')} ${esc(c)}<small>${c === 'Semua' ? ALL.length : counts[c] || 0}</small></button>`).join('');
+    $('#chips').innerHTML = items.map(c => `<button class="chip${c === cat ? ' active' : ''}" data-cat="${esc(c)}">${ICONS[c] || (c === 'Semua' ? Z.ms('apps') : Z.ms('category'))} ${esc(c)}<small>${c === 'Semua' ? ALL.length : counts[c] || 0}</small></button>`).join('');
     $('#chips').onclick = e => {
       const b = e.target.closest('.chip'); if (!b) return;
       cat = b.dataset.cat;
@@ -55,12 +55,12 @@
     const items = ALL.filter(e => (cat === 'Semua' || e.category === cat) && (!q || `${e.name} ${e.path} ${e.desc} ${e.category}`.toLowerCase().includes(q))
       && (planFilter === 'all' || (planFilter === 'free' ? (e.plan || 'free') === 'free' : planFilter === 'premium' ? (e.plan || 'free') !== 'free' : canUse(e))));
     $('#resultInfo').textContent = `${items.length} endpoint ditemukan`;
-    if (!items.length) { $('#list').innerHTML = '<div class="card empty"><div class="big">🙈</div><p>Nggak ketemu. Coba kata kunci lain ya!</p></div>'; return; }
+    if (!items.length) { $('#list').innerHTML = '<div class="card empty"><div class="big"><span class="ms">search_off</span></div><p>Nggak ketemu. Coba kata kunci lain ya!</p></div>'; return; }
     const groups = {};
     items.forEach(e => (groups[e.category] = groups[e.category] || []).push(e));
     $('#list').innerHTML = Object.entries(groups).map(([c, list]) => `
       <section class="group">
-        <h2 class="group-title">${ICONS[c] || '📦'} ${esc(c)} <span class="count">${list.length}</span></h2>
+        <h2 class="group-title">${ICONS[c] || '<span class="ms">inventory_2</span>'} ${esc(c)} <span class="count">${list.length}</span></h2>
         <div class="ep-grid">${list.map(card).join('')}</div>
       </section>`).join('');
   }
@@ -80,10 +80,10 @@
   });
   function planTags(e) {
     let t = '';
-    if ((e.plan || 'free') !== 'free') t += `<span class="tier tier-${e.plan}">💎 ${PLAN_NAME[e.plan]}</span>`;
-    if (e.locked) t += '<span class="tag tag-lock">🔒 dikunci</span>';
-    if (e.hidden) t += '<span class="tag tag-hidden">👻 hidden</span>';
-    if (!canUse(e) && !e.locked) t += '<span class="tag tag-lock">🔒</span>';
+    if ((e.plan || 'free') !== 'free') t += `<span class="tier tier-${e.plan}"><span class="ms">diamond</span> ${PLAN_NAME[e.plan]}</span>`;
+    if (e.locked) t += '<span class="tag tag-lock"><span class="ms">lock</span> dikunci</span>';
+    if (e.hidden) t += '<span class="tag tag-hidden"><span class="ms">visibility_off</span> hidden</span>';
+    if (!canUse(e) && !e.locked) t += '<span class="tag tag-lock"><span class="ms">lock</span></span>';
     return t;
   }
   $('#planFilter').onchange = e => { planFilter = e.target.value; render(); };
@@ -117,24 +117,24 @@
     }).join('');
 
     $('#modalBody').innerHTML = `
-      <div class="row" style="gap:6px"><span class="tag tag-${ep.upload ? 'post' : 'get'}">${ep.method}</span><span class="tag tag-${ep.output}">${ep.output}</span><span class="badge">${ICONS[ep.category] || '📦'} ${esc(ep.category)}</span>${planTags(ep)}</div>
+      <div class="row" style="gap:6px"><span class="tag tag-${ep.upload ? 'post' : 'get'}">${ep.method}</span><span class="tag tag-${ep.output}">${ep.output}</span><span class="badge">${ICONS[ep.category] || '<span class="ms">inventory_2</span>'} ${esc(ep.category)}</span>${planTags(ep)}</div>
       <h2 style="margin-top:8px;padding-right:50px">${esc(ep.name)}</h2>
       <p class="muted" style="margin-top:0">${esc(ep.desc || '')}</p>
-      ${canUse(ep) ? '' : `<div class="card" style="background:var(--orange);color:#1d1a2f;box-shadow:var(--shadow);padding:12px 14px">🔒 ${ep.locked ? 'Endpoint ini sedang dikunci developer.' : `Endpoint ini khusus plan <b>${PLAN_NAME[ep.plan]}</b> ke atas.`} ${ep.locked ? '' : '<a class="btn btn-sm" href="/price" style="margin-left:6px">Upgrade</a>'}</div>`}
-      ${KEY ? '' : '<p class="small" style="font-weight:800">⚠️ Kamu belum punya API key. <a href="/profile#keys">Buat di Profile</a>.</p>'}
+      ${canUse(ep) ? '' : `<div class="card" style="background:var(--orange);color:#1d1a2f;box-shadow:var(--shadow);padding:12px 14px"><span class="ms">lock</span> ${ep.locked ? 'Endpoint ini sedang dikunci developer.' : `Endpoint ini khusus plan <b>${PLAN_NAME[ep.plan]}</b> ke atas.`} ${ep.locked ? '' : '<a class="btn btn-sm" href="/price" style="margin-left:6px">Upgrade</a>'}</div>`}
+      ${KEY ? '' : '<p class="small" style="font-weight:800"><span class="ms">warning</span> Kamu belum punya API key. <a href="/profile#keys">Buat di Profile</a>.</p>'}
 
-      <div class="section-title">🔗 Request URL</div>
-      <div class="urlbox"><code id="reqUrl"></code><button class="btn btn-sm" data-copy-target="reqUrl">Salin URL</button><a class="btn btn-sm btn-blue" id="openUrl" target="_blank" rel="noopener">Buka ↗</a></div>
+      <div class="section-title"><span class="ms">link</span> Request URL</div>
+      <div class="urlbox"><code id="reqUrl"></code><button class="btn btn-sm" data-copy-target="reqUrl">Salin URL</button><a class="btn btn-sm btn-blue" id="openUrl" target="_blank" rel="noopener">Buka <span class="ms">open_in_new</span></a></div>
 
-      ${ep.params.length ? `<div class="section-title">🧩 Parameter</div><form class="form-grid" id="paramForm" onsubmit="return false">${fields}</form>` : '<p class="muted" style="margin-top:12px">Endpoint ini nggak butuh parameter selain apikey. Langsung panggil aja!</p>'}
-      <div class="actions"><button class="btn btn-pink" id="tryBtn">▶ Coba sekarang</button><button class="btn btn-ghost" id="resetBtn">↺ Reset contoh</button></div>
+      ${ep.params.length ? `<div class="section-title"><span class="ms">extension</span> Parameter</div><form class="form-grid" id="paramForm" onsubmit="return false">${fields}</form>` : '<p class="muted" style="margin-top:12px">Endpoint ini nggak butuh parameter selain apikey. Langsung panggil aja!</p>'}
+      <div class="actions"><button class="btn btn-pink" id="tryBtn"><span class="ms">play_arrow</span> Coba sekarang</button><button class="btn btn-ghost" id="resetBtn"><span class="ms">restart_alt</span> Reset contoh</button></div>
 
-      <div class="section-title">💻 Contoh kode</div>
+      <div class="section-title"><span class="ms">code</span> Contoh kode</div>
       <div class="tabs" id="tabs">${LANGS.map(l => `<button class="tab${l === lang ? ' active' : ''}" data-lang="${l}">${l}</button>`).join('')}</div>
       <div class="codebox"><button class="btn btn-sm copy" data-copy-target="code">Salin</button><pre id="code"></pre></div>
 
-      <div class="section-title">📦 Respons server</div>
-      <div class="response" id="response"><div class="placeholder">Tekan <b>▶ Coba sekarang</b> buat lihat hasilnya di sini.<br>Respons bisa berupa JSON, gambar, video, audio, atau URL file.</div></div>
+      <div class="section-title"><span class="ms">inventory_2</span> Respons server</div>
+      <div class="response" id="response"><div class="placeholder">Tekan <b><span class="ms">play_arrow</span> Coba sekarang</b> buat lihat hasilnya di sini.<br>Respons bisa berupa JSON, gambar, video, audio, atau URL file.</div></div>
     `;
     const form = $('#paramForm');
     if (form) form.addEventListener('input', update);
@@ -322,7 +322,7 @@ void main() async {
     if (missing.length) { toast(`Isi dulu: ${missing.map(p => p.name).join(', ')}`); return; }
 
     revokeBlobs();
-    btn.disabled = true; btn.textContent = '⏳ Memanggil…';
+    btn.disabled = true; btn.innerHTML = Z.ms('progress_activity', 'spin') + ' Memanggil…';
     box.innerHTML = '<div class="loading"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
     const started = performance.now();
     try {
@@ -344,7 +344,7 @@ void main() async {
         const pretty = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
         const found = typeof data === 'object' ? collectMedia(data) : [];
         box.innerHTML = head(text.length, '<button class="btn btn-sm" data-copy-target="respJson">Salin JSON</button>') +
-          `<div class="resp-body"><pre id="respJson">${typeof data === 'string' ? esc(data) : highlight(pretty)}</pre>${found.length ? `<div class="section-title">🎁 Media di dalam respons (${found.length})</div><div class="media-found">${found.slice(0, 8).map(mediaCard).join('')}</div>` : ''}</div>`;
+          `<div class="resp-body"><pre id="respJson">${typeof data === 'string' ? esc(data) : highlight(pretty)}</pre>${found.length ? `<div class="section-title"><span class="ms">perm_media</span> Media di dalam respons (${found.length})</div><div class="media-found">${found.slice(0, 8).map(mediaCard).join('')}</div>` : ''}</div>`;
         $('#respJson').dataset.raw = pretty;
       } else if (/^(image|video|audio)\//.test(type) || /octet-stream|pdf|zip/.test(type)) {
         const blob = await res.blob();
@@ -362,9 +362,9 @@ void main() async {
         box.innerHTML = head(text.length, '<button class="btn btn-sm" data-copy-target="respJson">Salin</button>') + `<div class="resp-body"><pre id="respJson">${esc(text.slice(0, 20000))}</pre></div>`;
       }
     } catch (e) {
-      box.innerHTML = `<div class="resp-head"><span class="badge bad">GAGAL</span></div><div class="resp-body"><div class="placeholder">😵 Request gagal: ${esc(e.message || e)}</div></div>`;
+      box.innerHTML = `<div class="resp-head"><span class="badge bad">GAGAL</span></div><div class="resp-body"><div class="placeholder"><span class="ms">error</span> Request gagal: ${esc(e.message || e)}</div></div>`;
     } finally {
-      btn.disabled = false; btn.textContent = '▶ Coba sekarang';
+      btn.disabled = false; btn.innerHTML = Z.ms('play_arrow') + ' Coba sekarang';
     }
   }
 

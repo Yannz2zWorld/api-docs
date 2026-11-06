@@ -9,7 +9,7 @@ const PROVIDERS = require('./providers');
 
 const DOMAINS = Object.values(PROVIDERS).map(p => new URL(p.base).hostname.replace(/^api\./, ''));
 const NAMES = /\b(dongtube|botcahx|theresav|nexray|api-faa|faa api)\b/gi;
-const SITE = () => process.env.SITE_NAME || 'API Zero';
+const SITE = () => require('./settings').peek('site').name;
 
 function secret() {
   const base = process.env.APP_SECRET || process.env.AUTH_SECRET || ['api-zero', ...Object.values(PROVIDERS).map(p => (p.keyEnv && process.env[p.keyEnv]) || '')].join('|');

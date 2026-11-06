@@ -25,24 +25,70 @@
 </head>
 <body>
 <main class="wrap page">
-  <div class="page-head"><h1>🛠️ Developer panel</h1><p class="muted" style="margin:0">Atur user, plan, endpoint, maintenance, dan pembayaran.</p></div>
+  <div class="page-head"><h1><span class="ms">build</span> Developer panel</h1><p class="muted" style="margin:0">Atur user, plan, endpoint, maintenance, dan pembayaran.</p></div>
   <nav class="dtabs" id="tabs">
-    <button data-tab="overview" class="active">📊 Ringkasan</button>
-    <button data-tab="users">👥 User</button>
-    <button data-tab="endpoints">🔌 Endpoint</button>
-    <button data-tab="orders">🧾 Pesanan</button>
-    <button data-tab="payments">💳 Pembayaran</button>
-    <button data-tab="blacklist">⛔ Blacklist</button>
+    <button data-tab="overview" class="active"><span class="ms">monitoring</span> Ringkasan</button>
+    <button data-tab="site"><span class="ms">web</span> Profil web</button>
+    <button data-tab="users"><span class="ms">group</span> User</button>
+    <button data-tab="endpoints"><span class="ms">power</span> Endpoint</button>
+    <button data-tab="orders"><span class="ms">receipt_long</span> Pesanan</button>
+    <button data-tab="payments"><span class="ms">credit_card</span> Pembayaran</button>
+    <button data-tab="blacklist"><span class="ms">block</span> Blacklist</button>
   </nav>
 
   <section data-panel="overview">
     <div class="stats" id="stats"></div>
     <div class="card" style="margin-top:20px">
-      <div class="row"><h2 style="margin:0">🛠️ Maintenance server</h2><span class="spacer"></span><label class="switch"><input type="checkbox" id="mtOn"><span></span></label></div>
+      <div class="row"><h2 style="margin:0"><span class="ms">build</span> Maintenance server</h2><span class="spacer"></span><label class="switch"><input type="checkbox" id="mtOn"><span></span></label></div>
       <p class="muted small">Saat aktif: API menjawab 503 untuk semua user (developer tetap bisa), dan teks di bawah muncul sebagai bubble mengambang di halaman login &amp; semua halaman.</p>
       <div class="field"><label for="mtMsg">Teks maintenance</label><textarea id="mtMsg" maxlength="500"></textarea></div>
       <button class="btn btn-pink" id="mtSave">Simpan maintenance</button>
     </div>
+  </section>
+
+  <section data-panel="site" class="hidden">
+    <form id="siteForm" onsubmit="return false">
+      <div class="grid2">
+        <div class="card">
+          <h2>Identitas</h2>
+          <div class="form-grid">
+            <div class="field"><label>Nama web <span class="req">*</span></label><input name="name" maxlength="40" required></div>
+            <div class="field"><label>Creator di respons API</label><input name="creator" maxlength="40" placeholder="sama dengan nama web"><div class="hint">Isi field <code>"creator"</code> di setiap jawaban API.</div></div>
+          </div>
+          <div class="field"><label>Tagline (halaman login)</label><input name="tagline" maxlength="120"></div>
+          <div class="field"><label>Deskripsi (meta / mesin pencari)</label><textarea name="description" maxlength="300" style="min-height:70px"></textarea></div>
+          <div class="field"><label>Teks footer</label><input name="footer" maxlength="200" placeholder="mis. Dibuat oleh Yannz"></div>
+          <div class="field"><label>Pengumuman di Home (kosongkan = tidak tampil)</label><textarea name="announcement" maxlength="500" style="min-height:70px"></textarea></div>
+        </div>
+        <div class="card">
+          <h2>Logo, favicon &amp; warna</h2>
+          <div class="field"><label>Logo</label>
+            <div class="row"><span id="logoPreview"></span><input type="file" id="logoFile" accept="image/*" style="flex:1;min-width:160px"><button type="button" class="btn btn-sm btn-ghost" id="logoReset">Pakai huruf</button></div>
+            <div class="hint">Gambar persegi, otomatis dikecilkan ke 256×256. Tanpa gambar, logo memakai huruf di bawah.</div></div>
+          <div class="field"><label>Huruf logo (maks 3)</label><input name="logoText" maxlength="3" style="max-width:120px"></div>
+          <div class="field"><label>Favicon (ikon tab browser)</label>
+            <div class="row"><img id="favPreview" alt="" width="32" height="32" style="border:2px solid var(--line);border-radius:8px;background:#fff"><input type="file" id="favFile" accept="image/png,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,image/webp,image/jpeg" style="flex:1;min-width:160px"><button type="button" class="btn btn-sm btn-ghost" id="favReset">Bawaan</button></div>
+            <div class="hint">PNG/SVG/ICO, maks 200 KB. PNG/JPG/WEBP dikecilkan ke 128×128.</div></div>
+          <div class="form-grid">
+            <div class="field"><label>Warna utama</label><input type="color" name="color" style="height:46px;padding:4px"></div>
+            <div class="field"><label>Warna aksen</label><input type="color" name="accent" style="height:46px;padding:4px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <h2>Kontak &amp; sosial media</h2>
+        <p class="muted small" style="margin-top:0">Tampil di footer semua halaman. Kosongkan yang tidak dipakai.</p>
+        <div class="form-grid">
+          <div class="field"><label>WhatsApp</label><input name="l_whatsapp" placeholder="6281234567890 atau https://wa.me/..."></div>
+          <div class="field"><label>Saluran WhatsApp</label><input name="l_channel" placeholder="https://whatsapp.com/channel/..."></div>
+          <div class="field"><label>Telegram</label><input name="l_telegram" placeholder="https://t.me/..."></div>
+          <div class="field"><label>Instagram</label><input name="l_instagram" placeholder="https://instagram.com/..."></div>
+          <div class="field"><label>GitHub</label><input name="l_github" placeholder="https://github.com/..."></div>
+          <div class="field"><label>Email</label><input name="l_email" type="email" placeholder="admin@domain.com"></div>
+        </div>
+      </div>
+      <div class="actions"><button class="btn btn-pink" id="siteSave" type="button">Simpan profil web</button><span class="muted small">Perubahan langsung terlihat setelah halaman dimuat ulang.</span></div>
+    </form>
   </section>
 
   <section data-panel="users" class="hidden">
@@ -71,7 +117,7 @@
 
   <section data-panel="payments" class="hidden">
     <div class="card">
-      <h2>💳 Metode pembayaran</h2>
+      <h2><span class="ms">credit_card</span> Metode pembayaran</h2>
       <p class="muted small">Tampil di halaman Price saat user transfer manual. Contoh: DANA · a.n. W** N*** H*** · 0812xxxx.</p>
       <div class="pay-row small muted" style="font-weight:800"><span>Nama</span><span>Atas nama</span><span>Nomor / rekening</span><span>Catatan</span><span></span></div>
       <div id="payRows"></div>
@@ -81,7 +127,7 @@
 
   <section data-panel="blacklist" class="hidden">
     <div class="card">
-      <h2>⛔ Blacklist</h2>
+      <h2><span class="ms">block</span> Blacklist</h2>
       <p class="muted small">Email, no HP, atau username di sini tidak bisa daftar/login lagi. Ban user dengan opsi blacklist mengisi ini otomatis.</p>
       <div class="row" style="margin-bottom:12px">
         <select id="blKind" style="width:auto"><option value="email">Email</option><option value="phone">No HP</option><option value="username">Username</option></select>
@@ -94,11 +140,11 @@
 </main>
 
 <dialog id="userModal" class="modal sm">
-  <form method="dialog"><button class="btn modal-close" aria-label="Tutup">✕</button></form>
+  <form method="dialog"><button class="btn modal-close" aria-label="Tutup"><span class="ms">close</span></button></form>
   <div class="modal-body" id="userBody"></div>
 </dialog>
 <dialog id="epModal" class="modal">
-  <form method="dialog"><button class="btn modal-close" aria-label="Tutup">✕</button></form>
+  <form method="dialog"><button class="btn modal-close" aria-label="Tutup"><span class="ms">close</span></button></form>
   <div class="modal-body">
     <h2 id="epTitle" style="padding-right:50px">Tambah endpoint</h2>
     <form id="epForm" onsubmit="return false">
@@ -120,7 +166,7 @@
           <div class="field"><label>Kirim key lewat</label><select name="keyMode"><option value="query">Query (?apikey=)</option><option value="header">Header</option></select></div>
         </div>
       </div>
-      <div class="section-title">🧩 Parameter</div>
+      <div class="section-title"><span class="ms">extension</span> Parameter</div>
       <div class="param-row small muted" style="font-weight:800"><span>Nama</span><span>Placeholder</span><span>Pilihan (a,b,c)</span><span>Wajib</span><span></span></div>
       <div id="paramRows"></div>
       <button class="btn btn-ghost btn-sm" type="button" id="paramAdd">+ Parameter</button>

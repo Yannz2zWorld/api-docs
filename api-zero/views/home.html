@@ -15,37 +15,38 @@
 </head>
 <body>
 <main class="wrap page">
+  <section class="card announce hidden" id="announce" style="margin-bottom:20px"></section>
   <section class="card hello" id="hello"><div class="loading"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></section>
 
   <section class="stats" style="margin-top:20px" id="stats"></section>
 
   <section class="card" style="margin-top:20px">
-    <div class="row"><h2 style="margin:0">🔑 API key kamu</h2><span class="spacer"></span><a class="btn btn-sm btn-ghost" href="/profile#keys">Kelola key</a></div>
+    <div class="row"><h2 style="margin:0"><span class="ms">key</span> API key kamu</h2><span class="spacer"></span><a class="btn btn-sm btn-ghost" href="/profile#keys">Kelola key</a></div>
     <p class="muted small">Tambahkan <code>?apikey=KEY</code> di setiap request. Kuota dihitung per akun, reset tiap 00:00 WIB.</p>
     <div class="urlbox" id="keyBox"></div>
     <div class="section-title">Contoh request</div>
-    <div class="urlbox"><code id="exUrl"></code><button class="btn btn-sm" data-copy-target="exUrl">Salin</button><a class="btn btn-sm btn-blue" id="exOpen" target="_blank" rel="noopener">Buka ↗</a></div>
+    <div class="urlbox"><code id="exUrl"></code><button class="btn btn-sm" data-copy-target="exUrl">Salin</button><a class="btn btn-sm btn-blue" id="exOpen" target="_blank" rel="noopener">Buka <span class="ms">open_in_new</span></a></div>
   </section>
 
   <section class="quick" style="margin-top:20px">
-    <a href="/playground"><div class="card"><div class="ico">🎡</div><h3>Playground</h3><p class="muted small">Coba semua endpoint, lihat respons, salin kode.</p></div></a>
-    <a href="/price"><div class="card"><div class="ico">💎</div><h3>Upgrade plan</h3><p class="muted small">Kuota lebih besar + endpoint premium.</p></div></a>
-    <a href="/chat"><div class="card"><div class="ico">💬</div><h3>Live chat</h3><p class="muted small">Ngobrol bareng user lain &amp; developer.</p></div></a>
-    <a href="/profile"><div class="card"><div class="ico">👤</div><h3>Profile</h3><p class="muted small">Foto, username, sandi, saldo, dan key.</p></div></a>
+    <a href="/playground"><div class="card"><div class="ico"><span class="ms">attractions</span></div><h3>Playground</h3><p class="muted small">Coba semua endpoint, lihat respons, salin kode.</p></div></a>
+    <a href="/price"><div class="card"><div class="ico"><span class="ms">diamond</span></div><h3>Upgrade plan</h3><p class="muted small">Kuota lebih besar + endpoint premium.</p></div></a>
+    <a href="/chat"><div class="card"><div class="ico"><span class="ms">chat</span></div><h3>Live chat</h3><p class="muted small">Ngobrol bareng user lain &amp; developer.</p></div></a>
+    <a href="/profile"><div class="card"><div class="ico"><span class="ms">person</span></div><h3>Profile</h3><p class="muted small">Foto, username, sandi, saldo, dan key.</p></div></a>
   </section>
-  <p class="footer">API Zero · format endpoint <code>/api/(path)/(fitur)</code></p>
 </main>
 <script src="/assets/common.js"></script>
 <script>
 (async () => {
   const { $, esc, num, rupiah, date, tierBadge, avatar } = Z;
   Z.nav(); Z.maintenanceBubble();
+  if (Z.SITE.announcement) { $('#announce').innerHTML = `${Z.ms('campaign')}<div><b>Pengumuman</b><div style="white-space:pre-wrap">${esc(Z.SITE.announcement)}</div></div>`; $('#announce').classList.remove('hidden'); }
   try {
     const [d, list] = await Promise.all([Z.me(), fetch('/api/list').then(r => r.json()).catch(() => ({ total: 0, categories: [] }))]);
     const u = d.user, p = d.plan;
     const hour = new Date().getHours();
     const greet = hour < 11 ? 'Selamat pagi' : hour < 15 ? 'Selamat siang' : hour < 18 ? 'Selamat sore' : 'Selamat malam';
-    $('#hello').innerHTML = `${avatar(u, 'lg')}<div><p style="margin:0;font-weight:800">${greet} 👋</p><h1>${esc(u.username)}</h1>
+    $('#hello').innerHTML = `${avatar(u, 'lg')}<div><p style="margin:0;font-weight:800">${greet}</p><h1>${esc(u.username)}</h1>
       <div class="row">${tierBadge(u.tier, u.tierName)}<span class="badge">ID ${esc(u.id)}</span>${u.tierExpiresAt ? `<span class="badge">aktif s/d ${date(u.tierExpiresAt)}</span>` : ''}</div></div>`;
     const limit = d.usage.limit;
     const pct = limit ? Math.min(100, Math.round(d.usage.today / limit * 100)) : 4;
@@ -60,7 +61,7 @@
       : `<span class="muted">Belum ada key.</span> <a class="btn btn-sm btn-pink" href="/profile#keys">Buat key</a>`;
     const ex = `${location.origin}/api/islamic/doaharian?apikey=${encodeURIComponent(key || 'KEY_KAMU')}`;
     $('#exUrl').textContent = ex; $('#exOpen').href = ex;
-  } catch (e) { $('#hello').innerHTML = `<p>😵 ${esc(e.message)}</p>`; }
+  } catch (e) { $('#hello').innerHTML = `<p><span class="ms">error</span> ${esc(e.message)}</p>`; }
 })();
 </script>
 </body>

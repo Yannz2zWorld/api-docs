@@ -10,7 +10,10 @@
   .plan .price small { font-size: 14px; color: var(--ink-soft); }
   .plan ul { margin: 0; padding-left: 0; list-style: none; flex: 1; }
   .plan li { padding: 4px 0; font-weight: 700; }
-  .plan li::before { content: "✔ "; color: #2f9e5f; }
+  .plan li { display: flex; gap: 6px; align-items: flex-start; }
+  .plan li::before { content: "check_circle"; font-family: "Material Symbols Rounded"; font-size: 20px; line-height: 1.2; color: #2f9e5f; font-variation-settings: "FILL" 1; }
+  .plan-ico { width: 44px; height: 44px; display: grid; place-items: center; border: var(--border); border-radius: 12px; background: var(--yellow); color: #1d1a2f; }
+  .plan-ico .ms { font-size: 26px; }
   .plan.current { outline: 4px dashed var(--pink); outline-offset: 4px; }
   .plan .ribbon { position: absolute; top: -12px; right: 14px; }
   .pm { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px; border: var(--border); border-radius: 12px; background: var(--field); margin-bottom: 8px; cursor: pointer; }
@@ -21,13 +24,13 @@
 <body>
 <main class="wrap page">
   <div class="page-head row">
-    <div><h1>💎 Pilih plan</h1><p class="muted" style="margin:0">Semua plan berlaku <b id="days">30</b> hari. Bayar pakai saldo langsung aktif.</p></div>
+    <div><h1><span class="ms">diamond</span> Pilih plan</h1><p class="muted" style="margin:0">Semua plan berlaku <b id="days">30</b> hari. Bayar pakai saldo langsung aktif.</p></div>
     <span class="spacer"></span><div class="stat"><b id="bal">…</b><span>saldo kamu</span></div>
   </div>
   <section class="plans" id="plans"><div class="loading"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></section>
 
   <section class="card" style="margin-top:24px">
-    <h2>💰 Top up saldo</h2>
+    <h2><span class="ms">account_balance_wallet</span> Top up saldo</h2>
     <p class="muted small">Transfer ke salah satu metode di bawah, lalu kirim pesanan. Saldo masuk setelah dicek developer.</p>
     <div class="row"><input id="topAmount" type="number" min="1000" step="1000" placeholder="Jumlah, mis. 10000" style="max-width:240px"><button class="btn btn-green" id="topBtn">Top up</button></div>
   </section>
@@ -35,14 +38,14 @@
 </main>
 
 <dialog id="payModal" class="modal sm">
-  <form method="dialog"><button class="btn modal-close" aria-label="Tutup">✕</button></form>
+  <form method="dialog"><button class="btn modal-close" aria-label="Tutup"><span class="ms">close</span></button></form>
   <div class="modal-body">
     <h2 id="payTitle" style="padding-right:50px">Bayar</h2>
     <p class="muted" id="payDesc"></p>
     <div id="pmList"></div>
     <div class="field"><label for="paySender">Nama / nomor pengirim <span class="req">*</span></label><input id="paySender" maxlength="80" placeholder="mis. Budi · 0812xxxx"></div>
     <div class="field"><label for="payNote">Catatan (opsional)</label><input id="payNote" maxlength="300" placeholder="mis. jam transfer, 4 digit terakhir"></div>
-    <button class="btn btn-pink btn-block" id="paySend">Saya sudah transfer ✅</button>
+    <button class="btn btn-pink btn-block" id="paySend">Saya sudah transfer</button>
     <p class="hint">Pesanan dicek manual oleh developer, biasanya tidak lama.</p>
   </div>
 </dialog>

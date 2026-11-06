@@ -26,7 +26,7 @@
 <body>
 <main class="wrap page" style="padding-bottom:20px">
   <section class="card chat">
-    <div class="chat-head"><span style="font-size:24px">💬</span><div><h3 style="margin:0">Live chat</h3><div class="small" style="font-weight:800">Ngobrol bareng user &amp; developer. Sopan ya!</div></div></div>
+    <div class="chat-head"><span style="font-size:24px"><span class="ms">chat</span></span><div><h3 style="margin:0">Live chat</h3><div class="small" style="font-weight:800">Ngobrol bareng user &amp; developer. Sopan ya!</div></div></div>
     <div class="msgs" id="msgs" aria-live="polite"><div class="loading"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>
     <form class="composer" id="form">
       <textarea id="text" maxlength="500" placeholder="Tulis pesan… (Enter kirim, Shift+Enter baris baru)" aria-label="Pesan"></textarea>
@@ -35,7 +35,7 @@
   </section>
 </main>
 <dialog id="userModal" class="modal sm">
-  <form method="dialog"><button class="btn modal-close" aria-label="Tutup">✕</button></form>
+  <form method="dialog"><button class="btn modal-close" aria-label="Tutup"><span class="ms">close</span></button></form>
   <div class="modal-body" id="userBody"></div>
 </dialog>
 <script src="/assets/common.js"></script>

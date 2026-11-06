@@ -20,20 +20,20 @@
 
   <div class="grid2" style="margin-top:20px">
     <section class="card">
-      <h2>📇 Data akun</h2>
+      <h2><span class="ms">badge</span> Data akun</h2>
       <dl class="kv" id="info"></dl>
     </section>
     <section class="card">
-      <h2>🖼️ Foto profil</h2>
+      <h2><span class="ms">image</span> Foto profil</h2>
       <p class="muted small">PNG/JPG/WEBP. Otomatis dikecilkan ke 256×256.</p>
       <div class="row"><input type="file" id="avatarFile" accept="image/*" style="flex:1"><button class="btn btn-sm btn-ghost" id="avatarDel">Hapus foto</button></div>
     </section>
     <section class="card">
-      <h2>✏️ Ganti username</h2>
+      <h2><span class="ms">edit</span> Ganti username</h2>
       <form id="nameForm"><div class="field"><label for="newName">Username baru</label><input id="newName" pattern="[a-z0-9_]{3,20}" required></div><button class="btn btn-blue">Simpan</button></form>
     </section>
     <section class="card">
-      <h2>🔒 Ganti sandi</h2>
+      <h2><span class="ms">lock</span> Ganti sandi</h2>
       <form id="passForm">
         <div class="field" id="curWrap"><label for="curPass">Sandi lama</label><input id="curPass" type="password" autocomplete="current-password"></div>
         <div class="field"><label for="newPass">Sandi baru</label><input id="newPass" type="password" minlength="6" required autocomplete="new-password"></div>
@@ -44,7 +44,7 @@
   </div>
 
   <section class="card" id="keys" style="margin-top:20px">
-    <div class="row"><h2 style="margin:0">🔑 API key</h2><span class="spacer"></span><span class="badge" id="keyCount"></span></div>
+    <div class="row"><h2 style="margin:0"><span class="ms">key</span> API key</h2><span class="spacer"></span><span class="badge" id="keyCount"></span></div>
     <div id="keyList" style="margin:10px 0"></div>
     <form id="keyForm" class="form-grid" style="align-items:end">
       <div class="field"><label for="keyLabel">Label (opsional)</label><input id="keyLabel" maxlength="40" placeholder="mis. Bot WA"></div>
@@ -54,7 +54,7 @@
   </section>
 
   <section class="card" style="margin-top:20px">
-    <h2>🧾 Riwayat pesanan</h2>
+    <h2><span class="ms">receipt_long</span> Riwayat pesanan</h2>
     <div id="orders"></div>
   </section>
 </main>

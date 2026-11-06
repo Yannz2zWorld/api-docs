@@ -30,8 +30,47 @@
   }
   $('#mtSave').onclick = e => busy(e.currentTarget, async () => {
     await api('/dev/maintenance', { method: 'PUT', body: { on: $('#mtOn').checked, message: $('#mtMsg').value } });
-    toast($('#mtOn').checked ? 'Maintenance AKTIF 🛠️' : 'Maintenance mati ✅');
+    toast($('#mtOn').checked ? 'Maintenance AKTIF' : 'Maintenance mati');
   });
+
+  // ---------------------------------------------------------------- profil web
+  const SF = name => $('#siteForm').elements[name];
+  function showSite(s) {
+    for (const k of ['name', 'creator', 'tagline', 'description', 'footer', 'announcement', 'logoText']) SF(k).value = s[k] || '';
+    SF('color').value = s.color || '#ffd84d'; SF('accent').value = s.accent || '#ff8fb8';
+    for (const k of Object.keys(s.links || {})) if (SF('l_' + k)) SF('l_' + k).value = s.links[k] || '';
+    $('#logoPreview').innerHTML = s.logoUrl ? `<span class="logo-badge logo-img"><img src="${esc(s.logoUrl)}" alt=""></span>` : `<span class="logo-badge">${esc(s.logoText || '0')}</span>`;
+    $('#favPreview').src = s.faviconUrl;
+  }
+  async function loadSite() { showSite((await api('/dev/site')).site); }
+  $('#siteSave').onclick = e => busy(e.currentTarget, async () => {
+    const links = {};
+    for (const k of ['whatsapp', 'channel', 'telegram', 'instagram', 'github', 'email']) links[k] = SF('l_' + k).value.trim();
+    const body = { links };
+    for (const k of ['name', 'creator', 'tagline', 'description', 'footer', 'announcement', 'logoText', 'color', 'accent']) body[k] = SF(k).value;
+    showSite((await api('/dev/site', { method: 'PUT', body })).site);
+    toast('Profil web disimpan');
+  });
+  // Kecilkan gambar di browser. SVG/ICO dikirim apa adanya.
+  function readImage(file, size) {
+    return new Promise((resolve, reject) => {
+      if (/svg|icon/.test(file.type)) { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.onerror = reject; fr.readAsDataURL(file); return; }
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas'); c.width = c.height = size;
+        const s = Math.min(img.width, img.height);
+        c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+        URL.revokeObjectURL(img.src); resolve(c.toDataURL('image/png'));
+      };
+      img.onerror = () => reject(new Error('File itu bukan gambar.'));
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  const upload = (kind, image) => busy(null, async () => { showSite((await api('/dev/site/image', { method: 'POST', body: { kind, image } })).site); toast(kind === 'logo' ? 'Logo diganti' : 'Favicon diganti'); });
+  $('#logoFile').onchange = e => e.target.files[0] && readImage(e.target.files[0], 256).then(d => upload('logo', d)).catch(err => toast(err.message, true));
+  $('#favFile').onchange = e => e.target.files[0] && readImage(e.target.files[0], 128).then(d => upload('favicon', d)).catch(err => toast(err.message, true));
+  $('#logoReset').onclick = () => upload('logo', null);
+  $('#favReset').onclick = () => upload('favicon', null);
 
   // ---------------------------------------------------------------- users
   let USERS = [];
@@ -59,33 +98,33 @@
       <button class="btn btn-pink btn-block" id="nuSave">Buat user</button>`;
     $('#nuSave').onclick = e => busy(e.currentTarget, async () => {
       await api('/dev/users', { method: 'POST', body: { username: $('#nuName').value.trim().toLowerCase(), password: $('#nuPass').value, email: $('#nuEmail').value || undefined, phone: $('#nuPhone').value || undefined, tier: $('#nuTier').value, days: $('#nuDays').value } });
-      $('#userModal').close(); toast('User dibuat ✅'); loadUsers();
+      $('#userModal').close(); toast('User dibuat'); loadUsers();
     });
     $('#userModal').showModal();
   };
 
   function editUser(u) {
     $('#userBody').innerHTML = `<div class="row">${avatar(u)}<div><h2 style="margin:0">${esc(u.username)}</h2><div class="small muted mono">${esc(u.id)} · gabung ${date(u.createdAt)}</div></div></div>
-      <div class="section-title">💎 Atur plan</div>
+      <div class="section-title"><span class="ms">diamond</span> Atur plan</div>
       <div class="form-grid"><div class="field"><label>Plan</label><select id="euTier">${tierOptions(u.rawTier)}</select></div><div class="field"><label>Durasi (hari, dari sekarang)</label><input id="euDays" type="number" value="30" min="1"></div></div>
       <button class="btn btn-blue btn-sm" id="euTierSave">Simpan plan</button>
-      <div class="section-title">💰 Saldo (${rupiah(u.balance)})</div>
+      <div class="section-title"><span class="ms">account_balance_wallet</span> Saldo (${rupiah(u.balance)})</div>
       <div class="row"><input id="euBal" type="number" step="1000" placeholder="+10000 atau -5000" style="flex:1"><button class="btn btn-green btn-sm" id="euBalSave">Ubah saldo</button></div>
-      <div class="section-title">✏️ Akun</div>
+      <div class="section-title"><span class="ms">edit</span> Akun</div>
       <div class="form-grid"><div class="field"><label>Username</label><input id="euName" value="${esc(u.username)}"></div><div class="field"><label>Reset sandi</label><input id="euPass" placeholder="sandi baru"></div></div>
       <button class="btn btn-ghost btn-sm" id="euAcc">Simpan akun</button>
-      <div class="section-title">⛔ Ban / blacklist</div>
+      <div class="section-title"><span class="ms">block</span> Ban / blacklist</div>
       ${u.banned ? `<p class="small">Diban${u.banReason ? ': ' + esc(u.banReason) : ''}</p><button class="btn btn-green btn-sm" id="euUnban">Buka ban</button>`
         : `<div class="field"><input id="euReason" placeholder="Alasan ban"></div><label class="check small"><input type="checkbox" id="euBl"> Blacklist email, no HP &amp; username juga</label>
            <div style="margin-top:8px"><button class="btn btn-red btn-sm" id="euBan">Ban user</button></div>`}
-      <div class="section-title">🗑️ Hapus</div>
+      <div class="section-title"><span class="ms">delete</span> Hapus</div>
       <button class="btn btn-red btn-sm" id="euDel">Hapus user permanen</button>`;
     const patch = (btn, body, msg) => busy(btn, async () => { await api('/dev/users/' + u.id, { method: 'PATCH', body }); toast(msg); $('#userModal').close(); loadUsers(); });
-    $('#euTierSave').onclick = e => patch(e.currentTarget, { tier: $('#euTier').value, days: $('#euDays').value }, 'Plan diubah ✅');
-    $('#euBalSave').onclick = e => patch(e.currentTarget, { balanceDelta: $('#euBal').value }, 'Saldo diubah ✅');
-    $('#euAcc').onclick = e => patch(e.currentTarget, { username: $('#euName').value.trim().toLowerCase(), ...($('#euPass').value ? { password: $('#euPass').value } : {}) }, 'Akun disimpan ✅');
-    if (u.banned) $('#euUnban').onclick = e => patch(e.currentTarget, { banned: false }, 'Ban dibuka ✅');
-    else $('#euBan').onclick = e => confirm(`Ban ${u.username}?`) && patch(e.currentTarget, { banned: true, reason: $('#euReason').value, blacklist: $('#euBl').checked }, 'User diban ⛔');
+    $('#euTierSave').onclick = e => patch(e.currentTarget, { tier: $('#euTier').value, days: $('#euDays').value }, 'Plan diubah');
+    $('#euBalSave').onclick = e => patch(e.currentTarget, { balanceDelta: $('#euBal').value }, 'Saldo diubah');
+    $('#euAcc').onclick = e => patch(e.currentTarget, { username: $('#euName').value.trim().toLowerCase(), ...($('#euPass').value ? { password: $('#euPass').value } : {}) }, 'Akun disimpan');
+    if (u.banned) $('#euUnban').onclick = e => patch(e.currentTarget, { banned: false }, 'Ban dibuka');
+    else $('#euBan').onclick = e => confirm(`Ban ${u.username}?`) && patch(e.currentTarget, { banned: true, reason: $('#euReason').value, blacklist: $('#euBl').checked }, 'User diban <span class="ms">block</span>');
     $('#euDel').onclick = e => confirm(`Hapus ${u.username} beserta key & riwayatnya? Tidak bisa dibatalkan.`) && busy(e.currentTarget, async () => {
       await api('/dev/users/' + u.id, { method: 'DELETE' }); toast('User dihapus.'); $('#userModal').close(); loadUsers();
     });
@@ -131,7 +170,7 @@
     const el = e.target.closest('[data-act]'); if (!el) return;
     const path = el.closest('tr').dataset.path;
     const body = el.dataset.act === 'plan' ? { plan: el.value } : { [el.dataset.act]: el.checked };
-    patchEp(path, body).then(() => toast('Disimpan ✅')).catch(err => { toast(err.message, true); renderEndpoints(); });
+    patchEp(path, body).then(() => toast('Disimpan')).catch(err => { toast(err.message, true); renderEndpoints(); });
   });
   $('#epRows').addEventListener('click', e => {
     const el = e.target.closest('button[data-act]'); if (!el) return;
@@ -142,7 +181,7 @@
       if (ep.source === 'custom') EPS = EPS.filter(x => x !== ep); else ep.deleted = true;
       renderEndpoints(); toast('Endpoint dihapus.');
     });
-    if (el.dataset.act === 'restore') busy(el, async () => { await patchEp(path, { deleted: false }); renderEndpoints(); toast('Endpoint dipulihkan ✅'); });
+    if (el.dataset.act === 'restore') busy(el, async () => { await patchEp(path, { deleted: false }); renderEndpoints(); toast('Endpoint dipulihkan'); });
     if (el.dataset.act === 'edit') busy(el, async () => { const d = await api('/dev/endpoints/custom?path=' + encodeURIComponent(path)); openEpForm(d.spec); });
   });
 
@@ -154,7 +193,7 @@
     div.className = 'param-row';
     div.innerHTML = `<input data-k="name" placeholder="url" value="${esc(p.name || '')}"><input data-k="placeholder" placeholder="contoh nilai / petunjuk" value="${esc(p.placeholder || '')}">
       <input data-k="options" placeholder="opsional" value="${esc((p.options || []).join(','))}"><label class="check"><input type="checkbox" data-k="required"${p.required ? ' checked' : ''}></label>
-      <button type="button" class="btn btn-sm btn-red" title="Hapus">✕</button>`;
+      <button type="button" class="btn btn-sm btn-red" title="Hapus"><span class="ms">close</span></button>`;
     div.querySelector('button').onclick = () => div.remove();
     $('#paramRows').appendChild(div);
   }
@@ -189,7 +228,7 @@
       server: F('server').value, upstream: F('upstream').value, url: F('url').value, keyValue: F('keyValue').value, keyParam: F('keyParam').value, keyMode: F('keyMode').value, params, sample };
     if (editingPath) await api('/dev/endpoints', { method: 'PUT', body: { ...body, originalPath: editingPath } });
     else await api('/dev/endpoints', { method: 'POST', body });
-    $('#epModal').close(); toast('Endpoint disimpan ✅'); await loadEndpoints();
+    $('#epModal').close(); toast('Endpoint disimpan'); await loadEndpoints();
   });
 
   // ---------------------------------------------------------------- orders
@@ -210,7 +249,7 @@
     const note = approve ? '' : prompt('Alasan ditolak (opsional):', '') ?? null;
     if (note === null) return;
     if (approve && !confirm('Pastikan uang sudah masuk. Terima pesanan ini?')) return;
-    busy(b, async () => { await api(`/dev/orders/${b.dataset.order}/${b.dataset.act}`, { method: 'POST', body: { note } }); toast(approve ? 'Pesanan diterima, plan/saldo aktif ✅' : 'Pesanan ditolak.'); loadOrders(); });
+    busy(b, async () => { await api(`/dev/orders/${b.dataset.order}/${b.dataset.act}`, { method: 'POST', body: { note } }); toast(approve ? 'Pesanan diterima, plan/saldo aktif' : 'Pesanan ditolak.'); loadOrders(); });
   };
 
   // ---------------------------------------------------------------- payments
@@ -219,7 +258,7 @@
     div.className = 'pay-row'; div.dataset.id = p.id || '';
     div.innerHTML = `<input data-k="name" placeholder="DANA" value="${esc(p.name || '')}"><input data-k="holder" placeholder="a.n. W** N*** H***" value="${esc(p.holder || '')}">
       <input data-k="number" placeholder="0812xxxxxxxx" value="${esc(p.number || '')}"><input data-k="note" placeholder="opsional" value="${esc(p.note || '')}">
-      <button type="button" class="btn btn-sm btn-red">✕</button>`;
+      <button type="button" class="btn btn-sm btn-red"><span class="ms">close</span></button>`;
     div.querySelector('button').onclick = () => div.remove();
     $('#payRows').appendChild(div);
   }
@@ -232,7 +271,7 @@
   $('#paySave').onclick = e => busy(e.currentTarget, async () => {
     const payments = [...$('#payRows').children].map(r => ({ id: r.dataset.id, ...Object.fromEntries([...r.querySelectorAll('[data-k]')].map(i => [i.dataset.k, i.value])) }));
     await api('/dev/payments', { method: 'PUT', body: { payments } });
-    toast('Metode pembayaran disimpan ✅'); loadPayments();
+    toast('Metode pembayaran disimpan'); loadPayments();
   });
 
   // ---------------------------------------------------------------- blacklist
@@ -243,11 +282,11 @@
   }
   $('#blAdd').onclick = e => busy(e.currentTarget, async () => {
     await api('/dev/blacklist', { method: 'POST', body: { kind: $('#blKind').value, value: $('#blValue').value, reason: $('#blReason').value } });
-    $('#blValue').value = ''; $('#blReason').value = ''; toast('Diblokir ⛔'); loadBlacklist();
+    $('#blValue').value = ''; $('#blReason').value = ''; toast('Diblokir'); loadBlacklist();
   });
   $('#blRows').onclick = e => { const b = e.target.closest('[data-unbl]'); if (b) busy(b, async () => { await api('/dev/blacklist?value=' + encodeURIComponent(b.dataset.unbl), { method: 'DELETE' }); loadBlacklist(); }); };
 
-  const LOADERS = { overview: loadOverview, users: loadUsers, endpoints: loadEndpoints, orders: loadOrders, payments: loadPayments, blacklist: loadBlacklist };
+  const LOADERS = { overview: loadOverview, site: loadSite, users: loadUsers, endpoints: loadEndpoints, orders: loadOrders, payments: loadPayments, blacklist: loadBlacklist };
   const fromHash = () => showTab(LOADERS[location.hash.slice(1)] ? location.hash.slice(1) : 'overview');
   window.addEventListener('hashchange', fromHash);
   fromHash();

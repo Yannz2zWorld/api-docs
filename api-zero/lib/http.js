@@ -1,5 +1,5 @@
 'use strict';
-const SITE = () => process.env.SITE_NAME || 'API Zero';
+const SITE = () => require('./settings').peek('site').creator;
 const wrap = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 const fail = (res, status, error, message, extra = {}) => res.status(status).json({ status: false, creator: SITE(), error, message, ...extra });
 

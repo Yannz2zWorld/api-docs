@@ -1,6 +1,6 @@
 # API Zero
 
-REST API platform dengan UI kartun (tanpa 3D). Semua fitur dipanggil lewat satu format:
+REST API platform dengan UI kartun (tanpa 3D). Ikon memakai Material Symbols (set ikon Google/Chrome), bukan emoji. Semua fitur dipanggil lewat satu format:
 
 ```
 https://api-zero.web.id/api/(path)/(fitur)?apikey=KEY_KAMU&param=...
@@ -36,6 +36,9 @@ premium secara terbuka, jadi ini pilihan awal) dan bisa diubah per endpoint di D
 
 ## Developer panel
 
+- **Profil web**: nama web, creator di respons API, tagline, deskripsi (meta), logo (gambar atau huruf), favicon,
+  warna utama & aksen, pengumuman di Home, teks footer, link kontak (WhatsApp, saluran, Telegram, Instagram, GitHub, email).
+  Semua halaman dan respons API langsung memakai pengaturan ini.
 - **Ringkasan**: statistik + **maintenance** (on/off + teks bubble). Saat on, API menjawab 503 untuk semua user kecuali developer.
 - **User**: cari, tambah user, atur plan + durasi, tambah/kurangi saldo, ganti username, reset sandi, ban (opsional blacklist email/HP/username), hapus.
 - **Endpoint**: cari & filter, atur plan, kunci, sembunyikan, hapus/pulihkan, tambah endpoint sendiri (form, tanpa AI) ke provider yang ada atau URL bebas, edit endpoint buatan sendiri.
@@ -68,7 +71,7 @@ Alamat, nama, dan key provider hanya ada di server (`lib/providers.js` + env). F
    `DEVELOPER_USERNAMES`, key provider. Opsional `GOOGLE_CLIENT_ID`, SMTP (lupa sandi), `PUBLIC_BASE_URL`.
 4. Deploy. Tabel database dibuat otomatis saat request pertama.
 5. **Settings → Domains** → tambah `api-zero.web.id`.
-6. Daftar di `/login` dengan username developer → buka `/developer`, isi metode pembayaran.
+6. Daftar di `/login` dengan username developer → buka `/developer`: atur Profil web (nama, logo, favicon) dan metode pembayaran.
 
 ## Lokal
 

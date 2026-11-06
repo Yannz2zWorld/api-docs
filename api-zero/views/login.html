@@ -21,13 +21,13 @@
 </style>
 </head>
 <body>
-<button class="btn btn-ghost btn-sm icon-btn theme-corner" data-theme-btn title="Ganti tema">🌙</button>
+<button class="btn btn-ghost btn-sm icon-btn theme-corner" data-theme-btn title="Ganti tema" aria-label="Ganti tema"></button>
 <main class="login">
   <div class="login-box">
     <div class="login-hero">
       <svg class="mascot" viewBox="0 0 120 120" aria-hidden="true"><line x1="60" y1="22" x2="60" y2="8" stroke="#1d1a2f" stroke-width="4" stroke-linecap="round"/><circle cx="60" cy="8" r="6" fill="#ff8fb8" stroke="#1d1a2f" stroke-width="3"/><rect x="16" y="22" width="88" height="74" rx="24" fill="#7cc8ff" stroke="#1d1a2f" stroke-width="4"/><rect x="29" y="37" width="62" height="42" rx="14" fill="#fff" stroke="#1d1a2f" stroke-width="3"/><ellipse cx="48" cy="55" rx="5" ry="7" fill="#1d1a2f"/><ellipse cx="72" cy="55" rx="5" ry="7" fill="#1d1a2f"/><path d="M52 68 q8 7 16 0" stroke="#1d1a2f" stroke-width="4" fill="none" stroke-linecap="round"/></svg>
       <div class="brand"><span class="logo-badge">0</span> API Zero</div>
-      <p>REST API gratis &amp; premium, tinggal panggil!</p>
+      <p>{{TAGLINE}}</p>
     </div>
     <div class="card">
       <div class="seg" role="tablist">
@@ -38,7 +38,7 @@
       <form id="loginForm" autocomplete="on">
         <div class="field"><label for="lUser">Username atau email</label><input id="lUser" name="username" autocomplete="username" required></div>
         <div class="field"><label for="lPass">Sandi</label><input id="lPass" name="password" type="password" autocomplete="current-password" required></div>
-        <button class="btn btn-pink btn-block" type="submit">Masuk 🚀</button>
+        <button class="btn btn-pink btn-block" type="submit">Masuk</button>
         <p class="small" style="text-align:right;margin:10px 0 0"><button type="button" class="link" id="forgotLink">Lupa sandi?</button></p>
       </form>
 
@@ -47,11 +47,11 @@
         <div class="field"><label for="rPass">Sandi <span class="req">*</span></label><input id="rPass" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="minimal 6 karakter"></div>
         <div class="field"><label for="rPhone">No. HP <span class="req">*</span></label><input id="rPhone" name="phone" type="tel" autocomplete="tel" required placeholder="08xxxxxxxxxx"></div>
         <div class="field"><label for="rEmail">Email <span class="req">*</span></label><input id="rEmail" name="email" type="email" autocomplete="email" required placeholder="buat reset sandi"><div class="hint">Kode lupa sandi dikirim ke email ini.</div></div>
-        <button class="btn btn-pink btn-block" type="submit">Daftar gratis ✨</button>
+        <button class="btn btn-pink btn-block" type="submit">Daftar gratis</button>
       </form>
 
       <form id="forgotForm" class="hidden">
-        <h3>Lupa sandi 🔑</h3>
+        <h3>Lupa sandi</h3>
         <p class="small muted" style="margin-top:0">Masukkan email akun kamu. Kami kirim kode 6 digit.</p>
         <div class="field"><label for="fEmail">Email</label><input id="fEmail" type="email" required autocomplete="email"></div>
         <button class="btn btn-blue btn-block" type="submit" id="sendCode">Kirim kode</button>
@@ -60,7 +60,7 @@
           <div class="field"><label for="fPass">Sandi baru</label><input id="fPass" type="password" minlength="6" autocomplete="new-password"></div>
           <button class="btn btn-pink btn-block" type="button" id="doReset">Ganti sandi</button>
         </div>
-        <p class="small" style="margin:12px 0 0"><button type="button" class="link" id="backLogin">← Kembali ke masuk</button></p>
+        <p class="small" style="margin:12px 0 0"><button type="button" class="link" id="backLogin"><span class="ms">arrow_back</span> Kembali ke masuk</button></p>
       </form>
 
       <div id="googleArea" class="hidden">
@@ -72,5 +72,6 @@
 </main>
 <script src="/assets/common.js"></script>
 <script src="/assets/login.js"></script>
+<script>Z.footer();</script>
 </body>
 </html>

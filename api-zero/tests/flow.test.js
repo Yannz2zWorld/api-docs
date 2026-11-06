@@ -103,6 +103,20 @@ test('platform flow', { skip: !URL_DB && 'TEST_DATABASE_URL belum diisi' }, asyn
   assert.strictEqual((await call('u3', 'POST', '/auth/login', { username: 'ani', password: 'newpass1' })).status, 403);
   assert.strictEqual((await call('z', 'POST', '/auth/register', { username: 'ani2', password: 'secret12', phone: '081200000002', email: 'other@x.io' })).status, 403);
 
+  // profil web dari Developer panel
+  assert.strictEqual((await call('u3', 'PUT', '/dev/site', { name: 'X' })).status, 403);
+  r = await call('dev', 'PUT', '/dev/site', { name: 'Zero Lab', creator: 'ZeroBot', tagline: 'Halo', color: '#123456', links: { github: 'https://github.com/x' } });
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual((await call('dev', 'PUT', '/dev/site', { name: 'Zero Lab', links: { github: 'javascript:alert(1)' } })).status, 400);
+  const png = 'data:image/png;base64,' + Buffer.from('89504e470d0a1a0a', 'hex').toString('base64');
+  assert.strictEqual((await call('dev', 'POST', '/dev/site/image', { kind: 'favicon', image: png })).status, 200);
+  const fav = await fetch(base + '/site/favicon');
+  assert.strictEqual(fav.headers.get('content-type'), 'image/png');
+  const html = await (await fetch(base + '/login')).text();
+  assert.match(html, /<title>Masuk · Zero Lab<\/title>/);
+  assert.match(html, /--yellow:#123456/);
+  assert.strictEqual((await call('dev', 'GET', '/api/nope/x')).data.creator, 'ZeroBot');
+
   // CSRF
   const ev = await fetch(base + '/chat/messages', { method: 'POST', headers: { Origin: 'https://evil.example', 'Content-Type': 'application/json', Cookie: jar.dev }, body: '{"text":"x"}' });
   assert.strictEqual(ev.status, 403);

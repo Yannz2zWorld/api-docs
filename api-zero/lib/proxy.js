@@ -6,10 +6,11 @@ const PROVIDERS = require('./providers');
 const { clean } = require('./hide');
 const { fetchFile, MAX_FILE_BYTES } = require('./fetchFile');
 
+const CREATOR = () => require('./settings').peek('site').creator;
 const TIMEOUT_MS = Number(process.env.UPSTREAM_TIMEOUT_MS || 55000);
 const STREAM_TYPE = /^(image|video|audio)\/|^application\/(octet-stream|pdf|zip|vnd\.android|x-|ogg)/i;
 
-const fail = (res, status, error, message) => res.status(status).json({ status: false, creator: process.env.SITE_NAME || 'API Zero', error, message });
+const fail = (res, status, error, message) => res.status(status).json({ status: false, creator: CREATOR(), error, message });
 const keyOf = p => (p.keyMode === 'none' ? 'none' : p.key || process.env[p.keyEnv]);
 // Endpoint buatan developer yang menunjuk ke URL bebas (server: 'custom').
 function providerOf(spec) {
@@ -116,7 +117,7 @@ async function handle(spec, req, res) {
     if (!data || typeof data !== 'object') {
       if (!r.ok) return fail(res, 502, 'UPSTREAM_FAILED', 'Server sumber lagi bermasalah.');
       if (type === 'text/html') return fail(res, 502, 'UPSTREAM_FAILED', 'Server sumber mengirim jawaban yang tidak dikenali.');
-      return res.json({ status: true, creator: process.env.SITE_NAME || 'API Zero', result: clean(o, text, strip) });
+      return res.json({ status: true, creator: CREATOR(), result: clean(o, text, strip) });
     }
     const body = clean(o, data, strip);
     if (!r.ok || body.status === false) {
@@ -124,7 +125,7 @@ async function handle(spec, req, res) {
       return fail(res, r.status === 400 || r.status === 422 ? 400 : 502, r.status === 400 || r.status === 422 ? 'INVALID_PARAMETER' : 'UPSTREAM_FAILED', msg);
     }
     const { status, ...rest } = Array.isArray(body) ? { result: body } : body;
-    return res.json({ status: true, creator: process.env.SITE_NAME || 'API Zero', ...rest });
+    return res.json({ status: true, creator: CREATOR(), ...rest });
   } finally { up.done(); }
 }
 
