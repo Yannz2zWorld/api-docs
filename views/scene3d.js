@@ -419,8 +419,9 @@ function loadScript(src) {
 }
 
 function boot() {
-  const els = document.querySelectorAll('[data-scene3d]');
-  if (!els.length) return;
+  const mode3d = document.documentElement.getAttribute('data-mode') === '3d';
+  const els = [...document.querySelectorAll('[data-scene3d]')].filter(el => mode3d || el.getAttribute('data-scene3d') === 'preview');
+  if (!els.length) { fallback(); return; }
   if (!hasWebGL()) { note('WebGL is not available in this browser: keeping the CSS scene'); fallback(); return; }
   note('WebGL ok, loading three.js');
   Promise.all(SCRIPTS.map(f => loadScript(CDN + f))).then(() => {

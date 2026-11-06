@@ -18,11 +18,12 @@
   const STYLES = {
     // The cartoon look, kept clean: light dotted paper, white panels, thick black outlines, hard
     // shadows, rounded cartoon type, pastel yellow as the one accent. Same values as views/theme.css.
-    default: { name: 'Default', desc: 'Kartun terang yang clean: kertas bertitik, kartu putih, garis hitam tebal, aksen kuning pastel. Tampilan bawaan.', dark: false,
-      bg: '#f6f4ee', dot: '#dcd7c9', surface: '#ffffff', surface2: '#fbf8ef', surface3: '#f3efe2', ink: '#141414', muted: '#4a4a4a', faint: '#7a7a7a',
-      edge: '#141414', edgeSoft: '#e4dfd1', drop: '#141414', border: 3, radius: 18, shadow: [5, 5], accent: '#ffd966', ok: '#15803d', bad: '#b45309',
+    // Tampilan bawaan: abu-abu polos bergaya kartun (garis tegas, bayangan geser), sama dengan Web DB.
+    default: { name: 'Default', desc: 'Abu-abu polos bergaya kartun: kartu putih, garis tegas, bayangan geser. Sama dengan Web DB. Tampilan bawaan.', dark: false,
+      bg: '#e5e7eb', dot: '#e5e7eb', surface: '#ffffff', surface2: '#f9fafb', surface3: '#f3f4f6', ink: '#1f2937', muted: '#4b5563', faint: '#6b7280',
+      edge: '#1f2937', edgeSoft: '#d1d5db', drop: '#9ca3af', border: 2, radius: 18, shadow: [4, 4], accent: '#4b5563', ok: '#15803d', bad: '#b91c1c',
       font: "Nunito, 'Trebuchet MS', sans-serif", weight: 600, head: "Fredoka, Nunito, 'Trebuchet MS', sans-serif", headWeight: 600, mono: "'JetBrains Mono', ui-monospace, Menlo, monospace",
-      dots: [1.2, 1.2, 24], fonts: 'family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700' },
+      dots: [0, 0, 24], fonts: 'family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700' },
     classic: { name: 'Classic', desc: 'Gelap, garis tegas, aksen merah. Tampilan lama.', dark: true,
       bg: '#0b0b0c', dot: '#1f1f23', surface: '#141416', surface2: '#1b1b1e', surface3: '#232327', ink: '#f4f4f5', muted: '#a1a1aa', faint: '#71717a',
       edge: '#d4d4d8', edgeSoft: '#3f3f46', drop: '#3f3f46', border: 2, radius: 12, shadow: [6, 6], accent: '#c8202f' },
@@ -254,7 +255,74 @@ ${R} .shell .btn:not(.secondary):hover,${R} .account-pop a:hover,${R} .account-p
 
   // set(): applied at once, kept in this browser, saved on the account (resolves true when saved there).
   // The look stays after signing out too: this browser keeps the last account's choice.
-  window.YannzUI = { STYLES, load, save, apply, inkOn, sync, accentOf, owner: () => uid || owner(), set(pref) { const p = clean(pref); save({ ...p, uid: uid || owner() }); apply(p); return push(p); } };
+  // Mode tampilan: "biasa" (bawaan, tanpa 3D) atau "3d" (scythe 3D tampil). Disimpan di browser ini.
+  const MODE_KEY = 'yannz-mode';
+  function mode() {
+    try {
+      return localStorage.getItem(MODE_KEY) === '3d' ? '3d' : 'biasa';
+    } catch {
+      return 'biasa';
+    }
+  }
+  function setMode(m) {
+    try {
+      localStorage.setItem(MODE_KEY, m === '3d' ? '3d' : 'biasa');
+    } catch { /* penyimpanan diblokir: mode hanya untuk halaman ini */ }
+    location.reload();
+  }
+  function pasangMode() {
+    const html = document.documentElement;
+    html.setAttribute('data-mode', mode());
+    if (!document.getElementById('yz-mode-style')) {
+      const st = document.createElement('style');
+      st.id = 'yz-mode-style';
+      st.textContent = `html[data-mode="biasa"] .scene3d:not([data-scene3d="preview"]){display:none!important}
+.yz-mode{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9990;display:inline-flex;border:2px solid var(--edge,#1f2937);border-radius:999px;background:var(--surface,#fff);box-shadow:3px 3px 0 var(--drop,#9ca3af);overflow:hidden;font:700 12px var(--f-body,Nunito,sans-serif)}
+.yz-mode button{all:unset;cursor:pointer;padding:7px 12px;color:var(--ink,#1f2937);font:inherit}
+.yz-mode button[aria-pressed="true"]{background:var(--accent,#4b5563);color:var(--accent-ink,#fff)}
+.yz-mode button:focus-visible{outline:3px solid var(--ink,#1f2937);outline-offset:-3px}
+.yz-latar3d{position:fixed!important;inset:0!important;z-index:-1!important;pointer-events:none!important;opacity:.5}
+@media (max-width:640px){.yz-mode{bottom:10px;font-size:11px}.yz-mode button{padding:6px 10px}}`;
+      (document.head || html).append(st);
+    }
+    const tombol = () => {
+      // Mode biasa: tampilkan langsung hiasan CSS halaman, tanpa menunggu 3D.
+      if (mode() === 'biasa') html.classList.remove('scene-pending');
+      if (html.hasAttribute('data-no-theme') || document.querySelector('.yz-mode')) return;
+      const box = document.createElement('div');
+      box.className = 'yz-mode';
+      box.setAttribute('role', 'group');
+      box.setAttribute('aria-label', 'Mode tampilan');
+      for (const [m, label] of [['biasa', 'Mode Biasa'], ['3d', 'Mode 3D']]) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = label;
+        b.setAttribute('aria-pressed', String(mode() === m));
+        b.addEventListener('click', () => { if (mode() !== m) setMode(m); });
+        box.append(b);
+      }
+      document.body.append(box);
+      // Mode 3D di halaman yang belum punya scythe: scythe 3D jadi latar di belakang isi halaman.
+      if (mode() === '3d' && !document.querySelector('[data-scene3d]')) {
+        const latar = document.createElement('div');
+        latar.className = 'scene3d yz-latar3d';
+        latar.setAttribute('data-scene3d', 'stack');
+        latar.setAttribute('aria-hidden', 'true');
+        document.body.prepend(latar);
+        if (!document.querySelector('script[src*="scene3d.js"]')) {
+          const sc = document.createElement('script');
+          sc.src = '/assets/scene3d.js?v=10';
+          sc.defer = true;
+          document.head.append(sc);
+        }
+      }
+    };
+    if (document.body) tombol();
+    else document.addEventListener('DOMContentLoaded', tombol, { once: true });
+  }
+  pasangMode();
+
+  window.YannzUI = { mode, setMode, STYLES, load, save, apply, inkOn, sync, accentOf, owner: () => uid || owner(), set(pref) { const p = clean(pref); save({ ...p, uid: uid || owner() }); apply(p); return push(p); } };
   apply();
   sync();
   // Another tab changed it: follow.
