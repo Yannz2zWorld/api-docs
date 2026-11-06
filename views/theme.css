@@ -1,27 +1,27 @@
-/* Yannz API — shared cartoon theme, kept clean: light dotted paper, white panels, thick black
-   outlines, hard offset shadows, rounded cartoon type, pastel yellow as the one accent. The Default look in Custom UI
+/* Yannz API — shared cartoon theme, same as Web DB: plain grey background, white panels, dark grey
+   outlines, hard offset shadows, rounded cartoon type, grey as the accent. The Default look in Custom UI
    (views/ui-theme.js) uses the same values. Animations move only transform / opacity. */
 :root {
-  --bg: #f6f4ee;
+  --bg: #e5e7eb;
   --surface: #ffffff;
-  --surface-2: #fbf8ef;
-  --surface-3: #f3efe2;
-  --ink: #141414;
-  --muted: #4a4a4a;
-  --faint: #7a7a7a;
-  --edge: #141414;
-  --edge-soft: #e4dfd1;
-  --drop: #141414;
-  --accent: #ffd966;
-  --accent-ink: #141414;
+  --surface-2: #f9fafb;
+  --surface-3: #f3f4f6;
+  --ink: #1f2937;
+  --muted: #4b5563;
+  --faint: #6b7280;
+  --edge: #1f2937;
+  --edge-soft: #d1d5db;
+  --drop: #9ca3af;
+  --accent: #4b5563;
+  --accent-ink: #ffffff;
   --red: var(--accent);
   --red-deep: color-mix(in srgb, var(--accent) 78%, #000);
   --ok: #15803d;
   --bad: #b45309;
   --warn: #4a4a4a;
   --radius: 18px;
-  --line: 3px solid var(--edge);
-  --shadow: 5px 5px 0 var(--drop);
+  --line: 2px solid var(--edge);
+  --shadow: 4px 4px 0 var(--drop);
   --ease: cubic-bezier(.2, .8, .2, 1);
   --f-head: Fredoka, Nunito, "Trebuchet MS", sans-serif;
   --f-body: Nunito, "Trebuchet MS", system-ui, sans-serif;
@@ -34,7 +34,6 @@ body {
   margin: 0;
   min-height: 100vh;
   background: var(--bg);
-  background-image: radial-gradient(#dcd7c9 1.2px, transparent 1.2px);
   background-size: 24px 24px;
   color: var(--ink);
   font: 600 15px/1.6 var(--f-body);
