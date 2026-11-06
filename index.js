@@ -600,6 +600,31 @@ async function resolveIdentity(req) {
 // Order matters: authentication and authorization failures are answered before any quota
 // is reserved, and a reserved request is refunded when the handler does not succeed, so
 // the daily quota counts successful fetches only.
+// Search endpoints take ?random=true: the list in the answer comes back shuffled instead of in the source's order.
+const isSearchPath = p => /\/search\//.test(p);
+const wantsRandom = v => ['1', 'true', 'yes', 'ya', 'on'].includes(String(v || '').toLowerCase());
+const RANDOM_PARAM = { name: 'random', required: false, placeholder: 'true = hasil diacak (opsional)' };
+function shuffleResult(body) {
+  if (!body || typeof body !== 'object') return body;
+  const spots = [['result'], ['data'], ['result', 'data'], ['result', 'results'], ['result', 'items'], ['data', 'data'], ['data', 'results'], ['results'], ['items']];
+  for (const keys of spots) {
+    let parent = body;
+    for (const k of keys.slice(0, -1)) parent = parent && typeof parent === 'object' ? parent[k] : null;
+    const last = keys[keys.length - 1];
+    const list = parent && typeof parent === 'object' ? parent[last] : null;
+    if (Array.isArray(list) && list.length > 1) {
+      const copy = list.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      parent[last] = copy;
+      return { ...body, random: true };
+    }
+  }
+  return body;
+}
+
 function apiGateway(cleanPath, run) {
   return async (req, res) => {
     // Path changed in the Developer panel: the old address says where it went.
@@ -685,6 +710,7 @@ function apiGateway(cleanPath, run) {
       // Media links in a working answer point at our own /media (services/mediaProxyService.js).
       // and no answer names or links an upstream server (they only run in the background).
       if (res.statusCode < 400) body = mediaProxy.rewrite(body, req);
+      if (res.statusCode < 400 && isSearchPath(cleanPath) && wantsRandom(req.query.random)) body = shuffleResult(body);
       body = mediaProxy.scrub(body, req);
       return sendJson(body);
     };
@@ -720,7 +746,9 @@ fs.readdirSync(pluginFolder).forEach(file => {
       const fromPanel = fs.readFileSync(fullPath, 'utf8').startsWith('// Endpoint added from the owner panel.');
 
       handlers.forEach(route => {
-        const { name, desc, category, path: routePath, run, params } = route;
+        const { name, desc, category, path: routePath, run } = route;
+        let { params } = route;
+        if (Array.isArray(params) && isSearchPath(routePath) && !params.some(p => p.name === 'random')) params = [...params, RANDOM_PARAM];
 
         if (name && desc && category && routePath && typeof run === 'function') {
           const cleanPath = routePath.split('?')[0];
