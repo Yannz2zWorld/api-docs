@@ -65,9 +65,25 @@ function sendStoredFile(res, f) {
   const fname = encodeURIComponent(f.name).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
   res.set('Cache-Control', 'public, max-age=86400, immutable');
   res.set('Content-Type', f.mime);
-  res.set('Content-Length', String(f.size));
+  res.set('Accept-Ranges', 'bytes');
   res.set('Content-Disposition', `${f.inline ? 'inline' : 'attachment'}; filename*=UTF-8''${fname}`);
   safeFileHeaders(res, f.mime);
+  // Range requests: Safari / iOS only play audio and video that can be fetched in parts (206).
+  const total = f.buffer.length;
+  const range = /^bytes=(\d*)-(\d*)$/.exec(String((res.req && res.req.headers && res.req.headers.range) || '').trim());
+  if (range && (range[1] || range[2])) {
+    let start = range[1] ? Number(range[1]) : Math.max(0, total - Number(range[2]));
+    let end = range[1] && range[2] ? Math.min(Number(range[2]), total - 1) : total - 1;
+    if (!Number.isFinite(start) || start >= total || start > end) {
+      res.set('Content-Range', `bytes */${total}`);
+      return res.status(416).end();
+    }
+    res.status(206);
+    res.set('Content-Range', `bytes ${start}-${end}/${total}`);
+    res.set('Content-Length', String(end - start + 1));
+    return res.end(f.buffer.subarray(start, end + 1));
+  }
+  res.set('Content-Length', String(total));
   return res.end(f.buffer);
 }
 function safeFileHeaders(res, mime) {
